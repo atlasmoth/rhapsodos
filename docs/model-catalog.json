@@ -10,10 +10,10 @@
       "en"
     ],
     "minimumOS": 28,
-    "minimumMemoryMB": 1024,
+    "minimumMemoryMB": 3072,
     "license": "Apache-2.0 + BSD-3-Clause-Clear + MIT",
     "licenseUrl": "https://huggingface.co/litert-community/kitten-tts-nano-0.8",
-    "description": "A compact English voice for offline listening. Download once; narration stays on this device.",
+    "description": "A local English voice for phones with at least 3 GB of device memory. Short passages are prepared on this device; system narration remains available.",
     "files": [
       {
         "path": "kitten_predictor_fp16.tflite",
