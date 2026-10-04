@@ -3,7 +3,6 @@ package com.osuji.ereaderapp.pdf
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.RectF
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Build
@@ -15,13 +14,7 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
 
-data class PdfTextBox(
-    val start: Int,
-    val end: Int,
-    val bounds: List<RectF>,
-)
-
-data class PdfSourcePage(val pageIndex: Int, val text: String, val boxes: List<PdfTextBox>)
+data class PdfSourcePage(val pageIndex: Int, val text: String)
 
 data class ImportedPdf(
     val id: String,
@@ -81,22 +74,19 @@ class PdfAdapter(private val context: Context) {
                 repeat(renderer.pageCount) { index ->
                     renderer.openPage(index).use { page ->
                         val source = StringBuilder()
-                        val boxes = mutableListOf<PdfTextBox>()
                         page.textContents.forEach { content ->
                             val text = content.text
                             if (text.isNotBlank()) {
                                 extractedCharacters += text.length + 1
                                 require(extractedCharacters <= 20_000_000) { "This PDF exceeds the current text-preparation limit." }
-                                val sourceStart = source.length
                                 source.append(text).append('\n')
-                                boxes += PdfTextBox(sourceStart, sourceStart + text.length, content.bounds.map { RectF(it.left / page.width, it.top / page.height, it.right / page.width, it.bottom / page.height) })
                             }
                         }
-                        pages += PdfSourcePage(index, source.toString(), boxes)
+                        pages += PdfSourcePage(index, source.toString())
                     }
                 }
             } else {
-                repeat(renderer.pageCount) { pages += PdfSourcePage(it, "", emptyList()) }
+                repeat(renderer.pageCount) { pages += PdfSourcePage(it, "") }
             }
             renderer.pageCount
         }
