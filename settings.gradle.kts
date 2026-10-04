@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "eReader"
-include(":shared")
+include(":shared", ":androidApp")

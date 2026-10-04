@@ -1,6 +1,8 @@
 # Android architecture
 
-Status: tentative architecture, researched against primary documentation on **4 October 2026**. No app implementation or device qualification is included. The Android API floor, dependency versions and exact model artifacts remain explicit qualification decisions.
+Status: architecture guiding an initial native implementation, researched on **4 October 2026**. Android starts at API 28, with API-dependent document capabilities that remain to qualify. Model artifacts and physical-device readiness are not certified.
+
+The initial `0.01` app uses native PDF pages, system offline TTS through Media3, a microphone foreground service, anchored voice/text notes and Compose adaptive scenes. Embedded-text listening currently requires API 35 or newer; older devices and scans have an explicit original-page-only state. Saved audio remains available with a pending-model transcription state. LiteRT pack execution, OCR and the model gallery are subsequent qualification work; no unused LiteRT runtime is bundled in this slice.
 
 ## Product and stack
 
@@ -158,7 +160,7 @@ Use semantic headings and passage actions in reflow, useful TalkBack order, name
 
 ## Persistence and privacy
 
-Use one canonical SQLite schema and repository layer through KMP with an Android driver. Room KMP versus SQLDelight remains open. Do not add a second Android-only domain schema. Preference storage can hold harmless UI settings; documents, notes, jobs and progress remain in the canonical store.
+Use one canonical SQLite schema and repository layer through KMP with an Android driver. SQLDelight is the initial implementation choice. Do not add a second Android-only domain schema. Preference storage can hold harmless UI settings; documents, notes, jobs and progress remain in the canonical store.
 
 Transactions, file manifests and journals coordinate durable recordings and derived audio. On launch recover/checkpoint jobs, verify committed assets and safely reconcile orphan files. Lexical search is first; validate FTS support in the selected driver/build before making it a dependency.
 
