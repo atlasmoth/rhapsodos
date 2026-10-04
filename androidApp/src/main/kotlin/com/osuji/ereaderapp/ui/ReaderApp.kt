@@ -274,7 +274,7 @@ fun ReaderApp() {
             onDismissRequest = { showSettings = false },
             title = { Text("Make yourself comfortable") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     Text("Text follows your system size. The page view keeps the original PDF; passage view gives you comfortable, accessible type.")
                     Text("Appearance", style = MaterialTheme.typography.labelLarge)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -607,9 +607,14 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
     val document = contents.document
     var bitmap by remember(document.id, page) { mutableStateOf<Bitmap?>(null) }
     var error by remember(document.id, page) { mutableStateOf<String?>(null) }
+    var renderAttempt by remember(document.id, page) { mutableIntStateOf(0) }
     var scale by remember(document.id, page) { mutableFloatStateOf(1f) }
     var offset by remember(document.id, page) { mutableStateOf(Offset.Zero) }
-    LaunchedEffect(document.id, page) { runCatching { pdf.render(document.filePath, page, 2400) }.onSuccess { bitmap = it }.onFailure { error = it.message ?: "This page could not be rendered." } }
+    LaunchedEffect(document.id, page, renderAttempt) {
+        try { bitmap = pdf.render(document.filePath, page, 2400) }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (failure: Exception) { error = failure.message ?: "This page could not be rendered." }
+    }
     val active = contents.passages.firstOrNull { it.id == activePassageId && it.pageIndex == page }
     val regions = if (active != null) contents.pages.firstOrNull { it.pageIndex == page }?.regions.orEmpty().filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
     val highlight = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
@@ -641,7 +646,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
                     regions.forEach { region -> drawRect(highlight, Offset(left + region.x * renderedWidth, top + region.y * renderedHeight), Size(region.width * renderedWidth, region.height * renderedHeight)) }
                 }
             }
-            else if (error != null) Column(Modifier.padding(24.dp)) { Text(error!!); TextButton(onClick = { error = null; selectPage(page) }) { Text("Try another page") } }
+            else if (error != null) Column(Modifier.padding(24.dp)) { Text(error!!); TextButton(onClick = { error = null; renderAttempt++ }) { Text("Retry page") } }
             else CircularProgressIndicator(Modifier.padding(48.dp))
         }
     }
@@ -713,7 +718,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
         onDismissRequest = { if (!saving) editing = null },
         title = { Text("Your words") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(text, { text = it }, enabled = !saving, minLines = 4, label = { Text("Transcript or written thought") })
                 saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
