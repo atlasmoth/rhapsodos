@@ -95,6 +95,7 @@ fun ReaderApp() {
     var showSettings by rememberSaveable { mutableStateOf(false) }
     val preferences = remember { context.getSharedPreferences("presentation", android.content.Context.MODE_PRIVATE) }
     var reducedMotion by rememberSaveable { mutableStateOf(preferences.getBoolean("reducedMotion", false)) }
+    var touchFeedback by rememberSaveable { mutableStateOf(preferences.getBoolean("touchFeedback", true)) }
     var typedNote by rememberSaveable { mutableStateOf(false) }
     var typedText by rememberSaveable { mutableStateOf("") }
     var typedDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -222,6 +223,10 @@ fun ReaderApp() {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Reduce decorative motion", Modifier.weight(1f))
                         Switch(reducedMotion, { reducedMotion = it; preferences.edit().putBoolean("reducedMotion", it).apply(); haptic(view) })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Touch feedback", Modifier.weight(1f))
+                        Switch(touchFeedback, { touchFeedback = it; preferences.edit().putBoolean("touchFeedback", it).apply(); haptic(view) })
                     }
                     Text("eReader 0.01 · local content processing", style = MaterialTheme.typography.bodySmall)
                 }
