@@ -70,9 +70,9 @@ Prepare the first page promptly and append committed batches. Embedded extractio
 
 Normalize geometry to the canonical page coordinate system, retaining crop/rotation/raster transforms. Preserve block confidence and extraction provenance. Build reading order before narration, detect duplicate headers/footers and expose uncertain passages instead of inventing missing content.
 
-Persist source ranges as **UTF-16 code-unit offsets into immutable versioned canonical source strings**. Endpoints cannot split surrogate pairs. Shared mappings preserve the relationship between source, reflow and spoken text. Qualify Unicode, combining characters and bidirectional text; a PDF glyph index is not automatically a Kotlin text offset.
+Persist source ranges as **UTF-16 code-unit offsets into immutable versioned canonical source strings**. Endpoints cannot split surrogate pairs. Shared mappings preserve the relationship between source, accessible display text and spoken text. Qualify Unicode, combining characters and bidirectional text; a PDF glyph index is not automatically a Kotlin text offset.
 
-Compose hosts a focused native PDF adapter and an accessible reflow surface. Current-passage overlays come from canonical geometry and timing. Bound thumbnails, raster pages and inference memory together; rendering several full-resolution pages alongside a large model can exceed the budget even when each subsystem appears reasonable alone.
+Compose hosts the original PDF as the main reader, with accessible source text and a record action attached to the current highlight. There is no separate passage/reflow pane. Current-passage overlays come from canonical geometry and timing. Hit testing uses the same fitted, zoomed and panned geometry as painting; only a tap on the active visible highlight enters pause-and-record. Validate expected document/passage identity against the native transport before freezing, and retain the same anchor through the microphone-permission flow. Bound thumbnails, raster pages and inference memory together; rendering several full-resolution pages alongside a large model can exceed the budget even when each subsystem appears reasonable alone.
 
 ## Persistent playback
 
@@ -149,16 +149,16 @@ Material3 Adaptive and Navigation3 adaptive scenes map library/outline-to-source
 
 | Available window | Layout |
 | --- | --- |
-| Compact | Focused listening/source destination, persistent player and recorder/notes sheet or destination |
+| Compact | Original PDF, persistent player and recorder/notes sheet |
 | Medium | Source plus one context pane if content and font scale fit |
-| Wide | Outline/library, source/passage and anchored notes with a persistent dock |
+| Wide | Outline/library, PDF and anchored notes with a persistent dock |
 | Very wide | Adjustable bounded panes and readable text measure; optional context without stretched controls |
 
 Choose layout from actual window constraints, font scaling and posture. Account for hinges and avoid placing important controls across an occlusion. Preserve source selection, scroll/zoom, auto-follow state, note draft, transcript edits and actual audio position as panes change.
 
 Manual scrolling suspends following until the listener chooses to return. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
 
-Use semantic headings and passage actions in reflow, useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
+Expose current source text and a pause-and-record action on the PDF highlight, with useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
 
 ## Persistence and privacy
 
@@ -179,7 +179,8 @@ Before selecting the API floor, verify rendering/extraction fallbacks, foregroun
 Required evaluation includes:
 
 - Difficult PDFs and gold reading-order/source-position comparisons.
-- Long playback, speed changes, seek, reflow and source/voice revisions without incorrect attachments.
+- Long playback, speed changes, seek, PDF zoom/page browsing and source/voice revisions without incorrect attachments.
+- Active-highlight taps, blank-space taps, pan/pinch, rapid taps and passage-boundary races; only the confirmed current source may enter capture.
 - Save/resume, denied permission, low storage, interrupted capture, process death and stale ASR completion.
 - Screen lock, audio focus, calls, routes, Bluetooth and service recreation.
 - Compact/wide/resizable/foldable layouts with large text and assistive technologies.

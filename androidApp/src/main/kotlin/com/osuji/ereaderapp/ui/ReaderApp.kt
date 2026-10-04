@@ -8,20 +8,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,18 +38,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import com.osuji.ereaderapp.R
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -75,6 +77,7 @@ import com.osuji.ereaderapp.data.Bookmark
 import com.osuji.ereaderapp.pdf.DocumentPreparation
 import com.osuji.ereaderapp.audio.TranscriptionCoordinator
 import com.osuji.ereaderapp.pdf.PdfAdapter
+import com.osuji.ereaderapp.pdf.SourceRegion
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -131,6 +134,10 @@ fun ReaderApp() {
     var typedPage by rememberSaveable { mutableIntStateOf(0) }
     var typedSaving by remember { mutableStateOf(false) }
     var typedError by remember { mutableStateOf<String?>(null) }
+    var recordRequestPending by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(recordRequestPending, audio.capturing) {
+        if (recordRequestPending && !playback.capturing) recordRequestPending = false
+    }
     LaunchedEffect(noteCapture.error) { if (noteCapture.draft == null && noteCapture.error != null) message = noteCapture.error }
 
     fun openDocument(id: String) {
@@ -172,15 +179,24 @@ fun ReaderApp() {
         if (action.first == "export") { exportDocumentId = action.second.id; exportPicker.launch("${action.second.title}.rhapsodos"); libraryAction = null }
     }
     val microphone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
-        if (allowed) { haptic(view, true); capture.begin() }
-        else { typedNote = true; typedError = null; message = null }
+        if (recordRequestPending) {
+            recordRequestPending = false
+            if (playback.capturing && playback.state.value.documentId == typedDocumentId && playback.state.value.passageId == typedPassageId) {
+                if (allowed) { haptic(view, true); capture.begin() }
+                else { typedNote = true; typedError = null; message = null }
+            }
+        }
     }
-    fun recordThought() {
-        val frozen = playback.beginCapture() ?: return
+    fun recordThought(expectedDocumentId: String? = null, expectedPassageId: String? = null, expectedSourceRevision: String? = null): Boolean {
+        if (recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
+        val current = playback.state.value
+        if (current.preview || current.noteId != null || current.preparing || current.durationMillis <= 0) return false
+        val frozen = playback.beginCapture(expectedDocumentId, expectedPassageId, expectedSourceRevision) ?: return false
+        recordRequestPending = true
         typedDocumentId = frozen.documentId
         typedPassageId = frozen.passageId
         typedOffset = frozen.offsetMillis
-        typedPage = audio.pageIndex
+        typedPage = playback.state.value.pageIndex
         typedQuote = ""
         scope.launch {
             runCatching { store.contents(frozen.documentId) }.onSuccess { contents ->
@@ -190,9 +206,14 @@ fun ReaderApp() {
             }
         }
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            recordRequestPending = false
             haptic(view, true)
             capture.begin()
-        } else microphone.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            try { microphone.launch(Manifest.permission.RECORD_AUDIO) }
+            catch (failure: Exception) { recordRequestPending = false; typedNote = true; typedError = null }
+        }
+        return true
     }
 
     fun writeThought(documentId: String, passage: ReaderPassage) {
@@ -236,7 +257,7 @@ fun ReaderApp() {
                 }
             },
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, playback, !playback.capturing, ::recordThought, { showSleep = true })
+                if (audio.documentId != null) ListeningDock(audio, playback, !playback.capturing, { recordThought() }, { showSleep = true })
             },
         ) { padding ->
             NavDisplay(
@@ -249,7 +270,7 @@ fun ReaderApp() {
                         LibraryPane(library.documents, audio, reducedMotion, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, reducedMotion, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
+                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
                     }
                 },
             )
@@ -464,17 +485,15 @@ private fun EmptyListeningRoom(import: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, reducedMotion: Boolean, back: () -> Unit, record: () -> Unit, write: (ReaderPassage) -> Unit) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, back: () -> Unit, record: (String, String, String) -> Boolean, write: (ReaderPassage) -> Unit) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
-    var mode by rememberSaveable(id) { mutableStateOf("passage") }
     var following by rememberSaveable(id) { mutableStateOf(true) }
     var page by rememberSaveable(id) { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     val view = LocalView.current
-    val list = rememberLazyListState()
-    val dragged by list.interactionSource.collectIsDraggedAsState()
     val snapshot by store.snapshot.collectAsStateWithLifecycle()
     val metadata = snapshot.documents.firstOrNull { it.id == id }
     val preparation = koinInject<DocumentPreparation>()
@@ -482,21 +501,28 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showSearch by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
     var showPronunciation by remember { mutableStateOf(false) }
+    var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
+    var showPassageTools by remember { mutableStateOf(false) }
     var bookmarks by remember(id) { mutableStateOf<List<Bookmark>>(emptyList()) }
     LaunchedEffect(id) { bookmarks = store.bookmarks(id) }
-    LaunchedEffect(id, metadata, progress[id]?.running) { runCatching { store.contents(id) }.onSuccess { document = it }.onFailure { error = "This document could not be opened." } }
-    LaunchedEffect(dragged) { if (dragged) following = false }
-    LaunchedEffect(audio.passageId, following, document) {
-        if (following && audio.documentId == id && !audio.preview) {
-            page = audio.pageIndex
-            val index = document?.passages?.indexOfFirst { it.id == audio.passageId } ?: -1
-            if (index >= 0 && mode == "passage") list.animateScrollToItem(index + 1)
-        }
+    LaunchedEffect(id, metadata, progress[id]?.running) {
+        try { document = store.contents(id) }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (failure: Exception) { error = "This document could not be opened." }
+    }
+    LaunchedEffect(audio.passageId, audio.pageIndex, audio.documentId, audio.preview, following) {
+        if (following && audio.documentId == id && !audio.preview) page = audio.pageIndex
     }
     val contents = document
     if (contents == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { if (error == null) CircularProgressIndicator() else Text(error!!) }
         return
+    }
+    val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && !audio.preview && audio.noteId == null }
+    val currentAvailable = active != null && !audio.capturing
+    fun returnToPassage(passageId: String) {
+        val index = contents.passages.indexOfFirst { it.id == passageId }
+        if (index >= 0 && !playback.capturing) { following = true; playback.listen(contents, index) }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 850.dp
@@ -507,18 +533,28 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     Column(Modifier.weight(1f)) { Label("THE LISTENING ROOM"); Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                     IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search document") }
                     IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Pages and bookmarks") }
+                    Box {
+                        IconButton(onClick = { showPassageTools = true; haptic(view) }) { Icon(Icons.Default.MoreVert, "Current passage actions") }
+                        DropdownMenu(expanded = showPassageTools, onDismissRequest = { showPassageTools = false }) {
+                            DropdownMenuItem(text = { Text(if (bookmarks.any { it.passageId == active?.id }) "Remove current bookmark" else "Bookmark current passage") }, enabled = currentAvailable, onClick = {
+                                showPassageTools = false
+                                active?.let { passage -> scope.launch { bookmarks = store.toggleBookmark(java.util.UUID.randomUUID().toString(), id, passage.id, "Page ${passage.pageIndex + 1}"); haptic(view) } }
+                            })
+                            DropdownMenuItem(text = { Text("Write a thought") }, enabled = currentAvailable, onClick = { showPassageTools = false; active?.let(write) })
+                            DropdownMenuItem(text = { Text("Pronunciation") }, onClick = { showPassageTools = false; showPronunciation = true; haptic(view) })
+                        }
+                    }
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
                         val index = contents.passages.indexOfFirst { it.id == saved?.passageId }.coerceAtLeast(0)
+                        following = true
                         playback.listen(contents, index, saved?.offsetMillis ?: 0); haptic(view, true)
-                    }) { Icon(Icons.Default.PlayArrow, "Start listening") }
+                    }, enabled = !audio.capturing) { Icon(Icons.Default.PlayArrow, "Start listening") }
                 }
-                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    FilterChip(mode == "passage", { mode = "passage"; haptic(view) }, { Text("Passages") })
-                    FilterChip(showPronunciation, { showPronunciation = true; haptic(view) }, { Text("Pronunciation") })
-                    FilterChip(mode == "page", { mode = "page"; haptic(view) }, { Text("Original PDF") })
-                    if (!wide) FilterChip(mode == "notes", { mode = "notes"; haptic(view) }, { Text("Thoughts (${notes.size})") })
-                    if (!following && audio.documentId == id && !audio.preview) TextButton(onClick = { following = true; haptic(view) }) { Text("Follow") }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    if (!wide) TextButton(onClick = { showThoughts = true; haptic(view) }) { Icon(Icons.Default.EditNote, null); Spacer(Modifier.width(6.dp)); Text("Thoughts (${notes.count { it.status != "draft" }})") }
+                    Spacer(Modifier.weight(1f))
+                    if (!following && audio.documentId == id && !audio.preview) TextButton(onClick = { following = true; haptic(view) }) { Text("Follow narration") }
                 }
                 progress[id]?.let { prepared ->
                     if (prepared.running || prepared.error != null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -528,102 +564,104 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         if (!prepared.running) TextButton(onClick = { preparation.prepare(id) }) { Text("Retry") }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
-                when (mode) {
-                    "page" -> OriginalPage(contents, page, pdf, audio.passageId.takeIf { audio.documentId == id }, { page = it; following = false }, Modifier.weight(1f))
-                    "notes" -> NotesPane(notes, store, { note ->
-                        val index = contents.passages.indexOfFirst { it.id == note.passageId }
-                        if (index >= 0) { mode = "passage"; following = true; playback.listen(contents, index) }
-                    }, Modifier.weight(1f))
-                    else -> {
-                        if (contents.passages.isEmpty()) {
-                            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                                Text(if (contents.document.extractionStatus == "preparing") "Preparing your first passage" else "The original is ready.", style = MaterialTheme.typography.headlineMedium)
-                                Text("Listening becomes available as pages are prepared. Empty pages remain available in the original PDF.")
-                                OutlinedButton(onClick = { mode = "page" }) { Text("View the original PDF") }
-                            }
-                        } else LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            item {
-                                Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
-                                    Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text("One passage at a time", fontWeight = FontWeight.SemiBold)
-                                        Text("Tap a passage to listen there. Highlights and thoughts use passage-level source anchors.", style = MaterialTheme.typography.bodySmall)
-                                    }
-                                }
-                            }
-                            itemsIndexed(contents.passages, key = { _, passage -> passage.id }) { index, passage ->
-                                val active = audio.documentId == id && audio.passageId == passage.id
-                                Surface(onClick = { haptic(view); playback.listen(contents, index); following = true }, shape = RoundedCornerShape(22.dp), color = if (active) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface) {
-                                    Column(Modifier.padding(20.dp).widthIn(max = 720.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("PAGE ${passage.pageIndex + 1}${if (active) " · CURRENT" else ""}${if (passage.provenance == "ocr") " · RECOGNIZED" else ""}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
-                                            IconButton(onClick = { scope.launch { bookmarks = store.toggleBookmark(java.util.UUID.randomUUID().toString(), id, passage.id, "Page ${passage.pageIndex + 1}"); haptic(view) } }) { Icon(if (bookmarks.any { it.passageId == passage.id }) Icons.Default.Bookmark else Icons.Default.BookmarkBorder, "Toggle passage bookmark") }
-                                            IconButton(onClick = { write(passage) }, enabled = !playback.capturing) { Icon(Icons.Default.EditNote, "Write a thought at this passage") }
-                                        }
-                                        SelectionContainer { Text(passage.displayText, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 34.sp)) }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                OriginalPage(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, active, currentAvailable && audio.durationMillis > 0 && !audio.preparing,
+                    { page = it; following = false }, { following = false },
+                    { passageId, revision -> record(id, passageId, revision) }, Modifier.weight(1f))
             }
             if (wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column(Modifier.padding(20.dp)) {
                     Label("KEEP WHAT MATTERS")
                     Spacer(Modifier.height(8.dp)); Text("Your thoughts", style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(18.dp))
-                    NotesPane(notes, store, { note ->
-                        val index = contents.passages.indexOfFirst { it.id == note.passageId }
-                        if (index >= 0) { mode = "passage"; following = true; playback.listen(contents, index) }
-                    }, Modifier.weight(1f))
-                    if (audio.documentId == id) FilledTonalButton(onClick = record, enabled = audio.durationMillis > 0 && !audio.preparing, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Mic, null); Spacer(Modifier.width(8.dp)); Text("Record a thought") }
+                    NotesPane(notes, store, { note -> returnToPassage(note.passageId) }, Modifier.weight(1f))
                 }
             }
         }
     }
+    if (showThoughts) ModalBottomSheet(onDismissRequest = { showThoughts = false }) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 620.dp).navigationBarsPadding().padding(horizontal = 22.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Your thoughts", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                TextButton(onClick = { showThoughts = false }) { Text("Close") }
+            }
+            NotesPane(notes, store, { note -> returnToPassage(note.passageId); showThoughts = false }, Modifier.weight(1f))
+        }
+    }
     if (showPronunciation) PronunciationDialog(contents, { document = it }, { showPronunciation = false })
-    if (showSearch) SearchSheet(id, { hit ->
-        val index = contents.passages.indexOfFirst { it.id == hit.passageId }
-        if (index >= 0) { mode = "passage"; following = true; playback.listen(contents, index) }
-    }, { showSearch = false })
+    if (showSearch) SearchSheet(id, { hit -> returnToPassage(hit.passageId) }, { showSearch = false })
     if (showContents) AlertDialog(onDismissRequest = { showContents = false }, title = { Text("Find your place") }, text = {
         LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (bookmarks.isNotEmpty()) item { Text("BOOKMARKS", style = MaterialTheme.typography.labelSmall) }
             items(bookmarks, key = { it.id }) { bookmark ->
-                TextButton(onClick = { val index = contents.passages.indexOfFirst { it.id == bookmark.passageId }; if (index >= 0) { playback.listen(contents, index); following = true; mode = "passage" }; showContents = false }) { Icon(Icons.Default.Bookmark, null); Spacer(Modifier.width(8.dp)); Text(bookmark.label) }
+                TextButton(onClick = { returnToPassage(bookmark.passageId); showContents = false }) { Icon(Icons.Default.Bookmark, null); Spacer(Modifier.width(8.dp)); Text(bookmark.label) }
             }
-            item { Text("PREPARED PAGES", style = MaterialTheme.typography.labelSmall) }
+            if (contents.sections.isNotEmpty()) item { Text("CHAPTERS", style = MaterialTheme.typography.labelSmall) }
             items(contents.sections, key = { it.id }) { section ->
-                TextButton(onClick = { val index = contents.passages.indexOfFirst { it.id == section.passageId }; if (index >= 0) { playback.listen(contents, index); following = true; mode = "passage" }; showContents = false }) { Text(section.title) }
+                TextButton(onClick = { returnToPassage(section.passageId); showContents = false }) { Text(section.title) }
+            }
+            item { Text("PAGES", style = MaterialTheme.typography.labelSmall) }
+            items(contents.document.pageCount) { index ->
+                TextButton(onClick = { page = index; following = false; showContents = false }) { Text("Page ${index + 1}") }
             }
         }
     }, confirmButton = { TextButton(onClick = { showContents = false }) { Text("Close") } })
+}
 
+internal class PdfPagePlacement(viewportWidth: Float, viewportHeight: Float, imageWidth: Float, imageHeight: Float, scale: Float, panX: Float, panY: Float) {
+    private val viewport = Rect(0f, 0f, viewportWidth, viewportHeight)
+    private val fit = minOf(viewportWidth / imageWidth, viewportHeight / imageHeight)
+    val width = imageWidth * fit * scale
+    val height = imageHeight * fit * scale
+    val left = (viewportWidth - width) / 2 + panX
+    val top = (viewportHeight - height) / 2 + panY
+    fun rectangle(region: SourceRegion) = Rect(left + region.x * width, top + region.y * height, left + (region.x + region.width) * width, top + (region.y + region.height) * height)
+    fun contains(x: Float, y: Float, regions: List<SourceRegion>): Boolean {
+        val point = Offset(x, y)
+        return viewport.contains(point) && regions.any { region -> region.width > 0 && region.height > 0 && rectangle(region).contains(point) }
+    }
+    fun visible(regions: List<SourceRegion>): Boolean = regions.any { it.width > 0 && it.height > 0 && rectangle(it).overlaps(viewport) }
+}
+
+private data class DrawnPdfHighlight(val passageId: String, val revision: String, val placement: PdfPagePlacement, val regions: List<SourceRegion>)
+private class PdfHighlightInteraction { var drawn: DrawnPdfHighlight? = null }
+
+internal class PdfHighlightTap(private val startX: Float, private val startY: Float, private val startedAt: Long, private val slop: Float, private val maximumDuration: Long) {
+    private var accepted = true
+    fun update(x: Float, y: Float, uptime: Long, pointerCount: Int, consumed: Boolean): Boolean {
+        val distance = Offset(x - startX, y - startY).getDistance()
+        accepted = accepted && pointerCount == 1 && !consumed && uptime - startedAt in 0 until maximumDuration && distance <= slop
+        return accepted
+    }
 }
 
 @Composable
-private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassageId: String?, selectPage: (Int) -> Unit, modifier: Modifier) {
+private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (String, String) -> Boolean, modifier: Modifier) {
     val document = contents.document
     var bitmap by remember(document.id, page) { mutableStateOf<Bitmap?>(null) }
     var error by remember(document.id, page) { mutableStateOf<String?>(null) }
     var renderAttempt by remember(document.id, page) { mutableIntStateOf(0) }
     var scale by remember(document.id, page) { mutableFloatStateOf(1f) }
     var offset by remember(document.id, page) { mutableStateOf(Offset.Zero) }
+    val interaction = remember(document.id, page) { PdfHighlightInteraction() }
+    val latestRecord by rememberUpdatedState(record)
+    val latestAvailable by rememberUpdatedState(recordAvailable)
+    val density = LocalDensity.current
     LaunchedEffect(document.id, page, renderAttempt) {
         try { bitmap = pdf.render(document.filePath, page, 2400) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = failure.message ?: "This page could not be rendered." }
     }
-    val active = contents.passages.firstOrNull { it.id == activePassageId && it.pageIndex == page }
+    val active = activePassage?.takeIf { it.pageIndex == page }
+    val latestActive by rememberUpdatedState(active)
     val regions = if (active != null) contents.pages.firstOrNull { it.pageIndex == page }?.regions.orEmpty().filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
-    val highlight = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+    val highlight = Color(0xFF9F3800).copy(alpha = 0.18f)
+    val outline = Color(0xFF9F3800).copy(alpha = 0.75f)
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { selectPage(page - 1) }, enabled = page > 0) { Icon(Icons.Default.ChevronLeft, "Previous page") }
             Text("${page + 1} / ${document.pageCount}", style = MaterialTheme.typography.labelLarge)
-            IconButton(onClick = { scale = (scale + 0.5f).coerceAtMost(5f) }, enabled = scale < 5f) { Icon(Icons.Default.ZoomIn, "Zoom in") }
-            IconButton(onClick = { scale = 1f; offset = Offset.Zero }) { Icon(Icons.Default.FitScreen, "Fit original page") }
+            IconButton(onClick = { scale = (scale + 0.5f).coerceAtMost(5f); browse() }, enabled = scale < 5f) { Icon(Icons.Default.ZoomIn, "Zoom in") }
+            IconButton(onClick = { scale = 1f; offset = Offset.Zero; browse() }) { Icon(Icons.Default.FitScreen, "Fit original page") }
             IconButton(onClick = { selectPage(page + 1) }, enabled = page + 1 < document.pageCount) { Icon(Icons.Default.ChevronRight, "Next page") }
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFFE8E8E3)), contentAlignment = Alignment.Center) {
@@ -633,17 +671,63 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
             val transform = rememberTransformableState { zoom, pan, _ ->
                 scale = (scale * zoom).coerceIn(1f, 5f)
                 val proposed = offset + pan
-                offset = Offset(proposed.x.coerceIn(-widthPixels * (scale - 1) / 2, widthPixels * (scale - 1) / 2), proposed.y.coerceIn(-heightPixels * (scale - 1) / 2, heightPixels * (scale - 1) / 2))
+                val fit = if (image != null) minOf(widthPixels / image.width, heightPixels / image.height) else 1f
+                val horizontal = ((image?.width ?: 0) * fit * scale - widthPixels).coerceAtLeast(0f) / 2
+                val vertical = ((image?.height ?: 0) * fit * scale - heightPixels).coerceAtLeast(0f) / 2
+                offset = Offset(proposed.x.coerceIn(-horizontal, horizontal), proposed.y.coerceIn(-vertical, vertical))
+                browse()
             }
-            if (image != null) Box(Modifier.fillMaxSize().transformable(transform).graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y }) {
-                Image(image.asImageBitmap(), "Original PDF page ${page + 1}. Pinch to zoom, or use zoom controls. Passages provide accessible text.", Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                if (regions.isNotEmpty()) Canvas(Modifier.fillMaxSize()) {
-                    val fit = minOf(size.width / image.width, size.height / image.height)
-                    val renderedWidth = image.width * fit
-                    val renderedHeight = image.height * fit
-                    val left = (size.width - renderedWidth) / 2
-                    val top = (size.height - renderedHeight) / 2
-                    regions.forEach { region -> drawRect(highlight, Offset(left + region.x * renderedWidth, top + region.y * renderedHeight), Size(region.width * renderedWidth, region.height * renderedHeight)) }
+            if (image != null) {
+                val pixels = remember(image) { image.asImageBitmap() }
+                val placement = PdfPagePlacement(widthPixels, heightPixels, image.width.toFloat(), image.height.toFloat(), scale, offset.x, offset.y)
+                Canvas(Modifier.fillMaxSize().transformable(transform).pointerInput(document.id, page) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val candidate = interaction.drawn?.takeIf { latestAvailable && !down.isConsumed && it.placement.contains(down.position.x, down.position.y, it.regions) }
+                        val tap = PdfHighlightTap(down.position.x, down.position.y, down.uptimeMillis, viewConfiguration.touchSlop, minOf(viewConfiguration.longPressTimeoutMillis, 500L))
+                        tap.update(down.position.x, down.position.y, down.uptimeMillis, currentEvent.changes.count { it.pressed || it.previousPressed }, down.isConsumed)
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            val accepted = tap.update(change.position.x, change.position.y, change.uptimeMillis, event.changes.count { it.pressed || it.previousPressed }, change.isConsumed)
+                            if (!change.pressed) {
+                                val drawn = interaction.drawn
+                                if (accepted && candidate != null && drawn != null && latestAvailable && candidate.passageId == drawn.passageId && candidate.revision == drawn.revision && latestActive?.id == drawn.passageId && drawn.placement.contains(change.position.x, change.position.y, drawn.regions)) {
+                                    change.consume()
+                                    latestRecord(drawn.passageId, drawn.revision)
+                                }
+                                break
+                            }
+                            val final = awaitPointerEvent(PointerEventPass.Final)
+                            val finalChange = final.changes.firstOrNull { it.id == down.id } ?: break
+                            tap.update(finalChange.position.x, finalChange.position.y, finalChange.uptimeMillis, final.changes.count { it.pressed || it.previousPressed }, finalChange.isConsumed)
+                        }
+                    }
+                }.semantics {
+                    contentDescription = "Original PDF page ${page + 1} of ${document.pageCount}. Pinch to zoom, or use zoom controls." + if (contents.pages.firstOrNull { it.pageIndex == page }?.regions.isNullOrEmpty()) contents.pages.firstOrNull { it.pageIndex == page }?.text?.let { " Prepared page text: $it" }.orEmpty() else ""
+                }) {
+                    val drawnPlacement = PdfPagePlacement(size.width, size.height, image.width.toFloat(), image.height.toFloat(), scale, offset.x, offset.y)
+                    withTransform({ translate(drawnPlacement.left, drawnPlacement.top); scale(drawnPlacement.width / image.width, drawnPlacement.height / image.height, pivot = Offset.Zero) }) { drawImage(pixels) }
+                    regions.forEach { region ->
+                        val rect = drawnPlacement.rectangle(region)
+                        drawRect(highlight, rect.topLeft, rect.size)
+                        drawRect(outline, rect.topLeft, rect.size, style = Stroke(1.dp.toPx()))
+                    }
+                    interaction.drawn = active?.takeIf { regions.isNotEmpty() }?.let { DrawnPdfHighlight(it.id, document.sourceRevision, drawnPlacement, regions) }
+                }
+                contents.passages.filter { it.pageIndex == page }.forEach { passage ->
+                    val passageRegions = contents.pages.firstOrNull { it.pageIndex == page }?.regions.orEmpty().filter { it.start < passage.pageEnd && it.end > passage.pageStart }
+                    val rectangles = passageRegions.map(placement::rectangle).filter { it.overlaps(Rect(0f, 0f, widthPixels, heightPixels)) }
+                    if (rectangles.isNotEmpty()) {
+                        val bounds = Rect(rectangles.minOf { it.left }.coerceAtLeast(0f), rectangles.minOf { it.top }.coerceAtLeast(0f), rectangles.maxOf { it.right }.coerceAtMost(widthPixels), rectangles.maxOf { it.bottom }.coerceAtMost(heightPixels))
+                        Box(Modifier.align(Alignment.TopStart).offset { IntOffset(bounds.left.toInt(), bounds.top.toInt()) }.size(with(density) { bounds.width.toDp() }, with(density) { bounds.height.toDp() }).semantics {
+                            contentDescription = if (passage.id == active?.id) "Current narration passage. ${passage.sourceText}" else passage.sourceText
+                            if (recordAvailable && passage.id == active?.id) customActions = listOf(CustomAccessibilityAction("Pause and record a thought at the current passage") {
+                                val drawn = interaction.drawn
+                                drawn != null && latestAvailable && latestActive?.id == drawn.passageId && drawn.placement.visible(drawn.regions) && latestRecord(drawn.passageId, drawn.revision)
+                            })
+                        })
+                    }
                 }
             }
             else if (error != null) Column(Modifier.padding(24.dp)) { Text(error!!); TextButton(onClick = { error = null; renderAttempt++ }) { Text("Retry page") } }

@@ -236,10 +236,19 @@ class PlaybackCoordinator(
 
     fun resume() { if (!capturing) { desiredPlaying = true; player?.play() } }
 
-    fun beginCapture(): FrozenPlayback? {
+    fun beginCapture(expectedDocumentId: String? = null, expectedPassageId: String? = null, expectedSourceRevision: String? = null): FrozenPlayback? {
+        if (expectedDocumentId != null || expectedPassageId != null || expectedSourceRevision != null) {
+            if (capturing || playingNote != null || state.value.preview) return null
+            publish()
+            val current = state.value
+            if (current.documentId != expectedDocumentId || current.passageId != expectedPassageId ||
+                contents?.document?.sourceRevision != expectedSourceRevision || player?.currentMediaItem?.mediaId != expectedPassageId ||
+                current.preparing || current.durationMillis <= 0) return null
+        }
         captureAnchor?.let { return it }
         if (playingNote != null || state.value.preview) return null
         val frozen = pause() ?: return null
+        if (expectedDocumentId != null && (frozen.documentId != expectedDocumentId || frozen.passageId != expectedPassageId)) return null
         captureAnchor = frozen
         capturing = true
         restartAfterCapture = generation?.isActive == true
