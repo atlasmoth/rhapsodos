@@ -1,4 +1,4 @@
-# Listening-first PDF app
+# Rhapsodos
 
 This project turns a PDF into an enjoyable listening experience. The document view follows the passage being spoken; a listener can pause, record a thought, save it at that exact passage, and resume while the note is transcribed.
 
@@ -8,7 +8,7 @@ The initial audience is everyday readers and people who benefit from accessible 
 
 Implementation was authorized on **4 October 2026**. The first native listening/capture slice is in development, with shared KMP contracts and local persistence. Git now tracks work in atomic commits. Architecture proposals and performance targets are not evidence of measured device behavior or a completed v1.
 
-Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The working display name is **eReader**.
+Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The display name is **Rhapsodos**.
 
 Both native debug builds pass. The initial import, system narration, source-following and anchored written-note loop has passed phone/tablet emulator and simulator checks. See [Development](docs/development.md#verification-recorded-on-4-october-2026) for the exact evidence, current limitations and remaining v1 gates.
 
@@ -23,6 +23,8 @@ The documentation records decisions from the product discussion and identifies c
 | [Product](docs/product.md) | Audience, listening and note journeys, scope and product guarantees |
 | [Design](docs/design.md) | Five design references, visual direction and adaptive phone/tablet/window behavior |
 | [UI quality](docs/ui-quality.md) | Rich haptics, Metal/AGSL effects, responsiveness budgets and sustained performance qualification |
+| [Brand](docs/brand.md) | Unified identity, licensed fonts, light/dark palette and native launch animation |
+| [Integration contract](docs/implementation-contract.md) | Actual shared commands, canonical JSON contracts and native download/asset responsibilities |
 | [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and LiteRT architecture |
 | [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 17 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
