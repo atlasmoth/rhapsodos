@@ -18,6 +18,17 @@ The shared `ReaderCore` is the canonical synchronous store. Native adapters call
 
 Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear intervals with equal source/spoken lengths interpolate an intersecting spoken subrange to obtain its exact source subrange. Other intervals map to the whole source interval. Adjacent linear intervals are coalesced to keep ordinary documents compact; an interval is not a word boundary. `mappingVersion` includes the document's pronunciation revision.
 
+## Anchored notes
+
+- `createNoteDraft(noteId,documentId,passageId,recordingPath,offsetMillis)` freezes the source attachment and returns its canonical record. Pause native transport before calling it. The native offset supplements the passage's source revision/ranges and quote; it does not replace them.
+- `commitNote(noteId,recordingPath,durationMillis)` accepts durable nonempty audio and returns the saved record. Repeating the same commit is idempotent; a saved recording's locator and duration are immutable.
+- `saveTextNote(noteId,documentId,passageId,text,offsetMillis)` saves a typed thought without audio. Reusing its ID is idempotent only for the same attachment and text. Use `editTranscript(noteId,text)` for deliberate edits.
+- `markNoteStatus(noteId,status)` accepts `interrupted` only for an unsaved zero-duration draft. Saved recordings cannot become interrupted drafts. Transcription states (`pending`, `pendingModel`, `transcribing`, `transcribed`, `failed`) require committed audio.
+- `updateTranscript(noteId,text,status)` records machine output without replacing a manual edit. It accepts `transcribed`, `failed` and `pendingModel` after audio commit.
+- `discardDraft(noteId)` removes only an unsaved draft. Native code must successfully remove its owned recording before acknowledging the discard; file failure leaves a visible retryable draft.
+
+Saving or recovering audio does not depend on ASR. Native adapters finalize and synchronize audio before canonical commit, preserve original recovery data, and keep post-commit presentation failures from changing the saved note's status or attachment.
+
 ## Outline and pronunciation
 
 - `setDocumentSections(documentId,sectionsJson)` accepts a bounded array of genuine PDF outline destinations resolved to prepared passage IDs. Each section is `{id,title,passageId,pageIndex}`. Store the original PDF's outline, not guessed headings. If no outline is available, page sections remain a truthful fallback. Returns the document snapshot.

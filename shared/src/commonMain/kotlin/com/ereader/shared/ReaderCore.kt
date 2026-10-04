@@ -157,7 +157,8 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         require(status in setOf("pending", "pendingModel", "transcribing", "transcribed", "failed", "interrupted")) { "Invalid note state" }
         val note = queries.noteById(noteId).executeAsOne()
         val recoverableDraft = note.duration_millis == 0L && note.status in setOf("draft", "interrupted")
-        require((status == "interrupted" && recoverableDraft) || note.duration_millis > 0) { "Save the recording before transcription" }
+        if (status == "interrupted") require(recoverableDraft) { "Saved recordings cannot become interrupted drafts" }
+        else require(note.duration_millis > 0) { "Save the recording before transcription" }
         queries.markNoteStatus(status, noteId)
     }
 
