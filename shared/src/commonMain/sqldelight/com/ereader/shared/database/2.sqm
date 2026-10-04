@@ -1,0 +1,3 @@
+CREATE TABLE document_section (id TEXT NOT NULL PRIMARY KEY, document_id TEXT NOT NULL REFERENCES document(id), title TEXT NOT NULL, passage_id TEXT NOT NULL REFERENCES passage(id), page_index INTEGER NOT NULL, ordinal INTEGER NOT NULL);
+CREATE TABLE pronunciation_rule (id TEXT NOT NULL PRIMARY KEY, document_id TEXT NOT NULL REFERENCES document(id), term TEXT NOT NULL, replacement TEXT NOT NULL, language_tag TEXT NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(document_id, term));
+CREATE TABLE narration_revision (document_id TEXT NOT NULL PRIMARY KEY REFERENCES document(id), revision INTEGER NOT NULL);

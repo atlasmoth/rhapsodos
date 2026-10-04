@@ -188,6 +188,59 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     @Throws(Exception::class)
+    fun setDocumentSections(documentId: String, sectionsJson: String): String = lock.withLock {
+        val sections = json.decodeFromString<List<DocumentSection>>(sectionsJson)
+        require(sections.size <= 10_000 && sections.map { it.id }.distinct().size == sections.size)
+        sections.forEach { section ->
+            require(section.id.isNotBlank() && section.title.isNotBlank() && section.title.length <= 500)
+            require(requirePassage(documentId, section.passageId).page_index.toInt() == section.pageIndex)
+        }
+        database.transaction {
+            queries.deleteDocumentSections(documentId)
+            sections.forEachIndexed { index, section -> queries.insertSection(section.id, documentId, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
+        }
+        json.encodeToString(documentSnapshot(documentId))
+    }
+
+    @Throws(Exception::class)
+    fun savePronunciation(ruleId: String, documentId: String, term: String, replacement: String, languageTag: String): String = lock.withLock {
+        validateRule(PronunciationRule(ruleId, documentId, term, replacement, languageTag))
+        queries.documentById(documentId).executeAsOne()
+        val existing = queries.pronunciationById(ruleId).executeAsOneOrNull()
+        require(existing == null || existing.document_id == documentId) { "Rule belongs to another document" }
+        val rules = pronunciations(documentId)
+        val matching = rules.firstOrNull { it.term.equals(term.trim(), ignoreCase = true) }
+        require(rules.size < 1_000 || existing != null || matching != null) { "This document has reached its pronunciation rule limit" }
+        database.transaction {
+            if (matching != null && matching.id != ruleId) queries.deletePronunciation(matching.id)
+            queries.savePronunciation(ruleId, documentId, term.trim(), replacement.trim(), languageTag, epochMillis())
+            incrementNarrationRevision(documentId)
+        }
+        json.encodeToString(documentSnapshot(documentId))
+    }
+
+    @Throws(Exception::class)
+    fun removePronunciation(ruleId: String): String = lock.withLock {
+        val rule = queries.pronunciationById(ruleId).executeAsOne()
+        database.transaction {
+            queries.deletePronunciation(ruleId)
+            incrementNarrationRevision(rule.document_id)
+        }
+        json.encodeToString(documentSnapshot(rule.document_id))
+    }
+
+    private fun validateRule(rule: PronunciationRule) {
+        require(rule.id.isNotBlank() && rule.documentId.isNotBlank() && rule.term.trim().length in 1..80 && rule.replacement.trim().length in 1..200 && rule.languageTag.isNotBlank()) { "Enter a term and how it should sound" }
+        require(!rule.term.any { it.isISOControl() } && !rule.replacement.any { it.isISOControl() }) { "Pronunciation rules must be plain text" }
+    }
+
+    private fun incrementNarrationRevision(documentId: String) {
+        queries.saveNarrationRevision(documentId, (queries.revisionForDocument(documentId).executeAsOneOrNull() ?: 0L) + 1L)
+    }
+
+    private fun pronunciations(documentId: String) = queries.pronunciationsForDocument(documentId).executeAsList().map { PronunciationRule(it.id, it.document_id, it.term, it.replacement, it.language_tag) }
+
+    @Throws(Exception::class)
     fun toggleBookmark(bookmarkId: String, documentId: String, passageId: String, label: String): String = lock.withLock {
         require(bookmarkId.isNotBlank())
         val passage = requirePassage(documentId, passageId)
@@ -231,6 +284,9 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             paths.forEach { queries.enqueueFileRemoval(it) }
             queries.deleteDocumentNotes(documentId)
             queries.deleteDocumentBookmarks(documentId)
+            queries.deleteDocumentSections(documentId)
+            queries.deleteDocumentPronunciations(documentId)
+            queries.deleteDocumentNarrationRevision(documentId)
             queries.deleteDocumentPosition(documentId)
             queries.deleteDocumentPassages(documentId)
             queries.deleteDocumentPages(documentId)
@@ -265,7 +321,8 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
         json.encodeToString(DocumentArchive(document = snapshot.document, pages = snapshot.pages,
             notes = notes, bookmarks = bookmarks(documentId), position = queries.allPositions().executeAsList()
-                .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis) }))
+                .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis) },
+            sections = snapshot.sections, pronunciations = snapshot.pronunciations))
     }
 
     @Throws(Exception::class)
@@ -289,6 +346,10 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             require(if (note.status == "text") note.recordingPath.isEmpty() && note.durationMillis == 0L else note.recordingPath.isNotBlank() && note.durationMillis > 0)
         }
         archive.bookmarks.forEach { require(it.documentId == document.id && it.id.isNotBlank() && it.passageId in passages) }
+        require(archive.sections.size <= 10_000 && archive.sections.map { it.id }.distinct().size == archive.sections.size)
+        archive.sections.forEach { require(it.id.isNotBlank() && it.title.isNotBlank() && it.title.length <= 500 && passages[it.passageId]?.pageIndex == it.pageIndex) }
+        require(archive.pronunciations.size <= 1_000)
+        archive.pronunciations.forEach { validateRule(it); require(it.documentId == document.id) }
         archive.position?.let { require(it.documentId == document.id && it.passageId in passages && it.offsetMillis >= 0) }
         database.transaction {
             queries.insertDocument(document.id, document.title, document.filePath, "1", document.pageCount.toLong(), "preparing", epochMillis())
@@ -299,6 +360,9 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             }
             archive.bookmarks.forEach { queries.insertBookmark(it.id, it.documentId, it.passageId, it.label, it.createdAt) }
             archive.position?.let { queries.savePosition(it.documentId, it.passageId, it.offsetMillis, epochMillis()) }
+            archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
+            archive.pronunciations.forEach { queries.savePronunciation(it.id, it.documentId, it.term, it.replacement, it.languageTag, epochMillis()) }
+            if (archive.pronunciations.isNotEmpty()) incrementNarrationRevision(document.id)
         }
         json.encodeToString(documentSnapshot(document.id))
     }
@@ -349,6 +413,13 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     @Throws(Exception::class)
     fun removeModel(packId: String) = lock.withLock { queries.deleteModelInstall(packId) }
 
+    @Throws(Exception::class)
+    fun invalidateModel(packId: String, generation: String, error: String) = lock.withLock {
+        val previous = queries.modelInstallById(packId).executeAsOneOrNull() ?: return@withLock
+        if (previous.generation != generation || previous.status != "ready") return@withLock
+        saveInstall(previous.toDomain().copy(status = "failed", error = error.take(500), updatedAt = epochMillis()))
+    }
+
     private fun requirePack(id: String) = ModelCatalog.packs.firstOrNull { it.id == id } ?: error("Unknown speech pack")
 
     private fun saveInstall(install: ModelInstall) = queries.saveModelInstall(install.packId, install.generation, install.status, install.bytesDownloaded, install.totalBytes, install.installedPath, install.error, install.updatedAt)
@@ -371,16 +442,21 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val row = queries.documentById(id).executeAsOne()
         val pages = sourcePages(id)
         val pagesByIndex = pages.associateBy { it.pageIndex }
+        val rules = pronunciations(id)
+        val revision = queries.revisionForDocument(id).executeAsOneOrNull() ?: 0L
         val passages = queries.passagesForDocument(id).executeAsList().map { stored ->
             val page = pagesByIndex.getValue(stored.page_index.toInt())
-            stored.toDomain().copy(languageTag = page.languageTag, provenance = page.provenance)
+            val speech = SpokenText.build(stored.source_text, stored.page_start.toInt(), rules.filter { it.languageTag.substringBefore('-').equals(page.languageTag.substringBefore('-'), ignoreCase = true) })
+            stored.toDomain().copy(spokenText = speech.text, spokenMapping = speech.mapping, mappingVersion = "whitespace-v1:pronunciation-$revision", languageTag = page.languageTag, provenance = page.provenance)
         }
+        val sections = queries.sectionsForDocument(id).executeAsList().map { DocumentSection(it.id, it.title, it.passage_id, it.page_index.toInt()) }
         return DocumentSnapshot(
             DocumentRecord(row.id, row.title, row.file_path, row.source_revision,
                 row.page_count.toInt(), row.passage_count.toInt(), row.extraction_status),
             passages,
             pages,
-            passages.distinctBy { it.pageIndex }.map { DocumentSection("$id:page:${it.pageIndex}", "Page ${it.pageIndex + 1}", it.id, it.pageIndex) },
+            sections.ifEmpty { passages.distinctBy { it.pageIndex }.map { DocumentSection("$id:page:${it.pageIndex}", "Page ${it.pageIndex + 1}", it.id, it.pageIndex) } },
+            rules,
         )
     }
 

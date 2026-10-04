@@ -15,7 +15,7 @@ data class SourcePage(
 data class SourceRegion(val start: Int, val end: Int, val x: Double, val y: Double, val width: Double, val height: Double)
 
 @Serializable
-data class SpokenMapping(val spokenStart: Int, val spokenEnd: Int, val sourceStart: Int, val sourceEnd: Int)
+data class SpokenMapping(val spokenStart: Int, val spokenEnd: Int, val sourceStart: Int, val sourceEnd: Int, val kind: String = "linear")
 
 @Serializable
 data class DocumentRecord(
@@ -52,10 +52,14 @@ data class DocumentSnapshot(
     val passages: List<Passage>,
     val pages: List<SourcePage> = emptyList(),
     val sections: List<DocumentSection> = emptyList(),
+    val pronunciations: List<PronunciationRule> = emptyList(),
 )
 
 @Serializable
 data class DocumentSection(val id: String, val title: String, val passageId: String, val pageIndex: Int)
+
+@Serializable
+data class PronunciationRule(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String = "en")
 
 @Serializable
 data class Bookmark(val id: String, val documentId: String, val passageId: String, val label: String, val createdAt: Long)
@@ -75,6 +79,8 @@ data class DocumentArchive(
     val notes: List<VoiceNote>,
     val bookmarks: List<Bookmark>,
     val position: PlaybackPosition?,
+    val sections: List<DocumentSection> = emptyList(),
+    val pronunciations: List<PronunciationRule> = emptyList(),
 )
 
 @Serializable

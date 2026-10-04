@@ -55,7 +55,7 @@ internal object PassageBuilder {
         fun append(mapping: SpokenMapping) {
             val previous = mappings.lastOrNull()
             if (previous != null && previous.spokenEnd == mapping.spokenStart && previous.sourceEnd == mapping.sourceStart &&
-                previous.spokenEnd - previous.spokenStart == previous.sourceEnd - previous.sourceStart &&
+                previous.kind == "linear" && mapping.kind == "linear" && previous.spokenEnd - previous.spokenStart == previous.sourceEnd - previous.sourceStart &&
                 mapping.spokenEnd - mapping.spokenStart == mapping.sourceEnd - mapping.sourceStart) {
                 mappings[mappings.lastIndex] = previous.copy(spokenEnd = mapping.spokenEnd, sourceEnd = mapping.sourceEnd)
             } else mappings.add(mapping)
@@ -71,7 +71,7 @@ internal object PassageBuilder {
                 append(SpokenMapping(spokenIndex, spokenIndex + length, pageStart + start, pageStart + sourceIndex))
                 spokenIndex += length
             } else if (start > 0 && sourceIndex < source.length) {
-                append(SpokenMapping(spokenIndex, spokenIndex + 1, pageStart + start, pageStart + sourceIndex))
+                append(SpokenMapping(spokenIndex, spokenIndex + 1, pageStart + start, pageStart + sourceIndex, if (sourceIndex - start == 1) "linear" else "collapsed"))
                 spokenIndex++
             }
         }
