@@ -1,0 +1,37 @@
+[
+  {
+    "repo": "NeuralVox/OpenPhonemizer",
+    "commit": "15ffa723139a5e9a34b069e34c17fdac3095dba3",
+    "url": "https://raw.githubusercontent.com/NeuralVox/OpenPhonemizer/15ffa723139a5e9a34b069e34c17fdac3095dba3/LICENSE",
+    "spdx": "BSD-3-Clause-Clear",
+    "copyright": "The Clear BSD License\n\nCopyright (c) 2024 mrfakename, NeuralVox, OpenPhonemizer Contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted (subject to the limitations in the disclaimer\nbelow) provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright notice,\nthis list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\nnotice, this list of conditions and the following disclaimer in the\ndocumentation and/or other materials provided with the distribution.\n\n"
+  },
+  {
+    "repo": "as-ideas/DeepPhonemizer",
+    "commit": "5dce7e27556aef4426f5623baf6351d266a30a73",
+    "url": "https://raw.githubusercontent.com/axelspringer/DeepPhonemizer/5dce7e27556aef4426f5623baf6351d266a30a73/LICENSE",
+    "spdx": "MIT",
+    "copyright": "MIT License\n\nCopyright (c) 2021 Axel Springer News Media & Tech GmbH & Co. KG - Ideas Engineering\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the "
+  },
+  {
+    "repo": "KittenML/KittenTTS",
+    "commit": "ab5592c28b6f376ea4c3963e84ce6d6688241eca",
+    "url": "https://raw.githubusercontent.com/KittenML/KittenTTS/ab5592c28b6f376ea4c3963e84ce6d6688241eca/LICENSE",
+    "spdx": "Apache-2.0",
+    "copyright": "                             Apache License\n                       Version 2.0, January 2004\n                    http://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n    Definitions.\n\n    \"License\" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.\n\n    \"Licensor\" shall mean the copyright owner or entity authorized by the copyright owner that is granting the License.\n\n    \"Legal Entity\" shall mean the union of the acting entity and all other entities that control, are controlled by, or are under common control with that enti"
+  },
+  {
+    "repo": "UsefulSensors/moonshine",
+    "commit": "234f60faa0eb388b01cdf7e60aca232af37aefda",
+    "url": "https://raw.githubusercontent.com/moonshine-ai/moonshine/234f60faa0eb388b01cdf7e60aca232af37aefda/LICENSE",
+    "spdx": "NOASSERTION",
+    "copyright": "The code in this repo (https://github.com/moonshine-ai/moonshine), apart from \nthe source in core/third-party, is licensed under the MIT License. Moonshine \nmodels are released under the MIT License by default, in every language and at \nevery size. This includes all streaming speech-to-text models and all \nEnglish-language models. See SECTION 1 for terms.\n\nThe only speech-to-text models that are NOT MIT are the legacy non-streaming \nmodels for languages other than English, which remain under the Moonshine \nCommunity License, a non-commercial license. That list is exhaustive: \n\n  Arabic      Base, Tiny \n  Japanese    Base, Tiny \n  Korean      "
+  },
+  {
+    "repo": "google-ai-edge/LiteRT",
+    "commit": "f9c6371694c020b2fff1c7597dabcaf90674c434",
+    "url": "https://raw.githubusercontent.com/google-ai-edge/LiteRT/f9c6371694c020b2fff1c7597dabcaf90674c434/LICENSE",
+    "spdx": "Apache-2.0",
+    "copyright": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, o"
+  }
+]

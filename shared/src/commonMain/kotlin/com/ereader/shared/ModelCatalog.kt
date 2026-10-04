@@ -265,6 +265,31 @@ internal object ModelCatalog {
       }
     ],
     "totalBytes": 79066059
+  },
+  {
+    "id": "kokoro-english-coreml",
+    "name": "Enhanced English voices",
+    "capability": "tts",
+    "platform": "ios",
+    "runtime": "kokoro-coreml",
+    "version": "models-2026-03-23",
+    "languageTags": [
+      "en"
+    ],
+    "minimumOS": 18,
+    "minimumMemoryMB": 3072,
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Jud/kokoro-coreml/blob/6bfc02afb237a311caee927482e58c028edb6acb/LICENSE",
+    "description": "Expressive offline English narration with Kokoro CoreML. Generates a passage locally before playback; first use may take longer on older devices.",
+    "files": [
+      {
+        "path": "kokoro-models.tar.gz",
+        "url": "https://github.com/Jud/kokoro-coreml/releases/download/models-2026-03-23/kokoro-models.tar.gz",
+        "sha256": "0d24bbf80526456bd8640f9f484cd1c333aee8a936e618ac44e619eafb79aec9",
+        "bytes": 103394124
+      }
+    ],
+    "totalBytes": 103394124
   }
 ]
     """.trimIndent())
