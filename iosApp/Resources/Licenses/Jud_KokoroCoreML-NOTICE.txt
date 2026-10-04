@@ -1,0 +1,6 @@
+English G2P frontend retained from KokoroCoreML by Jud, Apache License 2.0.
+Pinned upstream commit: 6bfc02afb237a311caee927482e58c028edb6acb.
+https://github.com/Jud/kokoro-coreml
+English G2P portions originally from MisakiSwift by mlalma, Apache License 2.0, as retained in source headers. Dictionaries derive from Misaki by hexgrad, Apache License 2.0. BART G2P remains bundled and offline.
+Rhapsodos retains only the English phonemizer and its required dictionaries. Acoustic models, DSP, tokenizer and download APIs are removed. Plain PDF text is processed literally; pronunciation-markup interpretation is removed to preserve source contents.
+Plain PDF text is not interpreted as pronunciation markup. Unsupported BART graphemes fail explicitly rather than being dropped.
