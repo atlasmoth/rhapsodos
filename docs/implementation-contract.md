@@ -23,6 +23,8 @@ Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear 
 - `setDocumentSections(documentId,sectionsJson)` accepts a bounded array of genuine PDF outline destinations resolved to prepared passage IDs. Each section is `{id,title,passageId,pageIndex}`. Store the original PDF's outline, not guessed headings. If no outline is available, page sections remain a truthful fallback. Returns the document snapshot.
 - `savePronunciation(ruleId,documentId,term,replacement,languageTag)` stores a literal whole-term, case-insensitive spoken correction and returns the updated snapshot. `removePronunciation(ruleId)` removes it and returns the snapshot. `documentJson` includes `pronunciations:[{id,documentId,term,replacement,languageTag}]`. The source/display text and every note anchor stay unchanged. Rule changes update `mappingVersion` and spoken text; they affect only narration.
 
+Combining marks and connector punctuation continue a word. A correction for `cafe` therefore leaves a decomposed `café` and `_cafe` intact. Corrections never normalize or rewrite the canonical source to make a match.
+
 Pause before changing pronunciation, invalidate the affected prepared narration, reload the same source passage and resume explicitly. Old audio offsets cannot be silently applied to a new spoken edition. Model/cache keys include the spoken text and voice artifact version. Archives carry outline and pronunciation choices with their source.
 
 ## Downloadable speech

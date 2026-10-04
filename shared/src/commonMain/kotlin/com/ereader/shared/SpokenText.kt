@@ -29,11 +29,11 @@ internal data class SpokenText(val text: String, val mapping: List<SpokenMapping
             var position = 0
             var unchangedStart = 0
             while (position < normalized.length) {
-                val candidates = if (position == 0 || !normalized[position - 1].isLetterOrDigit()) ordered[normalized[position].lowercaseChar()].orEmpty() else emptyList()
+                val candidates = if (position == 0 || !normalized[position - 1].continuesWord()) ordered[normalized[position].lowercaseChar()].orEmpty() else emptyList()
                 val rule = candidates.firstOrNull {
                     position + it.term.length <= normalized.length && normalized.regionMatches(position, it.term, 0, it.term.length, ignoreCase = true) &&
-                        (position == 0 || !normalized[position - 1].isLetterOrDigit()) &&
-                        (position + it.term.length == normalized.length || !normalized[position + it.term.length].isLetterOrDigit())
+                        (position == 0 || !normalized[position - 1].continuesWord()) &&
+                        (position + it.term.length == normalized.length || !normalized[position + it.term.length].continuesWord())
                 }
                 if (rule == null) {
                     position += if (normalized[position].isHighSurrogate() && position + 1 < normalized.length && normalized[position + 1].isLowSurrogate()) 2 else 1
@@ -52,3 +52,9 @@ internal data class SpokenText(val text: String, val mapping: List<SpokenMapping
 
 private fun SpokenMapping.sourceBoundary(offset: Int, end: Boolean): Int =
     if (kind == "linear" && sourceEnd - sourceStart == spokenEnd - spokenStart) sourceStart + offset - spokenStart else if (end) sourceEnd else sourceStart
+
+private fun Char.continuesWord(): Boolean = isLetterOrDigit() || when (category) {
+    CharCategory.NON_SPACING_MARK, CharCategory.COMBINING_SPACING_MARK,
+    CharCategory.ENCLOSING_MARK, CharCategory.CONNECTOR_PUNCTUATION -> true
+    else -> false
+}
