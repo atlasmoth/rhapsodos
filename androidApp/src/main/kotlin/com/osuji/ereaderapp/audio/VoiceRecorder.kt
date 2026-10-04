@@ -156,7 +156,8 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
         }
         val destination = File(file.parentFile, file.name.replace(".recording.wav", ".wav"))
         if (file != destination) check(file.renameTo(destination)) { "The recording could not be finalized." }
-        syncDirectory(checkNotNull(destination.parentFile))
+        if (captureFile == file) captureFile = destination
+        syncDirectory(checkNotNull(destination.parentFile), context.filesDir)
         return destination
     }
 

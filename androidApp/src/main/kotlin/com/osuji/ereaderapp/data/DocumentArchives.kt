@@ -120,8 +120,10 @@ class DocumentArchives(private val context: Context, private val store: ReaderSt
                             replace(note, "recordingPath", JsonPrimitive(File(destination, path).absolutePath))
                         } else note
                     }
+                    File(staging, "audio").takeIf { it.isDirectory }?.let { syncDirectory(it, context.filesDir) }
+                    syncDirectory(staging, context.filesDir)
                     check(staging.renameTo(destination)) { "The archive files could not be saved." }
-                    syncDirectory(destination.parentFile!!)
+                    syncDirectory(destination.parentFile!!, context.filesDir)
                     val local = replace(replace(manifest, "document", replace(document, "filePath", JsonPrimitive(File(destination, "document.pdf").absolutePath))), "notes", JsonArray(notes))
                     store.restoreManifest(local.toString())
                     committed = true

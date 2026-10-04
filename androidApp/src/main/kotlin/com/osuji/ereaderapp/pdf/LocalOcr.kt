@@ -69,7 +69,7 @@ class LocalOcr(private val context: Context) {
             context.assets.open("ocr/eng.traineddata").use { input -> staging.outputStream().use { output -> input.copyTo(output); output.fd.sync() } }
             require(staging.length() == 4_113_088L && digest(staging) == MODEL_SHA256) { "The bundled English recognition model failed its integrity check." }
             check(staging.renameTo(destination)) { "The English recognition model could not be prepared." }
-            syncDirectory(directory)
+            syncDirectory(directory, context.filesDir)
         } finally { staging.delete() }
         return root
     }

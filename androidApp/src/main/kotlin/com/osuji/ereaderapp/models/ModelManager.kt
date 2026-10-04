@@ -106,7 +106,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return null
     }
 
-    fun installed(packId: String): File? = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" && packId in validated && it.installedPath.isNotBlank() }?.let {
+    fun installed(packId: String): File? = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" && packId in validated && packId !in state.value.removing && it.installedPath.isNotBlank() }?.let {
         owned(it.installedPath).takeIf { directory -> directory.isDirectory }
     }
 
@@ -153,6 +153,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 beforeVerification?.invoke()
                 validateRuntime(pack.id, staging)
                 coroutineContext.ensureActive()
+                syncDirectory(staging, context.filesDir)
                 val finalPath = "Models/${pack.id}/${pack.version}"
                 val destination = owned(finalPath)
                 check(destination.parentFile!!.mkdirs() || destination.parentFile!!.isDirectory)
@@ -160,7 +161,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 if (destination.exists()) check(destination.renameTo(previous)) { "The previous model could not be retained safely." }
                 try {
                     check(staging.renameTo(destination)) { "Verified model files could not be installed." }
-                    syncDirectory(destination.parentFile!!)
+                    syncDirectory(destination.parentFile!!, context.filesDir)
                     store.activateModel(pack.id, generation, finalPath, pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) })
                     validated += pack.id
                     previous.deleteRecursively()
@@ -194,19 +195,34 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     fun pauseAll() { jobs.values.forEach { it.cancel() } }
     fun remove(packId: String) = scope.launch {
         if (packId in state.value.removing) return@launch
+        if (packId in state.value.checking) { reportError("Wait for this download's integrity check before removing it."); return@launch }
         mutableState.update { it.copy(removing = it.removing + packId) }
         try {
+            require(packId.matches(Regex("[a-z0-9-]+")) && state.value.catalog.any { it.id == packId })
             pause(packId)
             jobs[packId]?.join()
-            val directory = state.value.installs.firstOrNull { it.packId == packId }?.installedPath?.takeIf { it.isNotBlank() }?.let { owned(it) }
             beforeModelRemoval?.invoke(packId)
             runtime.close(packId)
-            if (state.value.selectedVoice == packId) selectVoice("system")
-            store.removeModel(packId)
             validated -= packId
-            withContext(Dispatchers.IO) { directory?.deleteRecursively(); owned("Models/.staging/$packId").deleteRecursively() }
+            withContext(Dispatchers.IO) {
+                listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
+                    check(!directory.exists() || directory.deleteRecursively()) { "Downloaded files could not be removed. Free storage and retry removal." }
+                    if (directory.parentFile!!.isDirectory) syncDirectory(directory.parentFile!!, context.filesDir)
+                }
+            }
+            store.removeModel(packId)
+            if (state.value.selectedVoice == packId) selectVoice("system")
             refresh()
-        } catch (failure: Exception) { reportError("This download could not be removed. Retry when you are ready.") }
+        } catch (failure: Exception) {
+            withContext(kotlinx.coroutines.NonCancellable) {
+                validated -= packId
+                val install = store.modelInstalls().firstOrNull { it.packId == packId }
+                if (install?.status == "ready") store.invalidateModel(packId, install.generation, "Removal did not finish. Retry removing the downloaded files.")
+                refresh()
+                reportError("This download could not be removed. Retry removing its downloaded files.")
+            }
+            if (failure is CancellationException) throw failure
+        }
         finally { mutableState.update { it.copy(removing = it.removing - packId) } }
     }
 

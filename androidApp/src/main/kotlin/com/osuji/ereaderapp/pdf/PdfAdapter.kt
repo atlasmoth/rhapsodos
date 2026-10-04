@@ -60,7 +60,7 @@ class PdfAdapter(private val context: Context) {
             } ?: error("The file provider could not open this PDF.")
             val count = Json.parseToJsonElement(checkNotNull(remote.request(temporary.absolutePath, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
             check(temporary.renameTo(destination)) { "The local PDF copy could not be saved." }
-            syncDirectory(directory)
+            syncDirectory(directory, context.filesDir)
             ImportedPdf(id, displayName(uri), destination.absolutePath, count)
         } catch (failure: Exception) {
             temporary.delete()

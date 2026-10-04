@@ -87,11 +87,11 @@ fun OfflineSpeechSheet(dismiss: () -> Unit) {
                                     if (pack.capability == "tts") Button(onClick = { scope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing && !checking) { Text(if (state.selectedVoice == pack.id) "Selected" else "Use this voice") }
                                     else Text("Ready for saved voice notes", style = MaterialTheme.typography.labelLarge)
                                     if (pack.capability == "tts") TextButton(onClick = { playback.previewVoice(pack.id) }, enabled = !playback.capturing && !checking) { Text("Listen to a sample") }
-                                    TextButton(onClick = { models.remove(pack.id) }, enabled = !playback.capturing) { Text("Remove download") }
                                 }
                                 "downloading", "verifying" -> OutlinedButton(onClick = { models.pause(pack.id); haptic(view) }) { Text("Pause download") }
                                 else -> Button(onClick = { models.download(pack.id); haptic(view) }, enabled = reason == null) { Text(if (status == "paused") "Resume download" else if (status == "failed") "Retry download" else "Download") }
                             }
+                            if (install != null && !removing && status !in setOf("downloading", "verifying")) TextButton(onClick = { models.remove(pack.id) }, enabled = !playback.capturing && !checking) { Text("Remove downloaded files") }
                             TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pack.licenseUrl))) } }) { Text("License") }
                         }
                     }
