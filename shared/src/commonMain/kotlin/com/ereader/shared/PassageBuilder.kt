@@ -2,7 +2,6 @@ package com.ereader.shared
 
 internal object PassageBuilder {
     private const val MAX_SEGMENT_LENGTH = 1200
-    private val whitespace = Regex("\\s+")
 
     fun build(documentId: String, pages: List<SourcePage>): List<Passage> {
         var sourceOffset = 0
@@ -15,7 +14,7 @@ internal object PassageBuilder {
                     if (start == text.length) break
                     val end = findEnd(text, start)
                     val raw = text.substring(start, end)
-                    val spoken = raw.replace(whitespace, " ").trim()
+                    val spoken = normalize(raw)
                     if (spoken.isNotEmpty()) {
                         add(Passage(
                             id = "$documentId:1:${page.pageIndex}:$start",
@@ -27,11 +26,44 @@ internal object PassageBuilder {
                             sourceEnd = sourceOffset + end,
                             sourceText = raw,
                             spokenText = spoken,
+                            languageTag = page.languageTag,
+                            spokenMapping = mapping(raw, start),
+                            provenance = page.provenance,
                         ))
                     }
                     start = end
                 }
                 sourceOffset += text.length + 3
+            }
+        }
+    }
+
+    fun normalize(source: String): String = buildString {
+        var separator = false
+        source.forEach { character ->
+            if (character.isWhitespace()) separator = isNotEmpty()
+            else {
+                if (separator) append(' ')
+                append(character)
+                separator = false
+            }
+        }
+    }
+
+    fun mapping(source: String, pageStart: Int): List<SpokenMapping> = buildList {
+        var sourceIndex = 0
+        var spokenIndex = 0
+        while (sourceIndex < source.length) {
+            val start = sourceIndex
+            val whitespaceRun = source[sourceIndex].isWhitespace()
+            while (sourceIndex < source.length && source[sourceIndex].isWhitespace() == whitespaceRun) sourceIndex++
+            if (!whitespaceRun) {
+                val length = sourceIndex - start
+                add(SpokenMapping(spokenIndex, spokenIndex + length, pageStart + start, pageStart + sourceIndex))
+                spokenIndex += length
+            } else if (start > 0 && sourceIndex < source.length) {
+                add(SpokenMapping(spokenIndex, spokenIndex + 1, pageStart + start, pageStart + sourceIndex))
+                spokenIndex++
             }
         }
     }

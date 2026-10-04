@@ -26,6 +26,9 @@ CREATE TABLE source_page (
     document_id TEXT NOT NULL REFERENCES document(id),
     page_index INTEGER NOT NULL,
     source_text TEXT NOT NULL,
+    provenance TEXT NOT NULL DEFAULT 'embedded',
+    language_tag TEXT NOT NULL DEFAULT 'en',
+    regions_json TEXT NOT NULL DEFAULT '[]',
     PRIMARY KEY(document_id, page_index)
 );
 
@@ -55,6 +58,29 @@ CREATE TABLE playback_position (
     updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE bookmark (
+    id TEXT NOT NULL PRIMARY KEY,
+    document_id TEXT NOT NULL REFERENCES document(id),
+    passage_id TEXT NOT NULL UNIQUE REFERENCES passage(id),
+    label TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE model_install (
+    pack_id TEXT NOT NULL PRIMARY KEY,
+    generation TEXT NOT NULL,
+    status TEXT NOT NULL,
+    bytes_downloaded INTEGER NOT NULL,
+    total_bytes INTEGER NOT NULL,
+    installed_path TEXT NOT NULL,
+    error TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE file_removal (
+    path TEXT NOT NULL PRIMARY KEY
+);
+
 allDocuments:
 SELECT document.*, (SELECT COUNT(*) FROM passage WHERE document_id = document.id) AS passage_count
 FROM document ORDER BY created_at DESC;
@@ -71,7 +97,10 @@ insertPassage:
 INSERT INTO passage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 insertSourcePage:
-INSERT INTO source_page VALUES (?, ?, ?);
+INSERT INTO source_page VALUES (?, ?, ?, ?, ?, ?);
+
+pagesForDocument:
+SELECT * FROM source_page WHERE document_id = ? ORDER BY page_index;
 
 passagesForDocument:
 SELECT * FROM passage WHERE document_id = ? ORDER BY ordinal;
@@ -108,3 +137,77 @@ SELECT * FROM playback_position;
 
 savePosition:
 INSERT OR REPLACE INTO playback_position VALUES (?, ?, ?, ?);
+
+allBookmarks:
+SELECT * FROM bookmark ORDER BY created_at DESC;
+
+bookmarksForDocument:
+SELECT * FROM bookmark WHERE document_id = ? ORDER BY created_at DESC;
+
+bookmarkForPassage:
+SELECT * FROM bookmark WHERE passage_id = ?;
+
+insertBookmark:
+INSERT INTO bookmark VALUES (?, ?, ?, ?, ?);
+
+deleteBookmark:
+DELETE FROM bookmark WHERE id = ?;
+
+renameDocument:
+UPDATE document SET title = ? WHERE id = ?;
+
+setDocumentExtractionStatus:
+UPDATE document SET extraction_status = ? WHERE id = ?;
+
+deleteDocumentNotes:
+DELETE FROM note WHERE document_id = ?;
+
+deleteDocumentBookmarks:
+DELETE FROM bookmark WHERE document_id = ?;
+
+deleteDocumentPosition:
+DELETE FROM playback_position WHERE document_id = ?;
+
+deleteDocumentPassages:
+DELETE FROM passage WHERE document_id = ?;
+
+deleteDocumentPages:
+DELETE FROM source_page WHERE document_id = ?;
+
+deleteDocument:
+DELETE FROM document WHERE id = ?;
+
+deleteNote:
+DELETE FROM note WHERE id = ?;
+
+enqueueFileRemoval:
+INSERT OR IGNORE INTO file_removal VALUES (?);
+
+pendingFileRemovals:
+SELECT * FROM file_removal;
+
+acknowledgeFileRemoval:
+DELETE FROM file_removal WHERE path = ?;
+
+allModelInstalls:
+SELECT * FROM model_install;
+
+modelInstallById:
+SELECT * FROM model_install WHERE pack_id = ?;
+
+saveModelInstall:
+INSERT OR REPLACE INTO model_install VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteModelInstall:
+DELETE FROM model_install WHERE pack_id = ?;
+
+searchPassages:
+SELECT passage.*, document.title FROM passage JOIN document ON passage.document_id = document.id
+WHERE (:documentId = '' OR passage.document_id = :documentId) AND instr(lower(source_text), lower(:query)) > 0
+ORDER BY document.created_at DESC, passage.ordinal LIMIT 100;
+
+searchNotes:
+SELECT note.*, document.title FROM note JOIN document ON note.document_id = document.id
+WHERE (:documentId = '' OR note.document_id = :documentId)
+AND instr(lower(coalesce(edited_transcript, machine_transcript)), lower(:query)) > 0
+ORDER BY note.created_at DESC LIMIT 100;

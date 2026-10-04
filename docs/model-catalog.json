@@ -1,0 +1,100 @@
+[
+  {
+    "id": "android-kitten-english",
+    "name": "Ember \u2022 English voice",
+    "capability": "tts",
+    "platform": "android",
+    "runtime": "litert",
+    "version": "d4662d891f9b",
+    "languageTags": [
+      "en"
+    ],
+    "minimumOS": 28,
+    "minimumMemoryMB": 1024,
+    "license": "Apache-2.0 + BSD-3-Clause-Clear + MIT",
+    "licenseUrl": "https://huggingface.co/litert-community/kitten-tts-nano-0.8",
+    "description": "A compact English voice for offline listening. Download once; narration stays on this device.",
+    "files": [
+      {
+        "path": "kitten_predictor_fp16.tflite",
+        "url": "https://huggingface.co/litert-community/kitten-tts-nano-0.8/resolve/d4662d891f9bf54b3d93432610d0d296d229e026/kitten_predictor_fp16.tflite",
+        "sha256": "5f00a375b858be4a2ef655d1387cb6d172e0d4ca8ae6b93fdbad3cd49c0515e7",
+        "bytes": 16990756
+      },
+      {
+        "path": "kitten_prosody_fp16.tflite",
+        "url": "https://huggingface.co/litert-community/kitten-tts-nano-0.8/resolve/d4662d891f9bf54b3d93432610d0d296d229e026/kitten_prosody_fp16.tflite",
+        "sha256": "ea4501f8c0bcb617f85dc3703cd2dde5e1f49de175fcadaf05d6fccfdb080b6c",
+        "bytes": 1697636
+      },
+      {
+        "path": "kitten_vocoder_fp16.tflite",
+        "url": "https://huggingface.co/litert-community/kitten-tts-nano-0.8/resolve/d4662d891f9bf54b3d93432610d0d296d229e026/kitten_vocoder_fp16.tflite",
+        "sha256": "626497f75d550e70b82955a3f212417a3c1eebb9d05176716069c92bf41a712d",
+        "bytes": 13367840
+      },
+      {
+        "path": "voices.npz",
+        "url": "https://huggingface.co/litert-community/kitten-tts-nano-0.8/resolve/d4662d891f9bf54b3d93432610d0d296d229e026/voices.npz",
+        "sha256": "8aa7cee235abb0739cb51e6559685f65a4dacd95568833d05699b1633f519b3f",
+        "bytes": 3278902
+      },
+      {
+        "path": "dp_g2p_matcha_fp16.tflite",
+        "url": "https://huggingface.co/litert-community/Matcha-TTS/resolve/8d650e794583c0b0869c87027c2f3a7c293902cb/dp_g2p_matcha_fp16.tflite",
+        "sha256": "6e4b481f6874dfabc32ce73bf6f0ea1ba6ab5986ee6f76a27779364be8a53c73",
+        "bytes": 25785872
+      },
+      {
+        "path": "config.json",
+        "url": "https://raw.githubusercontent.com/google-ai-edge/litert-samples/1a320c1c1bffe8126e9756ae47db1ad5fb014af6/samples/litert/text_to_speech_streaming/kotlin_cpu/android/app/src/main/assets/config.json",
+        "sha256": "7363e9e4dda1613aebff7005f2e8c0c76d9b0a1cac31de0f3483bef3089c6906",
+        "bytes": 2071
+      },
+      {
+        "path": "g2p_dict.txt.gz",
+        "url": "https://raw.githubusercontent.com/google-ai-edge/litert-samples/1a320c1c1bffe8126e9756ae47db1ad5fb014af6/samples/litert/text_to_speech_streaming/kotlin_cpu/android/app/src/main/assets/g2p_dict.txt.gz",
+        "sha256": "5b3493a8cd4d20b72c7b91415afaf3f32335ebd81f349698e1cedc898c59f979",
+        "bytes": 1762038
+      },
+      {
+        "path": "g2p_meta.json",
+        "url": "https://raw.githubusercontent.com/google-ai-edge/litert-samples/1a320c1c1bffe8126e9756ae47db1ad5fb014af6/samples/litert/text_to_speech_streaming/kotlin_cpu/android/app/src/main/assets/g2p_meta.json",
+        "sha256": "7b87bfeaaa072be236e8491d771b0cb97cc92c3e5d83e3558fff8849868810f5",
+        "bytes": 1904
+      }
+    ],
+    "totalBytes": 62887019
+  },
+  {
+    "id": "android-moonshine-english",
+    "name": "English transcription",
+    "capability": "asr",
+    "platform": "android",
+    "runtime": "litert",
+    "version": "4d0fd016df00",
+    "languageTags": [
+      "en"
+    ],
+    "minimumOS": 28,
+    "minimumMemoryMB": 1024,
+    "license": "MIT",
+    "licenseUrl": "https://huggingface.co/litert-community/moonshine-tiny",
+    "description": "Compact local transcription for saved thoughts. Your recording remains available while transcription runs.",
+    "files": [
+      {
+        "path": "moonshine_tiny_5s_i8.tflite",
+        "url": "https://huggingface.co/litert-community/moonshine-tiny/resolve/4d0fd016df005c889aaa738b4765ede92736424f/moonshine_tiny_5s_i8.tflite",
+        "sha256": "97abdeea122d579229091659c24c59d988c6419d453a200f6471241a53b9a9b9",
+        "bytes": 51936896
+      },
+      {
+        "path": "tokenizer.json",
+        "url": "https://huggingface.co/UsefulSensors/moonshine-tiny/resolve/390624ed33d594443aa4aa221f5b9f283b545b5a/tokenizer.json",
+        "sha256": "6579793438bc4fbafffacf699169ff53e3769c5a0a0f5e71cdee8853e8130deb",
+        "bytes": 1985530
+      }
+    ],
+    "totalBytes": 53922426
+  }
+]

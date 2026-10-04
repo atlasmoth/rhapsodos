@@ -20,6 +20,14 @@ iOS stores PDF and recording locators relative to its owned data root so an app 
 
 This first source revision retains each platform's raw page text. Passage ranges use UTF-16 code units, with page-local ranges and document ranges calculated as pages separated by `\n\f\n`. Normalized spoken whitespace is stored separately. These simple passages are not a qualified layout-aware reading-order graph or the complete versioned mapping system described in the architecture.
 
+## Expanded shared store
+
+The canonical store now supports append-only page preparation, OCR provenance and normalized source regions, explicit versioned source-to-spoken whitespace mappings, local literal search, anchored bookmarks, rename/delete with a durable file-cleanup queue, and validated document archive export/restore. Existing source positions remain stable while later pages are appended. The single schema upgrade adds these records without removing existing recordings or edits. Native archive adapters own media copying and protection.
+
+The curated catalog and generation-scoped install inventory distinguish downloading, paused, verifying, failed and ready states. Activation requires the complete pinned digest/size manifest. Catalog URLs contain only public assets; the shared content policy rejects document and recording uploads. Download managers and runtimes are native integrations and need their own verification beyond store checks. See [implementation-contract.md](implementation-contract.md) and [model-catalog.json](model-catalog.json).
+
+Shared Android compilation and the iOS simulator framework link passed. A temporary real SQLDelight harness outside the repository passed 25 rejection cases, Unicode anchors, injected rollback, immutable incremental pages, source separator offsets, literal search, bookmark toggle, anchored archive round-trip, collision rejection, stale model generations, digest-manifest requirements and durable deletion cleanup. Those checks do not qualify native download resumption, microphone capture or physical-device inference.
+
 ## Building
 
 Use JDK 17, the installed Android SDK and Xcode. The Gradle wrapper is pinned; dependency versions live in `gradle/libs.versions.toml`. Configure the SDK through a local, untracked `local.properties` or the supported environment configuration. Do not commit signing material or machine-specific paths.

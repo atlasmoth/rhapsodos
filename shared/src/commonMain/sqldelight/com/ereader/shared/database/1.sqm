@@ -1,0 +1,6 @@
+ALTER TABLE source_page ADD COLUMN provenance TEXT NOT NULL DEFAULT 'embedded';
+ALTER TABLE source_page ADD COLUMN language_tag TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE source_page ADD COLUMN regions_json TEXT NOT NULL DEFAULT '[]';
+CREATE TABLE bookmark (id TEXT NOT NULL PRIMARY KEY, document_id TEXT NOT NULL REFERENCES document(id), passage_id TEXT NOT NULL UNIQUE REFERENCES passage(id), label TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE model_install (pack_id TEXT NOT NULL PRIMARY KEY, generation TEXT NOT NULL, status TEXT NOT NULL, bytes_downloaded INTEGER NOT NULL, total_bytes INTEGER NOT NULL, installed_path TEXT NOT NULL, error TEXT NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE file_removal (path TEXT NOT NULL PRIMARY KEY);
