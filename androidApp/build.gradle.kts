@@ -16,7 +16,7 @@ android {
         versionCode = 1
         versionName = "0.01"
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; aidl = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -45,6 +45,10 @@ dependencies {
     implementation(libs.media3.session)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.tesseract.android)
+    implementation(libs.pdfbox.android)
     implementation(libs.litert)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
     debugImplementation(libs.compose.tooling)
 }

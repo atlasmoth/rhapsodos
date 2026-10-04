@@ -1,24 +1,48 @@
 package com.osuji.ereaderapp
 
 import android.app.Application
+import android.app.Activity
+import android.os.Bundle
 import com.ereader.shared.AndroidCoreFactory
 import com.osuji.ereaderapp.audio.OfflineSynthesizer
 import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.audio.VoiceRecorder
+import com.osuji.ereaderapp.audio.TranscriptionCoordinator
 import com.osuji.ereaderapp.data.ReaderStore
+import com.osuji.ereaderapp.data.OwnedFiles
+import com.osuji.ereaderapp.data.DocumentArchives
+import com.osuji.ereaderapp.models.ModelManager
+import com.osuji.ereaderapp.speech.OfflineSpeechRuntime
 import com.osuji.ereaderapp.pdf.PdfAdapter
+import com.osuji.ereaderapp.pdf.DocumentPreparation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
 class ReaderApplication : Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val foreground = MutableStateFlow(false)
+    private var startedActivities = 0
     override fun onCreate() {
         super.onCreate()
-        val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        if (getProcessName() != packageName) return
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) { startedActivities++; foreground.value = true }
+            override fun onActivityStopped(activity: Activity) { startedActivities = (startedActivities - 1).coerceAtLeast(0); foreground.value = startedActivities > 0 }
+            override fun onActivityCreated(activity: Activity, state: Bundle?) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
         val koin = startKoin {
             androidContext(this@ReaderApplication)
             modules(module {
@@ -26,12 +50,46 @@ class ReaderApplication : Application() {
                 single { AndroidCoreFactory.open(get()) }
                 single { ReaderStore(get()) }
                 single { PdfAdapter(get()) }
-                single { OfflineSynthesizer(get()) }
+                single { OfflineSpeechRuntime(get()) }
+                single { ModelManager(get(), get(), get(), get()) }
+                single { OfflineSynthesizer(get(), get()) }
                 single { PlaybackCoordinator(get(), get(), get(), get()) }
+                single { TranscriptionCoordinator(get(), get(), get(), get(), get()) }
                 single { VoiceRecorder(get(), get()) }
-                single { VoiceNoteCoordinator(get(), get(), get(), get(), get()) }
+                single { VoiceNoteCoordinator(get(), get(), get(), get(), get(), get()) }
+                single { DocumentPreparation(get(), get(), get(), get()) }
+                single { OwnedFiles(get(), get()) }
+                single { DocumentArchives(get(), get()) }
             })
         }.koin
+        koin.get<ModelManager>().beforeModelRemoval = { id ->
+            if (id == "android-moonshine-english") koin.get<TranscriptionCoordinator>().pauseForModelRemoval()
+            else if (koin.get<ModelManager>().state.value.selectedVoice == id) koin.get<PlaybackCoordinator>().stopAndWait()
+        }
+        koin.get<ModelManager>().beforeVerification = {
+            combine(foreground, koin.get<PlaybackCoordinator>().state) { visible, audio -> visible && !audio.playing && !audio.capturing && !audio.preparing }.first { it }
+        }
+        koin.get<PdfAdapter>().beforeOcr = {
+            koin.get<PlaybackCoordinator>().state.first { !it.playing && !it.capturing && !it.preparing }
+        }
         koin.get<VoiceNoteCoordinator>().recoverDrafts()
+        koin.get<ModelManager>().initialize()
+        koin.get<TranscriptionCoordinator>().initialize()
+        koin.get<DocumentPreparation>().recover()
+        applicationScope.launch { runCatching { koin.get<OwnedFiles>().clean() } }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (getProcessName() != packageName) return
+        if (level >= TRIM_MEMORY_RUNNING_LOW) applicationScope.launch {
+            val koin = org.koin.core.context.GlobalContext.get()
+            val runtime = koin.get<OfflineSpeechRuntime>()
+            val playback = koin.get<PlaybackCoordinator>().state.value
+            koin.get<PdfAdapter>().releaseParserWhenIdle()
+            koin.get<TranscriptionCoordinator>().pauseForMemoryPressure()
+            runtime.close("android-moonshine-english")
+            if (!playback.playing && !playback.capturing && !playback.preparing) runtime.close("android-kitten-english")
+        }
     }
 }

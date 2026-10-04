@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import com.osuji.ereaderapp.data.syncDirectory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,6 +28,7 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
     private var captureJob: Job? = null
     private var captureFile: File? = null
     @Volatile private var running = false
+    var onInterrupted: (() -> Unit)? = null
 
     fun draftPath(noteId: String): String = File(context.filesDir, "recordings/$noteId.recording.wav").absolutePath
 
@@ -34,6 +36,7 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
     fun start(noteId: String) {
         check(!running) { "A recording is already in progress." }
         captureFile = null
+        require(android.os.StatFs(context.filesDir.absolutePath).availableBytes >= CaptureLimits.STORAGE_RESERVE_BYTES + 8192) { "Free at least 10 MB of storage before recording a thought." }
         val minimum = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         require(minimum > 0) { "This microphone does not support the recording format." }
         val recorder = AudioRecord.Builder()
@@ -68,14 +71,18 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
                     val buffer = ByteArray(8192)
                     var bytes = 0L
                     var lastSync = 0L
+                    var lastSpaceCheck = 0L
+                    var freeBytes = android.os.StatFs(context.filesDir.absolutePath).availableBytes
                     while (running) {
                         val count = recorder.read(buffer, 0, buffer.size, AudioRecord.READ_BLOCKING)
                         if (count < 0 && running) error("The microphone was interrupted.")
                         if (count <= 0) continue
-                        output.write(buffer, 0, count)
-                        bytes += count
+                        if (bytes - lastSpaceCheck >= SAMPLE_RATE * 2) { freeBytes = android.os.StatFs(context.filesDir.absolutePath).availableBytes; lastSpaceCheck = bytes }
+                        val writable = CaptureLimits.writableBytes(bytes, count, freeBytes)
+                        output.write(buffer, 0, writable)
+                        bytes += writable
                         var amplitude = 0
-                        for (index in 0 until count - 1 step 2) {
+                        for (index in 0 until writable - 1 step 2) {
                             val sample = ((buffer[index + 1].toInt() shl 8) or (buffer[index].toInt() and 255)).toShort().toInt()
                             amplitude = maxOf(amplitude, abs(sample))
                         }
@@ -84,12 +91,15 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
                             output.fd.sync()
                             lastSync = bytes
                         }
+                        if (bytes >= CaptureLimits.MAXIMUM_BYTES) { output.fd.sync(); error("Recording stopped at 30 minutes. Your draft is retained; save or discard it.") }
                     }
                     output.fd.sync()
                 }
             } catch (failure: Exception) {
                 running = false
+                runCatching { recorder.stop() }
                 mutableState.value = mutableState.value.copy(recording = false, error = failure.message ?: "Recording was interrupted.")
+                scope.launch(Dispatchers.Main.immediate) { onInterrupted?.invoke() }
             }
         }
     }
@@ -108,20 +118,21 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
         result.absolutePath
     }
 
-    suspend fun cancel() {
+    suspend fun cancel() = withContext(Dispatchers.IO) {
+        running = false
+        runCatching { audioRecord?.stop() }
+        captureJob?.join()
+        audioRecord?.release()
+        audioRecord = null
+        captureJob = null
         val file = captureFile
-        if (file == null) return
-        if (file.length() <= 44 && !running) {
-            withContext(Dispatchers.IO) { file.delete() }
-            captureFile = null
-            return
-        }
-        val result = stop()
-        withContext(Dispatchers.IO) { check(File(result).delete()) { "The recording could not be discarded." } }
+        check(file == null || !file.exists() || file.delete()) { "The recording could not be discarded." }
         captureFile = null
+        mutableState.value = CaptureState()
     }
 
     fun acknowledgeSaved() { captureFile = null; mutableState.value = CaptureState() }
+    fun hasAudio(): Boolean = (captureFile?.length() ?: 0) > 44
 
     fun duration(path: String): Long = (File(path).length() - 44).coerceAtLeast(0) * 1000 / (SAMPLE_RATE * 2)
 
@@ -134,7 +145,9 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
 
     private fun finalize(file: File): File {
         require(file.length() > 44) { "No audio was captured. Please record again." }
-        val dataSize = ((file.length() - 44) / 2 * 2).toInt()
+        val dataBytes = (file.length() - 44) / 2 * 2
+        require(dataBytes <= CaptureLimits.MAXIMUM_BYTES) { "This draft exceeds the recording limit. The original audio is retained." }
+        val dataSize = dataBytes.toInt()
         RandomAccessFile(file, "rw").use { output ->
             output.setLength(44L + dataSize)
             output.seek(0)
@@ -143,6 +156,7 @@ class VoiceRecorder(private val context: Context, private val scope: CoroutineSc
         }
         val destination = File(file.parentFile, file.name.replace(".recording.wav", ".wav"))
         if (file != destination) check(file.renameTo(destination)) { "The recording could not be finalized." }
+        syncDirectory(checkNotNull(destination.parentFile))
         return destination
     }
 

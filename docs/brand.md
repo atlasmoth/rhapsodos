@@ -18,7 +18,7 @@ Use the accessible primary token for text and controls. Decorative ember is not 
 
 ## Icon and launch
 
-The original mark occupies a 256-square coordinate system: seven rounded vertical bars, width 14, x positions 56, 77, 98, 119, 140, 161, 182; y positions 108, 88, 65, 49, 65, 88, 108; heights 40, 80, 126, 158, 126, 80, 40. Amber-to-ember bars sit on a near-black field with a restrained radial glow. The geometry is identical across native icons, onboarding and launch.
+The original mark occupies a 256-square coordinate system: seven rounded vertical bars, width 14, x positions 56, 77, 98, 119, 140, 161, 182; y positions 108, 88, 65, 49, 65, 88, 108; heights 40, 80, 126, 158, 126, 80, 40. Amber-to-ember bars sit on a near-black field with a restrained radial glow. The geometry is identical across native icons, onboarding and launch. Android uses separate adaptive foreground/background layers with a monochrome themed-icon layer; the foreground keeps the mark inside the launcher mask safe area. [Android adaptive-icon specification](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive)
 
 The static operating-system launch view leads into a brief native bar reveal and traveling wave, with a Metal/AGSL glow when supported. No animation delays usable content; the overlay finishes within 900 ms and does not replay on every document change. Reduced motion uses a short opacity transition; disabled effects, low power, high thermal state and assistive technology receive a still, fully legible identity. Splash animation never acquires audio focus or vibrates automatically.
 

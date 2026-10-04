@@ -12,8 +12,10 @@ Rhapsodos uses native operating-system frameworks and the pinned dependencies in
 | OpenAI Whisper / WhisperKit | Offline CoreML English transcription | MIT; [Whisper license](https://github.com/openai/whisper/blob/main/LICENSE), [Argmax source](https://github.com/argmaxinc/argmax-oss-swift) |
 | Kokoro CoreML | Optional enhanced English narration on eligible iOS 18+ devices | Apache-2.0; [pinned host source/license](https://github.com/Jud/kokoro-coreml/tree/6bfc02afb237a311caee927482e58c028edb6acb) |
 | PDFBox Android | Embedded-text PDF extraction and outline interpretation on Android | Apache-2.0; [source](https://github.com/TomRoush/PdfBox-Android) |
-| ML Kit bundled Latin recognizer | Local scanned-page OCR on Android | [Google ML Kit terms](https://developers.google.com/ml-kit/terms) |
+| Tesseract4Android, Tesseract and official tessdata_fast English | Bundled local scanned-page OCR on Android | Apache-2.0, with original Leptonica/libjpeg/libpng notices; [wrapper](https://github.com/adaptech-cz/Tesseract4Android/tree/4.9.0), [pinned model](https://github.com/tesseract-ocr/tessdata_fast/tree/87416418657359cb625c412a48b6e1d6d41c29bd), [artifact manifest](ocr-manifest.json) |
 
 Full fetched speech license texts are in [licenses/](licenses/), with exact source revisions in [license-sources.json](license-sources.json). Native code ships applicable notices with its resources. Vendored iOS host modifications and their pinned source attribution are recorded beside that source. An asset's runtime compatibility, license and actual device qualification are separate questions.
 
 Do not broaden the Moonshine entry to a legacy non-English model without reviewing its specific terms. Do not substitute a public webfont URL for redistribution permission. Do not replace pinned model URLs with mutable branch downloads or enable a library's automatic fallback download.
+
+ML Kit was evaluated and removed: its documented Android diagnostic collection includes device/app identifiers and usage metadata. The chosen bundled OCR path requires no telemetry or hidden model transfer. [Official disclosure](https://developers.google.com/ml-kit/android-data-disclosure)

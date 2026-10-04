@@ -1,10 +1,10 @@
 # Android architecture
 
-Status: architecture guiding an initial native implementation, researched on **4 October 2026**. Android starts at API 28, with API-dependent document capabilities that remain to qualify. Model artifacts and physical-device readiness are not certified.
+Status: native implementation and integration qualification, **4 October 2026**. Android starts at API 28. [Development](development.md) records executed checks; physical-device readiness remains to qualify.
 
-The initial `0.01` app uses native PDF pages, system offline TTS through Media3, a microphone foreground service, anchored voice/text notes and Compose adaptive scenes. Embedded-text listening currently requires API 35 or newer; older devices and scans have an explicit original-page-only state. Saved audio remains available with a pending-model transcription state. LiteRT pack execution, OCR and the model gallery are subsequent qualification work; no unused LiteRT runtime is bundled in this slice.
+The `0.01` app uses native PDF pages, Media3 narration, a capture service, anchored voice/text notes and Compose adaptive scenes. PDFBox provides embedded extraction at API 28; bundled Tesseract processes scans without hidden downloads or telemetry. An isolated service owns PDF rendering/parsing and exchanges descriptors and bounded results with the app. The curated gallery executes pinned Kitten narration and Moonshine saved-file transcription through LiteRT. Missing transcription capability leaves saved audio attached and replayable.
 
-The initial app explicitly removes dependency-injected network permissions from its merged manifest. Check the produced APK, not just this module's manifest. System speech is a separate OS service: select installed voices marked offline and qualify the actual engine. Future public model downloads require an intentional network-permission and policy change; they must not introduce document or recording upload fallbacks.
+The APK intentionally includes `INTERNET` for explicit public pack downloads. Ktor transfer requests originate in the embedded catalog and use approved HTTPS redirect hosts; downloaded bytes must match pinned sizes/hashes. A data-sync foreground service exposes progress and pause, and interrupted attempts recover safely. There is no document or recording upload provider. Installed system speech is a separate OS service: select voices marked offline and qualify the actual engine.
 
 ## Product and stack
 
@@ -33,7 +33,7 @@ flowchart TB
     Nav[Navigation3 and adaptive scenes]
     Presentation[Lifecycle-aware presentation state]
     Core[KMP document, narration, anchors, jobs and policy]
-    PDF[Native PDF and ML Kit adapters]
+    PDF[Isolated native PDF and bundled OCR adapters]
     Audio[Media3 service and capture coordinator]
     Speech[System speech and LiteRT adapters]
     Storage[SQLite driver, protected files and journal]
@@ -66,7 +66,7 @@ Evaluate AndroidX PDF for native display/extraction integration, but check its c
 
 Treat imported PDFs as untrusted input. Evaluate supported sandboxed document loading and isolate parsing where appropriate; a wrapper UI alone is not isolation. Keep page rendering/cache ownership serialized as required by the chosen engine, close pages/descriptors deterministically and avoid blocking the main thread. [SandboxedPdfLoader](https://developer.android.com/reference/androidx/pdf/SandboxedPdfLoader)
 
-Start rendering immediately and prepare nearby text first. Embedded extraction feeds the shared graph. ML Kit OCR processes only pages/regions with missing or unusable text, using bounded rasterization. Select script resources explicitly and account for download readiness. OCR provides text/geometry, not a complete guarantee of column order or table semantics. [ML Kit text recognition](https://developers.google.com/ml-kit/vision/text-recognition/v2/android)
+Prepare the first page promptly and append committed batches. Embedded extraction feeds the shared graph; Tesseract processes pages with unusable embedded text using bounded rasterization. English data is bundled and pinned in [ocr-manifest.json](ocr-manifest.json). Geometric whitespace cuts establish ordinary column order while source regions retain the exact canonical UTF-16 offsets. OCR/layout errors remain reviewable against the original PDF. Broad tables, footnotes and complex-layout qualification still require the corpus. [Tesseract wrapper](https://github.com/adaptech-cz/Tesseract4Android), [official models](https://tesseract-ocr.github.io/tessdoc/Data-Files.html)
 
 Normalize geometry to the canonical page coordinate system, retaining crop/rotation/raster transforms. Preserve block confidence and extraction provenance. Build reading order before narration, detect duplicate headers/footers and expose uncertain passages instead of inventing missing content.
 
@@ -189,4 +189,4 @@ Required evaluation includes:
 
 Follow [AGENTS.md](../AGENTS.md): keep comments essential, do not commit or leave unit-test source in the repository, run meaningful appropriate checks and track coherent changes in validated atomic commits. Temporary unit checks belong outside the repository. Remove obsolete pre-release features and internal compatibility shims freely while preserving real user data, unrelated work and current durability guarantees.
 
-Open decisions are the Android API floor and pins, PDF extraction engine coverage, shared SQLite library, recording recovery format, exact initial voice/ASR artifacts and local encryption/restore design. Resolve them with the first complete listening slice and documented physical-device evidence.
+Decisions now implemented include API 28, pinned Gradle dependencies, SQLDelight ownership, recoverable PCM WAV capture, app-private OS-protected storage, portable archive restore, bundled English OCR and the initial LiteRT speech packs. Remaining qualification concerns are source fidelity across the broader corpus, resource/route behavior on physical devices and the release quality gates above.

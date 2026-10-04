@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 import plistlib
 import re
+import struct
 import subprocess
 import sys
+import zipfile
 
 
 IGNORED = {".git", ".gradle", ".kotlin", ".idea", ".swiftpm", "build", "DerivedData", "Pods", "node_modules", ".venv", "__pycache__"}
@@ -58,17 +61,45 @@ def android_metadata(path, args):
     minimum = re.search(r"^sdkVersion:'([^']+)'", result.stdout, re.MULTILINE)
     target = re.search(r"^targetSdkVersion:'([^']+)'", result.stdout, re.MULTILINE)
     permissions = set(re.findall(r"^uses-permission[^:]*: name='([^']+)'", result.stdout, re.MULTILINE))
-    metadata = {"application_id": package.get("name"), "version": package.get("versionName"), "build": package.get("versionCode"), "min_sdk": minimum.group(1) if minimum else None, "target_sdk": target.group(1) if target else None, "internet_permission": "android.permission.INTERNET" in permissions}
-    expected = {"application_id": args.application_id, "version": args.version, "build": args.build, "min_sdk": str(args.android_min), "target_sdk": str(args.android_target), "internet_permission": False}
+    label = re.search(r"^application-label:'([^']+)'", result.stdout, re.MULTILINE)
+    metadata = {"application_id": package.get("name"), "display_name": label.group(1) if label else None, "version": package.get("versionName"), "build": package.get("versionCode"), "min_sdk": minimum.group(1) if minimum else None, "target_sdk": target.group(1) if target else None, "internet_permission": "android.permission.INTERNET" in permissions}
+    expected = {"application_id": args.application_id, "display_name": args.display_name, "version": args.version, "build": args.build, "min_sdk": str(args.android_min), "target_sdk": str(args.android_target), "internet_permission": True}
     require_metadata("Android APK", metadata, expected)
+    metadata["arm64_native_16k_alignment"] = native_alignment(path)
     return metadata
+
+
+def native_alignment(path):
+    count = 0
+    with path.open("rb") as handle, zipfile.ZipFile(path) as archive:
+        for entry in archive.infolist():
+            if not entry.filename.startswith("lib/arm64-v8a/") or not entry.filename.endswith(".so"):
+                continue
+            count += 1
+            handle.seek(entry.header_offset + 26)
+            name_length, extra_length = struct.unpack("<HH", handle.read(4))
+            data_offset = entry.header_offset + 30 + name_length + extra_length
+            if entry.compress_type != zipfile.ZIP_STORED or data_offset % 16_384:
+                raise ValueError("An ARM64 library is not packaged for 16 KB pages: " + entry.filename)
+            data = archive.read(entry)
+            if data[:6] != b"\x7fELF\x02\x01":
+                raise ValueError("Unexpected ARM64 library format: " + entry.filename)
+            offset = struct.unpack_from("<Q", data, 32)[0]
+            size, number = struct.unpack_from("<HH", data, 54)
+            alignments = [struct.unpack_from("<Q", data, offset + index * size + 48)[0]
+                          for index in range(number) if struct.unpack_from("<I", data, offset + index * size)[0] == 1]
+            if not alignments or any(value < 16_384 or value % 16_384 for value in alignments):
+                raise ValueError("An ARM64 library has incompatible ELF load alignment: " + entry.filename)
+    if count == 0:
+        raise ValueError("The APK is missing its qualified ARM64 native libraries")
+    return {"libraries": count, "status": "passed"}
 
 
 def ios_metadata(path, args):
     with (path / "Info.plist").open("rb") as handle:
         info = plistlib.load(handle)
-    metadata = {"application_id": info.get("CFBundleIdentifier"), "version": info.get("CFBundleShortVersionString"), "build": str(info.get("CFBundleVersion", "")), "min_ios": info.get("MinimumOSVersion")}
-    expected = {"application_id": args.application_id, "version": args.version, "build": args.build, "min_ios": args.ios_min}
+    metadata = {"application_id": info.get("CFBundleIdentifier"), "display_name": info.get("CFBundleDisplayName"), "version": info.get("CFBundleShortVersionString"), "build": str(info.get("CFBundleVersion", "")), "min_ios": info.get("MinimumOSVersion")}
+    expected = {"application_id": args.application_id, "display_name": args.display_name, "version": args.version, "build": args.build, "min_ios": args.ios_min}
     require_metadata("iOS app", metadata, expected)
     return metadata
 
@@ -79,6 +110,42 @@ def require_metadata(label, actual, expected):
         raise ValueError(f"{label} metadata mismatch: {json.dumps(mismatches, sort_keys=True)}")
 
 
+def check_assets(root):
+    packs = json.loads((root / "docs/model-catalog.json").read_text())
+    source = (root / "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt").read_text()
+    embedded = json.loads(source.split('"""', 2)[1])
+    if embedded != packs:
+        raise ValueError("Shared model catalog differs from its reviewable manifest")
+    ids = set()
+    for pack in packs:
+        if pack["id"] in ids or not re.fullmatch(r"[a-z0-9-]+", pack["id"]):
+            raise ValueError("Duplicate or invalid model pack ID")
+        ids.add(pack["id"])
+        paths = set()
+        if pack["totalBytes"] != sum(asset["bytes"] for asset in pack["files"]):
+            raise ValueError("Model pack byte total differs from assets")
+        for asset in pack["files"]:
+            path = Path(asset["path"])
+            if path.is_absolute() or ".." in path.parts or asset["path"] in paths or asset["bytes"] <= 0:
+                raise ValueError("Unsafe or invalid model asset")
+            paths.add(asset["path"])
+            if not re.fullmatch(r"[0-9a-f]{64}", asset["sha256"]) or not asset["url"].startswith("https://"):
+                raise ValueError("Model asset is missing a pinned checksum or HTTPS URL")
+    fonts = json.loads((root / "docs/font-manifest.json").read_text())
+    names = {"inter": ("inter.ttf", "Inter.ttf"), "spacegrotesk": ("space_grotesk.ttf", "SpaceGrotesk.ttf"), "spacemono": ("space_mono.ttf", "SpaceMono.ttf")}
+    for font in fonts:
+        android, ios = names[font["family"]]
+        for path in (root / "androidApp/src/main/res/font" / android, root / "iosApp/Resources/Fonts" / ios):
+            data = path.read_bytes()
+            if len(data) != font["bytes"] or hashlib.sha256(data).hexdigest() != font["sha256"]:
+                raise ValueError("Bundled font differs from its pinned manifest")
+    ocr = json.loads((root / "docs/ocr-manifest.json").read_text())["model"]
+    data = (root / ocr["path"]).read_bytes()
+    if len(data) != ocr["bytes"] or hashlib.sha256(data).hexdigest() != ocr["sha256"]:
+        raise ValueError("Bundled OCR model differs from its pinned manifest")
+    return {"model_packs": len(packs), "font_families": len(fonts), "bundled_ocr_models": 1, "status": "passed"}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Check repository policy and optionally inspect real built app metadata; this does not run device qualification.")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -87,6 +154,7 @@ def main():
     parser.add_argument("--version", default="0.01")
     parser.add_argument("--build", default="1")
     parser.add_argument("--application-id", default="com.osuji.ereaderapp")
+    parser.add_argument("--display-name", default="Rhapsodos")
     parser.add_argument("--android-min", type=int, default=28)
     parser.add_argument("--android-target", type=int, default=37)
     parser.add_argument("--ios-min", default="17.0")
@@ -97,11 +165,12 @@ def main():
         if prohibited:
             raise ValueError("Unit-test source files are prohibited: " + ", ".join(prohibited))
         report["unit_source_policy"] = "passed"
+        report["pinned_assets"] = check_assets(args.root.resolve())
         if args.apk:
             report["android_artifact"] = android_metadata(args.apk.resolve(), args)
         if args.ios_app:
             report["ios_artifact"] = ios_metadata(args.ios_app.resolve(), args)
-    except (ValueError, OSError, subprocess.CalledProcessError, StopIteration) as error:
+    except (ValueError, OSError, subprocess.CalledProcessError, StopIteration, struct.error, zipfile.BadZipFile) as error:
         report["error"] = str(error)
         print(json.dumps(report, indent=2, sort_keys=True))
         return 1

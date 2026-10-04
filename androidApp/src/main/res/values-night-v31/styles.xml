@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Reader" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#FFB58B</item>
+        <item name="android:windowBackground">#161412</item>
+        <item name="android:windowSplashScreenBackground">#161412</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_rhapsodos</item>
+        <item name="android:windowSplashScreenAnimationDuration">320</item>
+    </style>
+</resources>

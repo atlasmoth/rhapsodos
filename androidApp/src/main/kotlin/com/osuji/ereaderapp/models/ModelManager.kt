@@ -1,0 +1,290 @@
+package com.osuji.ereaderapp.models
+
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.StatFs
+import com.osuji.ereaderapp.data.ModelInstall
+import com.osuji.ereaderapp.data.ModelPack
+import com.osuji.ereaderapp.data.ReaderStore
+import com.osuji.ereaderapp.data.VerifiedPackFile
+import com.osuji.ereaderapp.data.syncDirectory
+import com.osuji.ereaderapp.speech.OfflineSpeechRuntime
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.request.header
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.utils.io.readAvailable
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.RandomAccessFile
+import java.net.URI
+import java.security.MessageDigest
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.flow.update
+import kotlin.coroutines.coroutineContext
+
+data class ModelState(val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(), val selectedVoice: String = "system", val voiceId: String = "bella", val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null)
+
+fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in setOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+
+class ModelManager(private val context: Context, private val store: ReaderStore, val runtime: OfflineSpeechRuntime, private val scope: CoroutineScope) {
+    private val preferences = context.getSharedPreferences("speech", Context.MODE_PRIVATE)
+    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "system") ?: "system", voiceId = preferences.getString("voiceId", "bella") ?: "bella"))
+    val state = mutableState.asStateFlow()
+    private val ready = MutableSharedFlow<String>(extraBufferCapacity = 2)
+    val readyEvents = ready.asSharedFlow()
+    var beforeModelRemoval: (suspend (String) -> Unit)? = null
+    var beforeVerification: (suspend () -> Unit)? = null
+    private val jobs = ConcurrentHashMap<String, Job>()
+    private val validated = ConcurrentHashMap.newKeySet<String>()
+    internal var downloadService: ModelDownloadService? = null
+    internal fun hasDownloads() = jobs.isNotEmpty()
+    private val client = HttpClient(OkHttp) {
+        followRedirects = false
+        install(HttpTimeout) { connectTimeoutMillis = 30_000; socketTimeoutMillis = 45_000; requestTimeoutMillis = 600_000 }
+    }
+
+    fun initialize() = scope.launch {
+        try {
+            val catalog = store.modelCatalog()
+            val installs = store.modelInstalls()
+            mutableState.update { it.copy(catalog = catalog, installs = installs, checking = installs.filter { record -> record.status == "ready" }.map { record -> record.packId }.toSet()) }
+            installs.filter { it.status == "ready" }.forEach { install ->
+                val pack = catalog.firstOrNull { it.id == install.packId }
+                val verified = if (pack != null) withContext(Dispatchers.IO) {
+                    runCatching {
+                        val directory = owned(install.installedPath)
+                        require(pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 })
+                        beforeVerification?.invoke()
+                        validateRuntime(pack.id, directory)
+                    }.isSuccess
+                } else false
+                if (verified) validated += install.packId
+                else store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
+                mutableState.update { it.copy(checking = it.checking - install.packId) }
+            }
+            installs.filter { it.status in setOf("downloading", "verifying") }.forEach { install ->
+                val pack = catalog.firstOrNull { it.id == install.packId }
+                val recovered = if (pack != null && install.status == "verifying") withContext(Dispatchers.IO) {
+                    val directory = owned("Models/${pack.id}/${pack.version}")
+                    if (directory.isDirectory && pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 }) {
+                        runCatching { beforeVerification?.invoke(); validateRuntime(pack.id, directory); store.activateModel(pack.id, install.generation, "Models/${pack.id}/${pack.version}", pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) }); validated += pack.id; true }.getOrDefault(false)
+                    } else false
+                } else false
+                if (!recovered) store.updateModelInstall(install.packId, install.generation, "paused", install.bytesDownloaded)
+            }
+            mutableState.value = state.value.copy(catalog = catalog, installs = store.modelInstalls(), error = null)
+            if (state.value.selectedVoice != "system" && installed(state.value.selectedVoice) == null) mutableState.value = state.value.copy(error = "Your selected voice is unavailable. Choose a voice or download it again.")
+            state.value.installs.filter { it.status == "ready" }.forEach { ready.emit(it.packId) }
+        } catch (failure: Exception) { mutableState.value = state.value.copy(error = "Offline downloads could not be loaded. Reopen to retry.") }
+    }
+
+    fun compatibility(pack: ModelPack): String? {
+        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still use the installed Android voice, read and save typed thoughts."
+        if (Build.VERSION.SDK_INT < pack.minimumOS) return "Requires Android API ${pack.minimumOS} or newer"
+        val memory = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
+        if (memory.totalMem / (1024 * 1024) < pack.minimumMemoryMB) return "Requires ${pack.minimumMemoryMB} MB of device memory"
+        if (StatFs(context.filesDir.absolutePath).availableBytes < pack.totalBytes + 32L * 1024 * 1024) return "Free more storage before downloading"
+        return null
+    }
+
+    fun installed(packId: String): File? = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" && packId in validated && it.installedPath.isNotBlank() }?.let {
+        owned(it.installedPath).takeIf { directory -> directory.isDirectory }
+    }
+
+    fun selectedDirectory(): File? = if (state.value.selectedVoice == "system") null else installed(state.value.selectedVoice) ?: error("The selected offline voice is unavailable. Choose a voice or download it again.")
+    fun asrDirectory(): File? = installed("android-moonshine-english")
+
+    fun selectVoice(packId: String, voiceId: String = state.value.voiceId) {
+        require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
+        require(packId == "system" || installed(packId) != null) { "Download and verify this voice first." }
+        require(voiceId in listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki"))
+        preferences.edit().putString("voicePack", packId).putString("voiceId", voiceId).apply()
+        mutableState.update { it.copy(selectedVoice = packId, voiceId = voiceId) }
+    }
+
+    fun download(packId: String) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { scope.launch(Dispatchers.Main.immediate) { download(packId) }; return }
+        if (packId in state.value.removing) return
+        jobs[packId]?.let { previous ->
+            if (!previous.isActive) scope.launch { previous.join(); download(packId) }
+            return
+        }
+        val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return
+        compatibility(pack)?.let { mutableState.value = state.value.copy(error = it); return }
+        val generation = UUID.randomUUID().toString()
+        try { context.startForegroundService(Intent(context, ModelDownloadService::class.java)) }
+        catch (failure: Exception) { reportError("Open Rhapsodos to start this download, then try again."); return }
+        val task = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+            val staging = owned("Models/.staging/${pack.id}/${pack.version}")
+            try {
+                store.beginModelInstall(pack.id, generation)
+                check(staging.mkdirs() || staging.isDirectory)
+                var previousBytes = 0L
+                for (entry in pack.files) {
+                    require(entry.path.matches(Regex("[A-Za-z0-9_.-]+"))) { "This model contains an unsupported file path." }
+                    val target = File(staging, entry.path)
+                    if (target.length() != entry.bytes || digest(target) != entry.sha256) {
+                        stream(entry.url, target, entry.bytes) { count -> update(pack.id, generation, "downloading", previousBytes + count) }
+                    }
+                    require(target.length() == entry.bytes && digest(target) == entry.sha256) { "Downloaded file failed its integrity check. Retry to download it again." }
+                    previousBytes += entry.bytes
+                    update(pack.id, generation, "downloading", previousBytes)
+                }
+                update(pack.id, generation, "verifying", pack.totalBytes)
+                beforeVerification?.invoke()
+                validateRuntime(pack.id, staging)
+                coroutineContext.ensureActive()
+                val finalPath = "Models/${pack.id}/${pack.version}"
+                val destination = owned(finalPath)
+                check(destination.parentFile!!.mkdirs() || destination.parentFile!!.isDirectory)
+                val previous = File(destination.parentFile, ".${destination.name}.previous-$generation")
+                if (destination.exists()) check(destination.renameTo(previous)) { "The previous model could not be retained safely." }
+                try {
+                    check(staging.renameTo(destination)) { "Verified model files could not be installed." }
+                    syncDirectory(destination.parentFile!!)
+                    store.activateModel(pack.id, generation, finalPath, pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) })
+                    validated += pack.id
+                    previous.deleteRecursively()
+                } catch (failure: Exception) {
+                    if (previous.exists()) { destination.deleteRecursively(); previous.renameTo(destination) }
+                    throw failure
+                }
+                refresh()
+                ready.emit(pack.id)
+            } catch (cancelled: CancellationException) {
+                withContext(kotlinx.coroutines.NonCancellable) { store.updateModelInstall(pack.id, generation, "paused", stagedBytes(staging, pack)); refresh() }
+                throw cancelled
+            } catch (failure: Exception) {
+                store.updateModelInstall(pack.id, generation, "failed", stagedBytes(staging, pack), failure.message ?: "Download did not complete. Retry when you are ready.")
+                refresh()
+            } finally {
+                val completed = coroutineContext[Job]
+                withContext(kotlinx.coroutines.NonCancellable + Dispatchers.Main.immediate) {
+                    jobs.remove(pack.id, completed)
+                    if (jobs.isEmpty()) downloadService?.finishIfIdle()
+                }
+            }
+        }
+        jobs[packId] = task
+        task.start()
+    }
+
+    fun reportError(error: String) { mutableState.update { it.copy(error = error) } }
+
+    fun pause(packId: String) { jobs[packId]?.cancel() }
+    fun pauseAll() { jobs.values.forEach { it.cancel() } }
+    fun remove(packId: String) = scope.launch {
+        if (packId in state.value.removing) return@launch
+        mutableState.update { it.copy(removing = it.removing + packId) }
+        try {
+            pause(packId)
+            jobs[packId]?.join()
+            val directory = state.value.installs.firstOrNull { it.packId == packId }?.installedPath?.takeIf { it.isNotBlank() }?.let { owned(it) }
+            beforeModelRemoval?.invoke(packId)
+            runtime.close(packId)
+            if (state.value.selectedVoice == packId) selectVoice("system")
+            store.removeModel(packId)
+            validated -= packId
+            withContext(Dispatchers.IO) { directory?.deleteRecursively(); owned("Models/.staging/$packId").deleteRecursively() }
+            refresh()
+        } catch (failure: Exception) { reportError("This download could not be removed. Retry when you are ready.") }
+        finally { mutableState.update { it.copy(removing = it.removing - packId) } }
+    }
+
+    private suspend fun update(id: String, generation: String, status: String, bytes: Long) {
+        store.updateModelInstall(id, generation, status, bytes)
+        refresh()
+    }
+    private suspend fun refresh() { val inventory = store.modelInstalls(); mutableState.update { it.copy(installs = inventory) } }
+    private fun stagedBytes(directory: File, pack: ModelPack) = pack.files.sumOf { File(directory, it.path).length().coerceAtMost(it.bytes) }
+    private fun owned(path: String): File {
+        val root = context.filesDir.canonicalFile
+        val file = File(root, path).canonicalFile
+        require(file.path.startsWith(root.path + File.separator)) { "The model path is outside local storage." }
+        return file
+    }
+    private fun digest(file: File): String {
+        if (!file.isFile) return ""
+        val hash = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input -> val buffer = ByteArray(64 * 1024); while (true) { val count = input.read(buffer); if (count < 0) break; hash.update(buffer, 0, count) } }
+        return hash.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private suspend fun validateRuntime(packId: String, directory: File) {
+        try { runtime.smoke(packId, directory) }
+        catch (failure: LinkageError) { throw IllegalStateException("This device cannot load this offline pack. Use the installed Android voice or remove the download.", failure) }
+    }
+
+    private suspend fun stream(source: String, destination: File, expectedBytes: Long, progress: suspend (Long) -> Unit) {
+        var offset = destination.length().takeIf { it < expectedBytes } ?: 0L
+        if (offset == 0L) RandomAccessFile(destination, "rw").use { it.setLength(0) }
+        var url = source
+        repeat(8) {
+            require(allowed(url)) { "The model download redirected outside its approved hosts." }
+            var redirect: String? = null
+            var restart = false
+            client.prepareGet(url) { if (offset > 0) header(HttpHeaders.Range, "bytes=$offset-") }.execute { response ->
+                if (response.status.value in 300..399) {
+                    redirect = response.headers[HttpHeaders.Location]?.let { URI(url).resolve(it).toString() }
+                    require(redirect != null) { "The download server returned an invalid redirect." }
+                } else {
+                    require(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.PartialContent) { "The download server returned ${response.status.value}. Retry later." }
+                    if (offset > 0 && response.status == HttpStatusCode.OK) {
+                        offset = 0
+                        RandomAccessFile(destination, "rw").use { it.setLength(0) }
+                        restart = true
+                    } else {
+                        require(offset == 0L || response.headers[HttpHeaders.ContentRange]?.startsWith("bytes $offset-") == true) { "The download server returned an invalid resume range. Retry later." }
+                        val channel = response.bodyAsChannel()
+                        RandomAccessFile(destination, "rw").use { output ->
+                            output.seek(offset)
+                            val buffer = ByteArray(64 * 1024)
+                            var lastUpdate = 0L
+                            while (true) {
+                                coroutineContext.ensureActive()
+                                val count = channel.readAvailable(buffer, 0, buffer.size)
+                                if (count < 0) break
+                                if (count == 0) continue
+                                offset += count
+                                require(offset <= expectedBytes) { "The download exceeds its pinned size." }
+                                output.write(buffer, 0, count)
+                                val now = android.os.SystemClock.elapsedRealtime()
+                                if (now - lastUpdate > 300) { output.fd.sync(); progress(offset); lastUpdate = now }
+                            }
+                            output.fd.sync()
+                        }
+                        require(offset == expectedBytes) { "The model download ended early. Resume to continue." }
+                    }
+                }
+            }
+            redirect?.let { url = it }
+            if (redirect == null && !restart) return
+        }
+        error("The model download redirected too many times.")
+    }
+
+    private fun allowed(url: String): Boolean {
+        val uri = URI(url)
+        val host = uri.host ?: return false
+        return uri.scheme == "https" && uri.userInfo == null && (uri.port == -1 || uri.port == 443) && (host in setOf("huggingface.co", "raw.githubusercontent.com", "cdn-lfs.huggingface.co") || host.endsWith(".hf.co"))
+    }
+}

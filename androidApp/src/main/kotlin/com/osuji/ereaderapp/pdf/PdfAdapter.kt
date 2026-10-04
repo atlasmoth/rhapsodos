@@ -2,55 +2,66 @@ package com.osuji.ereaderapp.pdf
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
-import android.os.Build
-import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
+import com.osuji.ereaderapp.data.syncDirectory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
-import java.security.MessageDigest
 import java.util.UUID
+import kotlin.coroutines.coroutineContext
 
-data class PdfSourcePage(val pageIndex: Int, val text: String)
-
-data class ImportedPdf(
-    val id: String,
-    val title: String,
-    val path: String,
-    val fingerprint: String,
-    val pageCount: Int,
-    val pages: List<PdfSourcePage>,
-    val extractionMessage: String?,
+@Serializable data class SourceRegion(val start: Int, val end: Int, val x: Float, val y: Float, val width: Float, val height: Float)
+@Serializable data class PdfSourcePage(
+    val pageIndex: Int,
+    val text: String,
+    val provenance: String = "embedded",
+    val languageTag: String = "en",
+    val regions: List<SourceRegion> = emptyList(),
 )
 
+data class ImportedPdf(val id: String, val title: String, val path: String, val pageCount: Int)
+@Serializable data class PdfOutlineDestination(val title: String, val pageIndex: Int)
+
 class PdfAdapter(private val context: Context) {
+    private val rasterSlots = Semaphore(2)
+    private val ocr = LocalOcr(context)
+    var beforeOcr: (suspend () -> Unit)? = null
+
+    private val remote = RemotePdfClient(context)
+
     suspend fun import(uri: Uri): ImportedPdf = withContext(Dispatchers.IO) {
         val id = UUID.randomUUID().toString()
-        val directory = File(context.filesDir, "documents").apply { mkdirs() }
+        val directory = File(context.filesDir, "documents").apply { check(mkdirs() || isDirectory) }
         val temporary = File(directory, "$id.importing")
         val destination = File(directory, "$id.pdf")
-        val digest = MessageDigest.getInstance("SHA-256")
         try {
             context.contentResolver.openInputStream(uri)?.use { input ->
                 temporary.outputStream().use { output ->
                     val buffer = ByteArray(64 * 1024)
                     var copied = 0L
                     while (true) {
+                        coroutineContext.ensureActive()
                         val count = input.read(buffer)
                         if (count < 0) break
                         copied += count
-                        require(copied <= 512L * 1024 * 1024) { "This PDF exceeds the current 512 MB import limit." }
-                        digest.update(buffer, 0, count)
+                        require(copied <= 512L * 1024 * 1024) { "This PDF exceeds the 512 MB import limit." }
                         output.write(buffer, 0, count)
                     }
                     output.fd.sync()
                 }
             } ?: error("The file provider could not open this PDF.")
-            require(temporary.renameTo(destination)) { "The local PDF copy could not be saved." }
-            inspect(id, displayName(uri), destination, digest.digest().joinToString("") { "%02x".format(it) })
+            val count = Json.parseToJsonElement(checkNotNull(remote.request(temporary.absolutePath, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
+            check(temporary.renameTo(destination)) { "The local PDF copy could not be saved." }
+            syncDirectory(directory)
+            ImportedPdf(id, displayName(uri), destination.absolutePath, count)
         } catch (failure: Exception) {
             temporary.delete()
             destination.delete()
@@ -58,60 +69,41 @@ class PdfAdapter(private val context: Context) {
         }
     }
 
+    suspend fun extractPages(path: String, startPage: Int = 0, existingCharacters: Int = 0, prepared: suspend (PdfSourcePage) -> Unit) = withContext(Dispatchers.IO) {
+        var totalCharacters = existingCharacters
+        suspend fun append(page: PdfSourcePage) {
+            require(page.text.length <= 20_000_000 - totalCharacters) { "This document exceeds the 20 million character preparation limit. Your PDF and prepared pages are retained." }
+            totalCharacters += page.text.length
+            prepared(page)
+        }
+        val count = Json.parseToJsonElement(checkNotNull(remote.request(path, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
+        for (index in startPage until count) {
+            coroutineContext.ensureActive()
+            val embedded = Json.decodeFromString<PdfSourcePage>(checkNotNull(remote.request(path, "text", index).json))
+            if (usableText(embedded.text)) append(embedded)
+            else {
+                beforeOcr?.invoke()
+                rasterSlots.withPermit {
+                    val bitmap = checkNotNull(remote.request(path, "render", index, 1800).bitmap)
+                    try { append(ocr.recognize(bitmap, index)) } finally { bitmap.recycle() }
+                }
+            }
+        }
+    }
+
+    suspend fun render(path: String, index: Int, targetWidth: Int = 1400): Bitmap = rasterSlots.withPermit {
+        checkNotNull(remote.request(path, "render", index, targetWidth.coerceIn(400, 2400)).bitmap)
+    }
+
+    suspend fun outline(path: String): List<PdfOutlineDestination> = Json.decodeFromString(checkNotNull(remote.request(path, "outline").json))
+
+    fun releaseParser() { remote.release() }
+    fun releaseParserWhenIdle() { remote.releaseWhenIdle() }
+
+    private fun usableText(text: String): Boolean = text.count { it.isLetterOrDigit() } >= 3 && text.count { it == '\uFFFD' } * 5 < text.length
+
     private fun displayName(uri: Uri): String =
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) cursor.getString(0).removeSuffix(".pdf") else "Imported document"
+            if (cursor.moveToFirst()) cursor.getString(0)?.replace(Regex("(?i)\\.pdf$"), "")?.takeIf { it.isNotBlank() } ?: "Imported document" else "Imported document"
         } ?: "Imported document"
-
-    private fun inspect(id: String, title: String, file: File, fingerprint: String): ImportedPdf {
-        val pages = mutableListOf<PdfSourcePage>()
-        var extractedCharacters = 0L
-        val pageCount = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
-        PdfRenderer(descriptor).use { renderer ->
-            require(renderer.pageCount > 0) { "This PDF contains no viewable pages." }
-            require(renderer.pageCount <= 10_000) { "This PDF exceeds the current page limit." }
-            if (Build.VERSION.SDK_INT >= 35) {
-                repeat(renderer.pageCount) { index ->
-                    renderer.openPage(index).use { page ->
-                        val source = StringBuilder()
-                        page.textContents.forEach { content ->
-                            val text = content.text
-                            if (text.isNotBlank()) {
-                                extractedCharacters += text.length + 1
-                                require(extractedCharacters <= 20_000_000) { "This PDF exceeds the current text-preparation limit." }
-                                source.append(text).append('\n')
-                            }
-                        }
-                        pages += PdfSourcePage(index, source.toString())
-                    }
-                }
-            } else {
-                repeat(renderer.pageCount) { pages += PdfSourcePage(it, "") }
-            }
-            renderer.pageCount
-        }
-        }
-        val message = when {
-            Build.VERSION.SDK_INT < 35 -> "Original pages are available. Embedded-text listening currently requires Android 15 or newer."
-            pages.all { it.text.isBlank() } -> "No embedded text was found. You can view the original pages; scanned-page listening is not available in this build."
-            else -> null
-        }
-        return ImportedPdf(id, title, file.absolutePath, fingerprint, pageCount, pages, message)
-    }
-
-    suspend fun render(path: String, index: Int, targetWidth: Int = 1200): Bitmap = withContext(Dispatchers.IO) {
-        ParcelFileDescriptor.open(File(path), ParcelFileDescriptor.MODE_READ_ONLY).use { descriptor ->
-        PdfRenderer(descriptor).use { renderer ->
-            renderer.openPage(index.coerceIn(0, renderer.pageCount - 1)).use { page ->
-                val width = targetWidth.coerceIn(300, 1600)
-                val height = (width * page.height.toFloat() / page.width).toInt().coerceAtLeast(1)
-                require(height <= 6000) { "This page is too tall for the current rendering limit." }
-                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { bitmap ->
-                    bitmap.eraseColor(Color.WHITE)
-                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                }
-            }
-        }
-        }
-    }
 }

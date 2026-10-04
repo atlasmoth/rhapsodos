@@ -1,0 +1,18 @@
+{
+  "platform": "android",
+  "engine": {
+    "coordinate": "cz.adaptech.tesseract4android:tesseract4android:4.9.0",
+    "source": "https://github.com/adaptech-cz/Tesseract4Android/tree/4.9.0",
+    "sha256": "bce5d6413a1a5ae3d7240033fbbc851ba3217d0a08d9769400e17a077f42cb2a",
+    "license": "Apache-2.0",
+    "execution": "single-threaded"
+  },
+  "model": {
+    "path": "androidApp/src/main/assets/ocr/eng.traineddata",
+    "source": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata",
+    "bytes": 4113088,
+    "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+    "languageTag": "en",
+    "license": "Apache-2.0"
+  }
+}

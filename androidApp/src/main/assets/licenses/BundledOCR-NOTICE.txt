@@ -1,0 +1,17 @@
+Bundled English OCR
+
+Engine: Tesseract4Android 4.9.0 Standard (single thread)
+Artifact: cz.adaptech.tesseract4android:tesseract4android:4.9.0
+AAR SHA-256: bce5d6413a1a5ae3d7240033fbbc851ba3217d0a08d9769400e17a077f42cb2a
+Source: https://github.com/adaptech-cz/Tesseract4Android/tree/4.9.0
+Includes Tesseract 5.5.1, Leptonica 1.85.0, libjpeg 9f and libpng 1.6.48.
+See the accompanying original license files.
+
+Model: official tessdata_fast eng.traineddata (integer LSTM, English)
+Revision: 87416418657359cb625c412a48b6e1d6d41c29bd
+Source: https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata
+Bytes: 4113088
+SHA-256: 7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2
+License: Apache-2.0; original license accompanies this notice.
+
+The engine and model are bundled. Recognition requires no network request, account, telemetry or hidden model download. OCR text is machine recognized and may contain errors; the original PDF is retained.
