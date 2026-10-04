@@ -1,6 +1,21 @@
 # Models and evaluation
 
-Research snapshot: **4 October 2026**. This is a planning document, not a claim that any candidate has passed this app's device qualification. Provider catalogs, prices, SDK deployment targets and OS behavior must be rechecked before implementation and release.
+Research snapshot: **4 October 2026**. The implementation inventory below is separate from the broader candidate research. [Development](development.md) records executed checks. Provider catalogs/prices and physical-device readiness require continuing qualification.
+
+## Current embedded catalog
+
+| Platform | Capability | Pinned implementation | Download | Eligibility guard |
+| --- | --- | --- | --- | --- |
+| Android | Local English narration, eight voices | Kitten nano 0.8, LiteRT 2.1.5, local dictionary/G2P frontend | 62,887,019 bytes | API 28+, 3 GB device memory |
+| Android | Saved-note English transcription | Moonshine tiny 5-second INT8 LiteRT, tokenizer and public runtime sanity clip | 54,140,870 bytes | API 28+, 1 GB device memory |
+| iOS | Saved-note English transcription | Whisper tiny.en CoreML, WhisperKit 0.18.0 and exclusively local tokenizer | 79,066,059 bytes | iOS 17+, 2 GB device memory |
+| iOS | Enhanced English voice preview, three voices | Pinned end-to-end FP32 Kokoro CoreML export and bundled local Misaki/BART pronunciation frontend | 325,316,220 bytes | iOS 18+, 3 GB device memory; physical qualification pending |
+
+Exact URLs, bytes and SHA-256 values are in [model-catalog.json](model-catalog.json), with licenses in [third-party.md](third-party.md). These guards prevent known incompatible choices; they are not device-fleet qualification. The shipped catalog is embedded in the app rather than downloaded from an unsigned remote index. System narration and raw note capture remain independent of packs. Future remote catalog updates require their own signing contract.
+
+Real Android ARM64 emulator execution revealed roughly 693–720 MiB loaded speech PSS despite the compact download. The voice uses bounded synthesis chunks and releases idle ASR; the initial memory guard is conservative. Physical memory peaks, battery behavior and listening comfort remain unmeasured. See the dated execution record before promoting a pack.
+
+The initial Jud two-stage Kokoro export failed native simulator intelligibility checks and has been replaced. The replacement's inspected compiled graph is FP32 with fixed 128-token input and five-second waveform capacity, despite stale FP16 wording in its model card. Its output reports the unclamped predicted duration. The adapter rejects overflow and splits source chunks before accepting audio, without truncating tokens or clamping away speech. Native iOS 18.4 and 27 checks produced speech for all three voices and varied 310-character passages at two rates retained their final sentence under local ASR. This establishes a usable preview path, not perfect transcription or physical listening quality. See [development.md](development.md) for complete adapter, cache, lifecycle and memory evidence. [Pinned export and license](https://huggingface.co/aufklarer/Kokoro-82M-CoreML/tree/f8ff771e4cab0bb3368e8af3a090a7e847485401)
 
 ## Product constraints
 
@@ -100,7 +115,7 @@ These figures are derived from the posted [Eleven](https://elevenlabs.io/pricing
 
 ## Document and OCR model policy
 
-Use the document's embedded text and structure when reliable; apply OCR to pages or regions that need it. Native **Apple Vision** and **ML Kit Text Recognition** are the baseline candidates, with script-specific resources and physical-device evaluation. OCR text alone does not establish column order, table semantics or narration-safe structure. Retain page/block/glyph provenance and confidence through every correction. [Apple text recognition](https://developer.apple.com/documentation/vision/vnrecognizetextrequest), [ML Kit](https://developers.google.com/ml-kit/vision/text-recognition).
+Use embedded text where reliable and OCR where needed. The implementation uses **Apple Vision** and **bundled Tesseract English**. ML Kit was evaluated and removed because of documented diagnostic telemetry. OCR text alone does not establish table semantics or universally correct order; preserve geometry, provenance and original-page review. Additional scripts require separate artifact and device evaluation. [Apple Vision](https://developer.apple.com/documentation/vision/vnrecognizetextrequest), [Tesseract data](https://tesseract-ocr.github.io/tessdoc/Data-Files.html), [ML Kit disclosure](https://developers.google.com/ml-kit/android-data-disclosure)
 
 Complex layouts may justify optional **Docling** processing in a controlled server environment or a separately consented **Mistral OCR** service. Neither is a mandatory phone download or an excuse to replace faithful source text with generated prose. Route by document evidence and processing policy; compare reading order, omitted/added content, geometry and tables, not only OCR character accuracy. [Docling](https://github.com/docling-project/docling), [Mistral document processing](https://docs.mistral.ai/capabilities/document_ai/).
 

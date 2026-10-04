@@ -271,25 +271,73 @@ internal object ModelCatalog {
     "name": "Enhanced English voices",
     "capability": "tts",
     "platform": "ios",
-    "runtime": "kokoro-coreml",
-    "version": "models-2026-03-23",
+    "runtime": "kokoro-coreml-e2e-fp32",
+    "version": "f8ff771e4cab0bb3368e8af3a090a7e847485401",
     "languageTags": [
       "en"
     ],
     "minimumOS": 18,
     "minimumMemoryMB": 3072,
     "license": "Apache-2.0",
-    "licenseUrl": "https://github.com/Jud/kokoro-coreml/blob/6bfc02afb237a311caee927482e58c028edb6acb/LICENSE",
-    "description": "Expressive offline English narration with Kokoro CoreML. Generates a passage locally before playback; first use may take longer on older devices.",
+    "licenseUrl": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/blob/f8ff771e4cab0bb3368e8af3a090a7e847485401/README.md",
+    "description": "Three English voices you can download for offline listening. Optional preview; built-in voices work without this download.",
     "files": [
       {
-        "path": "kokoro-models.tar.gz",
-        "url": "https://github.com/Jud/kokoro-coreml/releases/download/models-2026-03-23/kokoro-models.tar.gz",
-        "sha256": "0d24bbf80526456bd8640f9f484cd1c333aee8a936e618ac44e619eafb79aec9",
-        "bytes": 103394124
+        "path": "kokoro_5s.mlmodelc/analytics/coremldata.bin",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/kokoro_5s.mlmodelc/analytics/coremldata.bin",
+        "bytes": 243,
+        "sha256": "4ab1ce05ed4689825180da77f37ff86d7bcee01877732c6426c5fc8834fbc798"
+      },
+      {
+        "path": "kokoro_5s.mlmodelc/coremldata.bin",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/kokoro_5s.mlmodelc/coremldata.bin",
+        "bytes": 478,
+        "sha256": "c177e635173de37545490ea0b431274816491e77bb187ac197ab63ad6a9b902d"
+      },
+      {
+        "path": "kokoro_5s.mlmodelc/metadata.json",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/kokoro_5s.mlmodelc/metadata.json",
+        "bytes": 4586,
+        "sha256": "23876f10def2950b7e127a7b769bf18ed4c7e4a2456237962c852d1e24caf568"
+      },
+      {
+        "path": "kokoro_5s.mlmodelc/model.mil",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/kokoro_5s.mlmodelc/model.mil",
+        "bytes": 804060,
+        "sha256": "b91217bd39429f72bbb049c564506d099ed3373a92d3a90249cf8ccb064984da"
+      },
+      {
+        "path": "vocab_index.json",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/vocab_index.json",
+        "bytes": 2034,
+        "sha256": "433690ab1da1256639c00179e7961a9e9f50ec91077a9c0877107c14e04fb989"
+      },
+      {
+        "path": "voices/af_heart.json",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/voices/af_heart.json",
+        "bytes": 5517,
+        "sha256": "c00984469c315ee8709bebb8ea0bd8321eae2d952f6db7c6214d660028d01ed2"
+      },
+      {
+        "path": "kokoro_5s.mlmodelc/weights/weight.bin",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/kokoro_5s.mlmodelc/weights/weight.bin",
+        "bytes": 324488320,
+        "sha256": "48b6d7301be895e25d80a6024b71ba023d1baa9ec71e26a66cc9e32f78f83a86"
+      },
+      {
+        "path": "voices/af_bella.json",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/voices/af_bella.json",
+        "bytes": 5505,
+        "sha256": "3fee6c5728f669f8b3bbca31cca30ebfee6fb00723f5fce3f2c7d47bcaa14a36"
+      },
+      {
+        "path": "voices/am_michael.json",
+        "url": "https://huggingface.co/aufklarer/Kokoro-82M-CoreML/resolve/f8ff771e4cab0bb3368e8af3a090a7e847485401/voices/am_michael.json",
+        "bytes": 5477,
+        "sha256": "df8ba32be906749caee1be1d26ad5f913bae14fdaefbda03da17fe50da3f4827"
       }
     ],
-    "totalBytes": 103394124
+    "totalBytes": 325316220
   }
 ]
     """.trimIndent())
