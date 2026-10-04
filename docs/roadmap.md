@@ -1,6 +1,6 @@
 # Delivery roadmap and qualification
 
-Status: proposed sequence and acceptance gates, 4 October 2026. Numerical values below are engineering targets; none are reported as measured app results. Follow [AGENTS.md](../AGENTS.md), including atomic commits and the prohibition on committing unit-test source.
+Status: implementation started, with the sequence and acceptance gates below still guiding qualification, 4 October 2026. Numerical values below are engineering targets; none are reported as measured app results. See [development.md](development.md) for current implementation boundaries. Follow [AGENTS.md](../AGENTS.md), including atomic commits and the prohibition on committing unit-test source.
 
 ## Sequence
 
@@ -113,9 +113,9 @@ Every completed implementation handoff should include the concrete behavior, fil
 1. Which compact voice wins long-session preference and meets the baseline device budget on each platform?
 2. Which compact ASR packs and languages are supported locally at launch?
 3. Which PDF extraction/rendering limitations require alternate engines or optional remote preparation?
-4. Room KMP or SQLDelight, and which Swift facade/bridge integration is least disruptive for this app?
+4. Does the initial SQLDelight store and Kotlin/Native JSON facade meet device concurrency, recovery and performance requirements?
 5. What recording format, key availability and export/restore design meet durability and lock-screen requirements?
-6. What Android API floor and dependency versions satisfy audience reach without fragile API assumptions?
+6. Which capabilities qualify across the initial Android API 28 floor, and do the current dependency pins satisfy audience reach without fragile API assumptions?
 7. Does optional cloud narration provide enough quality gain to justify its price and privacy tradeoff?
 
 Resolve these with a bounded experiment and record the decision in the owning document and an atomic commit. During this build, delete abandoned paths rather than maintaining compatibility layers for speculative alternatives.

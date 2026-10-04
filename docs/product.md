@@ -1,6 +1,6 @@
 # Product plan
 
-Status: agreed product direction and proposed first-release scope. Research baseline: 4 October 2026. This is a plan, not implemented behavior.
+Status: agreed product direction and proposed first-release scope. Research baseline: 4 October 2026. Implementation has started; [development.md](development.md) records the current slice and its verification. The scope below is not a claim that all first-release behavior is implemented.
 
 ## Product promise
 

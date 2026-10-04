@@ -10,6 +10,8 @@ Implementation was authorized on **4 October 2026**. The first native listening/
 
 Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The working display name is **eReader**.
 
+Both native debug builds pass. The initial import, system narration, source-following and anchored written-note loop has passed phone/tablet emulator and simulator checks. See [Development](docs/development.md#verification-recorded-on-4-october-2026) for the exact evidence, current limitations and remaining v1 gates.
+
 The documentation records decisions from the product discussion and identifies choices that still need implementation experiments. Check current primary documentation before selecting dependency versions, model artifacts, licenses or prices.
 
 ## Documentation
@@ -25,6 +27,7 @@ The documentation records decisions from the product discussion and identifies c
 | [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 17 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
 | [Roadmap](docs/roadmap.md) | Delivery stages, measurable acceptance criteria and collaboration boundaries |
+| [Development](docs/development.md) | Workspace/build commands, current first-slice scope and remaining v1 gates |
 
 Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.md](ARCHITECTURE.md), then read the relevant platform or feature document.
 
@@ -42,6 +45,6 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 
 ## Choices still to qualify
 
-Initial custom voice and ASR packs, Android minimum API level, exact dependency versions, the shared SQLite library, the Swift interop route, recording recovery format, local encryption/key recovery and optional cloud providers remain qualification decisions. The proposed structure deliberately allows those choices without replacing the source-anchor or note contracts.
+Initial custom voice and ASR packs, older-device document capabilities, sustained performance, recording recovery, local encryption/key recovery and optional cloud providers still need qualification. The first implementation uses SQLDelight, a Kotlin/Native framework facade and an Android API 28 floor; exact build pins live in the version catalog. These choices do not certify every feature on every supported device.
 
 The next implementation priority is the complete listening loop on physical devices: import, prepare, listen, follow, pause, record, save, resume and recover. A large model catalog or conversational assistant should not precede that experience.
