@@ -13,6 +13,8 @@ Research snapshot: **4 October 2026**. The implementation inventory below is sep
 
 Exact URLs, bytes and SHA-256 values are in [model-catalog.json](model-catalog.json), with licenses in [third-party.md](third-party.md). These guards prevent known incompatible choices; they are not device-fleet qualification. The shipped catalog is embedded in the app rather than downloaded from an unsigned remote index. System narration and raw note capture remain independent of packs. Future remote catalog updates require their own signing contract.
 
+Android packs also require a supported native ABI: `arm64-v8a`, `armeabi-v7a` or `x86_64`. An x86-only or unidentified ABI keeps the built-in reading/capture path available while withholding these packs. Runtime activation waits for foreground/idle resources on both platforms, even when asset transfer has completed.
+
 Real Android ARM64 emulator execution revealed roughly 693–720 MiB loaded speech PSS despite the compact download. The voice uses bounded synthesis chunks and releases idle ASR; the initial memory guard is conservative. Physical memory peaks, battery behavior and listening comfort remain unmeasured. See the dated execution record before promoting a pack.
 
 The initial Jud two-stage Kokoro export failed native simulator intelligibility checks and has been replaced. The replacement's inspected compiled graph is FP32 with fixed 128-token input and five-second waveform capacity, despite stale FP16 wording in its model card. Its output reports the unclamped predicted duration. The adapter rejects overflow and splits source chunks before accepting audio, without truncating tokens or clamping away speech. Native iOS 18.4 and 27 checks produced speech for all three voices and varied 310-character passages at two rates retained their final sentence under local ASR. This establishes a usable preview path, not perfect transcription or physical listening quality. See [development.md](development.md) for complete adapter, cache, lifecycle and memory evidence. [Pinned export and license](https://huggingface.co/aufklarer/Kokoro-82M-CoreML/tree/f8ff771e4cab0bb3368e8af3a090a7e847485401)
@@ -25,10 +27,10 @@ ASR serves **recorded voice notes**, not continuous voice commands or conversati
 
 English comes first. Language, script, pronunciation and model selection remain explicit so multilingual packs can be added later. A generic LLM is not required for narration, playback, source tracking, recording or transcription.
 
-Two policies must be supported:
+The implemented policy and a future service policy are distinct:
 
 - **Local only:** document processing, narration and note transcription stay on the device. Unavailable capability produces a fallback, pending job or useful explanation; it never triggers an upload.
-- **Local first with optional remote services:** the user separately chooses whether document text may be sent for narration/document processing and whether microphone recordings may be sent for transcription. A network failure returns to a permitted local path or leaves work pending.
+- **Future local first with optional remote services:** the user would separately choose whether document text may be sent for narration/document processing and whether microphone recordings may be sent for transcription. A network failure would return to a permitted local path or leave work pending. These services and permissions are not implemented in the current app.
 
 Downloaded cloud-generated audio can provide offline playback, but it is not on-device synthesis. Downloading a model is also different from having a chapter's audio prepared. The interface must accurately describe each state.
 

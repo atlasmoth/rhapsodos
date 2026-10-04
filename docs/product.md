@@ -1,6 +1,6 @@
 # Product plan
 
-Status: agreed product direction and proposed first-release scope. Research baseline: 4 October 2026. Implementation has started; [development.md](development.md) records the current slice and its verification. The scope below is not a claim that all first-release behavior is implemented.
+Status: agreed product direction and first-release scope. Research baseline: 4 October 2026. Native listening, notes, source preparation and speech downloads are implemented; [development.md](development.md) records executed evidence and remaining release qualification. The scope below defines the product bar rather than certifying every device or document.
 
 ## Product promise
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **implementation has started; architectural and device qualification gates remain**. Research baseline: 4 October 2026. This document specifies intended behavior; it does not certify completed app behavior, model conversion or physical-device benchmarks.
+Status: **native listening, notes, preparation and downloadable speech are implemented; release qualification remains**. Research baseline: 4 October 2026. This document specifies architectural responsibilities. See [docs/development.md](docs/development.md) for actual execution evidence and physical-device limits.
 
 ## 1. Product contract
 
@@ -79,7 +79,7 @@ Use **UTF-16 code-unit offsets into an immutable, versioned canonical source str
 
 1. Import a seekable PDF and retain dependable local access. An app-owned copy is the simplest initial approach; record its relationship to the original.
 2. Render the first useful page immediately. Extract nearby embedded text and geometry before scanning the whole document.
-3. Detect unusable text, missing text, duplicates and uncertain order. OCR only pages or regions that need it, using native Vision/ML Kit adapters initially.
+3. Detect unusable text, missing text, duplicates and uncertain order. OCR pages that need it using Apple Vision and bundled Tesseract English. Android parses and renders PDFs in an isolated process; the app receives bounded text/geometry or a bounded raster for local OCR.
 4. Build reading order and deterministic normalization. Preserve confidence, source provenance and explicit user corrections.
 5. Segment by sentences and paragraphs, independent of page boundaries. Schedule near-term narration first; index and prepare the remainder within resource limits.
 
@@ -227,11 +227,11 @@ Sync uses stable IDs, an outbox, conflict policy and deletion tombstones. Machin
 | Android requested stack; iOS 17+, Swift/CoreML | Agreed |
 | Local-first, strict local-only, curated packs, optional cloud | Agreed |
 | Wide-window layouts and accessible controls | Agreed |
-| One shared SQLite schema | Architecture direction |
+| One shared SQLite schema | Implemented with SQLDelight; native adapters use the same canonical store |
 | SQLite library and Swift bridge | Initial implementation: SQLDelight and a Kotlin/Native framework with a thin JSON facade; device/performance qualification remains |
-| Android minimum API and exact SDK versions | Qualify against actual platform features and audience |
+| Android minimum API and exact SDK versions | API 28 floor; pinned current build stack compiles, with API 37 emulator evidence and older physical-device qualification pending |
 | Custom local TTS/ASR artifacts | Bake off on physical supported devices |
-| Recoverable recording format and encryption/recovery | Design and interruption-test before readiness claim |
+| Recoverable recording format and encryption/recovery | Implemented bounded PCM recovery on Android and authenticated chunk vault on iOS; synthetic interruption checks passed, physical capture/route gates remain |
 | Cloud provider, paid tier and sync | Optional; choose from evaluated quality, retention and cost |
 
 See [Android](docs/android.md), [iOS](docs/ios.md), [model evaluation](docs/models-and-evaluation.md) and [roadmap](docs/roadmap.md) for platform details and acceptance gates. The core sequence is source integrity, reliable listening, durable capture, qualified packs, then wider language and optional intelligence features.

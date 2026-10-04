@@ -1,6 +1,6 @@
 # Delivery roadmap and qualification
 
-Status: implementation started, with the sequence and acceptance gates below still guiding qualification, 4 October 2026. Numerical values below are engineering targets; none are reported as measured app results. See [development.md](development.md) for current implementation boundaries. Follow [AGENTS.md](../AGENTS.md), including atomic commits and the prohibition on committing unit-test source.
+Status: core listening, notes, preparation and downloadable speech are implemented; the acceptance gates below continue to guide qualification, 4 October 2026. Numerical values below are engineering targets; none are reported as measured app results. See [development.md](development.md) for executed evidence and current boundaries. Follow [AGENTS.md](../AGENTS.md), including atomic commits and the prohibition on committing unit-test source.
 
 ## Sequence
 
@@ -108,13 +108,13 @@ Assign disjoint files/components for simultaneous edits and define the interface
 
 Every completed implementation handoff should include the concrete behavior, files/interfaces changed, evidence actually collected, known device/model limitations and updated decisions. Do not pass architectural speculation to the next agent as a tested guarantee.
 
-## Open decisions to settle
+## Remaining qualification decisions
 
 1. Which compact voice wins long-session preference and meets the baseline device budget on each platform?
 2. Which compact ASR packs and languages are supported locally at launch?
 3. Which PDF extraction/rendering limitations require alternate engines or optional remote preparation?
-4. Does the initial SQLDelight store and Kotlin/Native JSON facade meet device concurrency, recovery and performance requirements?
-5. What recording format, key availability and export/restore design meet durability and lock-screen requirements?
+4. Does the implemented SQLDelight store and Kotlin/Native JSON facade meet sustained physical-device concurrency, recovery and performance requirements?
+5. Do bounded Android PCM and the iOS authenticated chunk vault preserve recordings across physical microphone, route, lock-screen and low-storage interruptions? Portable archive export/restore and synthetic recovery already have executed evidence.
 6. Which capabilities qualify across the initial Android API 28 floor, and do the current dependency pins satisfy audience reach without fragile API assumptions?
 7. Does optional cloud narration provide enough quality gain to justify its price and privacy tradeoff?
 

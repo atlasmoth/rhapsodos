@@ -1,78 +1,123 @@
-# Development and current implementation
+# Development and verification
 
-Implementation started on **4 October 2026**. This is an early `0.01` build, not a completed or device-qualified v1. Both apps use `com.osuji.ereaderapp` and build/version code `1`.
+Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform core. Both use `com.osuji.ereaderapp`, version `0.01`, build/version code `1`. Implementation and verification started on **4 October 2026**. Physical-device release qualification remains open.
 
-## Workspace
+## Responsibilities
 
 | Path | Responsibility |
 | --- | --- |
-| `shared/` | KMP canonical SQLite schema, faithful source pages, segmentation, frozen note anchors, progress and transcript records |
-| `androidApp/` | Native Compose UI, PDF adapter, Media3 transport, system TTS and recording |
-| `iosApp/` | Native SwiftUI UI, PDFKit, system speech, protected recording and on-device-only system ASR |
-| `tools/` | Build/policy verification and inspection of actual app artifact metadata |
-| `docs/` | Product, architecture, quality requirements and qualification status |
+| `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search, bookmarks, pronunciation and model inventory |
+| `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers and LiteRT speech |
+| `iosApp/` | SwiftUI split navigation, PDFKit/Vision, native audio and protected capture, background URLSession transfers and CoreML speech |
+| `tools/` | Build/policy checks, artifact metadata and pinned asset inspection |
+| `docs/` | Product decisions, contracts, provenance and qualification evidence |
 
-SQLDelight is the initial canonical-store implementation. Both native apps use the same shared schema and `ReaderCore` commands. The Swift facade uses JSON snapshots across the established Kotlin/Native framework bridge. Native code owns file access, audio and UI lifetimes; store operations run off the UI thread.
+The shared store owns documents, source positions and notes. Native code owns files, PCM, inference, OS services and views. Harmless presentation preferences and generated caches are separate from durable user data.
 
-The initial system-speech path exposes passage precision. It does not claim sample-aligned word timing. A saved note freezes its source attachment, and a machine transcript remains separate from user-edited text.
+Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spoken normalization and pronunciation corrections preserve source/display text and note anchors through compact versioned mappings. Audio attachments currently have **passage precision with a native transport offset**. Word/sample alignment requires further work and is not advertised.
 
-iOS stores PDF and recording locators relative to its owned data root so an app update can relocate the container safely. Resolve only the known `Documents` and `Recordings` locations. Local data is excluded from automatic backup; the recording key is non-synchronizing and bound to this device. Intentional export, key recovery and restore remain release gates. Android also excludes its data from automatic backup and device transfer in this slice.
+## Implemented paths
 
-This first source revision retains each platform's raw page text. Passage ranges use UTF-16 code units, with page-local ranges and document ranges calculated as pages separated by `\n\f\n`. Normalized spoken whitespace is stored separately. These simple passages are not a qualified layout-aware reading-order graph or the complete versioned mapping system described in the architecture.
+| Journey | Implementation |
+| --- | --- |
+| Import | App-owned PDF, bounded progressive extraction, scan OCR, original-page access and preparation retry |
+| Listen | System/installed voices, downloaded local voices, native playback controls, rate, progress, following and manual browsing |
+| Remember | Frozen pre-capture anchor, durable audio, typed notes, transcript editing and deferred local transcription |
+| Navigate | Literal passage/note search, bookmarks, PDF outline destinations with page fallback, pronunciation corrections |
+| Manage | Rename/delete, owned-file cleanup and portable document/audio/note archive export/restore |
+| Offline speech | Curated platform catalog, explicit downloads, pause/resume, pinned verification, runtime checks, atomic activation, repair and removal |
+| Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, haptic preferences and wide layouts |
 
-## Expanded shared store
+See [implementation-contract.md](implementation-contract.md) for the actual shared commands. These entries describe code paths; the verification record determines which scenarios have been exercised.
 
-The canonical store now supports append-only page preparation, OCR provenance and normalized source regions, compact versioned source-to-spoken mappings, local literal search, anchored bookmarks, genuine PDF outline destinations, spoken pronunciation corrections, rename/delete with a durable file-cleanup queue, and validated document archive export/restore. Existing source positions remain stable while later pages are appended or pronunciation changes. Schema upgrades add these records without removing existing recordings or edits. Native archive adapters own media copying and protection.
+## Speech, privacy and durability
 
-The curated catalog and generation-scoped install inventory distinguish downloading, paused, verifying, failed and ready states. Activation requires the complete pinned digest/size manifest. Catalog URLs contain only public assets; the shared content policy rejects document and recording uploads. Download managers and runtimes are native integrations and need their own verification beyond store checks. See [implementation-contract.md](implementation-contract.md) and [model-catalog.json](model-catalog.json).
+The current app implements local-only content processing. App-managed HTTP transfers fetch explicitly requested public model assets. There is no cloud provider, account service, analytics client or sync backend. Installed system speech engines are separate OS services whose offline eligibility must be checked.
 
-Shared Android compilation and the iOS simulator framework link passed. A temporary real SQLDelight harness outside the repository passed 27 rejection cases, Unicode anchors, injected rollback, immutable incremental pages, source separator offsets, literal search, bookmark toggle, anchored archive round-trip, collision rejection, pronunciation/source fidelity, outline destination validation, stale model generations and invalidation, repair attempts, digest-manifest requirements and durable deletion cleanup. Those checks do not qualify native download resumption, microphone capture or physical-device inference.
+[model-catalog.json](model-catalog.json) pins every public asset. Android offers Kitten English narration and Moonshine English saved-note transcription. iOS offers Whisper tiny English transcription on the iOS 17 baseline and optional Kokoro CoreML voices on iOS 18+. Memory/OS guards constrain eligibility; physical qualification is pending.
+
+Native managers verify all artifacts, check runtime execution, install atomically and update the shared generation-scoped inventory. Failed ASR retains the recording and its attachment. The iOS Whisper adapter overrides an upstream tokenizer fallback to require local assets even after a parsing failure.
+
+Android now uses bundled Tesseract and a pinned English OCR model. ML Kit was removed after its documented diagnostic telemetry conflicted with the network boundary. See [third-party.md](third-party.md) for provenance and redistribution notices.
+
+iOS recordings use authenticated encrypted chunks and a non-synchronizing, device-bound Keychain key. Android recordings use app-private OS-protected storage. Automatic backup/transfer is disabled. Explicit `.rhapsodos` export contains the original PDF, notes and portable audio in a plaintext ZIP archive. Restore verifies safe paths, bounds, digests and canonical anchors; iOS seals restored audio with the local vault key. This provides deliberate local export/restore, without a cloud key-recovery promise.
 
 ## Building
 
-Use JDK 17, the installed Android SDK and Xcode. The Gradle wrapper is pinned; dependency versions live in `gradle/libs.versions.toml`. Configure the SDK through a local, untracked `local.properties` or the supported environment configuration. Do not commit signing material or machine-specific paths.
+Use JDK 17, Android SDK and Xcode. Pins live in `gradle/libs.versions.toml` and the Swift package lockfile. Configure the SDK through an untracked `local.properties` or environment setting. Keep signing material and machine paths out of source.
 
 ```sh
 ./gradlew :androidApp:assembleDebug :androidApp:lintDebug
 ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+./gradlew :shared:linkDebugFrameworkIosArm64
 tools/verify.sh policy
 tools/verify.sh android
 tools/verify.sh ios
 ```
 
-The iOS project is generated from `iosApp/project.yml` with XcodeGen. The normal Xcode prebuild integrates `SharedCore` through `embedAndSignAppleFrameworkForXcode`. An explicit prebuilt-framework option supports independent Swift validation against an already compiled framework; it must point to an actual matching platform/configuration artifact.
+XcodeGen generates the project from `iosApp/project.yml`. Normal Xcode builds integrate `SharedCore` through `embedAndSignAppleFrameworkForXcode`. `EREADER_PREBUILT_SHARED=1` supports independent Swift validation against the matching framework in `shared/build/bin/`; rebuild shared source changes before using it.
 
-`tools/check-workspace.py` checks the source policy and can inspect a built APK or `.app` bundle for the required ID, version, build and OS floors. It also rejects an Android APK containing the `INTERNET` permission in this initial local-only slice. That permission check does not certify the behavior of a separate installed system speech engine. The tool does not certify performance, all privacy egress or audio quality. `tools/verify.sh` orchestrates real builds and artifact inspection. Builds that need cache writes, SDK components or simulator services require appropriate local tool permissions.
+`tools/check-workspace.py` checks actual app metadata, source policy, catalog consistency, font hashes and the bundled OCR checksum. Android intentionally includes `INTERNET` for public pack downloads. This inspection does not certify every network path or an installed speech engine. The iOS verification command uses ad-hoc simulator signing and disables explicit Swift modules for the qualified Xcode/KMP integration. Simulator entitlements use Xcode's simulated signing mechanism; unsigned compilation does not exercise Keychain capture protection.
 
-## Verification recorded on 4 October 2026
+The documented `tools/verify.sh ios` command also passed through the normal Xcode Gradle build phase without `EREADER_PREBUILT_SHARED`. That checks the ordinary project integration in addition to the independent Swift builds.
 
-| Check | Executed result | Practical limit |
+## Executed evidence on 4 October 2026
+
+| Check | Recorded result | Limit |
 | --- | --- | --- |
-| Maintained build workflow | `tools/verify.sh all` passed Android assembly/lint, shared iOS simulator framework linking, normal Xcode prebuild, Swift/Metal app compilation and actual artifact inspection | Debug builds; no distribution/signing or release performance qualification |
-| Shared platform builds | Android main compilation and both iOS ARM64 device/simulator framework links passed | Framework compilation does not qualify physical-device behavior |
-| Shared integration | Temporary harness used actual compiled shared classes and SQLDelight JDBC SQLite: 20 guard/rejection cases, frozen anchors, idempotent save, interrupted draft states, edited-transcript preservation, injected transactional rollback and six Unicode-safe passages passed | In-memory shared-store evaluation; native microphone/filesystem recovery was not exercised |
-| Android emulator | Pixel 10 Pro Fold, API 37: real Files import, installed English narration in airplane mode, passage following, mic-denied typed note, exact canonical quote/range/offset and force-stop/relaunch persistence passed | Embedded-text fixture; no real microphone capture or device resource qualification |
-| Android layouts/settings | Narrow, wide three-pane and 200% text layouts inspected; touch-feedback preference persisted after process termination | Visual checks do not certify TalkBack, physical haptics or all window/posture combinations |
-| iOS simulators | iPhone 18 Pro/iOS 27.0 and iPad Pro 13-inch (M5)/iPadOS 26.3.1: real Files import produced 17 passages from three pages; narration, original-page highlighting, mic-denied frozen typed notes, save/resume and relaunch restoration passed | No iOS 17 runtime, real microphone capture, ASR accuracy or physical haptic qualification |
-| iOS storage/layout | Canonical relative PDF locator and note quote/UTF-16 ranges checked; PDF/progress/notes survived relaunch; tablet library/reader/notes panes inspected | Key recovery, backup/export and interrupted recording need separate evaluation |
-| Produced artifacts | Both actual app artifacts report `com.osuji.ereaderapp`, version `0.01`, build `1`; Android minimum/target API 28/37, iOS minimum 17.0; APK excludes `INTERNET` and `ACCESS_NETWORK_STATE` | Metadata and permissions are specific checks, not a complete privacy or OS-cohort certification |
-| Repository policy | No unit-test source detected; Python/shell syntax, Markdown links/fences and staged whitespace checks passed | Temporary harnesses and synthetic fixtures stayed outside the repository |
+| Shared builds | Android compilation and both ARM64 iOS framework links passed after the current catalog and pronunciation changes | Compilation only |
+| Shared SQLite integration | Temporary harness against compiled classes/SQLDelight passed 29 rejection guards, frozen/idempotent save, edit-preserving ASR, injected rollback, Unicode anchors, progressive source stability, mappings, search, bookmarks, outlines, pronunciation, archive round-trip, collisions, install generations, invalidation/repair and cleanup. Saved/transcribed recordings cannot be relabeled interrupted drafts | Native media/network checked separately |
+| Pronunciation boundaries | Combining marks and connector punctuation preserve whole terms and unchanged source | English-first literal correction policy |
+| Initial Android journey | Pixel 10 Pro Fold/API 37: Files import, airplane-mode system narration, following, denied-mic typed note and force-stop restoration passed | Earlier native slice; no physical microphone/device |
+| Initial iOS journey | iPhone 18 Pro/iOS 27 and iPad Pro 13-inch M5/iPadOS 26.3.1: Files import, narration, source highlighting, frozen typed note and relaunch restoration passed | Earlier native slice; no iOS 17 runtime or real microphone |
+| Android LiteRT | All eight voices produced finite nonzero PCM. 1,200 characters produced 120.23 s audio in 15.302 s cold and 14.282 s warm; repeated runs remained bounded | Emulator CPU measurements, not listener ratings or true streamed output |
+| Android memory | Long requests loaded roughly 712–720 MiB PSS; closed engines about 110 MiB in the recorded run | Conservative 3 GB narration-pack floor, not qualification of a physical 3 GB phone |
+| Android ASR | Public 4.55 s sanity clip transcribed in 246 ms warm; repeated 13.65 s clip retained all three sentences in 591 ms after overlap correction | Synthetic English; proper-name, currency, accent and noise accuracy remain limited |
+| Android model/note integration | 15 native assertions passed: actual download pause retained 16,375 bytes, resume/verification activated the pack, corruption invalidated it and retry repaired it. Saved-note ASR preserved the recording hash, frozen anchor and manual edit | Earlier `0.01` APK; its hash was not captured before replacement |
+| Android portable archives | 19 native assertions passed: iOS archive restored/exported with exact canonical JSON and raw PDF/audio bytes; unsafe path, wrong hash, truncated audio, undeclared entry and duplicate entry rejected without library mutation or staging residue | The archive-tested APK hash is recorded separately from the earlier manager checks |
+| English narration symbols | Android actual frontend/inference checks cover nine common operators, currency, negative numbers and word hyphens; unsupported operators fail explicitly | Literal readings only; no mathematical interpretation or complete pronunciation corpus |
+| Android isolated PDF | 22 actual checks passed: narrow-column embedded/scanned order, UTF-16 geometry, rotated/cropped text, bounded rendering, distinct isolated UID, worker death/recovery and idle/memory/background release | Broader complex-layout corpus and oldest supported hardware remain to qualify |
+| Android capture limits/recovery | 15 synthetic native checks passed for the 30-minute budget, sample alignment, storage reserve, interrupted finalization, retry, empty draft rejection and oversized draft preservation | No microphone opened; physical capture remains a release gate |
+| Android capture races | 14 assertions across six scenarios passed: save/cancel reservation, writer join, empty-running discard, failed deletion with retained retry, stale service start and canceled quiet-wait start | No microphone object was created or opened; exact APK association is recorded below |
+| Android playback/cache | Seven native checks preserved the original 1,200 ms reading position, 700 ms note replay and 900 ms frozen source anchor through previews/voice selection. Actual installed offline system TTS regenerated a damaged cache | Enhanced-voice cache run was correctly refused on the under-3 GB emulator |
+| Android ASR/removal lifecycle | Six native checks passed for memory deferral/wake, cancellation, retry, manual edits and suspended removal/download reservation | Synthetic saved speech and emulator lifecycle |
+| Android removal failure | Twelve native checks passed: denied file deletion retained bytes, inventory, error and retry; successful retry removed every owned version/staging file before clearing inventory. Documents, notes, progress and eleven PDF/recording files stayed unchanged | Exact prior APK association below; no microphone |
+| Android strict durability | Twenty-two native checks passed: a directory-sync failure after WAV rename retained the final recording and unsaved draft; retry saved once at the same 1,700 ms anchor offset. Actual PDF import/extraction and archive restore retained text, geometry, notes, audio and progress | Final debug APK; synthetic one-second recording and permission fault, no microphone |
+| iOS protected audio | Actual Keychain/vault checks round-tripped 4,550 ms; partial header/body and whole-block truncation rejected. Interrupted draft recovered a 4,437 ms authenticated prefix | Synthetic public audio; physical microphone/lock-screen behavior pending |
+| iOS recovered-note journey | A truncated draft produced a durable strict-format recovered asset, preserved the original, committed the 4,437 ms note at its frozen 1,750 ms offset and passed strict decryption, Whisper, archive export/restore and owned-file cleanup with the transcript edit intact | Synthetic interruption; physical capture remains separate |
+| iOS Whisper | Native public transfer activated the pinned local pack; real 4.55 s speech decoded in approximately 0.89 s | The word “Kitten” was misrecognized; ASR output remains editable |
+| iOS extraction/OCR | Embedded narrow-column PDF and Vision two-column/rotated scans retained the expected reading order and source geometry | Broad tables, footnotes and layout corpus pending |
+| iOS model recovery | Eight native delegate-fault assertions passed for bad resume-data purge/fresh retry, size overflow/cancellation, temporary move failure/cleanup and paused checksum work/state preservation. A complete orphaned installation was verified and runtime-checked; damaged generated audio regenerated | Network/background interruption on physical devices remains to qualify |
+| iOS enhanced voice | Replacement FP32 adapter produced all three voices on iOS 18.4 and 27. A varied 310-character passage retained its ending at two rates, producing 21.775–27.45 s in approximately 9.5–13.9 s. Fixed-buffer duration overflow rechunked without token/audio truncation; truncated WAV payloads regenerated. Literal brackets retained their contents; unsupported mixed-script words failed explicitly | Simulator CPU execution; ASR errors and repetitive text remain imperfect. Physical sustained listening remains a release gate |
+| iOS long voice/lookahead | A 1,200-character passage produced 82.2 s audio in approximately 30.8 s on both runtimes. Actual CoreML next-passage preparation during playback gave measured cached handoffs of approximately 55.3 ms; capture canceled/joined lookahead | Simulator workload, not a fleet latency guarantee or fully streamed synthesis |
+| iOS voice memory | Final runs peaked at approximately 221 MiB physical footprint and fell to 56–60 MiB after unloading | Host simulator measurement, not physical phone peak RAM; conservative 3 GB eligibility floor remains |
+| iOS audition | Voice samples preserved the paused book position and a saved note paused at approximately 700 ms, which resumed beyond 1,000 ms, with no sample-clock writes to canonical reading progress | Native synthetic playback; physical routes remain separate |
+| iOS final pack lifecycle | All nine pinned assets passed native verification/activation. Stale ready files were rejected; injected removal failure retained failed/unqualified inventory, and retry cleaned all owned versions/staging | Native iOS 18.4/27; real background network/lock interruptions remain physical gates |
+| iOS typography | Registered variable Space Grotesk uses explicit weight 400; a 24 pt title scales to 48 pt at accessibility XXXL | Native font measurement; full screen-reader/large-text interaction remains separately inspected |
+| Brand contrast | Ink/background, muted/surface, primary/background, primary/container and native filled-action label pairs exceed 4.5:1 in both palettes | Static token calculations; contrast over materials, disabled states and complete accessibility journeys remain separate |
+| iOS transport/archive | Generated playback pause froze at 765 ms, seek reached 1,000 ms and playback completed. Android archive restored/re-exported with exact canonical JSON | Native CLI integration, not physical route or listener qualification |
+| Build/policy | Android debug/release APKs, AAB and lint passed; simulator Debug and unsigned ARM64 iOS Release compiled. Produced metadata matches Rhapsodos, `com.osuji.ereaderapp`, `0.01` and build `1`; iOS plist/Mach-O minimum is 17.0. All seven ARM64 Android native libraries meet 16 KiB packaging/load alignment | Lint has zero errors and eleven existing warnings; distribution signing and physical qualification remain |
 
-Android lint finishes with **zero errors and four warnings**: the exported Media3 service, which filters untrusted controllers, and three KTX style suggestions. Kotlin reports the expected beta warning for `expect`/`actual` classes. These checks were not suppressed globally. No physical-device qualification was performed.
+Temporary checks and synthetic fixtures remain outside the repository. No unit-test source is added or committed. Android PSS and iOS physical-footprint measurements are different metrics and are not directly comparable.
 
-## First-slice behavior and remaining gates
+## Build artifacts and evidence association
 
-Native work implements PDF import, a source-following listening surface, system narration, persistent progress, frozen anchored audio/text notes and transcript editing. Actual build and smoke results must be recorded separately from these intended behaviors.
+The complete metadata, SHA-256 hashes and exact check associations are in [build-artifacts.json](build-artifacts.json). Build outputs stay outside Git.
 
-Important remaining v1 work includes:
+| Output | Location | Signing |
+| --- | --- | --- |
+| Android debug APK | [androidApp-debug.apk](../androidApp/build/outputs/apk/debug/androidApp-debug.apk) | Development key; installed on the development emulator |
+| Android release APK | [androidApp-release-unsigned.apk](../androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk) | Unsigned; owner signing required |
+| Android app bundle | [androidApp-release.aab](../androidApp/build/outputs/bundle/release/androidApp-release.aab) | Owner distribution signing required |
+| iOS simulator app | [Rhapsodos.app](../iosApp/build/Debug-iphonesimulator/Rhapsodos.app) | Ad-hoc simulator signing; installed on phone/tablet simulators |
+| iOS ARM64 release app | [Rhapsodos.app](../iosApp/build/Release-iphoneos/Rhapsodos.app) | Unsigned; owner team/provisioning required |
 
-- Progressive document preparation and qualified reading order/OCR for the wider PDF corpus. The initial adapters do not prove reliable narration of scans or complex layouts, or complete listening support on every device at the deployment floor.
-- Qualified compact custom voices and saved-file ASR packs, model catalog/download/update management and sustained resource scheduling.
-- Android saved recordings currently retain a truthful pending-model state; no remote transcription fallback is implied. iOS system ASR only runs where on-device recognition is available and authorized.
-- Parser isolation, full source geometry/alignment qualification and edition-aware audio preparation/cache management.
-- Explicit encryption, backup/export/key recovery across platforms. Protected storage or a recording vault does not by itself establish an end-to-end encrypted sync/restore product.
-- Interrupted capture, process termination and retry evaluation on actual devices, beyond code review and compilation.
-- Accessibility participant feedback, older-device coverage, wide-screen interaction and sustained haptic/GPU/audio/memory/energy profiling.
-- Distribution/signing and store metadata validation when publication is authorized.
+Native checks ran on several successive development artifacts. The record preserves their exact hashes rather than assigning historical checks to the last binary. The final Android artifact received the 22-check strict-durability/archive run. Earlier archive/preview, removal-failure and capture-race runs retain separate associations. The final iOS production adapter was exercised by external native harnesses on iOS 18.4 and 27; consumer Debug/Release builds are recorded separately.
 
-Follow [ui-quality.md](ui-quality.md) and [roadmap.md](roadmap.md) for release gates. Do not describe an emulator launch or successful compile as a world-class v1. Track completed work in validated atomic commits; temporary checks remain outside the repository and no unit-test source is committed.
+Native UI inspection previously exercised import, listening, following, typed notes and restart on phone/tablet surfaces. A later Android native inspection confirmed the Rhapsodos icon, wide light layout, playback, persisted dark appearance and settings. A light iPad wide layout was also visually inspected. Final simulator interaction attempts returned host automation timeouts, so latest gallery/large-text/fold interaction is not claimed. Static palette checks and native font measurements do not replace that interaction qualification.
+
+## Release qualification
+
+Complete real compilation, lint, model execution and relevant failure/recovery checks before atomic commits. Record UI inspections separately; a locked host can block native UI automation while build/model checks continue.
+
+Physical gates include microphone/route interruptions, locked-screen endurance, oldest supported devices, haptics, thermal/battery behavior, accessibility participants and sustained listening quality. Distribution needs the owner's signing configuration and separate publication authorization. [ui-quality.md](ui-quality.md) and [roadmap.md](roadmap.md) define the release bar.
