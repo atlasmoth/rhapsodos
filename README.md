@@ -6,7 +6,9 @@ The initial audience is everyday readers and people who benefit from accessible 
 
 ## Current state
 
-This is a planning and architecture baseline, researched on **4 October 2026**. No application scaffold or production code has been implemented. The workspace was not a Git repository when these documents were created. Architecture proposals and performance targets are not evidence of measured device behavior.
+Implementation was authorized on **4 October 2026**. The first native listening/capture slice is in development, with shared KMP contracts and local persistence. Git now tracks work in atomic commits. Architecture proposals and performance targets are not evidence of measured device behavior or a completed v1.
+
+Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The working display name is **eReader**.
 
 The documentation records decisions from the product discussion and identifies choices that still need implementation experiments. Check current primary documentation before selecting dependency versions, model artifacts, licenses or prices.
 
@@ -18,6 +20,7 @@ The documentation records decisions from the product discussion and identifies c
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Shared KMP core, native ownership, document anchors, playback, notes, storage, privacy and optional services |
 | [Product](docs/product.md) | Audience, listening and note journeys, scope and product guarantees |
 | [Design](docs/design.md) | Five design references, visual direction and adaptive phone/tablet/window behavior |
+| [UI quality](docs/ui-quality.md) | Rich haptics, Metal/AGSL effects, responsiveness budgets and sustained performance qualification |
 | [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and LiteRT architecture |
 | [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 17 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
@@ -33,8 +36,9 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 - Kotlin Multiplatform shares domain, data and policy. Android and iOS retain native interfaces, audio, document rendering and inference adapters.
 - Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin, Material3 Adaptive and LiteRT. iOS uses Swift, SwiftUI and CoreML, supporting iOS 17 and newer.
 - Wide windows, tablets and foldables receive deliberate layouts that preserve the listening session.
+- Rich haptics, native motion and GPU effects accompany a snappy interface with measurable performance budgets and accessible resource-aware fallbacks.
 - Keep code comments necessary and sparse. Do not commit unit-test files. During this pre-release build, remove obsolete features without compatibility shims.
-- Track work in coherent, validated atomic commits once the workspace is a Git repository.
+- Track work in coherent, validated atomic commits.
 
 ## Choices still to qualify
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **tentative architecture, with firm product and stack decisions**. Research baseline: 4 October 2026. This document specifies intended behavior; no app, model conversion or physical-device benchmark has been implemented here.
+Status: **implementation has started; architectural and device qualification gates remain**. Research baseline: 4 October 2026. This document specifies intended behavior; it does not certify completed app behavior, model conversion or physical-device benchmarks.
 
 ## 1. Product contract
 
@@ -16,6 +16,8 @@ The central guarantees are:
 6. Native audio survives navigation and window changes. Wide layouts add context without changing the session's ownership.
 
 Product scope and journeys are in [docs/product.md](docs/product.md); appearance and adaptive behavior are in [docs/design.md](docs/design.md).
+
+Both apps use `com.osuji.ereaderapp`, version `0.01` and initial build/version code `1`. The UI quality requirement includes rich intentional haptics, Metal-backed effects on iOS, AGSL/native effects on Android, responsive input and measured frame/memory/energy budgets. Native feedback/effect ownership stays outside KMP; shared semantic intents can drive it. See [docs/ui-quality.md](docs/ui-quality.md).
 
 ## 2. KMP backbone with native interfaces
 

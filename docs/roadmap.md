@@ -54,6 +54,8 @@ The app can support a device while a particular enhanced pack does not. Make tha
 
 ## Proposed quality gates
 
+The UI must also pass [ui-quality.md](ui-quality.md): intentional haptics, qualified Metal/AGSL effects, immediate local feedback, frame-budget profiling and resource-aware fallback. Versions start at `0.01`/build `1` for both apps, with ID `com.osuji.ereaderapp`. Atomic commits track implementation and qualification evidence.
+
 | Area | Target and method |
 | --- | --- |
 | Cached playback start | Proposed p95 below 0.5 seconds on qualified cohorts, measured from user action to audible output |

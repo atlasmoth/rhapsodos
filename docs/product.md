@@ -94,6 +94,8 @@ On a smaller device, favor the compact voice, bounded caches and delayed ASR ove
 
 ## Accessibility and comfort
 
+Rich haptics, polished native motion and tasteful GPU effects should make listening controls enjoyable and immediate. These are required product qualities with resource-aware and accessible fallbacks; they must preserve legibility and reliable narration/capture. See [ui-quality.md](ui-quality.md) for the measurable standard.
+
 Accessible listening is a core quality bar. Support screen readers, large text, high contrast, reduced motion, keyboard/pointer operation and non-color recording cues. The original PDF may need an accessible semantic companion; merely wrapping a canvas in native UI is insufficient.
 
 Do not move screen-reader focus with every highlight or speak every partial transcript over narration. Let people operate controls predictably with assistive speech enabled. Provide explicit settings for following, narration speed, pauses and source presentation.

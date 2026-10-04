@@ -59,7 +59,7 @@ This policy does not authorize deleting unrelated user work, real recordings or 
 - Coordinate commit ownership when agents share a checkout. The integration owner can create atomic commits after reviewing delegated changes; every agent should not independently stage the same files.
 - Do not rewrite existing history, amend someone else's commit, force push or discard work without authorization. Creating local commits does not authorize pushing, publishing or merging.
 
-If a workspace is not a Git repository, state that limitation. Do not claim work has been committed or initialize Git merely to make a report look complete. Establishing repository version control is a separate concrete action when authorized. This documentation request asks for the policy; it does not request Git initialization.
+If a workspace is not a Git repository, state that limitation and establish version control when authorized as part of implementation. Do not claim work has been committed until it has. The user has now authorized implementation and the required local atomic-commit workflow; pushing or publishing still requires authorization.
 
 ## Collaboration workflow
 
@@ -83,3 +83,9 @@ Verify changing APIs, licenses, model artifacts and prices against current prima
 Keep secrets out of source and logs. Do not log document text, filenames, passage quotes, recordings or transcripts in ordinary diagnostics. Provider credentials belong on an optional backend or in a deliberate user-owned credential design, never embedded in an app.
 
 Present consumer choices as voices, transcription and offline readiness. Runtime names, tensors and benchmark internals belong in optional advanced details. Build usable wide-window layouts, accessibility semantics and failure states alongside the core interaction.
+
+## UI and app identity requirements
+
+The UI must be exceptional: rich intentional haptics, polished native motion, tasteful GPU shaders, immediate input response and measured sustained performance. Follow [docs/ui-quality.md](docs/ui-quality.md). Use Core Haptics and Metal-backed SwiftUI effects on iOS; native haptics and supported AGSL/Compose effects on Android. Adapt for reduced motion, disabled haptics, low power, thermal pressure and older devices. Decorative effects must not compromise narration, recording, legibility or accessibility.
+
+Both apps use the application/bundle ID **`com.osuji.ereaderapp`**. The current app version is **`0.01`**, with initial build/version code **`1`**. Keep build metadata and documentation consistent and verify the actual produced app metadata. Use **eReader** as the neutral working display name until the user chooses branding.
