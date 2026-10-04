@@ -1,0 +1,85 @@
+# Contributor and agent instructions
+
+These instructions apply throughout this workspace. Current instructions from the human user take precedence. Read this file before changing code or documentation.
+
+## Product and scope
+
+Build a listening-first PDF app for everyday reading and accessibility. The reader follows narration and gives access to the original page. Voice notes are recorded at a frozen source position and transcribed asynchronously. English is the first launch language; preserve multilingual contracts.
+
+Architecture plans are not, by themselves, authorization to scaffold or implement the apps. Follow the current human task's scope. When implementation is authorized, work through a complete usable slice rather than accumulating speculative infrastructure.
+
+Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/product.md](docs/product.md), plus the platform and feature documents relevant to the task. Update the documents when actual decisions supersede proposals. Identify assumptions and unresolved device qualification honestly.
+
+## Architectural boundaries
+
+- Use KMP for shared domain contracts, document transformations, anchors, repositories, jobs and privacy policy. Keep SwiftUI and Compose as the native UI layers.
+- Android uses the agreed Compose/Material3 Expressive/Navigation3/Material3 Adaptive/Ktor/Koin/LiteRT stack. iOS uses Swift, SwiftUI and CoreML with an iOS 17 baseline.
+- Native platform code owns audio transport, media sessions, capture, rendering, model execution and OS lifecycle. Native playback time is authoritative.
+- Preserve source, display and spoken text separately with explicit versioned mappings. An audio timestamp or page number alone is not a durable note anchor.
+- Pause and freeze the source position before capture. Save durable audio before acknowledging a saved note. ASR failure must not prevent saving or move the attachment.
+- Enforce local-only policy in every content-processing and sync path. Never silently send a document or voice note to a remote fallback.
+- Core listening and note capture must not require a large language model, a network connection, an account or a flagship device. Optional packs need real device qualification.
+- Use one canonical persistence schema and clear ownership. Avoid duplicate native stores that disagree about documents, notes or progress.
+- Treat user recordings and edits as durable user data; generated narration and model files are separately managed assets or caches.
+
+## Code comments
+
+**Do not add superfluous comments. Comment only when it is very necessary.** Prefer clear naming, small functions and straightforward control flow.
+
+Comments are appropriate for a non-obvious invariant, a necessary platform workaround, a surprising constraint or rationale that cannot be expressed clearly in code. Explain why that behavior must exist. Do not narrate obvious statements, add decorative section banners, repeat signatures in docstrings, retain commented-out implementations or leave speculative TODO padding. Remove comments made stale by a change.
+
+This rule does not limit useful architecture documentation or documentation required for an external contract.
+
+## Verification and unit tests
+
+**Do not commit unit tests to this repository. Do not add or leave unit-test source files in the repository.** This is an explicit project preference, not permission to skip verification.
+
+Use the checks appropriate to the change: compilation, lint/static analysis, integration or end-to-end checks, representative document evaluation, manual interaction and physical-device qualification. Temporary unit checks or experimental harnesses may run outside the repository, such as in a task-specific temporary directory, and must not enter a commit. Do not create tests that merely mirror implementation details.
+
+For audio, notes, extraction, privacy and downloads, verify the relevant failure and recovery behavior as well as the happy path. Do not claim a model or app is qualified based on an emulator, a library's deployment target or one isolated vendor benchmark. Report what actually ran and any remaining limitation.
+
+Documentation-only work requires file/link/consistency review; it does not require an app test suite. Broaden verification when changes, failures or unresolved risks justify it, not by repeatedly rerunning already sufficient checks.
+
+## Removal and compatibility during the build
+
+**The product is pre-release. There is no obligation to preserve obsolete feature behavior or old internal APIs. Remove old features freely when the authorized change replaces or eliminates them.**
+
+Delete their unused code, settings, assets, dependencies and documentation. Do not retain deprecated wrappers, compatibility aliases, migration ladders, legacy feature flags or parallel old implementations without a current product requirement. Development schemas and disposable fixtures can be reset rather than supported indefinitely.
+
+This policy does not authorize deleting unrelated user work, real recordings or user edits. Preserve durability within the current product, explicit export/restore promises, source-anchor reconciliation and atomic model replacement. Supporting iOS 17 is an agreed platform requirement, not obsolete feature compatibility. Revisit the policy when real releases create a user-data migration obligation.
+
+## Atomic commits
+
+**Track all work in atomic commits.** Each commit represents one coherent change with its necessary code, configuration and documentation, and should be independently understandable and reviewable. Keep the repository buildable at commit boundaries whenever a build exists.
+
+- Inspect the working tree before editing and before staging. Separate unrelated tasks and never sweep unrelated user changes into a commit.
+- Complete relevant validation before committing. Include the validation outcome and any known remaining gate in the task handoff.
+- Use concise commit messages describing the concrete change. Avoid giant catch-all commits, speculative WIP commits and unrelated formatting churn.
+- Stage deliberate paths or hunks. Do not blindly stage the entire working tree.
+- Coordinate commit ownership when agents share a checkout. The integration owner can create atomic commits after reviewing delegated changes; every agent should not independently stage the same files.
+- Do not rewrite existing history, amend someone else's commit, force push or discard work without authorization. Creating local commits does not authorize pushing, publishing or merging.
+
+If a workspace is not a Git repository, state that limitation. Do not claim work has been committed or initialize Git merely to make a report look complete. Establishing repository version control is a separate concrete action when authorized. This documentation request asks for the policy; it does not request Git initialization.
+
+## Collaboration workflow
+
+1. Inspect the workspace and relevant instructions; determine the actual task and its acceptance criteria.
+2. Read the relevant architecture. Confirm concrete interfaces before splitting interdependent work.
+3. Delegate independent tasks with explicit file/component ownership, inputs, expected output and validation. Prefer disjoint edits; do not let several agents independently redesign the same contract.
+4. Communicate discoveries that affect another component promptly, especially anchor formats, storage ownership, runtime availability and audio lifecycle.
+5. Integrate and review the actual result. Resolve conflicting assumptions in one authoritative contract and update dependent documentation.
+6. Validate the complete affected journey, create atomic commits where repository workflow is established, and report the outcome concisely.
+
+Use an existing suitable checkout or worktree when available. Do not create speculative worktrees in a non-Git workspace. Never overwrite or revert unrelated changes. Search with `rg`/`rg --files` first and batch independent reads where useful.
+
+Proceed autonomously within the user's authorized scope. Do not repeatedly ask permission for ordinary reversible edits or routine implementation choices. Ask only when missing information materially blocks the result or an action needs authorization. Do not message outside this task, create user-facing chats, publish, deploy or merge unless authorized.
+
+Keep updates meaningful: explain findings, uncertainties and the next resolving step. Final handoffs should say what changed, how it was verified and what materially remains. Use clickable file links. Do not present plans or unperformed checks as finished implementation.
+
+## Dependencies, privacy and product polish
+
+Verify changing APIs, licenses, model artifacts and prices against current primary sources. Pin versions only after qualification. Treat upstream samples as reference material, not proof of production quality or permission to copy their entire dependency stack.
+
+Keep secrets out of source and logs. Do not log document text, filenames, passage quotes, recordings or transcripts in ordinary diagnostics. Provider credentials belong on an optional backend or in a deliberate user-owned credential design, never embedded in an app.
+
+Present consumer choices as voices, transcription and offline readiness. Runtime names, tensors and benchmark internals belong in optional advanced details. Build usable wide-window layouts, accessibility semantics and failure states alongside the core interaction.
