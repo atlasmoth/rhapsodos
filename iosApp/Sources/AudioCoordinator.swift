@@ -35,7 +35,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var replayFile: URL?
     private var observers: [NSObjectProtocol] = []
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
-    private var capturePending = false
+    private(set) var capturePending = false
     private var captureID: UUID?
     private var sleepTimer: Timer?
     private var narrationPlayer: AVAudioPlayer?
@@ -312,15 +312,28 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         previewing = false
     }
 
-    func prepareCapture() async {
+    struct CapturePreparation {
+        fileprivate let tasks: [Task<Void, Never>]
+        let offsetMillis: Int64
+    }
+
+    func reserveCapture() -> CapturePreparation {
         capturePending = true
-        await pauseAndJoinGeneration(restart: narrationPlayer == nil)
+        let tasks = [narrationTask, preloadTask, previewTask].compactMap { $0 }
+        pause(restart: narrationPlayer == nil)
         stopReplay()
+        return CapturePreparation(tasks: tasks, offsetMillis: offsetMillis)
+    }
+
+    func finishPreparingCapture(_ preparation: CapturePreparation) async {
+        for task in preparation.tasks { await task.value }
         for _ in 0..<20 {
             if !speech.isSpeaking && previewSpeech?.isSpeaking != true { break }
             try? await Task.sleep(for: .milliseconds(25))
         }
     }
+
+    func prepareCapture() async { await finishPreparingCapture(reserveCapture()) }
 
     func endCaptureMode() { if !recording { capturePending = false } }
 

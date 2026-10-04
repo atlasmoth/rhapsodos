@@ -80,7 +80,7 @@ Use a main-actor presentation layer and native actors or serial owners for mutab
 5. Feed extraction into the shared canonical document graph: pages, blocks, reading order, source text, geometry, language and confidence.
 6. Produce deterministic narration segments and explicit mappings from spoken text back to the original source. Index and pre-generate only as resources allow.
 
-Bridge `PDFView` into SwiftUI through a focused native adapter. PDFKit is the initial display engine, while the canonical graph drives reflow, narration, search and anchors. PDFKit's Live Text support can improve selection and search on scanned pages, but it does not replace the app's durable reading-order and source-mapping pipeline. Per-page overlays can display the current spoken range and note markers. [PDFKit enhancements](https://developer.apple.com/videos/play/wwdc2022/10089/)
+Bridge `PDFView` into SwiftUI as the main reader surface. The canonical graph drives narration, accessible source context, search and anchors; there is no separate "Listen and follow" or reflow pane. PDFKit's Live Text support can improve selection and search on scanned pages, but it does not replace the app's durable reading-order and source-mapping pipeline. Per-page overlays display the current spoken range and note markers. A tap must hit the active highlight in PDF page coordinates before dispatching pause-and-record for its expected document/passage identity. Blank-space taps, scrolling, zoom and text selection retain native PDF behavior. [PDFKit enhancements](https://developer.apple.com/videos/play/wwdc2022/10089/)
 
 Convert all extracted geometry into a documented coordinate convention. PDFKit character bounds use page coordinates; Vision text regions use normalized image coordinates. Account for page rotation, crop boxes, raster scale and the lower-left versus upper-left origins before showing highlights. [PDFPage character bounds](https://developer.apple.com/documentation/pdfkit/pdfpage/characterbounds(at:)), [Vision OCR](https://developer.apple.com/documentation/vision/recognizing-text-in-images)
 
@@ -149,7 +149,7 @@ Use actual available window size and accessibility text size, not device identit
 
 The playback dock is attached to a session-level container. Resizing, rotation or opening a note must not recreate playback, reload the model, move the frozen anchor or discard the draft. A large book cover must not displace the current passage and recording action in wide listening mode.
 
-Reflow uses Dynamic Type, a bounded readable measure, adjustable spacing and user themes. The original PDF remains a faithful document canvas with zoom; Dynamic Type applies to controls and the reflow presentation. Offer an explicit return to the original page from a reflow passage. Two-page spreads are a reading preference, not the default layout for following narration.
+The original PDF remains a faithful document canvas with zoom and the active narration highlight. Dynamic Type applies to controls and accessible source context. Expose the current excerpt and an equivalent pause-and-record action within the PDF surface without adding a visible reading pane. Two-page spreads are a reading preference, not the default layout for following narration.
 
 ### Accessibility
 
@@ -228,7 +228,8 @@ Track work in validated, coherent [atomic commits](../AGENTS.md#atomic-commits),
 Before calling the listening loop ready, validate:
 
 - Embedded-text, scanned, rotated, multi-column and long PDFs; incorrect order and low-confidence OCR remain reviewable.
-- Source highlighting and frozen anchors through pronunciation changes, reflow, seek, app restart and document reprocessing.
+- Source highlighting and frozen anchors through pronunciation changes, PDF zoom/page browsing, seek, app restart and document reprocessing.
+- Active-highlight taps, blank-space taps, text selection, pan/pinch, rapid taps and passage-boundary races; only the confirmed current source may enter capture.
 - Pause, denied permissions, capture, save, immediate resume, delayed/failed ASR and edited-transcript conflicts.
 - Calls, Siri, route loss, Bluetooth microphones, lock/unlock, protected-data availability, low storage and termination during recording/finalization.
 - Sustained narration on older supported hardware alongside source rendering; record latency, peak memory, energy/thermal behavior and underruns.

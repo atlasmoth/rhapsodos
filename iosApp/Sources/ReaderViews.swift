@@ -150,79 +150,30 @@ private struct ListeningView: View {
     let snapshot: DocumentSnapshot
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
-    @EnvironmentObject private var feedback: Feedback
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Picker("Presentation", selection: $store.sourceMode) {
-                    Text("Listen & follow").tag(false)
-                    Text("Original PDF").tag(true)
-                }.pickerStyle(.segmented).frame(maxWidth: 350)
-                Spacer(minLength: 8)
-                if !store.follow {
-                    Button { store.follow = true } label: { Label("Follow", systemImage: "scope") }.font(.caption)
-                }
-            }.padding(.horizontal, 20).padding(.vertical, 12)
-            if store.sourceMode {
-                if let url = store.originalURL {
+            if let url = store.originalURL {
                 PDFSurface(url: url, pageIndex: audio.current?.pageIndex ?? 0,
-                    range: audio.current.flatMap { $0.provenance == "embedded" ? store.currentSourceRange : nil },
-                    regions: store.currentRegions,
+                    baseRange: audio.current.flatMap { $0.provenance == "embedded" ? store.passageSourceRange : nil },
+                    baseRegions: store.passageRegions,
+                    range: audio.current.flatMap { $0.provenance == "embedded" ? store.highlightSourceRange : nil },
+                    regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" }, anchor: store.currentHighlightAnchor,
+                    excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
                     follow: store.follow, onBrowse: { store.follow = false },
+                    onHighlight: { anchor in
+                        guard store.canBeginNote, store.currentHighlightAnchor == anchor else { return false }
+                        return store.beginNote(expected: anchor)
+                    },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
-                } else {
-                    ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
-                }
+                    .overlay(alignment: .topTrailing) {
+                        if !store.follow {
+                            Button { store.follow = true } label: { Label("Follow narration", systemImage: "scope") }
+                                .font(.caption).padding(10).background(.regularMaterial, in: Capsule()).padding(12)
+                        }
+                    }
             } else {
-                ScrollViewReader { reader in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 24) {
-                            HStack {
-                                Label(audio.playing ? "NOW LISTENING" : "YOUR PLACE", systemImage: audio.playing ? "waveform" : "bookmark")
-                                    .font(.caption2.weight(.semibold)).tracking(1.1).foregroundStyle(Palette.accent)
-                                Spacer()
-                                Text("Page \((audio.current?.pageIndex ?? 0) + 1) of \(snapshot.document.pageCount)").font(.caption).foregroundStyle(.secondary)
-                            }
-                            if snapshot.passages.isEmpty {
-                                ContentUnavailableView("This PDF needs text preparation", systemImage: "doc.text.magnifyingglass",
-                                    description: Text("The original page is available. Pages without embedded text are prepared with on-device OCR. If this page remains empty, check the original scan and try preparation again."))
-                            }
-                            ForEach(Array(snapshot.passages.enumerated()), id: \.element.id) { index, passage in
-                                let current = index == audio.index
-                                VStack(alignment: .leading, spacing: 12) {
-                                    if current { Label("Current passage", systemImage: "speaker.wave.2").font(.caption.weight(.medium)).foregroundStyle(Palette.accent) }
-                                    Text(passage.displayText).font(BrandFont.body(21, relativeTo: .title3)).lineSpacing(8).textSelection(.enabled)
-                                        .foregroundStyle(current ? Color.primary : Color.secondary)
-                                    if current {
-                                        Button { Task { await store.beginNote() } } label: { Label("Pause & record thought", systemImage: "mic") }
-                                            .buttonStyle(.bordered).buttonBorderShape(.capsule).disabled(store.busy)
-                                    } else {
-                                        Button("Listen from here") { store.seek(passage); audio.play() }.font(.caption).foregroundStyle(Palette.accent)
-                                    }
-                                }
-                                .padding(24).frame(maxWidth: .infinity, alignment: .leading)
-                                .background(current ? Palette.accent.opacity(0.065) : Color.clear, in: RoundedRectangle(cornerRadius: 24))
-                                .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(current ? Palette.accent.opacity(0.15) : .clear) }
-                                .modifier(QuietGlow(active: current && audio.playing, restrained: feedback.restrained || reduceMotion))
-                                .id(passage.id)
-                                .accessibilityElement(children: .contain)
-                            }
-                        }.frame(maxWidth: 760).padding(.horizontal, 20).padding(.vertical, 24).frame(maxWidth: .infinity)
-                    }
-                    .simultaneousGesture(DragGesture(minimumDistance: 10).onChanged { _ in store.follow = false })
-                    .task(id: snapshot.document.id) {
-                        await Task.yield()
-                        if store.follow, let current = audio.current { reader.scrollTo(current.id, anchor: .center) }
-                    }
-                    .onChange(of: audio.index) { _, _ in
-                        if store.follow, let current = audio.current { reader.scrollTo(current.id, anchor: .center) }
-                    }
-                    .onChange(of: store.follow) { _, following in
-                        if following, let current = audio.current { reader.scrollTo(current.id, anchor: .center) }
-                    }
-                }
+                ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { PlaybackDock(count: snapshot.passages.count) }
@@ -263,7 +214,7 @@ private struct PlaybackDock: View {
                         .foregroundStyle(Palette.onAccent).background(Palette.accent, in: Circle())
                 }.accessibilityLabel(audio.playing ? "Pause narration" : "Play narration")
                 Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Next passage")
-                Button { Task { await store.beginNote() } } label: { Image(systemName: "mic").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Pause and record a thought")
+                Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
             }.foregroundStyle(Palette.accent)
     }
 }

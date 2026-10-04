@@ -215,72 +215,142 @@ actor PDFPreparationSession {
     }
 }
 
+struct PDFHighlightAnchor: Equatable {
+    let documentId: String
+    let sourceRevision: String
+    let passageId: String
+    let pageIndex: Int
+    let sourceStart: Int
+    let sourceEnd: Int
+}
+
 struct PDFSurface: UIViewRepresentable {
     let url: URL
     let pageIndex: Int
+    let baseRange: NSRange?
+    let baseRegions: [SourceRegion]
     let range: NSRange?
     let regions: [SourceRegion]
+    let pageContexts: [SourcePage]
+    let anchor: PDFHighlightAnchor?
+    let excerpt: String
+    let recordingEnabled: Bool
     let follow: Bool
     let onBrowse: () -> Void
+    let onHighlight: (PDFHighlightAnchor) -> Bool
     let onLoadFailure: () -> Void
 
     func makeUIView(context: Context) -> PDFView {
         let view = PDFView()
         view.autoScales = true
+        view.displayBox = .cropBox
         view.displayMode = .singlePageContinuous
         view.displayDirection = .vertical
         view.backgroundColor = UIColor.secondarySystemBackground
-        context.coordinator.view = view
-        let spinner = context.coordinator.spinner
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(spinner)
-        NSLayoutConstraint.activate([spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor), spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
-        let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.browsing(_:)))
-        pan.delegate = context.coordinator
-        pan.cancelsTouchesInView = false
-        view.addGestureRecognizer(pan)
+        context.coordinator.attach(to: view)
         return view
     }
 
     func updateUIView(_ view: PDFView, context: Context) {
         context.coordinator.onBrowse = onBrowse
+        context.coordinator.onHighlight = onHighlight
         context.coordinator.onLoadFailure = onLoadFailure
-        context.coordinator.request(url: url, pageIndex: pageIndex, range: range, regions: regions, follow: follow)
+        context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts,
+            anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow)
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onLoadFailure: onLoadFailure) }
+    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onHighlight: onHighlight, onLoadFailure: onLoadFailure) }
     static func dismantleUIView(_ uiView: PDFView, coordinator: Coordinator) { coordinator.cancel() }
 
     @MainActor
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         weak var view: PDFView?
         let spinner = UIActivityIndicatorView(style: .medium)
+        let highlightTap = UITapGestureRecognizer()
+        let accessibilityHighlight = HighlightAccessibilityView()
         var onBrowse: () -> Void
+        var onHighlight: (PDFHighlightAnchor) -> Bool
         var onLoadFailure: () -> Void
         private var url: URL?
         private var page = -1
         private var requestedPage = 0
+        private var requestedBaseRange: NSRange?
+        private var requestedBaseRegions: [SourceRegion] = []
         private var requestedRange: NSRange?
         private var requestedRegions: [SourceRegion] = []
+        private var requestedAnchor: PDFHighlightAnchor?
+        private var appliedAnchor: PDFHighlightAnchor?
+        private var appliedPage: PDFPage?
+        private var hitRects: [CGRect] = []
+        private var recordingEnabled = false
+        private var touchAnchor: PDFHighlightAnchor?
+        private var touchVersion: UUID?
+        private var geometryVersion = UUID()
+        private var pageContexts: [SourcePage] = []
+        private var pageAccessibility: [Int: HighlightAccessibilityView] = [:]
         private var overlayAnnotations: [(PDFPage, PDFAnnotation)] = []
         private var requestedFollow = true
         private var generation = UUID()
         private var loadTask: Task<Void, Never>?
+        private var observations: [NSObjectProtocol] = []
+        private var scrollObservations: [NSKeyValueObservation] = []
 
-        init(onBrowse: @escaping () -> Void, onLoadFailure: @escaping () -> Void) {
+        init(onBrowse: @escaping () -> Void, onHighlight: @escaping (PDFHighlightAnchor) -> Bool, onLoadFailure: @escaping () -> Void) {
             self.onBrowse = onBrowse
+            self.onHighlight = onHighlight
             self.onLoadFailure = onLoadFailure
             spinner.hidesWhenStopped = true
             spinner.accessibilityLabel = "Opening original PDF"
+            super.init()
         }
 
-        func request(url: URL, pageIndex: Int, range: NSRange?, regions: [SourceRegion], follow: Bool) {
+        func attach(to view: PDFView) {
+            self.view = view
+            spinner.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(spinner)
+            NSLayoutConstraint.activate([spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor), spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(browsing(_:)))
+            pan.delegate = self
+            pan.cancelsTouchesInView = false
+            view.addGestureRecognizer(pan)
+            highlightTap.addTarget(self, action: #selector(tapped(_:)))
+            highlightTap.delegate = self
+            highlightTap.numberOfTapsRequired = 1
+            highlightTap.numberOfTouchesRequired = 1
+            highlightTap.cancelsTouchesInView = false
+            highlightTap.delaysTouchesBegan = false
+            highlightTap.delaysTouchesEnded = false
+            view.addGestureRecognizer(highlightTap)
+            accessibilityHighlight.frame = view.bounds
+            accessibilityHighlight.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            accessibilityHighlight.frameProvider = { [weak self] in self?.accessibleFrame() ?? .zero }
+            accessibilityHighlight.activate = { [weak self] in self?.activateAccessibleHighlight() ?? false }
+            accessibilityHighlight.accessibilityLabel = "Current narration passage"
+            view.addSubview(accessibilityHighlight)
+            for name in [Notification.Name.PDFViewVisiblePagesChanged, .PDFViewScaleChanged, .PDFViewPageChanged, .PDFViewSelectionChanged] {
+                observations.append(NotificationCenter.default.addObserver(forName: name, object: view, queue: .main) { [weak self] _ in
+                    Task { @MainActor in self?.refreshAccessibility() }
+                })
+            }
+        }
+
+        func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage], anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
+            let baseChanged = requestedPage != pageIndex || requestedBaseRange != baseRange || requestedBaseRegions != baseRegions || requestedAnchor != anchor
+            let geometryChanged = baseChanged || requestedRange != range || requestedRegions != regions
+            let followChanged = follow && !requestedFollow
+            if baseChanged { geometryVersion = UUID() }
+            requestedBaseRange = baseRange
+            requestedBaseRegions = baseRegions
+            self.pageContexts = pageContexts
             requestedPage = pageIndex
             requestedRange = range
             requestedRegions = regions
+            requestedAnchor = anchor
+            self.recordingEnabled = recordingEnabled
+            accessibilityHighlight.accessibilityValue = excerpt
             if follow && !requestedFollow { page = -1 }
             requestedFollow = follow
-            guard self.url != url else { applyRequestedPosition(); return }
+            guard self.url != url else { if geometryChanged || followChanged { applyRequestedPosition() } else { refreshAccessibility() }; return }
             cancel()
             self.url = url
             page = -1
@@ -298,46 +368,188 @@ struct PDFSurface: UIViewRepresentable {
                 guard !Task.isCancelled, let self, self.generation == id, self.url == url else { return }
                 self.spinner.stopAnimating()
                 self.view?.document = document
+                self.observeScrolling()
                 self.applyRequestedPosition()
                 if document == nil { self.onLoadFailure() }
             }
         }
 
-        func cancel() { generation = UUID(); loadTask?.cancel(); loadTask = nil }
+        func cancel() {
+            generation = UUID(); loadTask?.cancel(); loadTask = nil
+            appliedAnchor = nil; appliedPage = nil; touchAnchor = nil; hitRects = []
+            accessibilityHighlight.isHidden = true
+            view?.highlightedSelections = []
+            overlayAnnotations.forEach { $0.0.removeAnnotation($0.1) }; overlayAnnotations.removeAll()
+            pageAccessibility.values.forEach { $0.removeFromSuperview() }; pageAccessibility.removeAll()
+            scrollObservations.removeAll()
+        }
+
+        private func observeScrolling() {
+            scrollObservations.removeAll()
+            guard let view else { return }
+            func observe(_ node: UIView) {
+                if let scroll = node as? UIScrollView {
+                    scrollObservations.append(scroll.observe(\.contentOffset) { [weak self] _, _ in Task { @MainActor in self?.refreshAccessibility() } })
+                    scrollObservations.append(scroll.observe(\.bounds) { [weak self] _, _ in Task { @MainActor in self?.refreshAccessibility() } })
+                }
+                node.subviews.forEach(observe)
+            }
+            observe(view)
+        }
 
         private func applyRequestedPosition() {
             guard let view, let page = view.document?.page(at: requestedPage) else { return }
             view.highlightedSelections = []
             overlayAnnotations.forEach { $0.0.removeAnnotation($0.1) }
             overlayAnnotations.removeAll()
+            hitRects = []
+            appliedPage = page
+            appliedAnchor = requestedAnchor
             let bounds = page.bounds(for: .cropBox)
-            for region in requestedRegions {
-                let rect = CGRect(x: bounds.minX + region.x * bounds.width,
-                    y: bounds.maxY - (region.y + region.height) * bounds.height,
-                    width: region.width * bounds.width, height: region.height * bounds.height)
-                let annotation = PDFAnnotation(bounds: rect, forType: .square, withProperties: nil)
-                annotation.color = .clear
-                annotation.interiorColor = UIColor(Palette.ember).withAlphaComponent(0.18)
-                let border = PDFBorder(); border.lineWidth = 0; annotation.border = border
-                page.addAnnotation(annotation)
-                overlayAnnotations.append((page, annotation))
-            }
-            if let range = requestedRange, range.location != NSNotFound, range.location >= 0, range.length > 0 {
-                let count = (page.string as NSString?)?.length ?? 0
-                if range.location <= count, range.length <= count - range.location, let selection = page.selection(for: range) {
-                    selection.color = UIColor(Palette.ember).withAlphaComponent(0.24)
-                    view.highlightedSelections = [selection]
+            func paintRegions(_ regions: [SourceRegion], alpha: CGFloat) {
+                for region in regions {
+                    let rect = CGRect(x: bounds.minX + region.x * bounds.width,
+                        y: bounds.maxY - (region.y + region.height) * bounds.height,
+                        width: region.width * bounds.width, height: region.height * bounds.height).intersection(bounds)
+                    guard !rect.isNull, !rect.isEmpty else { continue }
+                    let annotation = PDFAnnotation(bounds: rect, forType: .square, withProperties: nil)
+                    annotation.color = .clear
+                    annotation.interiorColor = UIColor(Palette.ember).withAlphaComponent(alpha)
+                    let border = PDFBorder(); border.lineWidth = 0; annotation.border = border
+                    page.addAnnotation(annotation)
+                    overlayAnnotations.append((page, annotation)); hitRects.append(rect)
                 }
             }
+            var selections: [PDFSelection] = []
+            func paintSelection(_ range: NSRange?, alpha: CGFloat) {
+                guard let range, range.location != NSNotFound, range.location >= 0, range.length > 0 else { return }
+                let count = (page.string as NSString?)?.length ?? 0
+                guard range.location <= count, range.length <= count - range.location, let selection = page.selection(for: range) else { return }
+                selection.color = UIColor(Palette.ember).withAlphaComponent(alpha)
+                selections.append(selection)
+                hitRects += selection.selectionsByLine().filter { $0.pages.contains(where: { $0 === page }) }.map { $0.bounds(for: page).intersection(bounds) }.filter { !$0.isEmpty && !$0.isNull }
+            }
+            paintRegions(requestedBaseRegions, alpha: 0.18)
+            paintSelection(requestedBaseRange, alpha: 0.18)
+            if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
+            if requestedRange != requestedBaseRange { paintSelection(requestedRange, alpha: 0.32) }
+            view.highlightedSelections = selections
             if requestedFollow, self.page != requestedPage {
                 self.page = requestedPage
                 view.go(to: page)
             }
+            refreshAccessibility()
         }
 
+        func highlight(at point: CGPoint) -> PDFHighlightAnchor? {
+            guard recordingEnabled, let view, view.bounds.contains(point), view.currentSelection?.string?.isEmpty != false,
+                  let appliedAnchor, appliedAnchor == requestedAnchor, appliedAnchor.pageIndex == requestedPage,
+                  let page = view.page(for: point, nearest: false), page === appliedPage,
+                  view.document?.page(at: requestedPage) === page else { return nil }
+            let position = view.convert(point, to: page)
+            guard page.bounds(for: .cropBox).contains(position), hitRects.contains(where: { $0.contains(position) }) else { return nil }
+            if page.annotations.contains(where: { ($0.type == "Link" || $0.type == "Widget") && $0.bounds.contains(position) }) { return nil }
+            return appliedAnchor
+        }
+
+        @discardableResult func activate(at point: CGPoint, expected: PDFHighlightAnchor) -> Bool {
+            guard highlight(at: point) == expected else { return false }
+            return onHighlight(expected)
+        }
+
+        func beginHighlightTouch(at point: CGPoint) -> Bool {
+            touchAnchor = highlight(at: point)
+            touchVersion = touchAnchor == nil ? nil : geometryVersion
+            return touchAnchor != nil
+        }
+        func continuesHighlightTouch(at point: CGPoint) -> Bool {
+            guard touchVersion == geometryVersion, let anchor = touchAnchor else { return false }
+            return highlight(at: point) == anchor
+        }
+        @discardableResult func finishHighlightTouch(at point: CGPoint) -> Bool {
+            defer { touchAnchor = nil; touchVersion = nil }
+            guard continuesHighlightTouch(at: point), let anchor = touchAnchor else { return false }
+            return activate(at: point, expected: anchor)
+        }
+        @objc private func tapped(_ gesture: UITapGestureRecognizer) {
+            guard gesture.state == .ended else { return }
+            finishHighlightTouch(at: gesture.location(in: view))
+        }
+
+        private func accessibleFrame() -> CGRect {
+            guard let view, let page = appliedPage, appliedAnchor == requestedAnchor else { return .zero }
+            let visible = hitRects.map { view.convert($0, from: page).intersection(view.bounds) }.filter { !$0.isEmpty && !$0.isNull }
+            guard let first = visible.first else { return .zero }
+            return UIAccessibility.convertToScreenCoordinates(visible.dropFirst().reduce(first) { $0.union($1) }, in: view)
+        }
+        private func refreshAccessibility() {
+            accessibilityHighlight.isHidden = accessibleFrame().isEmpty
+            let enabled = recordingEnabled && view?.currentSelection?.string?.isEmpty != false
+            accessibilityHighlight.accessibilityTraits = enabled ? [.button] : [.staticText]
+            accessibilityHighlight.accessibilityHint = enabled ? "Double-tap to pause and record a thought at this passage." : nil
+            accessibilityHighlight.accessibilityCustomActions = enabled ? [UIAccessibilityCustomAction(name: "Pause and record a thought", target: self, selector: #selector(accessibleRecording(_:)))] : nil
+            guard let view, let document = view.document else { return }
+            let visiblePages = Set(view.visiblePages.map { document.index(for: $0) })
+            let contexts = pageContexts.filter { visiblePages.contains($0.pageIndex) }
+            let visibleContexts = Set(contexts.map(\.pageIndex))
+            for index in Array(pageAccessibility.keys) where !visibleContexts.contains(index) { pageAccessibility.removeValue(forKey: index)?.removeFromSuperview() }
+            for context in contexts {
+                let element: HighlightAccessibilityView
+                if let existing = pageAccessibility[context.pageIndex] { element = existing }
+                else {
+                    element = HighlightAccessibilityView(frame: view.bounds)
+                    element.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                    let index = context.pageIndex
+                    element.frameProvider = { [weak self] in
+                        guard let view = self?.view, let page = view.document?.page(at: index) else { return .zero }
+                        let frame = view.convert(page.bounds(for: .cropBox), from: page).intersection(view.bounds)
+                        return frame.isNull || frame.isEmpty ? .zero : UIAccessibility.convertToScreenCoordinates(frame, in: view)
+                    }
+                    element.accessibilityTraits = [.staticText]
+                    element.accessibilityLabel = "Page \(index + 1), recognized text"
+                    view.addSubview(element)
+                    pageAccessibility[index] = element
+                }
+                element.accessibilityValue = context.text
+                element.isHidden = element.accessibilityFrame.isEmpty
+            }
+            view.bringSubviewToFront(accessibilityHighlight)
+        }
+        func activateAccessibleHighlight() -> Bool {
+            guard recordingEnabled, !accessibleFrame().isEmpty, let anchor = appliedAnchor, anchor == requestedAnchor, view?.currentSelection?.string?.isEmpty != false else { return false }
+            return onHighlight(anchor)
+        }
+        @objc private func accessibleRecording(_ action: UIAccessibilityCustomAction) -> Bool { activateAccessibleHighlight() }
+
         @objc func browsing(_ gesture: UIPanGestureRecognizer) {
-            if gesture.state == .began { page = -1; requestedFollow = false; onBrowse() }
+            if gesture.state == .began { page = -1; requestedFollow = false; touchAnchor = nil; onBrowse() }
+        }
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            guard gestureRecognizer === highlightTap else { return true }
+            if touch.view is UIControl { return false }
+            return beginHighlightTouch(at: touch.location(in: view))
+        }
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard gestureRecognizer === highlightTap else { return true }
+            return continuesHighlightTouch(at: gestureRecognizer.location(in: view))
+        }
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf other: UIGestureRecognizer) -> Bool {
+            guard gestureRecognizer === highlightTap else { return false }
+            if let tap = other as? UITapGestureRecognizer { return tap.numberOfTapsRequired > 1 }
+            return other is UILongPressGestureRecognizer || other is UIPanGestureRecognizer || other is UIPinchGestureRecognizer
         }
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool { true }
+        deinit { observations.forEach(NotificationCenter.default.removeObserver) }
     }
+}
+
+@MainActor
+final class HighlightAccessibilityView: UIView {
+    var frameProvider: (() -> CGRect)?
+    var activate: (() -> Bool)?
+    override init(frame: CGRect) { super.init(frame: frame); isAccessibilityElement = true; backgroundColor = .clear }
+    required init?(coder: NSCoder) { super.init(coder: coder); isAccessibilityElement = true; backgroundColor = .clear }
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool { false }
+    override var accessibilityFrame: CGRect { get { frameProvider?() ?? .zero } set { super.accessibilityFrame = newValue } }
+    override func accessibilityActivate() -> Bool { activate?() ?? false }
 }

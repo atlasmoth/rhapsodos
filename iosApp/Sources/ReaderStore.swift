@@ -24,10 +24,10 @@ final class ReaderStore: ObservableObject {
     @Published var typedThought = ""
     @Published var follow = true
     @Published var inspector = false
-    @Published var sourceMode = false
     var repository: SharedRepository?
     var files: LocalFiles?
     private var positions: [PlaybackPosition] = []
+    private var noteTask: Task<Void, Never>?
     private var capturedDuration: Int64 = 0
     private var transcriptionQueue: [String] = []
     private var transcribing = false
@@ -85,13 +85,15 @@ final class ReaderStore: ObservableObject {
     var currentNotes: [VoiceNote] { notes.filter { $0.documentId == selectedId } }
     var currentPassage: Passage? { audio.current }
     var originalURL: URL? { document.flatMap { files?.ownedURL($0.document.filePath) } }
-    var currentRegions: [SourceRegion] {
-        guard let passage = currentPassage, passage.provenance == "ocr",
-              let page = document?.pages.first(where: { $0.pageIndex == passage.pageIndex }) else { return [] }
-        let range = currentSourceRange ?? NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart)
-        return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
+    var currentHighlightAnchor: PDFHighlightAnchor? {
+        guard let document, let passage = currentPassage, passage.documentId == document.document.id, selectedId == passage.documentId else { return nil }
+        return PDFHighlightAnchor(documentId: passage.documentId, sourceRevision: document.document.sourceRevision,
+            passageId: passage.id, pageIndex: passage.pageIndex, sourceStart: passage.sourceStart, sourceEnd: passage.sourceEnd)
     }
-    var currentSourceRange: NSRange? {
+    var canBeginNote: Bool {
+        !busy && !loading && sceneActive && captureDraft == nil && !audio.recording && !audio.previewing && audio.replayingNote == nil && !audio.capturePending && currentHighlightAnchor != nil
+    }
+    var highlightSourceRange: NSRange? {
         guard let passage = currentPassage else { return nil }
         guard let spoken = audio.spokenRange else { return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart) }
         let mapped = passage.spokenMapping.filter { $0.spokenStart < NSMaxRange(spoken) && $0.spokenEnd > spoken.location }.map { mapping -> (Int, Int) in
@@ -101,10 +103,21 @@ final class ReaderStore: ObservableObject {
             }
             return (mapping.sourceStart, mapping.sourceEnd)
         }
-        guard let start = mapped.map({ $0.0 }).min(), let end = mapped.map({ $0.1 }).max() else {
-            return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart)
-        }
+        guard let start = mapped.map({ $0.0 }).min(), let end = mapped.map({ $0.1 }).max() else { return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart) }
         return NSRange(location: start, length: end - start)
+    }
+    var passageSourceRange: NSRange? {
+        currentPassage.map { NSRange(location: $0.pageStart, length: $0.pageEnd - $0.pageStart) }
+    }
+    var passageRegions: [SourceRegion] {
+        guard let passage = currentPassage, passage.provenance == "ocr",
+              let page = document?.pages.first(where: { $0.pageIndex == passage.pageIndex }), let range = passageSourceRange else { return [] }
+        return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
+    }
+    var highlightRegions: [SourceRegion] {
+        guard let passage = currentPassage, passage.provenance == "ocr",
+              let page = document?.pages.first(where: { $0.pageIndex == passage.pageIndex }), let range = highlightSourceRange else { return [] }
+        return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
     var currentBookmarks: [Bookmark] { bookmarks.filter { $0.documentId == selectedId } }
 
@@ -204,7 +217,6 @@ final class ReaderStore: ObservableObject {
             UserDefaults.standard.set(id, forKey: "selectedDocument")
             audio.load(imported.passages, title: title, at: 0)
             follow = true
-            sourceMode = true
             feedback.play(.saved)
             busy = false
             startPreparation(session: session, id: id, start: 0)
@@ -253,10 +265,8 @@ final class ReaderStore: ObservableObject {
                     let updated = try await repository.appendPages(documentId: id, pages: batch, finished: next == total)
                     self.preparationProgress = Double(next) / Double(max(1, total))
                     if self.selectedId == id {
-                        let previouslyEmpty = self.document?.passages.isEmpty == true
                         self.document = updated
                         self.audio.updatePassages(updated.passages)
-                        if previouslyEmpty && !updated.passages.isEmpty { self.sourceMode = false }
                     }
                     try await self.refresh()
                 }
@@ -350,19 +360,31 @@ final class ReaderStore: ObservableObject {
         feedback.play(.selection)
     }
 
-    func beginNote() async {
-        guard !busy, captureDraft == nil, let repository, let files, currentPassage != nil else { return }
+    @discardableResult func beginNote(expected: PDFHighlightAnchor? = nil) -> Bool {
+        guard canBeginNote, let repository, let files, let initial = currentHighlightAnchor,
+              let passage = currentPassage, expected == nil || expected == initial else { return false }
         busy = true
         models?.cancelRuntimeChecks()
         let worker = transcriptionTask
         worker?.cancel()
-        await audio.prepareCapture()
+        let preparation = audio.reserveCapture()
+        noteTask = Task { [weak self] in
+            guard let self else { return }
+            await self.startNoteCapture(anchor: initial, passage: passage, preparation: preparation, worker: worker, repository: repository, files: files)
+            self.noteTask = nil
+        }
+        return true
+    }
+
+    private func startNoteCapture(anchor: PDFHighlightAnchor, passage: Passage, preparation: AudioCoordinator.CapturePreparation,
+                                  worker: Task<Void, Never>?, repository: SharedRepository, files: LocalFiles) async {
+        await audio.finishPreparingCapture(preparation)
         await models?.cancelAndJoinRuntimeChecks()
         await worker?.value
         await speechPacks.unload()
         await voicePacks.unload()
-        guard let passage = currentPassage else { audio.endCaptureMode(); busy = false; return }
-        let frozenOffset = audio.offsetMillis
+        guard currentHighlightAnchor == anchor, !audio.previewing, audio.replayingNote == nil, sceneActive else { audio.endCaptureMode(); busy = false; return }
+        let frozenOffset = preparation.offsetMillis
         do {
             let id = UUID().uuidString
             let path = files.recordings.appendingPathComponent(id + ".voice")
