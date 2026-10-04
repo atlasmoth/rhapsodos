@@ -182,7 +182,7 @@ Priority is capture and audible playback, then immediate prefetch, saved-note AS
 
 ## 8. Persistence and recovery
 
-Use one canonical SQLite schema and repository layer through KMP, with native drivers and file/crypto adapters. **Room KMP versus SQLDelight is an open qualification decision**. Do not create independent Android/iOS schemas or a second SwiftData truth. Start with lexical search; vector search must justify its complexity through a defined task.
+Use one canonical SQLite schema and repository layer through KMP, with native drivers and file/crypto adapters. **SQLDelight is the initial implementation choice**, with a thin JSON facade across the Kotlin/Native framework for Swift. Qualify its concurrency, file protection and performance on actual devices. Do not create independent Android/iOS schemas or a second SwiftData truth. Start with lexical search; vector search must justify its complexity through a defined task.
 
 Database transactions own domain state; file manifests/journals bridge transactions to audio and model files. Reconcile missing, incomplete and orphaned files on launch. Jobs use stable IDs, input revisions, bounded checkpoints and idempotent completion. In-flight jobs recover into a safe resumable or failed state after process termination.
 
@@ -228,7 +228,7 @@ Sync uses stable IDs, an outbox, conflict policy and deletion tombstones. Machin
 | Local-first, strict local-only, curated packs, optional cloud | Agreed |
 | Wide-window layouts and accessible controls | Agreed |
 | One shared SQLite schema | Architecture direction |
-| SQLite library and Swift bridge | Qualify in first implementation slice |
+| SQLite library and Swift bridge | Initial implementation: SQLDelight and a Kotlin/Native framework with a thin JSON facade; device/performance qualification remains |
 | Android minimum API and exact SDK versions | Qualify against actual platform features and audience |
 | Custom local TTS/ASR artifacts | Bake off on physical supported devices |
 | Recoverable recording format and encryption/recovery | Design and interruption-test before readiness claim |

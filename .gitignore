@@ -1,0 +1,15 @@
+.DS_Store
+.gradle/
+.kotlin/
+.build/
+**/build/
+local.properties
+*.xcuserstate
+xcuserdata/
+DerivedData/
+*.apk
+*.ipa
+*.keystore
+*.jks
+.env
+captures/
