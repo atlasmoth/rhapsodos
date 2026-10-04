@@ -16,6 +16,8 @@ The shared `ReaderCore` is the canonical synchronous store. Native adapters call
 
 `SourcePage` gains `provenance` (`embedded` or `ocr`), `languageTag` (default `en`) and `regions`, an array of `{start,end,x,y,width,height}`. Region ranges are page UTF-16 offsets; coordinates are normalized top-left page coordinates. `Passage` includes `displayText`, `languageTag`, `mappingVersion`, `spokenMapping` with `{spokenStart,spokenEnd,sourceStart,sourceEnd}` page-relative ranges, and `provenance`. Embedded PDF selection and OCR regions are different geometries. `documentJson` includes `pages` and page-based `sections` with `{id,title,passageId,pageIndex}`. Do not fabricate heading detection.
 
+Mapping intervals with equal source/spoken lengths are linear: interpolate an intersecting spoken subrange within the interval to obtain its exact source subrange. Unequal lengths represent collapsed whitespace and map to the whole source interval. Adjacent linear intervals are coalesced to keep ordinary documents compact; an interval is not a word boundary.
+
 ## Downloadable speech
 
 - `modelCatalogJson(platform)` returns curated immutable entries: `{id,name,capability,platform,runtime,version,languageTags,minimumOS,minimumMemoryMB,license,licenseUrl,description,files:[{path,url,sha256,bytes}],totalBytes}`. Native adapters enforce OS, storage and memory compatibility before recommending an entry. Qualification is separate from compatibility.

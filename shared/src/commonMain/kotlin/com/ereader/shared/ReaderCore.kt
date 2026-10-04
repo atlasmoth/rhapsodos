@@ -370,8 +370,9 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     private fun documentSnapshot(id: String): DocumentSnapshot {
         val row = queries.documentById(id).executeAsOne()
         val pages = sourcePages(id)
+        val pagesByIndex = pages.associateBy { it.pageIndex }
         val passages = queries.passagesForDocument(id).executeAsList().map { stored ->
-            val page = pages.first { it.pageIndex == stored.page_index.toInt() }
+            val page = pagesByIndex.getValue(stored.page_index.toInt())
             stored.toDomain().copy(languageTag = page.languageTag, provenance = page.provenance)
         }
         return DocumentSnapshot(

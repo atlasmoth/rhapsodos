@@ -50,7 +50,16 @@ internal object PassageBuilder {
         }
     }
 
-    fun mapping(source: String, pageStart: Int): List<SpokenMapping> = buildList {
+    fun mapping(source: String, pageStart: Int): List<SpokenMapping> {
+        val mappings = mutableListOf<SpokenMapping>()
+        fun append(mapping: SpokenMapping) {
+            val previous = mappings.lastOrNull()
+            if (previous != null && previous.spokenEnd == mapping.spokenStart && previous.sourceEnd == mapping.sourceStart &&
+                previous.spokenEnd - previous.spokenStart == previous.sourceEnd - previous.sourceStart &&
+                mapping.spokenEnd - mapping.spokenStart == mapping.sourceEnd - mapping.sourceStart) {
+                mappings[mappings.lastIndex] = previous.copy(spokenEnd = mapping.spokenEnd, sourceEnd = mapping.sourceEnd)
+            } else mappings.add(mapping)
+        }
         var sourceIndex = 0
         var spokenIndex = 0
         while (sourceIndex < source.length) {
@@ -59,13 +68,14 @@ internal object PassageBuilder {
             while (sourceIndex < source.length && source[sourceIndex].isWhitespace() == whitespaceRun) sourceIndex++
             if (!whitespaceRun) {
                 val length = sourceIndex - start
-                add(SpokenMapping(spokenIndex, spokenIndex + length, pageStart + start, pageStart + sourceIndex))
+                append(SpokenMapping(spokenIndex, spokenIndex + length, pageStart + start, pageStart + sourceIndex))
                 spokenIndex += length
             } else if (start > 0 && sourceIndex < source.length) {
-                add(SpokenMapping(spokenIndex, spokenIndex + 1, pageStart + start, pageStart + sourceIndex))
+                append(SpokenMapping(spokenIndex, spokenIndex + 1, pageStart + start, pageStart + sourceIndex))
                 spokenIndex++
             }
         }
+        return mappings
     }
 
     private fun findEnd(text: String, start: Int): Int {
