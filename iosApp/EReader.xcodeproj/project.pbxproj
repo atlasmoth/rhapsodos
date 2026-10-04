@@ -1,0 +1,377 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB800AE8658C38622C0342F1 /* Feedback.swift */; };
+		3845EE5CD3D096E616C54E07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9DFA4348DF0C8CE8EE64C57 /* Assets.xcassets */; };
+		3FC5903F2BD44315D82D5596 /* SharedRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23EF19BE856883DC5656A94 /* SharedRepository.swift */; };
+		6129B2C910F6320DB613CCE2 /* ReaderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */; };
+		74DA643810151910DB13A018 /* Passage.metal in Sources */ = {isa = PBXBuildFile; fileRef = E333FA0C1DD84687684EC5C4 /* Passage.metal */; };
+		8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */; };
+		AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */; };
+		B382C6384FB9285D50B80F9D /* VoiceVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3557A4212E8E793E32F863DF /* VoiceVault.swift */; };
+		B605F37340FE6FD390A9E30B /* AudioCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */; };
+		F7CF63F3E160D75C8051E8B3 /* ReaderViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79886DDA250105F28FCDC609 /* ReaderViews.swift */; };
+		FD9A2B23D20329FDD060CA0E /* OnDeviceTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderStore.swift; sourceTree = "<group>"; };
+		3557A4212E8E793E32F863DF /* VoiceVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceVault.swift; sourceTree = "<group>"; };
+		4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EReaderApp.swift; sourceTree = "<group>"; };
+		79886DDA250105F28FCDC609 /* ReaderViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViews.swift; sourceTree = "<group>"; };
+		8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFSurface.swift; sourceTree = "<group>"; };
+		9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCoordinator.swift; sourceTree = "<group>"; };
+		9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceTranscriber.swift; sourceTree = "<group>"; };
+		B23EF19BE856883DC5656A94 /* SharedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRepository.swift; sourceTree = "<group>"; };
+		DB800AE8658C38622C0342F1 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
+		E32798E409159FACACCBC64A /* EReader.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = EReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E333FA0C1DD84687684EC5C4 /* Passage.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Passage.metal; sourceTree = "<group>"; };
+		F9DFA4348DF0C8CE8EE64C57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		37251F1303B8140509C909D1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F9DFA4348DF0C8CE8EE64C57 /* Assets.xcassets */,
+				E333FA0C1DD84687684EC5C4 /* Passage.metal */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		7A6D4899B9B40DE8BDCCDC97 = {
+			isa = PBXGroup;
+			children = (
+				37251F1303B8140509C909D1 /* Resources */,
+				A5500FFEA232E54DBD44C52D /* Sources */,
+				D689C6CB694E4E34546016C5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A5500FFEA232E54DBD44C52D /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */,
+				4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */,
+				DB800AE8658C38622C0342F1 /* Feedback.swift */,
+				9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */,
+				8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */,
+				3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */,
+				79886DDA250105F28FCDC609 /* ReaderViews.swift */,
+				B23EF19BE856883DC5656A94 /* SharedRepository.swift */,
+				3557A4212E8E793E32F863DF /* VoiceVault.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		D689C6CB694E4E34546016C5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E32798E409159FACACCBC64A /* EReader.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		241048A357DC8F508ACD1672 /* EReader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 111D2166CA6C2218AB813420 /* Build configuration list for PBXNativeTarget "EReader" */;
+			buildPhases = (
+				989C3900ABEA9DB727477651 /* Build SharedCore */,
+				467D8009200EE1406AC38AE6 /* Sources */,
+				8E57BED91453B92E1EC294A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EReader;
+			packageProductDependencies = (
+			);
+			productName = EReader;
+			productReference = E32798E409159FACACCBC64A /* EReader.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0CC8617C4202E9537E4877C4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					241048A357DC8F508ACD1672 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = E463C26DFD19753A87342D80 /* Build configuration list for PBXProject "EReader" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7A6D4899B9B40DE8BDCCDC97;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D689C6CB694E4E34546016C5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				241048A357DC8F508ACD1672 /* EReader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8E57BED91453B92E1EC294A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3845EE5CD3D096E616C54E07 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		989C3900ABEA9DB727477651 /* Build SharedCore */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build SharedCore";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${EREADER_PREBUILT_SHARED:-0}\" != \"1\" ]; then\n  cd \"$SRCROOT/..\"\n  ./gradlew :shared:embedAndSignAppleFrameworkForXcode\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		467D8009200EE1406AC38AE6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B605F37340FE6FD390A9E30B /* AudioCoordinator.swift in Sources */,
+				8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */,
+				13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */,
+				FD9A2B23D20329FDD060CA0E /* OnDeviceTranscriber.swift in Sources */,
+				AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */,
+				74DA643810151910DB13A018 /* Passage.metal in Sources */,
+				6129B2C910F6320DB613CCE2 /* ReaderStore.swift in Sources */,
+				F7CF63F3E160D75C8051E8B3 /* ReaderViews.swift in Sources */,
+				3FC5903F2BD44315D82D5596 /* SharedRepository.swift in Sources */,
+				B382C6384FB9285D50B80F9D /* VoiceVault.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		462AA0884C521BAF251C54A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited) -framework SharedCore -lsqlite3";
+				PRODUCT_BUNDLE_IDENTIFIER = com.osuji.ereaderapp;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		48741331A03326D85F69D9E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.01;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A4E7D2EFCFA38F1CF046BB21 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited) -framework SharedCore -lsqlite3";
+				PRODUCT_BUNDLE_IDENTIFIER = com.osuji.ereaderapp;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		EF932A212CC7E91C777089DB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.01;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		111D2166CA6C2218AB813420 /* Build configuration list for PBXNativeTarget "EReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				462AA0884C521BAF251C54A5 /* Debug */,
+				A4E7D2EFCFA38F1CF046BB21 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E463C26DFD19753A87342D80 /* Build configuration list for PBXProject "EReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				48741331A03326D85F69D9E5 /* Debug */,
+				EF932A212CC7E91C777089DB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0CC8617C4202E9537E4877C4 /* Project object */;
+}

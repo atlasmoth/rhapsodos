@@ -1,6 +1,10 @@
 # iOS architecture
 
-Status: tentative design, researched against primary documentation on 4 October 2026. No app implementation is included. The deployment floor is iOS 17; newer APIs are optional capabilities. Specific models, SDK versions and performance targets must be qualified on physical devices before adoption.
+Status: architecture guiding an initial native implementation, researched on 4 October 2026. The deployment floor is iOS 17; newer APIs are optional capabilities. Specific models and performance targets require physical-device qualification.
+
+The initial `0.01` app uses PDFKit, SwiftUI split navigation and an inspector, system narration, encrypted recording chunks and on-device-required system transcription where available. It reports passage precision rather than word-aligned audio timing. CoreML pack execution, OCR and the model gallery remain qualification work. The app builds for the iOS 17 deployment floor; compilation alone does not qualify behavior on every supported OS or device.
+
+Owned PDF and recording locators are relative to the app's data root, allowing iOS to relocate the container during updates. Local data is excluded from automatic backup, and the vault key is non-synchronizing and device-bound. Intentional export, key recovery and restore are still required before a durable release promise.
 
 ## Product intent
 
@@ -187,7 +191,7 @@ Qualification must cover prolonged playback with PDF rendering, model warm-up, s
 
 ## Persistence, jobs and privacy
 
-Use one canonical SQLite schema and repository layer through KMP for documents, passages, anchors, notes, transcripts, model inventory and the job journal. Native adapters provide the database driver, protected files and cryptographic execution. Room KMP versus SQLDelight remains an open qualification decision; do not create an independent iOS schema or a second SwiftData source of truth. Start with lexical search. FTS5 offers ranking and snippet capabilities, but select the FTS integration only after checking the chosen library, driver and SQLite build. Vector search can be added later if it improves a defined task. [SQLite FTS5](https://www.sqlite.org/fts5.html)
+Use one canonical SQLite schema and repository layer through KMP for documents, passages, anchors, notes, transcripts, model inventory and the job journal. Native adapters provide the database driver, protected files and cryptographic execution. SQLDelight is the initial implementation choice; do not create an independent iOS schema or a second SwiftData source of truth. Start with lexical search. FTS5 offers ranking and snippet capabilities, but select the FTS integration only after checking the chosen driver and SQLite build. Vector search can be added later if it improves a defined task. [SQLite FTS5](https://www.sqlite.org/fts5.html)
 
 Journal OCR, synthesis, ASR and sync jobs with stable IDs, input revisions, output manifests, retry/cancel state and bounded work checkpoints. On launch, reconcile in-flight jobs with files and committed records. Derived audio and indexes are rebuildable; raw voice notes and user edits are user data and need a distinct retention policy.
 
@@ -217,7 +221,7 @@ These are feature adapters, not reasons to increase the minimum OS silently. Spe
 
 Follow [AGENTS.md](../AGENTS.md) for verification and contributor policy. Validation is proportional to risk. Use compile/static checks, manual verification, physical-device qualification and appropriate integration/E2E scenarios. Temporary unit checks and experimental harnesses may run outside the repository, such as in a task-specific temporary directory; do not add or leave unit-test source files in the repository or include them in a commit. Do not create checks that merely restate implementation details.
 
-Track work in validated, coherent [atomic commits](../AGENTS.md#atomic-commits), with deliberate staging and coordinated commit ownership. The integration owner may commit reviewed delegated changes. This workspace is not currently a Git repository, so do not claim these documents were committed or initialize Git without separate authorization.
+Track work in validated, coherent [atomic commits](../AGENTS.md#atomic-commits), with deliberate staging and coordinated commit ownership. The integration owner may commit reviewed delegated changes. Git has been initialized for the authorized implementation; pushing or publishing remains separate.
 
 Before calling the listening loop ready, validate:
 
