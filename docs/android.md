@@ -4,6 +4,8 @@ Status: architecture guiding an initial native implementation, researched on **4
 
 The initial `0.01` app uses native PDF pages, system offline TTS through Media3, a microphone foreground service, anchored voice/text notes and Compose adaptive scenes. Embedded-text listening currently requires API 35 or newer; older devices and scans have an explicit original-page-only state. Saved audio remains available with a pending-model transcription state. LiteRT pack execution, OCR and the model gallery are subsequent qualification work; no unused LiteRT runtime is bundled in this slice.
 
+The initial app explicitly removes dependency-injected network permissions from its merged manifest. Check the produced APK, not just this module's manifest. System speech is a separate OS service: select installed voices marked offline and qualify the actual engine. Future public model downloads require an intentional network-permission and policy change; they must not introduce document or recording upload fallbacks.
+
 ## Product and stack
 
 Build a native listening app whose PDF surface follows the current narration. A listener can pause, record a thought at the confirmed passage, save and resume while ASR works independently. English, accessibility, offline reliability and non-flagship devices receive first-release attention.
