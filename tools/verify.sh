@@ -33,7 +33,7 @@ if [[ "$ereader_mode" == all || "$ereader_mode" == ios ]]; then
   command -v xcodebuild >/dev/null
   bash "$ereader_root/gradlew" -p "$ereader_root" --console=plain --no-daemon :shared:linkDebugFrameworkIosSimulatorArm64
   ereader_derived_data="${EREADER_DERIVED_DATA:-$(mktemp -d "${TMPDIR:-/tmp}/ereader-verify.XXXXXX")}"
-  xcodebuild -project "$ereader_root/iosApp/EReader.xcodeproj" -scheme EReader -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$ereader_derived_data" CODE_SIGNING_ALLOWED=NO build
+  xcodebuild -project "$ereader_root/iosApp/EReader.xcodeproj" -scheme EReader -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$ereader_derived_data" CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- SWIFT_ENABLE_EXPLICIT_MODULES=NO build
   python3 "$ereader_root/tools/check-workspace.py" --ios-app "$ereader_derived_data/Build/Products/Debug-iphonesimulator/EReader.app"
   printf 'iOS build artifacts: %s\n' "$ereader_derived_data"
 fi

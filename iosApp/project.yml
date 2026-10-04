@@ -14,6 +14,18 @@ settings:
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+packages:
+  Kokoro:
+    path: Vendor/Kokoro
+  Argmax:
+    url: https://github.com/argmaxinc/argmax-oss-swift.git
+    exactVersion: 0.18.0
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    exactVersion: 0.9.20
+  Transformers:
+    url: https://github.com/huggingface/swift-transformers.git
+    exactVersion: 1.1.6
 targets:
   EReader:
     type: application
@@ -21,11 +33,21 @@ targets:
     sources:
       - Sources
       - Resources
+    dependencies:
+      - package: Kokoro
+        product: KokoroCoreML
+      - package: Argmax
+        product: WhisperKit
+      - package: ZIPFoundation
+        product: ZIPFoundation
+      - package: Transformers
+        product: Tokenizers
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.osuji.ereaderapp
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: EReader.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         FRAMEWORK_SEARCH_PATHS: "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: "$(inherited) -framework SharedCore -lsqlite3"

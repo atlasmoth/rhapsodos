@@ -1,0 +1,13 @@
+Rhapsodos native speech dependencies
+
+WhisperKit/Argmax OSS Swift 0.18.0 and whisper-tiny.en conversion from argmaxinc/whisperkit-coreml, commit 0f63a7800b00dd0226abd051b906c246e1907482, MIT. Tokenizer assets from openai/whisper-tiny.en retain upstream MIT attribution. Base Whisper by OpenAI, Copyright (c) 2022 OpenAI, MIT; the full notice is OpenAI_Whisper.txt.
+https://github.com/openai/whisper/blob/86098128c0b4f24f0e2aa2994de830614b474227/LICENSE
+
+English G2P frontend retained from Jud/kokoro-coreml commit 6bfc02afb237a311caee927482e58c028edb6acb, Apache-2.0, including MisakiSwift/Misaki-derived phonemization and dictionaries. BART G2P swift-bart-g2p 0.4.0 remains bundled and offline, Apache-2.0. Upstream Jud acoustic models, DSP, tokenizer and download APIs are excluded.
+
+Optional fixed-shape FP32 CoreML Kokoro weights/conversion and Heart, Bella and Michael voice embeddings: aufklarer/Kokoro-82M-CoreML, commit f8ff771e4cab0bb3368e8af3a090a7e847485401, Apache-2.0. Base Kokoro-82M by hexgrad, Apache-2.0. Model assets are downloaded only through the curated, verified native installer.
+https://huggingface.co/aufklarer/Kokoro-82M-CoreML/blob/f8ff771e4cab0bb3368e8af3a090a7e847485401/README.md
+
+The fixed 128-token acoustic adapter, duration-overflow checks, faithful rechunking, cancellation, cache and recording ownership are Rhapsodos implementation. Runtime checks are native simulator evidence; physical-device speed, memory and endurance remain qualification requirements.
+
+Additional native libraries: Hugging Face Swift Transformers 1.1.6 (Apache-2.0), ZIPFoundation 0.9.20 (MIT), and their accompanying dependency license texts.

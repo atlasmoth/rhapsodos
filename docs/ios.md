@@ -1,10 +1,10 @@
 # iOS architecture
 
-Status: architecture guiding an initial native implementation, researched on 4 October 2026. The deployment floor is iOS 17; newer APIs are optional capabilities. Specific models and performance targets require physical-device qualification.
+Status: native implementation and integration qualification, 4 October 2026. The deployment floor remains iOS 17; newer APIs and packs are gated. [Development](development.md) records executed evidence. Physical-device speech and performance qualification remains open.
 
-The initial `0.01` app uses PDFKit, SwiftUI split navigation and an inspector, system narration, encrypted recording chunks and on-device-required system transcription where available. It reports passage precision rather than word-aligned audio timing. CoreML pack execution, OCR and the model gallery remain qualification work. The app builds for the iOS 17 deployment floor; compilation alone does not qualify behavior on every supported OS or device.
+The `0.01` app uses PDFKit/Vision progressive preparation, SwiftUI split navigation and an inspector, system narration and encrypted recording chunks. Its curated downloads provide Whisper tiny English transcription on iOS 17 and optional Kokoro CoreML voices on eligible iOS 18+ devices. Native background URLSession transfers verify artifacts and runtime readiness before activation. The attachment reports passage precision with native audio offset; word-aligned timing is not advertised.
 
-Owned PDF and recording locators are relative to the app's data root, allowing iOS to relocate the container during updates. Local data is excluded from automatic backup, and the vault key is non-synchronizing and device-bound. Intentional export, key recovery and restore are still required before a durable release promise.
+Owned locators are relative to the app's data root so container relocation remains safe. Automatic backup is disabled; the recording key is non-synchronizing and device-bound. Deliberate portable ZIP export renders protected audio to PCM16 WAV with source/notes intact; restore verifies the envelope and seals audio with the receiving device's key. There is no remote key recovery. Vault checks reject truncated committed audio. An interrupted draft can explicitly recover its authenticated prefix into a verified durable asset before canonical commit; its original remains owned recovery data until deliberate note/document deletion. Recovered notes use the same strict playback, ASR and export paths as complete recordings.
 
 ## Product intent
 
@@ -159,19 +159,21 @@ Support large Dynamic Type, sufficient contrast, reduced motion, Switch Control 
 
 ## Local speech and downloadable packs
 
-The default is local-first. Offer a separate local-only/private mode with an enforceable network policy. Qualified cloud speech is an explicit optional choice, never a hidden recovery path when a local pack fails.
+The current app processes content locally. Explicit model downloads fetch public assets; document text and voice recordings are not uploaded. A future cloud mode requires separate content permissions and an enforceable local-only policy. A failed local pack leaves a useful preparation, repair or built-in-voice choice.
 
 | Capability | iOS 17 baseline | Qualification rule |
 | --- | --- | --- |
 | Narration | Available system voices through `AVSpeechSynthesizer` | Confirm installed voice, language and playback behavior |
 | Voice-note transcription | Qualified compact CoreML ASR pack; optional system recognizer where offline capability is available | Validate model OS/runtime support and actual offline operation |
 | OCR | Vision page-level recognition | Measure layout/reading-order quality and memory use |
-| Enhanced local voice | Optional CoreML voice pack | Sustained narration must keep up or use explicit pre-generation |
+| Enhanced local voice | Built-in narration on iOS 17; optional CoreML pack on eligible iOS 18+ devices | Sustained narration must keep up or use explicit preparation |
 | Local language model | Optional later feature | Never required for opening, listening or saving a note |
 
 Legacy `SFSpeechRecognizer` exposes an on-device capability check, but availability varies. Set the on-device requirement when private mode uses that adapter and handle unsupported locales/assets without silently using a server. Microphone permission is necessary for capture; legacy system speech recognition also has a speech-recognition authorization flow. [On-device recognition support](https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition), [speech authorization](https://developer.apple.com/documentation/speech/asking-permission-to-use-speech-recognition)
 
 CoreML is the iOS inference baseline. `MLComputeUnits.all` allows the OS to select eligible compute resources; it does not promise that every operator or model runs on the Neural Engine. MLX is a separate runtime and should only be added for a justified, qualified model. A library's minimum deployment target is not proof that every model it loads supports iOS 17. [CoreML compute units](https://developer.apple.com/documentation/coreml/mlcomputeunits)
+
+The implemented enhanced voice uses the pinned FP32 end-to-end Kokoro export on CPU only, with a conservative iOS 18 and 3 GB eligibility floor. Its 128-token input and five-second output buffer require strict duration checks and complete source rechunking. The adapter accepts at most 4.75 seconds per acoustic call, verifies duration/frame consistency and caches bounded PCM WAVs under the source, voice, pace, frontend and model editions. The retained offline English frontend treats PDF text literally, without pronunciation markup. Unsupported pronunciation must fail explicitly; it must never silently drop a letter. [models-and-evaluation.md](models-and-evaluation.md) records the artifact and qualification evidence.
 
 ### Curated gallery
 
@@ -234,6 +236,6 @@ Before calling the listening loop ready, validate:
 - Compact iPhone, wide iPad, resizable windows, large Dynamic Type, VoiceOver, Switch Control, Voice Control and keyboard operation.
 - Model download interruption, compilation failure, replacement rollback, removal and recovery after process termination.
 
-First technical decisions to settle during implementation are the storage owner/library, the Swift bridge route, the tested PDF extraction limits, the recording recovery format, exact protection/key policy, and the initial qualified voice/ASR packs. PDFKit is the starting engine; commercial engines remain an option if real-document rendering, annotation or extraction qualification reveals a material gap.
+Implemented decisions include SQLDelight ownership, the Kotlin/Native facade, bounded PDFKit/Vision preparation, authenticated encrypted recording chunks, local Keychain policy, portable archive restore and pinned CoreML packs. Commercial PDF engines remain an option if corpus qualification exposes a material gap. Device-specific speech quality, endurance and the oldest supported runtime remain empirical release gates.
 
 Keep comments sparse and essential. During the pre-release build, obsolete features and internal APIs may be removed rather than maintained behind unnecessary backward-compatibility layers. Disposable development fixtures may be reset. Preserve real recordings, user edits and unrelated user work throughout development; pre-release status does not make them disposable. Retain source-anchor integrity, atomic model replacement, explicit export/restore promises and the chosen iOS 17 deployment floor.
