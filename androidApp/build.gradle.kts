@@ -45,5 +45,6 @@ dependencies {
     implementation(libs.media3.session)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.litert)
     debugImplementation(libs.compose.tooling)
 }
