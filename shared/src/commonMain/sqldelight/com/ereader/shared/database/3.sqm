@@ -1,0 +1,1 @@
+ALTER TABLE source_page ADD COLUMN geometry_space TEXT NOT NULL DEFAULT 'unspecified';

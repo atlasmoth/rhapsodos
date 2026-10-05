@@ -9,6 +9,7 @@ data class SourcePage(
     val provenance: String = "embedded",
     val languageTag: String = "en",
     val regions: List<SourceRegion> = emptyList(),
+    val geometrySpace: String = "unspecified",
 )
 
 @Serializable

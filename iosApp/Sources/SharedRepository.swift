@@ -44,6 +44,22 @@ struct SourcePage: Codable {
     let provenance: String
     let languageTag: String
     let regions: [SourceRegion]
+    let geometrySpace: String
+
+    init(pageIndex: Int, text: String, provenance: String, languageTag: String, regions: [SourceRegion], geometrySpace: String = "unspecified") {
+        self.pageIndex = pageIndex; self.text = text; self.provenance = provenance
+        self.languageTag = languageTag; self.regions = regions; self.geometrySpace = geometrySpace
+    }
+    private enum CodingKeys: String, CodingKey { case pageIndex, text, provenance, languageTag, regions, geometrySpace }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        pageIndex = try values.decode(Int.self, forKey: .pageIndex)
+        text = try values.decode(String.self, forKey: .text)
+        provenance = try values.decode(String.self, forKey: .provenance)
+        languageTag = try values.decode(String.self, forKey: .languageTag)
+        regions = try values.decode([SourceRegion].self, forKey: .regions)
+        geometrySpace = try values.decodeIfPresent(String.self, forKey: .geometrySpace) ?? "unspecified"
+    }
 }
 
 struct DocumentSection: Codable, Identifiable {
@@ -136,6 +152,10 @@ actor SharedRepository {
     func appendPages(documentId: String, pages: [ExtractedPage], finished: Bool) throws -> DocumentSnapshot {
         let json = String(decoding: try JSONEncoder().encode(pages), as: UTF8.self)
         return try decode(core.appendDocumentPages(documentId: documentId, pagesJson: json, finished: finished))
+    }
+    func updateGeometry(documentId: String, pageIndex: Int, regions: [SourceRegion]) throws -> DocumentSnapshot {
+        let json = String(decoding: try JSONEncoder().encode(regions), as: UTF8.self)
+        return try decode(core.updatePageGeometry(documentId: documentId, pageIndex: Int32(pageIndex), regionsJson: json, geometrySpace: "cropTopLeftV1"))
     }
     func bookmarks(documentId: String = "") throws -> [Bookmark] { try decode(core.bookmarksJson(documentId: documentId)) }
     func toggleBookmark(id: String, documentId: String, passageId: String, label: String) throws -> [Bookmark] {

@@ -158,7 +158,8 @@ private struct ListeningView: View {
                     baseRange: audio.current.flatMap { $0.provenance == "embedded" ? store.passageSourceRange : nil },
                     baseRegions: store.passageRegions,
                     range: audio.current.flatMap { $0.provenance == "embedded" ? store.highlightSourceRange : nil },
-                    regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" }, anchor: store.currentHighlightAnchor,
+                    regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" },
+                    geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
                     follow: store.follow, onBrowse: { store.follow = false },
                     onHighlight: { anchor in

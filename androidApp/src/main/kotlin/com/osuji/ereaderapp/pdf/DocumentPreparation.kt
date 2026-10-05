@@ -57,6 +57,22 @@ class DocumentPreparation(private val pdf: PdfAdapter, private val store: Reader
         }
     }
 
+    suspend fun repairGeometry(documentId: String, pageIndex: Int): com.osuji.ereaderapp.data.ReaderContents {
+        val document = store.contents(documentId)
+        val source = document.pages.firstOrNull { it.pageIndex == pageIndex } ?: error("This page has not been prepared yet.")
+        val prepared = pdf.extractPage(document.document.filePath, pageIndex)
+        val outerTrim = prepared.text != source.text && source.provenance == "embedded" && prepared.provenance == "embedded"
+        val first = if (outerTrim) prepared.text.indexOfFirst { !it.isWhitespace() }.coerceAtLeast(0) else 0
+        val last = if (outerTrim) prepared.text.indexOfLast { !it.isWhitespace() } + 1 else prepared.text.length
+        require(last >= first && prepared.text.substring(first, last) == source.text) { "This page's highlighting could not be verified. Its text, listening position and thoughts are unchanged." }
+        val regions = prepared.regions.mapNotNull { region ->
+            val start = maxOf(region.start, first)
+            val end = minOf(region.end, last)
+            if (start < end) region.copy(start = start - first, end = end - first) else null
+        }
+        return store.updatePageGeometry(documentId, pageIndex, regions, prepared.geometrySpace)
+    }
+
     fun cancel(documentId: String) { tasks.remove(documentId)?.cancel(); mutableProgress.value = mutableProgress.value - documentId }
     private fun update(progress: PreparationProgress) { mutableProgress.value = mutableProgress.value + (progress.documentId to progress) }
 }

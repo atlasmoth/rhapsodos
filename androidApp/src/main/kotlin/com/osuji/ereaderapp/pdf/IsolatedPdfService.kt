@@ -32,7 +32,7 @@ class IsolatedPdfService : Service() {
     private var document: PDDocument? = null
     private val binder = object : IPdfWorker.Stub() {
         override fun request(pdf: ParcelFileDescriptor, token: String, operation: String, pageIndex: Int, targetWidth: Int): ParcelFileDescriptor {
-            require(token.length <= 128 && operation in setOf("inspect", "text", "render", "outline"))
+            require(token.length <= 128 && operation in setOf("inspect", "text", "render", "outline", "geometry"))
             val pipe = ParcelFileDescriptor.createReliablePipe()
             if (queued.incrementAndGet() > 2) { queued.decrementAndGet(); pdf.close(); pipe.forEach { it.close() }; error("The PDF worker is busy.") }
             worker.execute {
@@ -50,6 +50,7 @@ class IsolatedPdfService : Service() {
                             val payload = when (operation) {
                                 "inspect" -> "{\"pageCount\":${checkNotNull(renderer).pageCount}}"
                                 "text" -> Json.encodeToString(embedded(pageIndex))
+                                "geometry" -> Json.encodeToString(geometry(pageIndex))
                                 else -> Json.encodeToString(outline())
                             }.toByteArray(Charsets.UTF_8)
                             require(payload.size <= 4_100_000) { "The prepared page exceeds the safe transfer limit." }
@@ -109,9 +110,9 @@ class IsolatedPdfService : Service() {
                             val advance = position.widthDirAdj.coerceAtLeast(0f)
                             val height = position.heightDir.coerceAtLeast(1f)
                             val rectangle = when ((position.dir.toInt() - page.rotation + 360) % 360) {
-                                90 -> floatArrayOf(position.x - height, position.y, height, advance)
+                                90 -> floatArrayOf(position.x - height, position.y - advance, height, advance)
                                 180 -> floatArrayOf(position.x - advance, position.y, advance, height)
-                                270 -> floatArrayOf(position.x, position.y - advance, height, advance)
+                                270 -> floatArrayOf(position.x, position.y, height, advance)
                                 else -> floatArrayOf(position.x, position.y - height, advance, height)
                             }
                             runs += PositionedText(value, position.xDirAdj, position.yDirAdj - height, advance, height, rectangle[0], rectangle[1], rectangle[2], rectangle[3])
@@ -120,25 +121,40 @@ class IsolatedPdfService : Service() {
                 }
             }.apply { startPage = index + 1; endPage = index + 1; sortByPosition = false }
             stripper.getText(parsed)
-            val result = PageReadingOrder.source(runs, page.cropBox.width, dimensions.first, dimensions.second, index)
+            val display = PageReadingOrder.source(runs, page.cropBox.width, dimensions.first, dimensions.second, index)
+            val rotation = geometry(index).rotation
+            val result = display.copy(regions = display.regions.map { PdfPageCoordinates.canonical(it, rotation) }, geometrySpace = "cropTopLeftV1")
             require(result.text.length <= 1_000_000) { "This page contains too much text to prepare safely." }
             if (usable(result.text)) return result
         }
-        if (Build.VERSION.SDK_INT >= 35) pdf.openPage(index).use { page ->
-            val items = page.textContents.mapNotNull { content ->
-                if (content.text.isBlank()) null else {
-                    val bounds = content.bounds
-                    if (bounds.isEmpty()) null else {
-                        val left = bounds.minOf { it.left }; val top = bounds.minOf { it.top }
-                        PositionedText(content.text, left, top, bounds.maxOf { it.right } - left, bounds.maxOf { it.bottom } - top)
+        if (Build.VERSION.SDK_INT >= 35) {
+            val rotation = geometry(index).rotation
+            return pdf.openPage(index).use { page ->
+                val items = page.textContents.mapNotNull { content ->
+                    if (content.text.isBlank()) null else {
+                        val bounds = content.bounds
+                        if (bounds.isEmpty()) null else {
+                            val left = bounds.minOf { it.left }; val top = bounds.minOf { it.top }
+                            PositionedText(content.text, left, top, bounds.maxOf { it.right } - left, bounds.maxOf { it.bottom } - top)
+                        }
                     }
                 }
+                val display = PageReadingOrder.source(items, page.width.toFloat(), dimensions.first, dimensions.second, index)
+                val result = display.copy(regions = display.regions.map { PdfPageCoordinates.canonical(it, rotation) }, geometrySpace = "cropTopLeftV1")
+                require(result.text.length <= 1_000_000)
+                result
             }
-            val result = PageReadingOrder.source(items, page.width.toFloat(), dimensions.first, dimensions.second, index)
-            require(result.text.length <= 1_000_000)
-            return result
         }
-        return PdfSourcePage(index, "")
+        return PdfSourcePage(index, "", geometrySpace = "cropTopLeftV1")
+    }
+
+    private fun geometry(index: Int): PdfPageGeometry {
+        val pdf = checkNotNull(renderer)
+        require(index in 0 until pdf.pageCount)
+        val page = checkNotNull(document()).getPage(index)
+        val rotation = ((page.rotation % 360) + 360) % 360
+        require(rotation in setOf(0, 90, 180, 270)) { "This PDF page uses an unsupported rotation." }
+        return pdf.openPage(index).use { displayed -> PdfPageGeometry(rotation, page.cropBox.width, page.cropBox.height, displayed.width.toFloat(), displayed.height.toFloat()) }
     }
 
     private fun render(index: Int, requestedWidth: Int): Bitmap = checkNotNull(renderer).openPage(index).use { page ->

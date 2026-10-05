@@ -2,6 +2,7 @@ package com.osuji.ereaderapp.pdf
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.osuji.ereaderapp.data.syncDirectory
@@ -25,6 +26,7 @@ import kotlin.coroutines.coroutineContext
     val provenance: String = "embedded",
     val languageTag: String = "en",
     val regions: List<SourceRegion> = emptyList(),
+    val geometrySpace: String = "unspecified",
 )
 
 data class ImportedPdf(val id: String, val title: String, val path: String, val pageCount: Int)
@@ -79,17 +81,26 @@ class PdfAdapter(private val context: Context) {
         val count = Json.parseToJsonElement(checkNotNull(remote.request(path, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
         for (index in startPage until count) {
             coroutineContext.ensureActive()
-            val embedded = Json.decodeFromString<PdfSourcePage>(checkNotNull(remote.request(path, "text", index).json))
-            if (usableText(embedded.text)) append(embedded)
-            else {
-                beforeOcr?.invoke()
-                rasterSlots.withPermit {
-                    val bitmap = checkNotNull(remote.request(path, "render", index, 1800).bitmap)
-                    try { append(ocr.recognize(bitmap, index)) } finally { bitmap.recycle() }
-                }
-            }
+            append(extractPage(path, index))
         }
     }
+
+    suspend fun extractPage(path: String, index: Int): PdfSourcePage {
+        val embedded = Json.decodeFromString<PdfSourcePage>(checkNotNull(remote.request(path, "text", index).json))
+        if (usableText(embedded.text)) return embedded
+        beforeOcr?.invoke()
+        val geometry = pageGeometry(path, index)
+        return rasterSlots.withPermit {
+            val displayed = checkNotNull(remote.request(path, "render", index, 1800).bitmap)
+            var upright = displayed
+            try {
+                if (geometry.rotation != 0) upright = Bitmap.createBitmap(displayed, 0, 0, displayed.width, displayed.height, Matrix().apply { postRotate(-geometry.rotation.toFloat()) }, true)
+                ocr.recognize(upright, index).copy(geometrySpace = "cropTopLeftV1")
+            } finally { if (upright !== displayed) upright.recycle(); displayed.recycle() }
+        }
+    }
+
+    suspend fun pageGeometry(path: String, index: Int): PdfPageGeometry = Json.decodeFromString(checkNotNull(remote.request(path, "geometry", index).json))
 
     suspend fun render(path: String, index: Int, targetWidth: Int = 1400): Bitmap = rasterSlots.withPermit {
         checkNotNull(remote.request(path, "render", index, targetWidth.coerceIn(400, 2400)).bitmap)

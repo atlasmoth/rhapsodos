@@ -6,6 +6,8 @@ These instructions apply throughout this workspace. Current instructions from th
 
 Build a listening-first PDF app for everyday reading and accessibility. The reader follows narration and gives access to the original page. Voice notes are recorded at a frozen source position and transcribed asynchronously. English is the first launch language; preserve multilingual contracts.
 
+The main reader surface is the original PDF with the active narration passage highlighted. Do not restore a separate "Listen and follow" or reflow pane. Tapping the visible active highlight pauses and freezes the current source position before audio-note capture. Blank-page taps and browsing gestures must not record or seek. Preserve accessible text and an equivalent record action within the PDF surface.
+
 Architecture plans are not, by themselves, authorization to scaffold or implement the apps. Follow the current human task's scope. When implementation is authorized, work through a complete usable slice rather than accumulating speculative infrastructure.
 
 Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/product.md](docs/product.md), plus the platform and feature documents relevant to the task. Update the documents when actual decisions supersede proposals. Identify assumptions and unresolved device qualification honestly.
@@ -16,6 +18,7 @@ Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/produc
 - Android uses the agreed Compose/Material3 Expressive/Navigation3/Material3 Adaptive/Ktor/Koin/LiteRT stack. iOS uses Swift, SwiftUI and CoreML with an iOS 17 baseline.
 - Native platform code owns audio transport, media sessions, capture, rendering, model execution and OS lifecycle. Native playback time is authoritative.
 - Preserve source, display and spoken text separately with explicit versioned mappings. An audio timestamp or page number alone is not a durable note anchor.
+- Persist tagged `cropTopLeftV1` geometry in the unrotated PDF crop box. Apply rotation in native rendering and hit testing. Repair untagged geometry only after fresh preparation proves the canonical text: exact whole-page equality, or embedded whole-page outer-whitespace trimming with an explicit UTF-16 prefix offset. OCR requires exact equality. Never use substring/fuzzy matching or move user anchors to accommodate a drawing error.
 - Pause and freeze the source position before capture. Save durable audio before acknowledging a saved note. ASR failure must not prevent saving or move the attachment.
 - Enforce local-only policy in every content-processing and sync path. Never silently send a document or voice note to a remote fallback.
 - Core listening and note capture must not require a large language model, a network connection, an account or a flagship device. Optional packs need real device qualification.

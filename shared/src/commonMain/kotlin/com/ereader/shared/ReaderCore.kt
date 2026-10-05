@@ -64,6 +64,16 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         json.encodeToString(documentSnapshot(documentId))
     }
 
+    @Throws(Exception::class)
+    fun updatePageGeometry(documentId: String, pageIndex: Int, regionsJson: String, geometrySpace: String): String = lock.withLock {
+        require(pageIndex >= 0 && geometrySpace == "cropTopLeftV1") { "Unsupported page geometry" }
+        val page = queries.sourcePageByIndex(documentId, pageIndex.toLong()).executeAsOne()
+        val regions = json.decodeFromString<List<SourceRegion>>(regionsJson)
+        validateGeometry(page.source_text, regions, geometrySpace)
+        database.transaction { queries.updatePageGeometry(json.encodeToString(regions), geometrySpace, documentId, pageIndex.toLong()) }
+        json.encodeToString(documentSnapshot(documentId))
+    }
+
     private fun appendPages(documentId: String, pages: List<SourcePage>, finished: Boolean) {
         val document = queries.documentById(documentId).executeAsOne()
         require(document.extraction_status == "preparing") { "Document preparation is already finalized" }
@@ -74,7 +84,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val sourceOffset = previous.sumOf { it.text.length + 3 }
         val ordinalOffset = document.passage_count.toInt()
         val passages = PassageBuilder.build(documentId, pages)
-        pages.forEach { queries.insertSourcePage(documentId, it.pageIndex.toLong(), it.text, it.provenance, it.languageTag, json.encodeToString(it.regions)) }
+        pages.forEach { queries.insertSourcePage(documentId, it.pageIndex.toLong(), it.text, it.provenance, it.languageTag, json.encodeToString(it.regions), it.geometrySpace) }
         passages.forEachIndexed { ordinal, passage ->
             queries.insertPassage(passage.id, documentId, (ordinalOffset + ordinal).toLong(), passage.pageIndex.toLong(),
                 passage.pageStart.toLong(), passage.pageEnd.toLong(), (sourceOffset + passage.sourceStart).toLong(),
@@ -91,11 +101,16 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         require(pages.size <= 10_000 && pages.map { it.pageIndex } == (firstPage until firstPage + pages.size).toList()) { "Pages must retain canonical order" }
         pages.forEach { page ->
             require(page.provenance in setOf("embedded", "ocr") && page.languageTag.isNotBlank()) { "Invalid source metadata" }
-            page.regions.forEach { region ->
-                require(region.start >= 0 && region.end in region.start..page.text.length && region.x.isFinite() && region.y.isFinite() && region.width.isFinite() && region.height.isFinite())
-                require(region.x in 0.0..1.0 && region.y in 0.0..1.0 && region.width in 0.0..1.0 && region.height in 0.0..1.0 && region.x + region.width <= 1.0001 && region.y + region.height <= 1.0001)
-                require(!splitsSurrogate(page.text, region.start) && !splitsSurrogate(page.text, region.end)) { "Region splits Unicode character" }
-            }
+            validateGeometry(page.text, page.regions, page.geometrySpace)
+        }
+    }
+
+    private fun validateGeometry(text: String, regions: List<SourceRegion>, geometrySpace: String) {
+        require(geometrySpace == "cropTopLeftV1" || geometrySpace == "unspecified" && regions.isEmpty()) { "Source regions need supported explicit geometry" }
+        regions.forEach { region ->
+            require(region.start >= 0 && region.end in region.start..text.length && region.x.isFinite() && region.y.isFinite() && region.width.isFinite() && region.height.isFinite())
+            require(region.x in 0.0..1.0 && region.y in 0.0..1.0 && region.width in 0.0..1.0 && region.height in 0.0..1.0 && region.x + region.width <= 1.0001 && region.y + region.height <= 1.0001)
+            require(!splitsSurrogate(text, region.start) && !splitsSurrogate(text, region.end)) { "Region splits Unicode character" }
         }
     }
 
@@ -318,9 +333,11 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     @Throws(Exception::class)
     fun exportDocumentJson(documentId: String): String = lock.withLock {
         val snapshot = documentSnapshot(documentId)
+        val pages = snapshot.pages.map { if (it.geometrySpace == "cropTopLeftV1") it else it.copy(regions = emptyList(), geometrySpace = "unspecified") }
+        validatePages(pages, 0)
         val notes = queries.allNotes().executeAsList().filter { it.document_id == documentId }.map { it.toDomain() }
         require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
-        json.encodeToString(DocumentArchive(document = snapshot.document, pages = snapshot.pages,
+        json.encodeToString(DocumentArchive(document = snapshot.document, pages = pages,
             notes = notes, bookmarks = bookmarks(documentId), position = queries.allPositions().executeAsList()
                 .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis) },
             sections = snapshot.sections, pronunciations = snapshot.pronunciations))
@@ -436,7 +453,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     private fun sourcePages(documentId: String): List<SourcePage> = queries.pagesForDocument(documentId).executeAsList().map {
-        SourcePage(it.page_index.toInt(), it.source_text, it.provenance, it.language_tag, json.decodeFromString(it.regions_json))
+        SourcePage(it.page_index.toInt(), it.source_text, it.provenance, it.language_tag, json.decodeFromString(it.regions_json), it.geometry_space)
     }
 
     private fun documentSnapshot(id: String): DocumentSnapshot {

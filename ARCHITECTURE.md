@@ -66,14 +66,16 @@ A PDF's drawing order is not necessarily its reading order. Extraction quality i
 Maintain three explicit, versioned representations:
 
 - **Source:** faithful extracted text, page geometry and provenance. It is the reference for notes and source highlights.
-- **Reading:** accessible presentation and reflow, with layout artifacts removed under defined policy.
+- **Reading:** accessible display text and semantic source context, with layout artifacts removed under defined policy. The visible reader remains the original PDF rather than a separate reflow pane.
 - **Spoken:** text prepared for pronunciation and narration, with an explicit mapping to source and reading ranges.
 
 Mappings are many-to-many. A single source token such as `$45` may produce several spoken words; a removed running header has no spoken range. Never recover source positions by counting characters in generated audio text alone.
 
 The graph contains logical document identity, content revision, extraction version, pages, blocks, headings, reading-order edges, source ranges, quadrilaterals, language and confidence/provenance. A logical document ID is separate from a file checksum: adding an exported annotation may change bytes without changing the referenced passage.
 
-Use **UTF-16 code-unit offsets into an immutable, versioned canonical source string** for persisted text ranges. Endpoints cannot split surrogate pairs. Swift must convert explicitly to `String.Index`; Kotlin and Swift grapheme counts are not interchangeable. Qualification includes emoji, combining marks, non-Latin scripts and right-to-left text. Geometry uses a defined normalized page coordinate system, with crop/rotation transforms preserved.
+Use **UTF-16 code-unit offsets into an immutable, versioned canonical source string** for persisted text ranges. Endpoints cannot split surrogate pairs. Swift must convert explicitly to `String.Index`; Kotlin and Swift grapheme counts are not interchangeable. Qualification includes emoji, combining marks, non-Latin scripts and right-to-left text. `SourcePage.geometrySpace = cropTopLeftV1` identifies normalized top-left coordinates in the unrotated PDF crop box. Native adapters apply page rotation, crop placement, zoom and pan when painting and hit testing.
+
+Never guess the coordinate convention of untagged geometry. Preserve the source and user data, then freshly prepare that original page and prove the canonical text before replacing only its geometry. Embedded text must equal the complete fresh page text, or that complete text trimmed only at its outer whitespace; the latter requires a literal UTF-16 prefix offset for every mapped range. OCR requires exact whole-page equality. Substring, fuzzy and internal-whitespace matching are excluded. Geometry repair cannot rewrite a source revision, passage, note attachment or reading position. Unverified geometry has no interactive highlight; listening, accessible source context and the playback-dock note action remain available.
 
 ### Incremental preparation
 
@@ -85,7 +87,7 @@ Use **UTF-16 code-unit offsets into an immutable, versioned canonical source str
 
 Normalization covers hyphenation, whitespace, repeated headers/footers, abbreviations and pronunciation. Footnotes, captions and tables have visible policies; uncertain content is not silently invented or discarded. Complex equations and tables may require a source-aware alternate presentation or a deliberate skip choice. A general LLM is not necessary for this baseline.
 
-The source graph drives narration and reflow. Native PDF surfaces display the faithful page and highlight mapped geometry. A low-confidence extraction can fall back to the original page and an explicit repair/preparation state.
+The source graph drives narration, search and accessible source context. Native PDF surfaces display the faithful page and highlight mapped geometry. Tapping the visible active highlight dispatches pause-and-record against its expected document/passage identity; a stale highlight must never attach to a different passage. Native hit testing accounts for the rendered page, crop, rotation, zoom and pan. Blank-space taps and browsing gestures do not record or seek. An uncertain extraction retains the original page and an explicit repair/preparation state.
 
 ## 4. Durable data contracts
 

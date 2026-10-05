@@ -10,6 +10,7 @@ struct ExtractedPage: Encodable {
     let provenance: String
     let languageTag: String
     let regions: [SourceRegion]
+    let geometrySpace = "cropTopLeftV1"
 }
 
 struct SourceRegion: Codable, Hashable {
@@ -52,8 +53,9 @@ enum PDFImporter {
                 let rect = page.bounds(for: .cropBox)
                 let embedded = page.string ?? ""
                 if !embedded.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    guard embedded.utf16.count <= 20_000_000 - characters else { throw PDFImportFailure.tooMuchText }
                     return ExtractedPage(pageIndex: index, text: embedded, width: rect.width, height: rect.height,
-                                         provenance: "embedded", languageTag: "en", regions: [])
+                                         provenance: "embedded", languageTag: "en", regions: embeddedRegions(page, canonicalText: embedded) ?? [])
                 }
                 let recognized = try recognize(page)
                 return ExtractedPage(pageIndex: index, text: recognized.text, width: rect.width, height: rect.height,
@@ -67,6 +69,49 @@ enum PDFImporter {
             progress(index + 1, pdf.pageCount)
         }
         return PDFExtraction(pages: pages)
+    }
+
+    static func repairGeometry(at url: URL, pageIndex: Int, canonicalText: String, provenance: String) throws -> [SourceRegion]? {
+        try Task.checkCancellation()
+        guard let pdf = PDFDocument(url: url), !pdf.isLocked, pdf.pageCount <= 10_000,
+              pageIndex >= 0, let page = pdf.page(at: pageIndex) else { throw PDFImportFailure.unreadable }
+        if provenance == "embedded" { return try autoreleasepool { try Task.checkCancellation(); return embeddedRegions(page, canonicalText: canonicalText) } }
+        let recognized = try autoreleasepool { try recognize(page) }
+        try Task.checkCancellation()
+        return recognized.text.utf16.elementsEqual(canonicalText.utf16) ? recognized.regions : nil
+    }
+
+    fileprivate static func embeddedRegions(_ page: PDFPage, canonicalText: String) -> [SourceRegion]? {
+        let raw = page.string ?? ""
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let original = raw as NSString
+        let sourceRange: NSRange
+        if raw.utf16.elementsEqual(canonicalText.utf16) { sourceRange = NSRange(location: 0, length: original.length) }
+        else if trimmed.utf16.elementsEqual(canonicalText.utf16) { sourceRange = original.range(of: trimmed, options: .literal) }
+        else { return nil }
+        let crop = page.bounds(for: .cropBox)
+        guard crop.width > 0, crop.height > 0, sourceRange.location != NSNotFound, sourceRange.length > 0,
+              let all = page.selection(for: sourceRange) else { return [] }
+        var regions: [SourceRegion] = []
+        for line in all.selectionsByLine() {
+            for index in 0..<line.numberOfTextRanges(on: page) {
+                let range = NSIntersectionRange(sourceRange, line.range(at: index, on: page))
+                guard range.location != NSNotFound, range.length > 0, NSMaxRange(range) <= original.length else { continue }
+                let content = original.substring(with: range) as NSString
+                let visible = (content as String).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !visible.isEmpty else { continue }
+                let local = content.range(of: visible, options: .literal)
+                guard local.location != NSNotFound else { continue }
+                let visibleRange = NSRange(location: range.location + local.location, length: local.length)
+                let rect = page.selection(for: visibleRange)?.bounds(for: page).intersection(crop) ?? .null
+                guard !rect.isNull, !rect.isEmpty else { continue }
+                regions.append(SourceRegion(start: visibleRange.location - sourceRange.location,
+                    end: NSMaxRange(visibleRange) - sourceRange.location,
+                    x: (rect.minX - crop.minX) / crop.width, y: (crop.maxY - rect.maxY) / crop.height,
+                    width: rect.width / crop.width, height: rect.height / crop.height))
+            }
+        }
+        return regions.sorted { $0.start == $1.start ? $0.end < $1.end : $0.start < $1.start }
     }
 
     fileprivate static func recognize(_ page: PDFPage) throws -> (text: String, regions: [SourceRegion]) {
@@ -185,7 +230,8 @@ actor PDFPreparationSession {
                 let bounds = page.bounds(for: .cropBox)
                 let embedded = page.string ?? ""
                 let usesOCR = embedded.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                let recognized = usesOCR ? try PDFImporter.recognize(page) : (text: embedded, regions: [SourceRegion]())
+                guard usesOCR || embedded.utf16.count <= 20_000_000 - characterCount else { throw PDFImportFailure.tooMuchText }
+                let recognized = usesOCR ? try PDFImporter.recognize(page) : (text: embedded, regions: PDFImporter.embeddedRegions(page, canonicalText: embedded) ?? [])
                 return ExtractedPage(pageIndex: index, text: recognized.text, width: bounds.width, height: bounds.height,
                     provenance: usesOCR ? "ocr" : "embedded", languageTag: "en", regions: recognized.regions)
             }
@@ -232,6 +278,8 @@ struct PDFSurface: UIViewRepresentable {
     let range: NSRange?
     let regions: [SourceRegion]
     let pageContexts: [SourcePage]
+    let geometrySpace: String
+    let sourceText: String
     let anchor: PDFHighlightAnchor?
     let excerpt: String
     let recordingEnabled: Bool
@@ -255,7 +303,7 @@ struct PDFSurface: UIViewRepresentable {
         context.coordinator.onBrowse = onBrowse
         context.coordinator.onHighlight = onHighlight
         context.coordinator.onLoadFailure = onLoadFailure
-        context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts,
+        context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts, geometrySpace: geometrySpace, sourceText: sourceText,
             anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow)
     }
 
@@ -278,6 +326,8 @@ struct PDFSurface: UIViewRepresentable {
         private var requestedBaseRegions: [SourceRegion] = []
         private var requestedRange: NSRange?
         private var requestedRegions: [SourceRegion] = []
+        private var requestedGeometrySpace = "unspecified"
+        private var requestedSourceText = ""
         private var requestedAnchor: PDFHighlightAnchor?
         private var appliedAnchor: PDFHighlightAnchor?
         private var appliedPage: PDFPage?
@@ -334,13 +384,15 @@ struct PDFSurface: UIViewRepresentable {
             }
         }
 
-        func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage], anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
-            let baseChanged = requestedPage != pageIndex || requestedBaseRange != baseRange || requestedBaseRegions != baseRegions || requestedAnchor != anchor
+        func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage], geometrySpace: String, sourceText: String, anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
+            let baseChanged = requestedPage != pageIndex || requestedBaseRange != baseRange || requestedBaseRegions != baseRegions || requestedAnchor != anchor || requestedGeometrySpace != geometrySpace || requestedSourceText != sourceText
             let geometryChanged = baseChanged || requestedRange != range || requestedRegions != regions
             let followChanged = follow && !requestedFollow
             if baseChanged { geometryVersion = UUID() }
             requestedBaseRange = baseRange
             requestedBaseRegions = baseRegions
+            requestedGeometrySpace = geometrySpace
+            requestedSourceText = sourceText
             self.pageContexts = pageContexts
             requestedPage = pageIndex
             requestedRange = range
@@ -407,6 +459,7 @@ struct PDFSurface: UIViewRepresentable {
             appliedAnchor = requestedAnchor
             let bounds = page.bounds(for: .cropBox)
             func paintRegions(_ regions: [SourceRegion], alpha: CGFloat) {
+                guard requestedGeometrySpace == "cropTopLeftV1" else { return }
                 for region in regions {
                     let rect = CGRect(x: bounds.minX + region.x * bounds.width,
                         y: bounds.maxY - (region.y + region.height) * bounds.height,
@@ -422,6 +475,7 @@ struct PDFSurface: UIViewRepresentable {
             }
             var selections: [PDFSelection] = []
             func paintSelection(_ range: NSRange?, alpha: CGFloat) {
+                guard requestedSourceText.utf16.elementsEqual((page.string ?? "").utf16) else { return }
                 guard let range, range.location != NSNotFound, range.location >= 0, range.length > 0 else { return }
                 let count = (page.string as NSString?)?.length ?? 0
                 guard range.location <= count, range.length <= count - range.location, let selection = page.selection(for: range) else { return }
@@ -429,10 +483,13 @@ struct PDFSurface: UIViewRepresentable {
                 selections.append(selection)
                 hitRects += selection.selectionsByLine().filter { $0.pages.contains(where: { $0 === page }) }.map { $0.bounds(for: page).intersection(bounds) }.filter { !$0.isEmpty && !$0.isNull }
             }
-            paintRegions(requestedBaseRegions, alpha: 0.18)
-            paintSelection(requestedBaseRange, alpha: 0.18)
-            if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
-            if requestedRange != requestedBaseRange { paintSelection(requestedRange, alpha: 0.32) }
+            if requestedBaseRange != nil && requestedSourceText.utf16.elementsEqual((page.string ?? "").utf16) {
+                paintSelection(requestedBaseRange, alpha: 0.18)
+                if requestedRange != requestedBaseRange { paintSelection(requestedRange, alpha: 0.32) }
+            } else {
+                paintRegions(requestedBaseRegions, alpha: 0.18)
+                if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
+            }
             view.highlightedSelections = selections
             if requestedFollow, self.page != requestedPage {
                 self.page = requestedPage

@@ -78,6 +78,8 @@ import com.osuji.ereaderapp.pdf.DocumentPreparation
 import com.osuji.ereaderapp.audio.TranscriptionCoordinator
 import com.osuji.ereaderapp.pdf.PdfAdapter
 import com.osuji.ereaderapp.pdf.SourceRegion
+import com.osuji.ereaderapp.pdf.PdfPageGeometry
+import com.osuji.ereaderapp.pdf.PdfPageCoordinates
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -566,7 +568,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                 }
                 OriginalPage(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, active, currentAvailable && audio.durationMillis > 0 && !audio.preparing,
                     { page = it; following = false }, { following = false },
-                    { passageId, revision -> record(id, passageId, revision) }, Modifier.weight(1f))
+                    { passageId, revision -> record(id, passageId, revision) }, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
             }
             if (wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column(Modifier.padding(20.dp)) {
@@ -635,25 +637,40 @@ internal class PdfHighlightTap(private val startX: Float, private val startY: Fl
 }
 
 @Composable
-private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (String, String) -> Boolean, modifier: Modifier) {
+private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (String, String) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val document = contents.document
     var bitmap by remember(document.id, page) { mutableStateOf<Bitmap?>(null) }
     var error by remember(document.id, page) { mutableStateOf<String?>(null) }
     var renderAttempt by remember(document.id, page) { mutableIntStateOf(0) }
+    var geometryAttempt by remember(document.id, page) { mutableIntStateOf(0) }
+    var geometry by remember(document.id, page) { mutableStateOf<PdfPageGeometry?>(null) }
+    var geometryError by remember(document.id, page) { mutableStateOf<String?>(null) }
     var scale by remember(document.id, page) { mutableFloatStateOf(1f) }
     var offset by remember(document.id, page) { mutableStateOf(Offset.Zero) }
     val interaction = remember(document.id, page) { PdfHighlightInteraction() }
     val latestRecord by rememberUpdatedState(record)
     val latestAvailable by rememberUpdatedState(recordAvailable)
     val density = LocalDensity.current
+    val preparation = koinInject<DocumentPreparation>()
+    val preparedPage = contents.pages.firstOrNull { it.pageIndex == page }
     LaunchedEffect(document.id, page, renderAttempt) {
         try { bitmap = pdf.render(document.filePath, page, 2400) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = failure.message ?: "This page could not be rendered." }
     }
+    LaunchedEffect(document.id, page, preparedPage, geometryAttempt) {
+        geometryError = null
+        if (preparedPage == null || preparedPage.text.isBlank()) return@LaunchedEffect
+        try {
+            if (geometry == null) geometry = pdf.pageGeometry(document.filePath, page)
+            if (preparedPage.geometrySpace != "cropTopLeftV1" || preparedPage.regions.isEmpty()) geometryUpdated(preparation.repairGeometry(document.id, page))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (failure: Exception) { geometryError = "This page's highlighting is unavailable. Use the microphone button to record at your listening position." }
+    }
     val active = activePassage?.takeIf { it.pageIndex == page }
     val latestActive by rememberUpdatedState(active)
-    val regions = if (active != null) contents.pages.firstOrNull { it.pageIndex == page }?.regions.orEmpty().filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
+    val displayRegions = if (preparedPage?.geometrySpace == "cropTopLeftV1" && geometry != null) preparedPage.regions.map { PdfPageCoordinates.displayed(it, geometry!!.rotation) } else emptyList()
+    val regions = if (active != null) displayRegions.filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
     val highlight = Color(0xFF9F3800).copy(alpha = 0.18f)
     val outline = Color(0xFF9F3800).copy(alpha = 0.75f)
     Column(modifier.fillMaxWidth()) {
@@ -663,6 +680,12 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
             IconButton(onClick = { scale = (scale + 0.5f).coerceAtMost(5f); browse() }, enabled = scale < 5f) { Icon(Icons.Default.ZoomIn, "Zoom in") }
             IconButton(onClick = { scale = 1f; offset = Offset.Zero; browse() }) { Icon(Icons.Default.FitScreen, "Fit original page") }
             IconButton(onClick = { selectPage(page + 1) }, enabled = page + 1 < document.pageCount) { Icon(Icons.Default.ChevronRight, "Next page") }
+        }
+        geometryError?.let { unavailable ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(unavailable, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                TextButton(onClick = { geometryAttempt++ }) { Text("Retry highlight") }
+            }
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color(0xFFE8E8E3)), contentAlignment = Alignment.Center) {
             val image = bitmap
@@ -704,7 +727,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
                         }
                     }
                 }.semantics {
-                    contentDescription = "Original PDF page ${page + 1} of ${document.pageCount}. Pinch to zoom, or use zoom controls." + if (contents.pages.firstOrNull { it.pageIndex == page }?.regions.isNullOrEmpty()) contents.pages.firstOrNull { it.pageIndex == page }?.text?.let { " Prepared page text: $it" }.orEmpty() else ""
+                    contentDescription = "Original PDF page ${page + 1} of ${document.pageCount}. Pinch to zoom, or use zoom controls." + if (displayRegions.isEmpty()) preparedPage?.text?.let { " Prepared page text: $it" }.orEmpty() else ""
                 }) {
                     val drawnPlacement = PdfPagePlacement(size.width, size.height, image.width.toFloat(), image.height.toFloat(), scale, offset.x, offset.y)
                     withTransform({ translate(drawnPlacement.left, drawnPlacement.top); scale(drawnPlacement.width / image.width, drawnPlacement.height / image.height, pivot = Offset.Zero) }) { drawImage(pixels) }
@@ -716,7 +739,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, a
                     interaction.drawn = active?.takeIf { regions.isNotEmpty() }?.let { DrawnPdfHighlight(it.id, document.sourceRevision, drawnPlacement, regions) }
                 }
                 contents.passages.filter { it.pageIndex == page }.forEach { passage ->
-                    val passageRegions = contents.pages.firstOrNull { it.pageIndex == page }?.regions.orEmpty().filter { it.start < passage.pageEnd && it.end > passage.pageStart }
+                    val passageRegions = displayRegions.filter { it.start < passage.pageEnd && it.end > passage.pageStart }
                     val rectangles = passageRegions.map(placement::rectangle).filter { it.overlaps(Rect(0f, 0f, widthPixels, heightPixels)) }
                     if (rectangles.isNotEmpty()) {
                         val bounds = Rect(rectangles.minOf { it.left }.coerceAtLeast(0f), rectangles.minOf { it.top }.coerceAtLeast(0f), rectangles.maxOf { it.right }.coerceAtMost(widthPixels), rectangles.maxOf { it.bottom }.coerceAtMost(heightPixels))

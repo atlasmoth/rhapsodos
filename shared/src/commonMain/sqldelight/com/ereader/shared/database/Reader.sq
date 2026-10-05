@@ -29,6 +29,7 @@ CREATE TABLE source_page (
     provenance TEXT NOT NULL DEFAULT 'embedded',
     language_tag TEXT NOT NULL DEFAULT 'en',
     regions_json TEXT NOT NULL DEFAULT '[]',
+    geometry_space TEXT NOT NULL DEFAULT 'unspecified',
     PRIMARY KEY(document_id, page_index)
 );
 
@@ -121,10 +122,16 @@ insertPassage:
 INSERT INTO passage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 insertSourcePage:
-INSERT INTO source_page VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO source_page VALUES (?, ?, ?, ?, ?, ?, ?);
 
 pagesForDocument:
 SELECT * FROM source_page WHERE document_id = ? ORDER BY page_index;
+
+sourcePageByIndex:
+SELECT * FROM source_page WHERE document_id = ? AND page_index = ?;
+
+updatePageGeometry:
+UPDATE source_page SET regions_json = ?, geometry_space = ? WHERE document_id = ? AND page_index = ?;
 
 passagesForDocument:
 SELECT * FROM passage WHERE document_id = ? ORDER BY ordinal;

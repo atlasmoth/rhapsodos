@@ -42,6 +42,9 @@ final class ReaderStore: ObservableObject {
     let speechPacks = CoreMLSpeech()
     let voicePacks = CoreMLVoice()
     private var preparationTask: Task<Void, Never>?
+    private var geometryRepairTask: Task<Void, Never>?
+    private var geometryRepairID: UUID?
+    private var geometryRepairAttempts: Set<String> = []
     private var sceneActive = true
 
     init() {
@@ -78,7 +81,10 @@ final class ReaderStore: ObservableObject {
         audio.$playing.merge(with: audio.$recording).merge(with: audio.$previewing).merge(with: audio.$replayPaused).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $preparingDocument.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $captureDraft.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
-        $busy.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
+        $busy.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions(); self?.repairCurrentGeometry() } }.store(in: &subscriptions)
+        audio.$index.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
+        $document.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
+        $captureDraft.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
         Task { await openLibrary() }
     }
 
@@ -106,17 +112,19 @@ final class ReaderStore: ObservableObject {
         guard let start = mapped.map({ $0.0 }).min(), let end = mapped.map({ $0.1 }).max() else { return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart) }
         return NSRange(location: start, length: end - start)
     }
+    var currentPage: SourcePage? {
+        guard let passage = currentPassage else { return nil }
+        return document?.pages.first { $0.pageIndex == passage.pageIndex }
+    }
     var passageSourceRange: NSRange? {
         currentPassage.map { NSRange(location: $0.pageStart, length: $0.pageEnd - $0.pageStart) }
     }
     var passageRegions: [SourceRegion] {
-        guard let passage = currentPassage, passage.provenance == "ocr",
-              let page = document?.pages.first(where: { $0.pageIndex == passage.pageIndex }), let range = passageSourceRange else { return [] }
+        guard let page = currentPage, page.geometrySpace == "cropTopLeftV1", let range = passageSourceRange else { return [] }
         return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
     var highlightRegions: [SourceRegion] {
-        guard let passage = currentPassage, passage.provenance == "ocr",
-              let page = document?.pages.first(where: { $0.pageIndex == passage.pageIndex }), let range = highlightSourceRange else { return [] }
+        guard let page = currentPage, page.geometrySpace == "cropTopLeftV1", let range = highlightSourceRange else { return [] }
         return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
     var currentBookmarks: [Bookmark] { bookmarks.filter { $0.documentId == selectedId } }
@@ -281,14 +289,47 @@ final class ReaderStore: ObservableObject {
         }
     }
 
+    private func repairCurrentGeometry() {
+        guard geometryRepairTask == nil, sceneActive, !busy, !preparingDocument, captureDraft == nil,
+              !audio.recording, !audio.capturePending, let snapshot = document, let page = currentPage,
+              page.geometrySpace != "cropTopLeftV1", let url = originalURL, let repository else { return }
+        let key = snapshot.document.id + ":" + snapshot.document.sourceRevision + ":" + String(page.pageIndex)
+        guard !geometryRepairAttempts.contains(key) else { return }
+        let id = UUID()
+        geometryRepairID = id
+        geometryRepairTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                if self.geometryRepairID == id {
+                    self.geometryRepairTask = nil; self.geometryRepairID = nil
+                    self.repairCurrentGeometry()
+                }
+            }
+            let worker = Task.detached(priority: .utility) {
+                try PDFImporter.repairGeometry(at: url, pageIndex: page.pageIndex, canonicalText: page.text, provenance: page.provenance)
+            }
+            do {
+                let regions = try await withTaskCancellationHandler(operation: { try await worker.value }, onCancel: { worker.cancel() })
+                try Task.checkCancellation()
+                guard self.document?.document.id == snapshot.document.id,
+                      self.document?.document.sourceRevision == snapshot.document.sourceRevision else { return }
+                self.geometryRepairAttempts.insert(key)
+                guard let regions else { return }
+                let repaired = try await repository.updateGeometry(documentId: snapshot.document.id, pageIndex: page.pageIndex, regions: regions)
+                if self.selectedId == snapshot.document.id { self.document = repaired }
+            } catch is CancellationError {
+            } catch { self.geometryRepairAttempts.insert(key) }
+        }
+    }
+
     func sceneChanged(_ phase: ScenePhase) {
         sceneActive = phase == .active
-        if phase == .background { preparationTask?.cancel() }
+        if phase == .background { preparationTask?.cancel(); geometryRepairTask?.cancel() }
         if phase == .active, !preparingDocument, let unfinished = library.first(where: { $0.extractionStatus == "preparing" }) {
             resumePreparation(unfinished.id)
         }
         serviceTranscriptions()
-        if sceneActive { Task { await models?.recheckReadyPacks() } }
+        if sceneActive { repairCurrentGeometry(); Task { await models?.recheckReadyPacks() } }
     }
 
     func toggleBookmark(_ passage: Passage) async {
@@ -325,7 +366,9 @@ final class ReaderStore: ObservableObject {
         busy = true
         defer { busy = false }
         preparationTask?.cancel()
+        geometryRepairTask?.cancel()
         await preparationTask?.value
+        await geometryRepairTask?.value
         if selectedId == id { await audio.pauseAndJoinGeneration(restart: true); audio.load([], title: "", at: 0); audio.stopReplay(); document = nil; selectedId = nil }
         do {
             _ = try await repository.deleteDocument(id)
@@ -367,20 +410,23 @@ final class ReaderStore: ObservableObject {
         models?.cancelRuntimeChecks()
         let worker = transcriptionTask
         worker?.cancel()
+        let geometryWorker = geometryRepairTask
+        geometryWorker?.cancel()
         let preparation = audio.reserveCapture()
         noteTask = Task { [weak self] in
             guard let self else { return }
-            await self.startNoteCapture(anchor: initial, passage: passage, preparation: preparation, worker: worker, repository: repository, files: files)
+            await self.startNoteCapture(anchor: initial, passage: passage, preparation: preparation, worker: worker, geometryWorker: geometryWorker, repository: repository, files: files)
             self.noteTask = nil
         }
         return true
     }
 
     private func startNoteCapture(anchor: PDFHighlightAnchor, passage: Passage, preparation: AudioCoordinator.CapturePreparation,
-                                  worker: Task<Void, Never>?, repository: SharedRepository, files: LocalFiles) async {
+                                  worker: Task<Void, Never>?, geometryWorker: Task<Void, Never>?, repository: SharedRepository, files: LocalFiles) async {
         await audio.finishPreparingCapture(preparation)
         await models?.cancelAndJoinRuntimeChecks()
         await worker?.value
+        await geometryWorker?.value
         await speechPacks.unload()
         await voicePacks.unload()
         guard currentHighlightAnchor == anchor, !audio.previewing, audio.replayingNote == nil, sceneActive else { audio.endCaptureMode(); busy = false; return }

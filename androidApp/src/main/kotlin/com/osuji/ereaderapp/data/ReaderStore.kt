@@ -3,6 +3,7 @@ package com.osuji.ereaderapp.data
 import com.ereader.shared.ReaderCore
 import com.osuji.ereaderapp.pdf.ImportedPdf
 import com.osuji.ereaderapp.pdf.PdfSourcePage
+import com.osuji.ereaderapp.pdf.SourceRegion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,6 +60,9 @@ class ReaderStore(private val core: ReaderCore) {
     }
     suspend fun append(documentId: String, pages: List<PdfSourcePage>, finished: Boolean): ReaderContents = locked {
         json.decodeFromString<ReaderContents>(core.appendDocumentPages(documentId, json.encodeToString(pages), finished)).also { updateSnapshot() }
+    }
+    suspend fun updatePageGeometry(documentId: String, pageIndex: Int, regions: List<SourceRegion>, geometrySpace: String): ReaderContents = locked {
+        json.decodeFromString<ReaderContents>(core.updatePageGeometry(documentId, pageIndex, json.encodeToString(regions), geometrySpace))
     }
     suspend fun saveProgress(documentId: String, passageId: String, offsetMillis: Long) = locked { core.saveProgress(documentId, passageId, offsetMillis); updateSnapshot() }
     suspend fun createDraft(noteId: String, documentId: String, passageId: String, path: String, offsetMillis: Long): VoiceNote = mutate { core.createNoteDraft(noteId, documentId, passageId, path, offsetMillis) }
