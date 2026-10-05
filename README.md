@@ -1,6 +1,6 @@
 # Rhapsodos
 
-This project turns a PDF into an enjoyable listening experience. The document view follows the passage being spoken; a listener can pause, record a thought, save it at that exact passage, and resume while the note is transcribed.
+This project turns a PDF into an enjoyable listening experience. The original PDF follows and highlights the passage being spoken. Tapping that highlight pauses narration and opens an audio note at the frozen source position; the listener can save and resume while transcription waits for available resources.
 
 The initial audience is everyday readers and people who benefit from accessible listening. Launch quality is English first, with multilingual document and speech contracts from the beginning.
 
@@ -10,7 +10,7 @@ Implementation was authorized on **4 October 2026**. Native listening, source pr
 
 Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The display name is **Rhapsodos**.
 
-Android debug/release APKs and its app bundle build successfully; iOS simulator Debug and unsigned device Release builds also pass. Native checks exercise local speech, source preparation, anchored notes, downloads, archive restore and failure recovery. See [Development](docs/development.md#executed-evidence-on-4-october-2026) for exact evidence, build locations and remaining qualification.
+Android debug/release APKs and its app bundle build successfully; iOS simulator Debug and unsigned device Release builds also pass. Native checks exercise local speech, source preparation, anchored notes, downloads, archive restore and failure recovery. See [Development](docs/development.md) for exact evidence, build locations and remaining qualification.
 
 The documentation records the implementation, product decisions and remaining qualification. Check current primary documentation before changing dependency versions, model artifacts, licenses or prices.
 

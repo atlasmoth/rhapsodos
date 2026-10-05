@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "recorded_on": "2026-10-04",
-  "source_revision": "81d9ca543c9c2fa1b37534078c902c410ea4d2c7",
+  "recorded_on": "2026-10-05",
+  "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -9,26 +9,26 @@
     "build": 1
   },
   "android": {
-    "source_revision": "172d9af4f441326cafcafbde9959f275f3df8f6c",
+    "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
     "min_sdk": 28,
     "target_sdk": 37,
     "artifacts": [
       {
         "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
-        "bytes": 155850920,
-        "sha256": "771c5bf5c2b4ddf459ea93475a726048c64f51203fc685b3876961cfad130ef9",
+        "bytes": 155048380,
+        "sha256": "6d38fec6f44945445d8776549a5d38b7bb4bad7be8752d6ee3194c1ed8c83174",
         "signing": "debug development key"
       },
       {
         "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
-        "bytes": 130545228,
-        "sha256": "75c8c502005fab47fc51710fcdd10089647a538d824e31016b99c3b5b73e838c",
+        "bytes": 130594380,
+        "sha256": "2aaf82c824520ec3e5f082c10b1fa02143ab503d9df5d16796c7c66580d3aaef",
         "signing": "owner distribution signing required"
       },
       {
         "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
-        "bytes": 52937446,
-        "sha256": "373959c9fb962a1d875c4483f58545b2e1228a02c58f354659b0716954a79c98",
+        "bytes": 52952243,
+        "sha256": "41667fada64492504437ade0b00f2f5c3fe319bcd1fd6bcfbbb7076523467eb4",
         "signing": "owner distribution signing required"
       }
     ],
@@ -43,24 +43,24 @@
     }
   },
   "ios": {
-    "source_revision": "81d9ca543c9c2fa1b37534078c902c410ea4d2c7",
+    "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
     "min_ios": "17.0",
     "artifacts": [
       {
         "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
-        "bundle_bytes": 37878165,
+        "bundle_bytes": 37788437,
         "bundle_files": 63,
-        "bundle_tree_sha256": "1df604104d2b9883df6a10612abbbe3f0c867494fdcb1f9959285ba077136564",
+        "bundle_tree_sha256": "478e3404cce707de08cd069830fd98b62a25a20f959862d5dc78df5a5d94e083",
         "binaries": [
           {
             "path": "EReader",
             "bytes": 40496,
-            "sha256": "83bf9820dbe148ebda50c50b499373ca409ce902cc1cfab86284fd28f24d051e"
+            "sha256": "8ebdfb15aeaa18eb0f32b0f41ef9831bf4a872a1425d7ff10d5659f75dd60d57"
           },
           {
             "path": "EReader.debug.dylib",
-            "bytes": 26311136,
-            "sha256": "5e21be14194ed5247dbcdba74afc5f868d0c195aff9ef46957670918e7d338d1"
+            "bytes": 26221408,
+            "sha256": "7b6d60f5eb1438291b66c19f88a8c87566243320b11fd87087ea12d90135c9b2"
           }
         ],
         "metadata": {
@@ -74,14 +74,14 @@
       },
       {
         "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
-        "bundle_bytes": 28259376,
+        "bundle_bytes": 28143024,
         "bundle_files": 44,
-        "bundle_tree_sha256": "d8227a272642862e968d4d970d3728b9c24e33394468f2f6a4bef194ff9309ee",
+        "bundle_tree_sha256": "6bd8000cdfdde819b86e6032b2b494e0196679c5485142d0ab7fe447c37990ac",
         "binaries": [
           {
             "path": "EReader",
-            "bytes": 16756432,
-            "sha256": "4e84fc9b004667b6f246cc2b383eaa66a103e09fb0410f8e1a491a14813db7bd"
+            "bytes": 16640080,
+            "sha256": "f1a04db2af1a631471ac3f27fb12c899cc3b71c89796518cb14608568b2343b6"
           }
         ],
         "metadata": {
@@ -95,8 +95,16 @@
       }
     ],
     "debug_and_unsigned_release_build": "passed",
-    "normal_xcode_gradle_workflow": "tools/verify.sh ios passed without EREADER_PREBUILT_SHARED",
-    "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes."
+    "normal_xcode_gradle_workflow": "tools/verify.sh ios passed without EREADER_PREBUILT_SHARED on 4 October; historical project-integration evidence.",
+    "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+    "current_native_build_workflow": "Current native Debug and unsigned Release passed with EREADER_PREBUILT_SHARED=1 against newly rebuilt matching SharedCore frameworks.",
+    "consumer_install_launch": {
+      "result": "passed",
+      "data_preserved": true,
+      "phone_runtime": "27",
+      "tablet_runtime": "26.3.1",
+      "artifact_bundle_tree_sha256": "478e3404cce707de08cd069830fd98b62a25a20f959862d5dc78df5a5d94e083"
+    }
   },
   "evidence": [
     {
@@ -105,7 +113,8 @@
       "tested_artifact": {
         "testedNativeApkSha256": "cac1a9f950dffb25a5a7101b9571381bbfb2d02c347b37d9c637b34cbb98671c"
       },
-      "caveat": "Historical native check; do not assign it to the final artifact."
+      "caveat": "Historical native check; do not assign it to the final artifact.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android preview/cache7",
@@ -114,7 +123,8 @@
         "testedNativeApkSha256": "cac1a9f950dffb25a5a7101b9571381bbfb2d02c347b37d9c637b34cbb98671c",
         "priorTestedNativeApkSha256": "02077d4b64ec5b43bb107333ae49120e2ba59bf22b48e51bf11d6d9ade099cca"
       },
-      "caveat": "Historical native check; do not assign it to the final artifact."
+      "caveat": "Historical native check; do not assign it to the final artifact.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android synthetic capture14",
@@ -122,7 +132,8 @@
       "tested_artifact": {
         "testedInstalledApkSha256": "9593bfde57b596a8b7509e822d3f3a480e537b374801422de0dfe6ece00fef18"
       },
-      "caveat": "Historical native check; do not assign it to the final artifact."
+      "caveat": "Historical native check; do not assign it to the final artifact.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android ASR/removal6",
@@ -130,7 +141,8 @@
       "tested_artifact": {
         "testedNativeApkSha256": "01854a6c58f3ce75ecda2dc21412eee1a282fea3380fc9c9bd7bdcfa87bde6b2"
       },
-      "caveat": "Historical native check; do not assign it to the final artifact."
+      "caveat": "Historical native check; do not assign it to the final artifact.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android removal failure/retry12",
@@ -140,7 +152,8 @@
         "evidence_log_sha256": "e79cb4c85a4761432682b981963b7f099ea3aae3623148a58db6d69adcb28c82",
         "external_instrumentation_apk_sha256": "2bb51a00d034cb9c00b9355760c99116d90846dc47cfdf5552a10ae169520647"
       },
-      "caveat": "Historical native check; do not assign it to the final artifact."
+      "caveat": "Historical native check; do not assign it to the final artifact.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android model/note15",
@@ -150,7 +163,8 @@
         "build": 1,
         "apk_sha256": null
       },
-      "caveat": "Earlier development APK hash was not captured before replacement."
+      "caveat": "Earlier development APK hash was not captured before replacement.",
+      "recorded_on": "2026-10-04"
     },
     {
       "check": "Android strict durability/archive22",
@@ -159,13 +173,15 @@
         "apk_sha256": "771c5bf5c2b4ddf459ea93475a726048c64f51203fc685b3876961cfad130ef9"
       },
       "report_sha256": "da079f9409c6407577f28e90b60ab753ab49071b7db4fcec676677010d8f52f9",
-      "microphone_opened": false
+      "microphone_opened": false,
+      "recorded_on": "2026-10-04",
+      "caveat": "Historical native check; do not assign it to the current consumer artifact."
     },
     {
       "check": "iOS production adapter/lifecycle",
       "runtime": "18.4",
       "result": "passed",
-      "execution": "External native harness using current production adapter; consumer build recorded separately.",
+      "execution": "External native harness using the 4 October production speech adapter; consumer build recorded separately.",
       "report_sha256": "a7818396dc5f95e616846597e06255bceee1a2dd825d6325c4380a22d76ad0ab",
       "microphone_opened": false,
       "long_passage": {
@@ -184,13 +200,15 @@
       },
       "nine_asset_activation_and_replacement": true,
       "model_removal_failure_retains_retry": true,
-      "model_removal_retry_cleans_owned_files": true
+      "model_removal_retry_cleans_owned_files": true,
+      "recorded_on": "2026-10-04",
+      "caveat": "Historical native check; do not assign it to the current consumer artifact."
     },
     {
       "check": "iOS production adapter/lifecycle",
       "runtime": "27",
       "result": "passed",
-      "execution": "External native harness using current production adapter; consumer build recorded separately.",
+      "execution": "External native harness using the 4 October production speech adapter; consumer build recorded separately.",
       "report_sha256": "e5df1731474fce4443580d3367bbb14d61f0bb8cc68a960fede5479acac695c2",
       "microphone_opened": false,
       "long_passage": {
@@ -209,7 +227,64 @@
       },
       "nine_asset_activation_and_replacement": true,
       "model_removal_failure_retains_retry": true,
-      "model_removal_retry_cleans_owned_files": true
+      "model_removal_retry_cleans_owned_files": true,
+      "recorded_on": "2026-10-04",
+      "caveat": "Historical native check; do not assign it to the current consumer artifact."
+    },
+    {
+      "check": "Shared tagged geometry migration/repair/archive",
+      "recorded_on": "2026-10-05",
+      "result": "passed",
+      "assertions": 72,
+      "execution": "Actual compiled ReaderCore and SQLDelight JDBC/SQLite; external temporary harness, including real SQL-trigger rollback and canonical data preservation.",
+      "report_sha256": "4861bebb9f6a3cfc759c7f8297df872d7035c0a8e5e7d74369a22500e2f73f40",
+      "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4"
+    },
+    {
+      "check": "Android PDF highlight, rotation and native capture",
+      "recorded_on": "2026-10-05",
+      "result": "passed",
+      "assertions": 102,
+      "tested_artifact": {
+        "apk_sha256": "6d38fec6f44945445d8776549a5d38b7bb4bad7be8752d6ee3194c1ed8c83174"
+      },
+      "report_sha256": "b0dc59087bd03330fe93d17906734de39c72df4ddf4da1c65c75a55fb303b04b",
+      "microphone_opened": false,
+      "execution": "Actual native components and original PDF rendering; temporary harness outside repository. Consumer GUI observations recorded separately.",
+      "groups": {
+        "drawing_tap_and_capture": 40,
+        "native_rotation_and_repair": 62
+      },
+      "earlier_fixture_repair": {
+        "association": "Initial pre-quarter-turn-correction broad whole-trim run; APK digest was not captured. Do not attribute this repair to the final strict-provenance artifact.",
+        "proof": "Fresh complete OCR text differs from canonical only in terminal LF; literal UTF16 regions intersected/offset; geometry-only update left canonical source/passages/revision/notes/progress and source bytes unchanged.",
+        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded\u2192embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
+        "subsequentPaintingEvidence": {
+          "debug6b10a82e": {
+            "rotationAssertions": 61,
+            "captureAssertions": 40
+          },
+          "finalDebug": "Current62 rotation/repair assertions verify retained tagged painting, not OCR-trim repair."
+        }
+      }
+    },
+    {
+      "check": "iOS PDF highlight, geometry repair and native capture",
+      "recorded_on": "2026-10-05",
+      "result": "passed",
+      "assertions": 111,
+      "runtime": "18.4",
+      "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
+      "report_sha256": "2e5e752e5764859d3d44cf65bbf2f71c10ed2eb2b65257c316d2927f27484835",
+      "microphone_opened": false,
+      "execution": "Actual PDFKit, shared store and production component methods in external native harness. Only hardware startCapture replaced by permission-denied probe; no injected finger/VoiceOver session.",
+      "native_sources_sha256": {
+        "PDFSurface.swift": "14e8f43f4fe47f986dc292d4d6c2311d7aa256816895376949dd80129f763602",
+        "ReaderStore.swift": "6f6bf8aa83548d89ff2e1af1b84d077baf5aa0f8c812ee5aeaab5b9e965a3a34",
+        "ReaderViews.swift": "b62d8944ffbf1ad9c14321256eed28bccf58ded5449d642c104e8d6d61021483",
+        "SharedRepository.swift": "9ec4eb7531caee89345dc750ed31e6f242a811522f5361f4fe5891705e946ef4"
+      },
+      "consumer_builds": "Native harness and consumer app builds are separate artifacts; matching production source hashes and SharedCore ABI verified."
     }
   ],
   "shared_sqlite_rejection_guards": 29,
@@ -221,6 +296,46 @@
     "Oldest supported OS/device qualification",
     "VoiceOver/TalkBack, large text and accessibility participant evaluation",
     "Sustained listening quality, haptics, battery/thermal/frame profiling",
-    "Final gallery/fold/large-text native UI inspection blocked by host automation timeouts"
+    "Full gallery/fold/large-text native UI inspection; only explicitly recorded current consumer interactions count"
+  ],
+  "consumer_ui_observations": [
+    {
+      "recorded_on": "2026-10-05",
+      "platform": "Android",
+      "artifact_sha256": "6d38fec6f44945445d8776549a5d38b7bb4bad7be8752d6ee3194c1ed8c83174",
+      "surface": "CUA / Android Studio Running Devices, unfolded Pixel 10 Pro Fold API37, dark appearance",
+      "observed": [
+        "PDF-only reader",
+        "Active rotated source highlight over actual text",
+        "Narration and page following",
+        "Blank PDF tap leaves reader unchanged",
+        "Highlight tap reaches microphone permission prompt",
+        "Denied permission shows typed fallback with expected page and passage",
+        "Empty verification thought canceled"
+      ],
+      "microphone_opened": false,
+      "limitations": [
+        "Playback had completed before the GUI highlight tap; native harness verifies synchronous pause during playback.",
+        "Compact posture reached locked emulator; compact reader not visually qualified.",
+        "No physical gestures, TalkBack or microphone qualification."
+      ]
+    },
+    {
+      "recorded_on": "2026-10-05",
+      "platform": "iOS",
+      "artifact_bundle_tree_sha256": "478e3404cce707de08cd069830fd98b62a25a20f959862d5dc78df5a5d94e083",
+      "surface": "CUA / DeviceHub, iPad Pro13-inch M5 / iPadOS26.3.1, light appearance",
+      "observed": [
+        "Original PDF as only reading surface",
+        "Active source text highlight aligned over native text",
+        "Library sidebar and playback dock"
+      ],
+      "microphone_opened": false,
+      "limitations": [
+        "Host CUA input returned AXError.cannotComplete; consumer tap interaction not claimed.",
+        "Only tablet wide presentation inspected on final consumer.",
+        "No physical capture or VoiceOver qualification."
+      ]
+    }
   ]
 }

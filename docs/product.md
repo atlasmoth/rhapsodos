@@ -16,8 +16,8 @@ The first audience is everyday readers and people using listening for accessibil
 | --- | --- |
 | First listen | Import a PDF, see its first useful content, choose an available voice and start without waiting for full-book processing |
 | Continue | Open the app or use system media controls and resume at the last source position with the selected voice |
-| Follow | Track the spoken passage in accessible reflow or on the original page; inspect nearby content and return to the current passage |
-| Remember | Pause and record a thought at the confirmed passage, save and resume while transcription continues |
+| Follow | Track the highlighted spoken passage on the original PDF; inspect nearby content and return to the current passage |
+| Remember | Tap the active PDF highlight to pause and record at the confirmed passage, then save and resume independently of transcription |
 | Revisit | Open a note, hear its original recording, edit its transcript and jump back to its source context |
 | Prepare for offline | Download a compatible voice if desired and prepare selected chapters; see exactly which content is ready |
 | Use a wide window | Keep outline, source and anchored notes in useful panes without restarting audio or losing a draft |
@@ -36,13 +36,13 @@ The player emphasizes the current passage and clear controls: play/pause, skip o
 
 Resume, scrubbing and chapter selection refer to the source, even if generated audio changes. If a requested section is not prepared, show that state and prepare it; do not pretend every PDF is instantly an offline audiobook.
 
-Offer reflow and original-page views. Reflow provides comfortable type, spacing and accessible structure. The source view preserves the PDF faithfully. Highlight only at the precision the speech path can support. Manual scrolling suspends automatic following until the listener chooses to return; narration does not force the screen away while they inspect something.
+The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual browsing suspends automatic following until the listener chooses to return; narration does not force the page away while they inspect something.
 
 Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure. Pronunciation corrections should preserve the source text and regenerate only the affected narration edition/segments.
 
 ### Voice note
 
-1. The listener invokes **Pause and record thought**.
+1. The listener taps the active highlight in the PDF or invokes its accessible **Pause and record thought** action.
 2. Playback stops at a confirmed position. The app freezes and saves the attachment before opening the microphone.
 3. The recorder shows the attached passage, recording status and duration. The listener can stop, cancel or save.
 4. Save finalizes durable audio. **Save and resume** returns to listening without waiting for ASR.
@@ -59,7 +59,7 @@ An interrupted recording must have a recoverable draft or an honest failure stat
 | --- | --- |
 | PDF import, incremental text/OCR and dependable reading order for the supported corpus | Broad document editing, arbitrary office formats and advanced PDF authoring |
 | Pleasant qualified voice, background audio, media controls, speed and resume | Voice cloning, generative dramatization and conversational playback |
-| Source-following reflow/original page and honest alignment precision | Mandatory word-level timing for providers that cannot supply it |
+| Source-following original PDF, accessible source context and honest alignment precision | Mandatory word-level timing for providers that cannot supply it |
 | Durable anchored voice notes, local ASR or explicit deferred transcription, transcript editing | Voice-command assistant, chat and automatic note rewriting |
 | Curated compatible speech downloads, offline preparation and storage controls | Unrestricted custom-model importing and a large model marketplace |
 | English quality, language-aware data contracts | Launching many languages with unmeasured quality |

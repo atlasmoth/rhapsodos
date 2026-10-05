@@ -47,7 +47,7 @@ Reduced motion uses a static or simplified treatment. Low Power Mode, elevated t
 | Visible input acknowledgement | p95 under 50 ms for common local actions, measured on supported physical cohorts |
 | Rendering | Meet the device's active refresh budget: 16.67 ms at 60 Hz; 8.33 ms at 120 Hz where supported and chosen |
 | Navigation/resize | Smooth transitions without resetting playback, draft state or model ownership |
-| Scrolling | Stable source/reflow scrolling without synchronous PDF rendering, OCR, DB access or inference on the UI thread |
+| Scrolling | Stable PDF zoom, pan and page browsing without synchronous rendering, OCR, DB access or inference on the UI thread |
 | Cached playback start | p95 under 0.5 s under the defined qualified conditions |
 | Startup | Measure cold and warm startup; establish cohort-specific targets rather than claiming one universal figure |
 | Memory/energy | Bound joint page/inference/effect caches; compare sustained sessions to system speech/cached-audio baselines |

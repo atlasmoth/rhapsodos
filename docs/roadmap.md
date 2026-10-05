@@ -9,7 +9,7 @@ Deliver the complete listening loop before expanding the model catalog or introd
 | Stage | Deliverable | Exit evidence |
 | --- | --- | --- |
 | 0. Evidence and contracts | Representative document corpus, voice/ASR bakeoff, source/anchor contracts, compact and wide journey designs | Explicit supported cohorts and failure cases; one coherent cross-platform contract; initial model shortlists with license/runtime evidence |
-| 1. Source and local state | Native import/render/extract/OCR feeding the shared graph, deterministic normalization and canonical persistence | Reading order/source ranges verified against gold references; resume/anchor behavior survives restart and reflow |
+| 1. Source and local state | Native import/render/extract/OCR feeding the shared graph, deterministic normalization and canonical persistence | Reading order/source ranges verified against gold references; resume/anchor behavior survives restart and PDF zoom/page browsing |
 | 2. Listening and remembering | Native persistent audio, media controls, following, recoverable recording, save/resume and asynchronous ASR | End-to-end journey on physical devices, including interruption, denied permission, low storage, termination and delayed ASR |
 | 3. Qualified offline experience | Curated packs, resumable verified installation, bounded resource scheduling and content preparation | Sustained supported-device playback, genuine airplane-mode journeys and installation/update recovery; truthful offline readiness |
 | 4. Launch quality | Accessibility participants, English quality, adaptive polish, pronunciation, sleep timer, export/storage clarity | No known release-blocking source loss, note loss, privacy fallback or supported-device playback failure; evidence recorded |

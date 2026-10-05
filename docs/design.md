@@ -8,7 +8,7 @@ Status: selected references and tentative experience design. Research baseline: 
 | --- | --- | --- |
 | [VoxShelf — Odama](https://dribbble.com/shots/25220008-VoxShelf-Mobile-App-Audiobook) | Spoken passage, audio controls and a cohesive dark/plum listening identity | Put the passage and record-thought action at the center. Keep accent color restrained and verify contrast; do not let a decorative waveform dominate |
 | [Abuk — tubik](https://tubikstudio.com/works/abuk) | A complete audiobook/ebook product case spanning mobile and tablet, reading, listening and settings | Study continuity between library, player, reader and notes, rather than borrowing a single isolated screen. Preserve useful native media behavior |
-| [Ebook Reader — Dipa Inhouse](https://dribbble.com/shots/21035903-Ebook-Reader-Mobile-Design) | Comfortable reading typography, chapters and persistent playback controls | Combine a quiet passage surface with accessible player controls and predictable chapter navigation |
+| [Ebook Reader — Dipa Inhouse](https://dribbble.com/shots/21035903-Ebook-Reader-Mobile-Design) | Comfortable reading typography, chapters and persistent playback controls | Combine a quiet PDF surface with accessible player controls and predictable chapter navigation |
 | [E-Book Dashboard / GrabRead — MindInventory](https://dribbble.com/shots/20454786-E-Book-Dashboard) | Warm editorial wide-screen library, compact navigation and contextual columns | Use the wide-screen structure for library/current listening/notes/offline readiness rather than unrelated dashboard widgets |
 | [File Reader + Chat Panel — Never Before Seen](https://dribbble.com/shots/26279355-File-Reader-Chat-Panel-Interface) | Clear document and supplementary-panel boundaries, independent pane controls | Adapt the supplementary panel to anchored notes and transcripts; keep independent scrolling and access to the current passage |
 
@@ -22,7 +22,7 @@ Use a coherent, quiet visual system: warm neutral reading surfaces, comfortable 
 
 The main screen should communicate **listen, follow, remember**. A large cover or waveform can establish identity, but should not displace the passage and recording action. The source text is the useful visual accompaniment to audio.
 
-The passage view uses a bounded line length, adjustable type/spacing and a calm highlight. The original PDF remains a faithful zoomable canvas. Use source geometry for highlights and note markers; never redraw the document into an invented layout and present it as the original.
+The original PDF is the main reader and remains a faithful zoomable canvas. There is no separate "Listen and follow" or reflow pane. Use source geometry for a calm active highlight and note markers; never redraw the document into an invented layout and present it as the original. Tapping the active highlight pauses narration and opens audio-note capture at the frozen source position. Keep blank space and browsing gestures free of recording actions.
 
 Motion explains transitions and preparation. It must respect reduced-motion preferences and should not move content with every spoken word. Use a stable highlight rather than constant scrolling animation.
 
@@ -31,8 +31,7 @@ Motion explains transitions and preparation. It must respect reduced-motion pref
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Continue listening, recent imports, prepared/offline status and import action |
-| Listening | Current passage, chapter context, play/pause, skip/seek, speed and record thought |
-| Source | Original page/reflow toggle, current passage, bookmarks and return-to-listening action |
+| PDF reader | Original page, active narration highlight, tap-to-record, bookmarks, follow control and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |
 | Offline voices | Preview, language/accent, recommendation, size, download and delete |
@@ -48,11 +47,11 @@ Adapt to available **window space**, font scale and posture, not a tablet label 
 | Window | Intended composition | Collapse behavior |
 | --- | --- | --- |
 | Compact | Focused destination and persistent player; source and notes available by navigation/sheet | Preserve source selection, scroll position and note draft |
-| Medium | Main passage/source plus one useful context pane | Switch outline/notes without making the source unusably narrow |
-| Wide | Outline/library, passage/source, anchored notes, persistent playback dock | Hide supplementary context first when text size or width demands it |
+| Medium | Main PDF plus one useful context pane | Switch outline/notes without making the source unusably narrow |
+| Wide | Outline/library, PDF, anchored notes, persistent playback dock | Hide supplementary context first when text size or width demands it |
 | Very wide | Adjustable bounded panes, optional richer source context | Bound text measure and avoid stretching controls or adding empty columns |
 
-Wide listening can show the source/reflow in the center and notes for the current document on the right. A library or outline belongs on the left. Do not force four simultaneous panes merely because a large display permits it. Offer a focused listening mode and explicit panel visibility.
+Wide listening shows the PDF in the center and can expose notes for the current document on the right. A library or outline belongs on the left. Do not force four simultaneous panes merely because a large display permits it. Offer a focused listening mode and explicit panel visibility.
 
 The source and notes scroll independently. Manual source scrolling suspends auto-follow and shows a return-to-current-passage action. Seeking moves narration only through an explicit listening command. Opening a note should expose its source context without inadvertently starting playback.
 
@@ -84,7 +83,7 @@ Audio and model ownership sit above individual screens. A layout transition must
 
 Target clear contrast, useful text scaling, generous controls and semantic labels. The active passage and recording state require more than color. Keep screen-reader focus stable; avoid live announcements for every spoken word or partial transcript.
 
-Provide useful chapter/note navigation, accessible recorder duration/state, keyboard shortcuts that respect text entry, pointer targets and reduced-motion behavior. Source reflow needs semantic headings and text access. PDF page rendering alone is not an accessibility solution. [WCAG guidance for non-web software](https://www.w3.org/TR/wcag2ict-22/)
+Provide useful chapter/note navigation, accessible recorder duration/state, keyboard shortcuts that respect text entry, pointer targets and reduced-motion behavior. Expose semantic source text and the active-highlight record action alongside the PDF canvas; rendering alone is not an accessibility solution. [WCAG guidance for non-web software](https://www.w3.org/TR/wcag2ict-22/)
 
 Validate the complete journey with assistive technologies and participants, including interaction between narration and the screen reader. Do not infer accessibility from a polished mockup.
 
