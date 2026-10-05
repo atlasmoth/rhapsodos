@@ -77,6 +77,7 @@ struct ReaderRoot: View {
                             if let passage = store.currentPassage {
                                 Button(store.currentBookmarks.contains(where: { $0.passageId == passage.id }) ? "Remove bookmark" : "Bookmark this passage", systemImage: "bookmark") { Task { await store.toggleBookmark(passage) } }
                             }
+                            if !store.follow { Button("Follow narration", systemImage: "scope") { store.follow = true } }
                             Button("Sleep timer", systemImage: "moon.zzz") { sleepTimer = true }
                             Button("Export document and notes", systemImage: "square.and.arrow.up") { exportConfirm = true }
                         } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")
@@ -137,7 +138,7 @@ private struct EmptyLibrary: View {
                 .padding(30).background(Palette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 34))
             VStack(spacing: 12) {
                 Text("Give your reading\na voice.").font(BrandFont.display(34, relativeTo: .largeTitle)).multilineTextAlignment(.center)
-                Text("Bring a PDF. Settle into a passage.\nSave a thought without losing your place.").foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Text("Bring a PDF.").foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
             Button { importer = true } label: { Label("Import your first PDF", systemImage: "plus").foregroundStyle(Palette.onAccent).padding(.horizontal, 12).padding(.vertical, 6) }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
@@ -150,6 +151,7 @@ private struct ListeningView: View {
     let snapshot: DocumentSnapshot
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
+    @AppStorage("originalPDFColours") private var originalPDFColours = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,18 +163,12 @@ private struct ListeningView: View {
                     regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" },
                     geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
-                    follow: store.follow, onBrowse: { store.follow = false },
+                    originalColours: originalPDFColours, follow: store.follow, onBrowse: { store.follow = false },
                     onHighlight: { anchor in
                         guard store.canBeginNote, store.currentHighlightAnchor == anchor else { return false }
                         return store.beginNote(expected: anchor)
                     },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
-                    .overlay(alignment: .topTrailing) {
-                        if !store.follow {
-                            Button { store.follow = true } label: { Label("Follow narration", systemImage: "scope") }
-                                .font(.caption).padding(10).background(.regularMaterial, in: Capsule()).padding(12)
-                        }
-                    }
             } else {
                 ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
             }
@@ -190,18 +186,17 @@ private struct PlaybackDock: View {
         VStack(spacing: 14) {
             if store.preparingDocument { ProgressView(store.preparation, value: store.preparationProgress).font(.caption2) }
             ProgressView(value: Double(audio.index) + (audio.duration > 0 ? audio.elapsed / audio.duration : 0), total: Double(max(1, count))).tint(Palette.accent)
-                .accessibilityLabel("Passage \(min(audio.index + 1, count)) of \(count)")
+                .accessibilityLabel("Listening progress")
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 18) { passageLabel; controls }
-                VStack(spacing: 10) { passageLabel; controls }
+                HStack(spacing: 18) { playbackStatus; controls }
+                VStack(spacing: 10) { playbackStatus; controls }
             }.disabled(count == 0 || store.busy || store.captureDraft != nil)
         }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
     }
 
-    private var passageLabel: some View {
+    private var playbackStatus: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(count > 0 ? "Passage \(audio.index + 1) of \(count)" : "Original PDF").font(.caption.weight(.semibold))
-            Text(audio.generating ? "Preparing local audio…" : audio.selectedVoice.hasPrefix("kokoro:") ? "Offline voice preview" : "On-device voice").font(.caption2).foregroundStyle(.secondary)
+            if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
             if audio.duration > 0 { Text("\(Duration.seconds(audio.elapsed).formatted(.time(pattern: .minuteSecond))) / \(Duration.seconds(audio.duration).formatted(.time(pattern: .minuteSecond)))").font(BrandFont.mono()) }
             if let end = audio.sleepUntil { Label(end.formatted(date: .omitted, time: .shortened), systemImage: "moon.zzz").font(.caption2) }
         }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: true, vertical: false)
@@ -225,6 +220,7 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var feedback: Feedback
     @AppStorage("appearance") private var appearance = "system"
+    @AppStorage("originalPDFColours") private var originalPDFColours = false
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         NavigationStack {
@@ -244,7 +240,11 @@ private struct VoiceSettings: View {
                         Text("Calm").tag(Float(0.43)); Text("Natural").tag(Float(0.5)); Text("Brisk").tag(Float(0.56))
                     }.pickerStyle(.segmented)
                 }
-                Section("Appearance") { Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented) }
+                Section("Appearance") {
+                    Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
+                    Toggle("Original colours", isOn: $originalPDFColours)
+                    Text("Strong colours are preserved. Use original colours for photographs.").font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Feel") {
                     Toggle("Touch feedback", isOn: $feedback.enabled)
                     Text("Motion and visual effects respect Reduce Motion, Low Power Mode and thermal conditions.").font(.caption).foregroundStyle(.secondary)

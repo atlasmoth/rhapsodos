@@ -283,23 +283,25 @@ struct PDFSurface: UIViewRepresentable {
     let anchor: PDFHighlightAnchor?
     let excerpt: String
     let recordingEnabled: Bool
+    var originalColours = false
     let follow: Bool
     let onBrowse: () -> Void
     let onHighlight: (PDFHighlightAnchor) -> Bool
     let onLoadFailure: () -> Void
 
     func makeUIView(context: Context) -> PDFView {
-        let view = PDFView()
+        let view = ThemedPDFView()
         view.autoScales = true
         view.displayBox = .cropBox
         view.displayMode = .singlePageContinuous
         view.displayDirection = .vertical
-        view.backgroundColor = UIColor.secondarySystemBackground
+        view.configureColours(original: originalColours)
         context.coordinator.attach(to: view)
         return view
     }
 
     func updateUIView(_ view: PDFView, context: Context) {
+        (view as? ThemedPDFView)?.configureColours(original: originalColours)
         context.coordinator.onBrowse = onBrowse
         context.coordinator.onHighlight = onHighlight
         context.coordinator.onLoadFailure = onLoadFailure
@@ -316,6 +318,7 @@ struct PDFSurface: UIViewRepresentable {
         let spinner = UIActivityIndicatorView(style: .medium)
         let highlightTap = UITapGestureRecognizer()
         let accessibilityHighlight = HighlightAccessibilityView()
+        let narrationOverlay = PDFNarrationOverlay()
         var onBrowse: () -> Void
         var onHighlight: (PDFHighlightAnchor) -> Bool
         var onLoadFailure: () -> Void
@@ -332,13 +335,13 @@ struct PDFSurface: UIViewRepresentable {
         private var appliedAnchor: PDFHighlightAnchor?
         private var appliedPage: PDFPage?
         private var hitRects: [CGRect] = []
+        private var paintedRects: [PDFNarrationRect] = []
         private var recordingEnabled = false
         private var touchAnchor: PDFHighlightAnchor?
         private var touchVersion: UUID?
         private var geometryVersion = UUID()
         private var pageContexts: [SourcePage] = []
         private var pageAccessibility: [Int: HighlightAccessibilityView] = [:]
-        private var overlayAnnotations: [(PDFPage, PDFAnnotation)] = []
         private var requestedFollow = true
         private var generation = UUID()
         private var loadTask: Task<Void, Never>?
@@ -356,6 +359,7 @@ struct PDFSurface: UIViewRepresentable {
 
         func attach(to view: PDFView) {
             self.view = view
+            (view as? ThemedPDFView)?.onColourChange = { [weak self] in self?.applyRequestedPosition() }
             spinner.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(spinner)
             NSLayoutConstraint.activate([spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor), spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
@@ -371,6 +375,16 @@ struct PDFSurface: UIViewRepresentable {
             highlightTap.delaysTouchesBegan = false
             highlightTap.delaysTouchesEnded = false
             view.addGestureRecognizer(highlightTap)
+            narrationOverlay.frame = view.bounds
+            narrationOverlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            narrationOverlay.rectangles = { [weak self] in
+                guard let self, let view = self.view, let page = self.appliedPage, self.appliedAnchor == self.requestedAnchor else { return [] }
+                return self.paintedRects.compactMap { rectangle in
+                    let bounds = view.convert(rectangle.bounds, from: page).intersection(view.bounds)
+                    return bounds.isEmpty || bounds.isNull ? nil : PDFNarrationRect(bounds: bounds, colour: rectangle.colour)
+                }
+            }
+            view.addSubview(narrationOverlay)
             accessibilityHighlight.frame = view.bounds
             accessibilityHighlight.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             accessibilityHighlight.frameProvider = { [weak self] in self?.accessibleFrame() ?? .zero }
@@ -412,7 +426,7 @@ struct PDFSurface: UIViewRepresentable {
             generation = id
             let worker = Task.detached(priority: .userInitiated) { () -> PDFDocument? in
                 guard !Task.isCancelled else { return nil }
-                let document = PDFDocument(url: url)
+                let document = ReadingPDFDocument(url: url)
                 return Task.isCancelled ? nil : document
             }
             loadTask = Task { [weak self] in
@@ -430,8 +444,8 @@ struct PDFSurface: UIViewRepresentable {
             generation = UUID(); loadTask?.cancel(); loadTask = nil
             appliedAnchor = nil; appliedPage = nil; touchAnchor = nil; hitRects = []
             accessibilityHighlight.isHidden = true
-            view?.highlightedSelections = []
-            overlayAnnotations.forEach { $0.0.removeAnnotation($0.1) }; overlayAnnotations.removeAll()
+            paintedRects = []
+            narrationOverlay.setNeedsDisplay()
             pageAccessibility.values.forEach { $0.removeFromSuperview() }; pageAccessibility.removeAll()
             scrollObservations.removeAll()
         }
@@ -451,13 +465,12 @@ struct PDFSurface: UIViewRepresentable {
 
         private func applyRequestedPosition() {
             guard let view, let page = view.document?.page(at: requestedPage) else { return }
-            view.highlightedSelections = []
-            overlayAnnotations.forEach { $0.0.removeAnnotation($0.1) }
-            overlayAnnotations.removeAll()
             hitRects = []
+            paintedRects = []
             appliedPage = page
             appliedAnchor = requestedAnchor
             let bounds = page.bounds(for: .cropBox)
+            let narrationTraits = (view as? ThemedPDFView)?.narrationTraits ?? view.traitCollection
             func paintRegions(_ regions: [SourceRegion], alpha: CGFloat) {
                 guard requestedGeometrySpace == "cropTopLeftV1" else { return }
                 for region in regions {
@@ -465,23 +478,20 @@ struct PDFSurface: UIViewRepresentable {
                         y: bounds.maxY - (region.y + region.height) * bounds.height,
                         width: region.width * bounds.width, height: region.height * bounds.height).intersection(bounds)
                     guard !rect.isNull, !rect.isEmpty else { continue }
-                    let annotation = PDFAnnotation(bounds: rect, forType: .square, withProperties: nil)
-                    annotation.color = .clear
-                    annotation.interiorColor = UIColor(Palette.ember).withAlphaComponent(alpha)
-                    let border = PDFBorder(); border.lineWidth = 0; annotation.border = border
-                    page.addAnnotation(annotation)
-                    overlayAnnotations.append((page, annotation)); hitRects.append(rect)
+                    let colour = UIColor(Palette.accent).resolvedColor(with: narrationTraits).withAlphaComponent(alpha)
+                    paintedRects.append(PDFNarrationRect(bounds: rect, colour: colour))
+                    hitRects.append(rect)
                 }
             }
-            var selections: [PDFSelection] = []
             func paintSelection(_ range: NSRange?, alpha: CGFloat) {
                 guard requestedSourceText.utf16.elementsEqual((page.string ?? "").utf16) else { return }
                 guard let range, range.location != NSNotFound, range.location >= 0, range.length > 0 else { return }
                 let count = (page.string as NSString?)?.length ?? 0
                 guard range.location <= count, range.length <= count - range.location, let selection = page.selection(for: range) else { return }
-                selection.color = UIColor(Palette.ember).withAlphaComponent(alpha)
-                selections.append(selection)
-                hitRects += selection.selectionsByLine().filter { $0.pages.contains(where: { $0 === page }) }.map { $0.bounds(for: page).intersection(bounds) }.filter { !$0.isEmpty && !$0.isNull }
+                let rectangles = selection.selectionsByLine().filter { $0.pages.contains(where: { $0 === page }) }.map { $0.bounds(for: page).intersection(bounds) }.filter { !$0.isEmpty && !$0.isNull }
+                let colour = UIColor(Palette.accent).resolvedColor(with: narrationTraits).withAlphaComponent(alpha)
+                paintedRects += rectangles.map { PDFNarrationRect(bounds: $0, colour: colour) }
+                hitRects += rectangles
             }
             if requestedBaseRange != nil && requestedSourceText.utf16.elementsEqual((page.string ?? "").utf16) {
                 paintSelection(requestedBaseRange, alpha: 0.18)
@@ -490,7 +500,6 @@ struct PDFSurface: UIViewRepresentable {
                 paintRegions(requestedBaseRegions, alpha: 0.18)
                 if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
             }
-            view.highlightedSelections = selections
             if requestedFollow, self.page != requestedPage {
                 self.page = requestedPage
                 view.go(to: page)
@@ -540,6 +549,7 @@ struct PDFSurface: UIViewRepresentable {
             return UIAccessibility.convertToScreenCoordinates(visible.dropFirst().reduce(first) { $0.union($1) }, in: view)
         }
         private func refreshAccessibility() {
+            narrationOverlay.setNeedsDisplay()
             accessibilityHighlight.isHidden = accessibleFrame().isEmpty
             let enabled = recordingEnabled && view?.currentSelection?.string?.isEmpty != false
             accessibilityHighlight.accessibilityTraits = enabled ? [.button] : [.staticText]
@@ -570,6 +580,7 @@ struct PDFSurface: UIViewRepresentable {
                 element.accessibilityValue = context.text
                 element.isHidden = element.accessibilityFrame.isEmpty
             }
+            view.bringSubviewToFront(narrationOverlay)
             view.bringSubviewToFront(accessibilityHighlight)
         }
         func activateAccessibleHighlight() -> Bool {

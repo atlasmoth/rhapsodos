@@ -25,13 +25,13 @@ internal object PdfDisplayColours {
                     val green = pixel shr 8 and 255
                     val blue = pixel and 255
                     val chroma = maxOf(red, green, blue) - minOf(red, green, blue)
-                    if (chroma >= 24) continue
+                    if (chroma >= 64) continue
                     val luminance = (2126 * red + 7152 * green + 722 * blue + 5000) / 10000
-                    val weight = if (chroma <= 8) 16 else 24 - chroma
+                    val weight = if (chroma <= 24) 40 else 64 - chroma
                     fun channel(shift: Int): Int {
                         val original = pixel shr shift and 255
                         val mapped = ((ink shr shift and 255) * (255 - luminance) + (paper shr shift and 255) * luminance + 127) / 255
-                        return (mapped * weight + original * (16 - weight) + 8) / 16
+                        return (mapped * weight + original * (40 - weight) + 20) / 40
                     }
                     pixels[index] = (pixel and -0x1000000) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
                 }
