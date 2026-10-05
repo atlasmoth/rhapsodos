@@ -8,6 +8,8 @@ Build a listening-first PDF app for everyday reading and accessibility. The read
 
 The main reader surface is the original PDF with the active narration passage highlighted. Do not restore a separate "Listen and follow" or reflow pane. Tapping the visible active highlight pauses and freezes the current source position before audio-note capture. Blank-page taps and browsing gestures must not record or seek. Preserve accessible text and an equivalent record action within the PDF surface.
 
+Keep the PDF surface free of visible page/zoom/fit controls and the player free of passage-count and routine voice-status labels. Retain useful preparation and failure feedback. Neutral page paper and ink follow the app theme; Original colours remains an Appearance option. Recolour only the display, preserve source PDFs and OCR inputs, and keep gesture and accessibility browsing usable.
+
 Architecture plans are not, by themselves, authorization to scaffold or implement the apps. Follow the current human task's scope. When implementation is authorized, work through a complete usable slice rather than accumulating speculative infrastructure.
 
 Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/product.md](docs/product.md), plus the platform and feature documents relevant to the task. Update the documents when actual decisions supersede proposals. Identify assumptions and unresolved device qualification honestly.

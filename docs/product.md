@@ -38,6 +38,10 @@ Resume, scrubbing and chapter selection refer to the source, even if generated a
 
 The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual browsing suspends automatic following until the listener chooses to return; narration does not force the page away while they inspect something.
 
+Page browsing and zoom use gestures and accessible actions; do not add a visible PDF control bar. Keep passage counts and routine voice-status labels out of the playback dock. Show actual preparation and failure states when they require attention. Import prompts use a short, single-sentence subtitle.
+
+The PDF display follows the app's light/dark background and contrasting ink for neutral and muted text. Recolour low-chroma pixels, preserve strongly coloured artwork, and offer **Original colours** in Appearance settings. This is a display transformation: it never rewrites the PDF, extraction input, source ranges or note anchors. Grayscale and muted-colour photographs and scanned illustrations also change because pixels cannot distinguish them from text; the original-colour option restores their appearance. Some coloured text can retain insufficient contrast in dark mode. Further automatic handling needs qualified text-aware rendering rather than treating artwork pixels as text.
+
 Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure. Pronunciation corrections should preserve the source text and regenerate only the affected narration edition/segments.
 
 ### Voice note

@@ -89,6 +89,8 @@ Normalization covers hyphenation, whitespace, repeated headers/footers, abbrevia
 
 The source graph drives narration, search and accessible source context. Native PDF surfaces display the faithful page and highlight mapped geometry. Tapping the visible active highlight dispatches pause-and-record against its expected document/passage identity; a stale highlight must never attach to a different passage. Native hit testing accounts for the rendered page, crop, rotation, zoom and pan. Blank-space taps and browsing gestures do not record or seek. An uncertain extraction retains the original page and an explicit repair/preparation state.
 
+Page colours are a native display concern. Neutral paper/ink follow the app appearance through a bounded raster transformation, with strongly coloured pixels preserved and an Original colours preference. Source PDFs, OCR inputs, canonical text, geometry and note anchors remain unchanged. Android transforms its bounded rendered bitmap off the main thread; iOS transforms clipped PDFKit render tiles at native zoom. Native narration overlays remain above the transformed page. Do not add a second document store or generated replacement PDF for this appearance feature.
+
 ## 4. Durable data contracts
 
 | Record | Essential information |
