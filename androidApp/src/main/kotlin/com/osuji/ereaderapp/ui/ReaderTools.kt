@@ -3,7 +3,6 @@ package com.osuji.ereaderapp.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -205,26 +204,4 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AboutSheet(dismiss: () -> Unit) {
-    val context = LocalContext.current
-    val licenses = remember { context.assets.list("licenses").orEmpty().sorted() }
-    var license by remember { mutableStateOf<Pair<String, String>?>(null) }
-    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
-        SheetHeader("Privacy & about", done = dismiss)
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { Text("Rhapsodos 0.01 · Build 1", style = MaterialTheme.typography.labelSmall) }
-            item { Text("Your reading, on your device", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("PDFs, source text, voice recordings, transcripts and listening positions remain in private app storage. No account, content upload, analytics or cloud speech fallback is used.") }
-            item { Text("Public downloads", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("Network access downloads the offline models you choose from their pinned public sources. Download hosts can see a network request and your IP address. Your PDF text, note audio, transcripts and filenames are never part of that request.") }
-            item { Text("Your controls", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("Deleting a document removes its local imported file, recordings and reading data. Generated narration is a disposable cache; removing a speech download leaves your thoughts intact.") }
-            item { Text("Offline speech and font notices", style = MaterialTheme.typography.titleLarge) }
-            items(licenses) { name -> TextButton(onClick = { license = name.removeSuffix(".txt").replace('_', ' ') to context.assets.open("licenses/$name").bufferedReader().use { it.readText() } }) { Text(name.removeSuffix(".txt").replace('_', ' ')) } }
-        }
-        }
-    }
-    license?.let { selected -> AlertDialog(onDismissRequest = { license = null }, title = { Text(selected.first) }, text = { androidx.compose.foundation.text.selection.SelectionContainer { Text(selected.second, modifier = Modifier.heightIn(max = 440.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), style = MaterialTheme.typography.bodySmall) } }, confirmButton = { TextButton(onClick = { license = null }) { Text("Close") } }) }
 }

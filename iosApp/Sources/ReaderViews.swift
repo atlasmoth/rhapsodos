@@ -403,7 +403,6 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var store: ReaderStore
     @State private var restorePicker = false
     @State private var gallery = false
-    @State private var about = false
     @State private var detent: PresentationDetent = .large
     @AppStorage("appearance") private var appearance = "system"
     @Environment(\.dismiss) private var dismiss
@@ -451,13 +450,6 @@ private struct VoiceSettings: View {
                         Button("Restore a document archive", systemImage: "square.and.arrow.down") { restorePicker = true }
                             .frame(minHeight: 44).disabled(transportUnavailable)
                     }
-                    ReaderSheetCard(title: "Privacy & about") {
-                        Label("Narration stays on this device", systemImage: "lock.shield")
-                        Text("Saved voice notes use on-device transcription. If recognition is unavailable, your recording stays saved for later.").font(.footnote).foregroundStyle(Palette.muted)
-                        Text("Double-tap prepared text to record a thought. Listening resumes from its paused position.").font(.footnote).foregroundStyle(Palette.muted)
-                        Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(Palette.muted)
-                        Button("About, privacy & offline notices") { audio.stopPreview(); about = true }.frame(minHeight: 44)
-                    }
                 }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
             }
         }.foregroundStyle(Palette.ink).background(Palette.paper)
@@ -465,7 +457,6 @@ private struct VoiceSettings: View {
             .sheet(isPresented: $gallery) {
                 if let models = store.models { ModelGallery(models: models) }
             }
-            .sheet(isPresented: $about) { AboutSheet() }
             .fileImporter(isPresented: $restorePicker, allowedContentTypes: [.rhapsodos, .zip, .archive]) { result in
                 dismiss()
                 switch result {
@@ -474,61 +465,6 @@ private struct VoiceSettings: View {
                 }
             }
             .onDisappear { audio.stopPreview() }
-    }
-}
-
-private struct AboutSheet: View {
-    private struct Notice: Identifiable, Sendable {
-        let id: String
-        let text: String
-    }
-    @Environment(\.dismiss) private var dismiss
-    @State private var notices: [Notice] = []
-    @State private var noticesLoaded = false
-    @State private var detent: PresentationDetent = .large
-    var body: some View {
-        VStack(spacing: 0) {
-            ReaderSheetHeader(title: "Privacy & about") { dismiss() }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(Palette.muted)
-                    ReaderSheetCard(title: "Private by default") {
-                        Text("PDFs, source text, voice recordings, transcripts and listening positions remain in private app storage. No account, content upload, analytics or cloud speech fallback is used.")
-                    }
-                    ReaderSheetCard(title: "Public downloads") {
-                        Text("Network access downloads the offline models you choose from their pinned public sources. Download hosts can see a network request and your IP address. Your PDF text, note audio, transcripts and filenames are never part of that request.")
-                    }
-                    ReaderSheetCard(title: "Your controls") {
-                        Text("Deleting a document removes its local imported file, recordings and reading data. Generated narration is a disposable cache; removing a speech download leaves your thoughts intact.")
-                    }
-                    ReaderSheetCard(title: "Offline speech and font notices") {
-                        if notices.isEmpty { Text(noticesLoaded ? "No bundled notices are available." : "Loading notices…").foregroundStyle(Palette.muted) }
-                        ForEach(notices) { notice in
-                            DisclosureGroup(notice.id.replacingOccurrences(of: "_", with: " ")) {
-                                Text(notice.text).font(.footnote).textSelection(.enabled).padding(.top, 8)
-                            }
-                        }
-                    }
-                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
-            }
-        }.background(Palette.paper).foregroundStyle(Palette.ink)
-            .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
-            .task {
-                let loaded = await Task.detached(priority: .utility) {
-                    let urls = (Bundle.main.urls(forResourcesWithExtension: "txt", subdirectory: "Licenses") ?? [])
-                        + (Bundle.main.urls(forResourcesWithExtension: "txt", subdirectory: nil) ?? [])
-                    var seen = Set<String>()
-                    return urls.sorted { $0.lastPathComponent < $1.lastPathComponent }.compactMap { url -> Notice? in
-                        guard seen.insert(url.lastPathComponent).inserted,
-                              let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 1_000_000,
-                              let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-                        return Notice(id: url.deletingPathExtension().lastPathComponent, text: text)
-                    }
-                }.value
-                guard !Task.isCancelled else { return }
-                notices = loaded
-                noticesLoaded = true
-            }
     }
 }
 

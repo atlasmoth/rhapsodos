@@ -141,7 +141,6 @@ fun ReaderApp() {
     var showVoices by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
-    var showAbout by rememberSaveable { mutableStateOf(false) }
     var libraryAction by remember { mutableStateOf<Pair<String, LibraryDocument>?>(null) }
     var renameText by remember { mutableStateOf("") }
     var actionSaving by remember { mutableStateOf(false) }
@@ -267,7 +266,6 @@ fun ReaderApp() {
         if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("A quick note") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Got it") } })
 
         if (showVoices) OfflineSpeechSheet(scope) { showVoices = false; showSettings = true }
-        if (showAbout) AboutSheet { showAbout = false; showSettings = true }
         if (showSearch) SearchSheet("", { hit ->
             val accepted = playback.openSearchPassage(hit.documentId, hit.passageId)
             if (accepted) openDocument(hit.documentId)
@@ -312,12 +310,6 @@ fun ReaderApp() {
                     }
                     SettingsSection("Documents") {
                         OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }, enabled = !importing && !playback.capturing) { Text("Restore a document archive") }
-                    }
-                    SettingsSection("Privacy & about") {
-                        Text("Narration stays on this device")
-                        Text("Saved voice notes use on-device transcription when an offline pack is ready. Otherwise the recording remains saved for later.", style = MaterialTheme.typography.bodySmall)
-                        TextButton(onClick = { showSettings = false; showAbout = true }) { Text("About, privacy & offline notices") }
-                        Text("Rhapsodos 0.01 · Build 1", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
