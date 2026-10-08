@@ -80,6 +80,8 @@ Native extraction and OCR convert display rectangles into the shared `cropTopLef
 
 ## Persistent playback
 
+The dock's volume control uses `AudioManager.STREAM_MUSIC` and its actual minimum, maximum and current index. Refresh from the system while the control is visible and after lifecycle changes; only explicit listener adjustments write the volume. Respect fixed-volume devices and keep the controls accessible without altering playback or microphone gain. This requires the normal `MODIFY_AUDIO_SETTINGS` permission. [AudioManager](https://developer.android.com/reference/android/media/AudioManager)
+
 Use Media3 with a session-owned player and a `MediaSessionService`-style background lifetime where appropriate. Prefer generating system-TTS chunks through `synthesizeToFile` and playing those files through the same Media3 transport as custom-model audio, with explicit sentence/segment alignment. Validate engine support and file completion before enqueueing. [Background playback](https://developer.android.com/media/media3/session/background-playback), [System TTS](https://developer.android.com/reference/android/speech/tts/TextToSpeech)
 
 If direct live TTS output is retained as a fallback, give it a separate transport adapter and declared sentence/utterance precision. It has no ExoPlayer-style seekable media position; callbacks alone do not justify exact mid-word note anchoring. Switching between live and file-backed transport is serialized, with one active owner and source-based resume.

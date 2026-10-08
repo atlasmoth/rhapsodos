@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import CoreGraphics
+import MediaPlayer
 
 struct ReaderRoot: View {
     @EnvironmentObject private var store: ReaderStore
@@ -248,10 +249,17 @@ private struct PlaybackDock: View {
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
     @State private var seekPreview: Double?
+    @State private var volumePresented = false
     var body: some View {
         VStack(spacing: 14) {
             if store.preparingDocument { ProgressView(store.preparation, value: store.preparationProgress).font(.caption2) }
-            documentProgress
+            HStack(spacing: 12) {
+                documentProgress
+                Button { volumePresented = true } label: {
+                    Image(systemName: "speaker.wave.2").font(.title3).frame(width: 44, height: 44)
+                }.foregroundStyle(Palette.accent).accessibilityLabel("Output volume")
+                    .popover(isPresented: $volumePresented) { OutputVolumePanel().presentationCompactAdaptation(.sheet).presentationDetents([.medium]) }
+            }
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) { playbackStatus; controls }
                 VStack(spacing: 10) { playbackStatus; controls }
@@ -316,6 +324,34 @@ private struct PlaybackDock: View {
                 Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
             }.foregroundStyle(Palette.accent)
     }
+}
+
+private struct OutputVolumePanel: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Output volume").font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }.frame(minWidth: 44, minHeight: 44)
+            }
+            SystemOutputVolume().frame(height: 44)
+            #if targetEnvironment(simulator)
+            Text("Volume changes work on a physical device.").font(.caption).foregroundStyle(.secondary)
+            #endif
+        }.padding(20).frame(idealWidth: 300).foregroundStyle(Palette.ink)
+    }
+}
+
+private struct SystemOutputVolume: UIViewRepresentable {
+    func makeUIView(context: Context) -> MPVolumeView {
+        let view = MPVolumeView(frame: .zero)
+        view.showsVolumeSlider = true
+        view.backgroundColor = .clear
+        view.tintColor = UIColor(Palette.accent)
+        return view
+    }
+    func updateUIView(_ view: MPVolumeView, context: Context) { view.tintColor = UIColor(Palette.accent) }
 }
 
 private struct VoiceSettings: View {

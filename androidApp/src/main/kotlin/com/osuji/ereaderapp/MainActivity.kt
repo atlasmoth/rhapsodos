@@ -3,6 +3,7 @@ package com.osuji.ereaderapp
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC
         syncSystemBars()
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener)
         if (Build.VERSION.SDK_INT >= 31) splashScreen.setOnExitAnimationListener { splash ->

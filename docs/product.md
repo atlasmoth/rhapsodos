@@ -38,6 +38,8 @@ The first-run model choice should be simple: recommend one compatible voice, pro
 
 The player emphasizes the current passage and clear controls: play/pause, skip or seek, speed, chapter/passage navigation, voice, sleep timer and record thought. Common actions remain reachable on phones; wide layouts keep a persistent playback dock.
 
+The dock provides output-volume controls through the native media-volume APIs. They follow the active output route and hardware volume buttons, without restarting narration or changing microphone gain. Opening the control never changes volume. Routes with fixed output volume explain where the listener can adjust it.
+
 Resume, scrubbing and chapter selection refer to the source, even if generated audio changes. If a requested section is not prepared, show that state and prepare it; do not pretend every PDF is instantly an offline audiobook.
 
 The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual browsing suspends automatic following until the listener chooses to return; narration does not force the page away while they inspect something.

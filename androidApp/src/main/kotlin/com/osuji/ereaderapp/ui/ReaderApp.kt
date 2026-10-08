@@ -30,6 +30,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -76,6 +78,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.audio.PlaybackSnapshot
+import com.osuji.ereaderapp.audio.MediaOutputVolume
 import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.data.LibraryDocument
 import com.osuji.ereaderapp.data.ReaderContents
@@ -977,6 +980,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                     if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available) { Text("${audio.speed}×") }
+                MediaVolumeControl()
                 IconButton(onClick = sleep, enabled = available) { Icon(Icons.Default.Bedtime, if (audio.sleepRemainingMillis > 0) "Sleep timer running" else "Set sleep timer") }
                 if (!compact) TransportControls(audio, playback, available, record)
             }
@@ -989,6 +993,38 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
             if (audio.sleepRemainingMillis > 0) Text("Sleep in ${clock(audio.sleepRemainingMillis)}", style = MaterialTheme.typography.labelSmall)
             if (audio.preview) TextButton(onClick = { playback.returnFromPreview() }) { Text("End voice preview") }
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MediaVolumeControl() {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current
+    val view = LocalView.current
+    val output = remember(context) { MediaOutputVolume(context) }
+    val volume by output.state.collectAsStateWithLifecycle()
+    var expanded by remember { mutableStateOf(false) }
+    val slider = remember(volume.minimum, volume.maximum) { SliderState(value = volume.current.toFloat(), steps = (volume.maximum - volume.minimum - 1).coerceAtLeast(0), trackRange = volume.minimum.toFloat()..volume.maximum.coerceAtLeast(volume.minimum + 1).toFloat()) }
+    LaunchedEffect(output, lifecycle) { lifecycle.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { output.observe() } }
+    LaunchedEffect(volume.current) { slider.value = volume.current.toFloat() }
+    Box {
+        IconButton(onClick = { output.refresh(); expanded = true; haptic(view) }) {
+            Icon(if (volume.current <= volume.minimum) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, "Media volume")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Column(Modifier.widthIn(min = 200.dp, max = 320.dp).padding(horizontal = 18.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Media volume", style = MaterialTheme.typography.titleSmall)
+                Slider(
+                    state = slider,
+                    onValueChange = { value -> output.setIndex(kotlin.math.round(value).toInt()); slider.value = output.state.value.current.toFloat() },
+                    enabled = volume.adjustable,
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Media output volume"; stateDescription = "${(volume.fraction * 100).toInt()} percent" },
+                )
+                Text(when { !volume.available -> "Volume unavailable"; volume.fixed || !volume.adjustable -> "Adjust volume on your output device."; else -> "${(volume.fraction * 100).toInt()}%" }, style = MaterialTheme.typography.labelSmall)
+                volume.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
         }
     }
 }
