@@ -162,6 +162,28 @@ Programmatic native selection retained source text, accessibility state and capt
 
 The earlier PDF-only geometry/capture runs retain their exact recorded associations above. They are not rerun or attributed to these new artifacts. [build-artifacts.json](build-artifacts.json) records the new native source/report hashes and consumer observations separately.
 
+## Library and player evidence on 8 October 2026
+
+The library now uses original first-page covers, per-file source progress and saved-position reopening. Global search, offline voices, settings and import sit beneath the library branding. The continue-listening hero, listening-room label, Bring-PDF prompts and complete sleep-timer feature are removed. The dock has whole-document seeking and native output volume. Android library bars distinguish the completed accent from a neutral remaining track.
+
+Each requested change has its own atomic commit. Two additional reviewed commits clarify the Android progress track and keep backward seeks paused after natural completion. Canonical source text, note anchors, recordings and edited transcripts retain their ownership and durability contracts.
+
+| Check | Recorded result | Limit |
+| --- | --- | --- |
+| Cover rendering | 14 host CoreGraphics checks passed for original colours, crop/rotation, bounded sizing and unchanged PDF bytes | Host image adaptation; full native caches and physical devices remain separate |
+| Shared progress | 65 actual ReaderCore/SQLDelight/SQLite checks passed, including schema 4→5, defaults, source weighting, validation and archive preservation | Private synthetic database; native clocks checked separately |
+| Shared source seeking | 80 read-only resolver checks passed for unequal spans, UTF-16, boundaries/gaps, revision/finite guards and unchanged canonical data | No full-book audio-duration claim; passage-level seek precision |
+| Android playback | Final Debug passed 53 native checks: prior resume/source-seek/installed Material3 semantics checks plus genuine natural completion, cleared play intent and a paused durable backward seek | Separate QA package, private database and muted synthetic PCM; stale intent is deliberately injected for one guard case |
+| iOS playback | Current sleep-free AudioCoordinator and matching Kotlin/Native resolver passed 44 checks on iOS 18.4; the prior progress-write queue passed 9 failure/retry checks | Synthetic PCM and injected delegate callbacks; complete ReaderStore seek transaction and consumer slider remain source-reviewed |
+| Android volume | 19 native adapter checks passed: no implicit writes, system readback, explicit changes, external-change observation and original-volume restoration | External change simulated through public AudioManager; fixed/unavailable branches use disclosed fixtures; physical routes remain open |
+| Builds and metadata | Final Android Debug, unsigned Release APK, AAB and lint passed; iOS simulator Debug and unsigned ARM64 Release passed against matching rebuilt shared frameworks | Android lint: 0 errors, 13 warnings. Both produced identities remain Rhapsodos / com.osuji.ereaderapp / 0.01 / 1; Android API 28 and iOS 17 baselines retained |
+
+Native evidence is associated with its exact tested source and artifact in [build-artifacts.json](build-artifacts.json). Earlier checks are historical evidence, not silently reassigned to the newest binaries. The first sleep-removal Android harness run had an eight-second synthetic transport-readiness timeout; an unchanged rerun passed 46 checks without a recorded player error. No cause is attributed. The later natural-completion fix passed all 53 checks on its first run.
+
+Consumer installation preserved the existing Android library and iOS simulator containers. The emulator initially lacked installation space; removing only the two known disposable QA APK copies allowed the update. No app data was cleared. CUA inspected original covers, per-file progress, library actions beneath branding and the simplified dark reader/player. On the earlier sleep-free Android build, narration traversed the public three-page sample and reached 100%/Finished. The new volume slider changed system media volume. This inspection found the natural-completion seek bug, which was then fixed and independently checked. On the final build, the same sample reaches 100%/Finished; seeking backward saves 45%, and force-stop/relaunch/open restores that source and page-two highlight with playback paused. The volume popup confirms the original 33% was restored, and neutral remaining tracks are visible. The offline-pack gallery opens from the new left-side action and shows download choices; this task did not redownload or rerun the previously qualified speech models.
+
+The current iOS Debug was freshly installed and launched on the preserved phone and tablet simulators. CUA visually inspected the iPad split view with the original cover, saved 40% source progress, source highlight, library actions and volume button. The simulator viewer then failed input with `noWindowsAvailable` and `timeoutReached`; no consumer tap or volume-change claim is made. MPVolumeView needs physical-device volume/route/VoiceOver qualification. Compact posture, physical hardware-volume buttons, microphone, sustained performance and assistive-technology usability are not newly qualified by these checks.
+
 ## Release qualification
 
 Complete real compilation, lint, model execution and relevant failure/recovery checks before atomic commits. Record UI inspections separately; a locked host can block native UI automation while build/model checks continue.

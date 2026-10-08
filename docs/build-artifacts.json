@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "recorded_on": "2026-10-05",
-  "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+  "recorded_on": "2026-10-08",
+  "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -9,58 +9,97 @@
     "build": 1
   },
   "android": {
-    "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+    "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
     "min_sdk": 28,
     "target_sdk": 37,
     "artifacts": [
       {
         "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
         "bytes": 155048380,
-        "sha256": "918aedfb1b85ae8ffc8ee7c37dd7180fbec7525773086362358350095f8e9599",
+        "sha256": "b7ad5a74e15c479d440e53a642f3a19a3cf730ae7f2073041b20fa529328c503",
+        "metadata": {
+          "application_id": "com.osuji.ereaderapp",
+          "display_name": "Rhapsodos",
+          "version": "0.01",
+          "build": "1",
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "internet_permission": true,
+          "arm64_native_16k_alignment": {
+            "libraries": 7,
+            "status": "passed"
+          }
+        },
         "signing": "debug development key"
       },
       {
         "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
-        "bytes": 130610764,
-        "sha256": "d17b4bccf2a2f90f150162ce71d40730616763543287ae34ef60eae6efa25f35",
+        "bytes": 130659952,
+        "sha256": "fec43a7b8b68efd60f3a1af52d6df0f7db07d97c87c400a19ecde66c01ad08b5",
+        "metadata": {
+          "application_id": "com.osuji.ereaderapp",
+          "display_name": "Rhapsodos",
+          "version": "0.01",
+          "build": "1",
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "internet_permission": true,
+          "arm64_native_16k_alignment": {
+            "libraries": 7,
+            "status": "passed"
+          }
+        },
         "signing": "owner distribution signing required"
       },
       {
         "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
-        "bytes": 52962793,
-        "sha256": "5f5aa567ae4c3d3d577e3a82f93aa555509cc7cdb0614934a8efbd343b8213bd",
+        "bytes": 52983058,
+        "sha256": "e03feaddf0f1b346341d18a8ec3ef6170a6beea6e530d003c8741c7c95df72fe",
+        "metadata": {
+          "application_id": "com.osuji.ereaderapp",
+          "version": "0.01",
+          "build": "1",
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "inspection": "Actual base manifest decoded with installed AAPT2 protobuf classes; no APK-to-AAB metadata inference."
+        },
         "signing": "owner distribution signing required"
       }
     ],
-    "strict_offline_build": "passed",
-    "lint": {
-      "errors": 0,
-      "warnings": 13
+    "metadata_and_arm64_native_16k_alignment": {
+      "result": "passed",
+      "debug": {
+        "libraries": 7,
+        "status": "passed"
+      },
+      "release": {
+        "libraries": 7,
+        "status": "passed"
+      }
     },
-    "arm64_native_16k_alignment": {
-      "libraries": 7,
-      "result": "passed"
-    }
+    "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
   },
   "ios": {
-    "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+    "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
     "min_ios": "17.0",
     "artifacts": [
       {
         "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
-        "bundle_bytes": 37889093,
+        "bundle_bytes": 38495397,
         "bundle_files": 63,
-        "bundle_tree_sha256": "5dddaafeadce877c98454cb607dca01a4ce826a824f6e4e5431545a32ec98227",
+        "bundle_tree_sha256": "06ae557f167df777dbc9fced4c9e5ae5a0f1b5a48a90413d1a6a637cc464bcb3",
         "binaries": [
           {
             "path": "EReader",
             "bytes": 40496,
-            "sha256": "63571f51d62e989090c838c99042981c4527d2f51423dd0ee1d71601d4ab69de"
+            "sha256": "abaf93abf4f81e3d1e8b4d6da91fcb049f45ea51dd6c1a72ab6d5116184f3ed3"
           },
           {
             "path": "EReader.debug.dylib",
-            "bytes": 26322064,
-            "sha256": "2f67c4ab4e6ea82a07e16fdd224027aea0f29b02493eac4079ec6f5c63cf92f8"
+            "bytes": 26928128,
+            "sha256": "28d3f16dee1709cd223d7600e8a5c6677a261ae128d7f6479d038328996996a8"
           }
         ],
         "metadata": {
@@ -74,14 +113,14 @@
       },
       {
         "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
-        "bundle_bytes": 28181264,
+        "bundle_bytes": 28559304,
         "bundle_files": 44,
-        "bundle_tree_sha256": "56e9ead7fc223bba2b6befa2208fdf6a5e630c504405f585039d981d0e1a163f",
+        "bundle_tree_sha256": "07a8caa2fc7e739c29d655fa51731e4e1e8f041f47e4cb7477350a7856a0884e",
         "binaries": [
           {
             "path": "EReader",
-            "bytes": 16678320,
-            "sha256": "0bd61f41c033e88d4ad5f6e489c551c58d3a00793f9de27b5cdb21d8a5b8eb7c"
+            "bytes": 17056360,
+            "sha256": "201c244e3d29181af302d79575232dc431c3339a8aa3a306b2f465a4419323f2"
           }
         ],
         "metadata": {
@@ -94,17 +133,9 @@
         "signing": "unsigned; owner provisioning required"
       }
     ],
-    "debug_and_unsigned_release_build": "passed",
-    "normal_xcode_gradle_workflow": "tools/verify.sh ios passed without EREADER_PREBUILT_SHARED on 4 October; historical project-integration evidence.",
     "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
-    "current_native_build_workflow": "Current native Debug and unsigned Release passed with EREADER_PREBUILT_SHARED=1 using the matching unchanged SharedCore frameworks.",
-    "consumer_install_launch": {
-      "result": "passed",
-      "data_preserved": true,
-      "phone_runtime": "27",
-      "tablet_runtime": "26.3.1",
-      "artifact_bundle_tree_sha256": "5dddaafeadce877c98454cb607dca01a4ce826a824f6e4e5431545a32ec98227"
-    }
+    "metadata_inspection": "passed",
+    "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
   },
   "evidence": [
     {
@@ -114,7 +145,12 @@
         "testedNativeApkSha256": "cac1a9f950dffb25a5a7101b9571381bbfb2d02c347b37d9c637b34cbb98671c"
       },
       "caveat": "Historical native check; do not assign it to the final artifact.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android preview/cache7",
@@ -124,7 +160,12 @@
         "priorTestedNativeApkSha256": "02077d4b64ec5b43bb107333ae49120e2ba59bf22b48e51bf11d6d9ade099cca"
       },
       "caveat": "Historical native check; do not assign it to the final artifact.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android synthetic capture14",
@@ -133,7 +174,12 @@
         "testedInstalledApkSha256": "9593bfde57b596a8b7509e822d3f3a480e537b374801422de0dfe6ece00fef18"
       },
       "caveat": "Historical native check; do not assign it to the final artifact.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android ASR/removal6",
@@ -142,7 +188,12 @@
         "testedNativeApkSha256": "01854a6c58f3ce75ecda2dc21412eee1a282fea3380fc9c9bd7bdcfa87bde6b2"
       },
       "caveat": "Historical native check; do not assign it to the final artifact.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android removal failure/retry12",
@@ -153,7 +204,12 @@
         "external_instrumentation_apk_sha256": "2bb51a00d034cb9c00b9355760c99116d90846dc47cfdf5552a10ae169520647"
       },
       "caveat": "Historical native check; do not assign it to the final artifact.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android model/note15",
@@ -164,7 +220,12 @@
         "apk_sha256": null
       },
       "caveat": "Earlier development APK hash was not captured before replacement.",
-      "recorded_on": "2026-10-04"
+      "recorded_on": "2026-10-04",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android strict durability/archive22",
@@ -175,7 +236,12 @@
       "report_sha256": "da079f9409c6407577f28e90b60ab753ab49071b7db4fcec676677010d8f52f9",
       "microphone_opened": false,
       "recorded_on": "2026-10-04",
-      "caveat": "Historical native check; do not assign it to the current consumer artifact."
+      "caveat": "Historical native check; do not assign it to the current consumer artifact.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "iOS production adapter/lifecycle",
@@ -202,7 +268,12 @@
       "model_removal_failure_retains_retry": true,
       "model_removal_retry_cleans_owned_files": true,
       "recorded_on": "2026-10-04",
-      "caveat": "Historical native check; do not assign it to the current consumer artifact."
+      "caveat": "Historical native check; do not assign it to the current consumer artifact.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "iOS production adapter/lifecycle",
@@ -229,7 +300,12 @@
       "model_removal_failure_retains_retry": true,
       "model_removal_retry_cleans_owned_files": true,
       "recorded_on": "2026-10-04",
-      "caveat": "Historical native check; do not assign it to the current consumer artifact."
+      "caveat": "Historical native check; do not assign it to the current consumer artifact.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-04",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Shared tagged geometry migration/repair/archive",
@@ -239,7 +315,12 @@
       "execution": "Actual compiled ReaderCore and SQLDelight JDBC/SQLite; external temporary harness, including real SQL-trigger rollback and canonical data preservation.",
       "report_sha256": "4861bebb9f6a3cfc759c7f8297df872d7035c0a8e5e7d74369a22500e2f73f40",
       "source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
-      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary."
+      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android PDF highlight, rotation and native capture",
@@ -268,7 +349,12 @@
           "finalDebug": "Current62 rotation/repair assertions verify retained tagged painting, not OCR-trim repair."
         }
       },
-      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary."
+      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "iOS PDF highlight, geometry repair and native capture",
@@ -287,7 +373,12 @@
         "SharedRepository.swift": "9ec4eb7531caee89345dc750ed31e6f242a811522f5361f4fe5891705e946ef4"
       },
       "consumer_builds": "Native harness and consumer app builds are separate artifacts; matching production source hashes and SharedCore ABI verified.",
-      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary."
+      "caveat": "Historical check for its recorded source/artifact; do not assign it to a later binary.",
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": "7f5275e5e3266ec9a376e685db1fdc6c5fd603d4",
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "Android themed PDF mapping and bounded raster",
@@ -356,6 +447,11 @@
       "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
       "tested_artifact": {
         "apk_sha256": "918aedfb1b85ae8ffc8ee7c37dd7180fbec7525773086362358350095f8e9599"
+      },
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
       }
     },
     {
@@ -406,7 +502,12 @@
         "Forced late-tile fallback matches fully opaque Original content inside2PDF-point page-edge inset; extra12-degree partially covered edge antialias pixels excluded.",
         "20px/100px glyph thresholds assert native exact colour presence at different display scales; they are not performance or visual-acuity metrics."
       ],
-      "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09"
+      "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "check": "iOS themed PDF page rendering, overlays and recovery",
@@ -456,7 +557,12 @@
         "Forced late-tile fallback matches fully opaque Original content inside2PDF-point page-edge inset; extra12-degree partially covered edge antialias pixels excluded.",
         "20px/100px glyph thresholds assert native exact colour presence at different display scales; they are not performance or visual-acuity metrics."
       ],
-      "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09"
+      "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     }
   ],
   "shared_sqlite_rejection_guards": 29,
@@ -490,7 +596,12 @@
         "Playback had completed before the GUI highlight tap; native harness verifies synchronous pause during playback.",
         "Compact posture reached locked emulator; compact reader not visually qualified.",
         "No physical gestures, TalkBack or microphone qualification."
-      ]
+      ],
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "recorded_on": "2026-10-05",
@@ -507,7 +618,12 @@
         "Host CUA input returned AXError.cannotComplete; consumer tap interaction not claimed.",
         "Only tablet wide presentation inspected on final consumer.",
         "No physical capture or VoiceOver qualification."
-      ]
+      ],
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "recorded_on": "2026-10-05",
@@ -530,7 +646,12 @@
         "Historical earlier8/24 mapping artifact; no attribution to later binary.",
         "Playback completed before tap; live pause timing not GUI qualified.",
         "Mouse wheel did not visibly browse; keyboard, TalkBack, pinch, compact posture and physical hardware unqualified."
-      ]
+      ],
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "recorded_on": "2026-10-05",
@@ -548,7 +669,12 @@
       "limitations": [
         "Final presentation recheck; earlier settings/fallback interactions not repeated or reassigned.",
         "Physical gestures, accessibility and endurance remain unqualified."
-      ]
+      ],
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
     },
     {
       "recorded_on": "2026-10-05",
@@ -569,7 +695,746 @@
         "Initial partial tile painting settled before final observation.",
         "Consumer settings/tap input, interactive selection handles, VoiceOver and physical performance remain unqualified.",
         "Phone fresh launch passed on27; phone UI not visually inspected in this final run."
+      ],
+      "historical_attribution": {
+        "recorded_on": "2026-10-05",
+        "recorded_source_revision": null,
+        "scope": "Retained historical evidence only for its originally recorded source/artifact; this updater performs no runtime or consumer UI requalification."
+      }
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "platform": "Android",
+      "artifact_sha256": "908d05efb8432743cdda7006404cee176a8211aa8e4bd112a43328901db9bf95",
+      "surface": "CUA / Android Studio Running Devices, unfolded Pixel10ProFold API37, dark appearance",
+      "observed": [
+        "Original first-page library and dock covers; per-file progress; global actions beneath branding",
+        "Continue hero, listening-room label, Bring-PDF prompts and sleep-timer UI absent",
+        "Narration traverses public three-page sample with whole-document progress reaching 100%/Finished",
+        "Output-volume popup opens during narration without pausing; explicit slider changes media volume from 33% to 53%, then original thumb selected",
+        "Backward seek after natural completion exposed stale-play-intent bug, subsequently fixed in 2c22e4e"
+      ],
+      "microphone_opened": false,
+      "limitations": [
+        "Earlier sleep-free APK; these interactions are not silently reassigned to the final artifact.",
+        "Hardware toolbar volume/back clicks did not visibly act and are not qualified.",
+        "No note or microphone capture; no physical routes, accessibility participant or compact posture qualification."
+      ]
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "platform": "Android",
+      "artifact_sha256": "b7ad5a74e15c479d440e53a642f3a19a3cf730ae7f2073041b20fa529328c503",
+      "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+      "surface": "CUA / Android Studio Running Devices, unfolded Pixel10ProFold API37, dark appearance",
+      "observed": [
+        "Final Debug installed preserving nine-document library; neutral remaining progress tracks visible",
+        "Saved source/highlight reopens paused after update and fresh launch",
+        "New left Offline voices action opens gallery with Selected system voice and Ember English/English transcription download choices",
+        "Natural completion reaches 100%/Finished with Play control",
+        "Backward source seek persists at 45%; reopening displays page-two source highlight with playback paused",
+        "Volume popup reads restored original 33%",
+        "No document or note edits or recordings created"
+      ],
+      "microphone_opened": false,
+      "limitations": [
+        "No model download or new model-runtime check this turn; selected consumer voice remains system.",
+        "Compact posture, TalkBack, hardware buttons, microphone and physical output routes remain unqualified."
+      ]
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "platform": "iOS",
+      "artifact_bundle_tree_sha256": "06ae557f167df777dbc9fced4c9e5ae5a0f1b5a48a90413d1a6a637cc464bcb3",
+      "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+      "surface": "CUA / DeviceHub, iPadPro13M5/iPadOS26.3.1, dark wide split view",
+      "observed": [
+        "Current Debug freshly installed/launched on phone and tablet without container reset",
+        "Original cover, per-file saved 40% progress, active PDF source highlight and paused whole-file meter visible",
+        "Global actions beneath sidebar branding; volume button present; requested old labels/hero/sleep UI absent"
+      ],
+      "microphone_opened": false,
+      "limitations": [
+        "Consumer viewer input failed with noWindowsAvailable and timeoutReached; taps and volume changes are unverified.",
+        "iPhone launch succeeded but compact presentation was not newly visually inspected.",
+        "MPVolumeView volume/routes/VoiceOver and physical hardware require device qualification."
       ]
     }
-  ]
+  ],
+  "artifact_history": [
+    {
+      "recorded_on": "2026-10-05",
+      "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+      "identity": {
+        "name": "Rhapsodos",
+        "application_id": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": 1
+      },
+      "android": {
+        "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+        "min_sdk": 28,
+        "target_sdk": 37,
+        "artifacts": [
+          {
+            "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+            "bytes": 155048380,
+            "sha256": "918aedfb1b85ae8ffc8ee7c37dd7180fbec7525773086362358350095f8e9599",
+            "signing": "debug development key"
+          },
+          {
+            "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+            "bytes": 130610764,
+            "sha256": "d17b4bccf2a2f90f150162ce71d40730616763543287ae34ef60eae6efa25f35",
+            "signing": "owner distribution signing required"
+          },
+          {
+            "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
+            "bytes": 52962793,
+            "sha256": "5f5aa567ae4c3d3d577e3a82f93aa555509cc7cdb0614934a8efbd343b8213bd",
+            "signing": "owner distribution signing required"
+          }
+        ],
+        "strict_offline_build": "passed",
+        "lint": {
+          "errors": 0,
+          "warnings": 13
+        },
+        "arm64_native_16k_alignment": {
+          "libraries": 7,
+          "result": "passed"
+        }
+      },
+      "ios": {
+        "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+        "min_ios": "17.0",
+        "artifacts": [
+          {
+            "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
+            "bundle_bytes": 37889093,
+            "bundle_files": 63,
+            "bundle_tree_sha256": "5dddaafeadce877c98454cb607dca01a4ce826a824f6e4e5431545a32ec98227",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 40496,
+                "sha256": "63571f51d62e989090c838c99042981c4527d2f51423dd0ee1d71601d4ab69de"
+              },
+              {
+                "path": "EReader.debug.dylib",
+                "bytes": 26322064,
+                "sha256": "2f67c4ab4e6ea82a07e16fdd224027aea0f29b02493eac4079ec6f5c63cf92f8"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "ad-hoc simulator"
+          },
+          {
+            "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
+            "bundle_bytes": 28181264,
+            "bundle_files": 44,
+            "bundle_tree_sha256": "56e9ead7fc223bba2b6befa2208fdf6a5e630c504405f585039d981d0e1a163f",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 16678320,
+                "sha256": "0bd61f41c033e88d4ad5f6e489c551c58d3a00793f9de27b5cdb21d8a5b8eb7c"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "unsigned; owner provisioning required"
+          }
+        ],
+        "debug_and_unsigned_release_build": "passed",
+        "normal_xcode_gradle_workflow": "tools/verify.sh ios passed without EREADER_PREBUILT_SHARED on 4 October; historical project-integration evidence.",
+        "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+        "current_native_build_workflow": "Current native Debug and unsigned Release passed with EREADER_PREBUILT_SHARED=1 using the matching unchanged SharedCore frameworks.",
+        "consumer_install_launch": {
+          "result": "passed",
+          "data_preserved": true,
+          "phone_runtime": "27",
+          "tablet_runtime": "26.3.1",
+          "artifact_bundle_tree_sha256": "5dddaafeadce877c98454cb607dca01a4ce826a824f6e4e5431545a32ec98227"
+        }
+      },
+      "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
+    }
+  ],
+  "artifact_inspection": {
+    "method": "Produced files and app manifests inspected; no build/install/runtime execution.",
+    "source_revision_attribution": "Matching source revision supplied by integration owner; byte hashes do not independently prove compiler/source provenance.",
+    "repo_unit_source_policy": "passed",
+    "pinned_assets": "passed",
+    "runtime_qualification": "not performed by artifact updater"
+  },
+  "shared_sqlite_rejection_guards_attribution": {
+    "recorded_on": "2026-10-05",
+    "source_revision": "b707bb10b4f7a5c1cba59cc33794c23cdeeeea09",
+    "scope": "Retained historical summary; no shared runtime checks run by artifact updater."
+  },
+  "library_player_verification": {
+    "recorded_on": "2026-10-08",
+    "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+    "attribution_policy": "Each run belongs only to its recorded source/artifact. Native harnesses, source reviews, builds and consumer UI observations have separate scopes. Temporary harnesses stay outside the repository.",
+    "prior_feature_runs": [
+      {
+        "id": "item1-ios-cover-rendering",
+        "featureCommit": "9aba52a0e611755315d8445393965fba76972e9f",
+        "checks": {
+          "passed": 14,
+          "total": 14
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-item1-covers/report.json",
+          "sha256": "0c821811839a893df522f43ead6d49486cbb80b9c26732dd6d2ffe9da37bbd87"
+        },
+        "harness": {
+          "path": "/private/tmp/rhapsodos-item1-covers/Checks.swift",
+          "sha256": "68a74e777e023e127f7880d0d198e1a9ed956bbbe93604fc3b68db1c7b0366ba"
+        },
+        "association": {
+          "kind": "host adaptation of the CoreGraphics render function; no recorded consumer artifact",
+          "featureCommitSourceSHA256": {
+            "iosApp/Sources/ReaderViews.swift": "3b0570fd459aa70f9c37cb2110d95898cfd81efc426ec267c4a5483d7b73c1b2"
+          }
+        },
+        "scope": "Host CoreGraphics: original first-page colour, crop/rotation at 0/90/180/270, maximum 256px, off-main render, unchanged source PDF bytes, missing-file fallback.",
+        "limits": "CGImage host adaptation substitutes UIImage wrapping; does not exercise the complete SwiftUI cache/navigation/consumer UI, Android implementation or physical devices.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item2-shared-cursor-migration",
+        "featureCommit": "7b40aa6205986aa4c29ebb4657932648a91e9ede",
+        "checks": {
+          "passed": 65,
+          "total": 65,
+          "fixtureSeedPassed": 2
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-progress-qa/check-report.json",
+          "sha256": "f690cc09d2b692301454f960abb1e502f8ac59eb95895fa8bb31018e61c40d02"
+        },
+        "supportingReports": [
+          {
+            "path": "/private/tmp/rhapsodos-progress-qa/seed-report.json",
+            "sha256": "bbd54e45a58daf313ccdcbdd862eafcd61f806e60d20494bbd66663e49be1701"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-progress-qa/seed-classes.json",
+            "sha256": "ff3d50e0765ce387ae9023383e8f8fa97494814252edab7891d1d36165e20c94"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-progress-qa/check-classes.json",
+            "sha256": "210fb04fbeedcb4566d22caa557e63324dedc27e15a0c016af529013f8aa8caf"
+          }
+        ],
+        "harness": {
+          "path": "/private/tmp/rhapsodos-progress-qa/ProgressHarness.java",
+          "sha256": "fd24b97f532d5e20a2be1a9f7bc4c3b0a9c365ce7d4ad50f976ef6f2f06481a0"
+        },
+        "association": {
+          "kind": "actual captured compiled JVM classes",
+          "seedSchema4ClassSHA256": {
+            "com/ereader/shared/ReaderCore.class": "d7b9678b2d684d3e6ea915224985c2736c57f0f0263bcf8d361d5e54fa197bbc",
+            "com/ereader/shared/database/ReaderQueries.class": "ee8ace468102972b2cc4dc715ad1ed9ba10e32095e1ff90dbb71c6c1bf520aef",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl$Schema.class": "c092d2a6fb13bc5d69681e6b36659e5d0735e06a1a6dde3699929fe5dd4de940"
+          },
+          "checkedSchema5ClassSHA256": {
+            "com/ereader/shared/ReaderCore.class": "b0e0a782fce63ecb8e80e3365e4a49aba62c6e94ecdf18e93d03cfa414a7c6e2",
+            "com/ereader/shared/database/ReaderQueries.class": "eed4944dba4f5aa77340e24d16bd922e291b1b0509064cd287561047073439e5",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl$Schema.class": "e07b3c7c937a346e968b3af12397dac7d337e1ee0156ff4753cf1a23105ca3bc"
+          }
+        },
+        "scope": "ReaderCore + SQLDelight/JDBC SQLite, private synthetic database; schema4-to-5 migration retains anchors/audio/edit paths/native millis, fraction default0; finite and inter-document guards, unequal source weighting, complete1, preparing unknown, export/restore and older archive default0.",
+        "limits": "Persistence integration only; no native playback, GUI, microphone, consumer database or physical-device qualification.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item2-android-native-resume",
+        "featureCommit": "7b40aa6205986aa4c29ebb4657932648a91e9ede",
+        "checks": {
+          "passed": 18,
+          "total": 18
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-android-progress-native-qa/report.json",
+          "sha256": "08c499d7bcdb86e8a607b2b43b80b10b2aacac742222dc629afcbee5e1e350cc"
+        },
+        "harness": {
+          "path": "/private/tmp/rhapsodos-android-progress-native-qa/src/com/osuji/progressqa/ProgressInstrumentation.java",
+          "sha256": "d160cfbee9e6058869901d8d157152fe041b9509f76bd2969489e33a76f3f85a"
+        },
+        "association": {
+          "kind": "consumer APK DEX loaded by DexClassLoader",
+          "consumerApkSHA256": "7cd47af855ff23b47126da8f6ba4e46bf4d36538739fdbfd72e1b391ac9943e0",
+          "consumerApkPathAtRun": "/data/local/tmp/rhapsodos-progress-consumer.apk"
+        },
+        "scope": "Actual Media3 clock and native coordinator; paused/playing same-book preservation, duration-dependent fraction, completion proof at clamped native end, explicit restart/nonfinal advance, prepared-tail completion. separate package, QA database, synthetic silent PCM, original consumer APK code loaded by DexClassLoader",
+        "limits": "Separate QA package/private synthetic DB and silent PCM; reflection-controlled state and no-service context. No consumer UI, real narration quality, microphone, physical routes or actual media-service lifecycle. Android OS not recorded in this report.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item2-ios-native-and-queue",
+        "featureCommit": "7b40aa6205986aa4c29ebb4657932648a91e9ede",
+        "checks": {
+          "nativePassed": 29,
+          "nativeTotal": 29,
+          "hostQueuePassed": 9,
+          "hostQueueTotal": 9
+        },
+        "qualification": {
+          "path": "/private/tmp/rhapsodos-item2-ios/qualification.json",
+          "sha256": "5068cc7d2850fc8f15eb2c1942dc46a36aeed741516e3627a42cbc1e6fbfd7d5"
+        },
+        "reports": [
+          {
+            "path": "/private/tmp/rhapsodos-item2-ios/native-report.json",
+            "sha256": "b91d38a80730850d3d113dea71309aa3bd4cb1323207f68987397115179c9208"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-item2-ios/queue-report.json",
+            "sha256": "7b966f59fc89caa84d8676c774c69ab60f97a28f86ecbccf66ae6bce6b4bfb5c"
+          }
+        ],
+        "association": {
+          "recordedSourceSHA256": {
+            "iosApp/Sources/AudioCoordinator.swift": "2dccee97af89505032a7118fcadd70a24e81bc5d20cd06fdc78dc16bf028a880",
+            "iosApp/Sources/ReaderStore.swift": "36ca51f90e113a97c8ef6ed1a8dca0d328e2518606be63407e0e080b100ab43f",
+            "iosApp/Sources/ReaderViews.swift": "75503dec9c8a5b99b668c067e4357592e4f3bb55694e16f9f243b7dff758934e",
+            "iosApp/Sources/SharedRepository.swift": "02bc175376ddc4a5ef3d63bd1d9e084847fb1188d1e3335a014be20ef0fec86f"
+          },
+          "matchesFeatureCommit": {
+            "iosApp/Sources/AudioCoordinator.swift": true,
+            "iosApp/Sources/ReaderStore.swift": true,
+            "iosApp/Sources/ReaderViews.swift": true,
+            "iosApp/Sources/SharedRepository.swift": true
+          },
+          "productionAudioCopyMatches": true,
+          "associatedConsumerDebugBinarySHA256": {
+            "EReader": "0c0b5eed882cb78383a0c0ecc9ab11ad221ac62a1bd0cfcddf38dd4119e85c62",
+            "EReader.debug.dylib": "4edac515c3980a8b68bed8aae66eccf88617aa37f5838f44fb304cdd634987f9"
+          },
+          "associatedConsumerDebugPathAtRun": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app"
+        },
+        "scope": {
+          "native": "iOS18.4 dedicated simulator; actual synthetic PCM WAV AVAudioPlayer clock/duration; AVSpeechSynthesizer and AVAudioPlayer delegate injection; capture reservation only, no microphone",
+          "hostQueue": "Production ReaderStore saveProgress/flushProgress method extraction with async repository/clock probes; serial immutable identity, injected storage failure blocks dependent export, retry commits latest cursor"
+        },
+        "limits": "Native harness copies production AudioCoordinator with private QA access; real synthetic WAV plus injected speech/audio delegate events. Host queue uses extracted production methods and repository/clock probes. Associated consumer binary compilation does not mean consumer UI was tested; no voice quality, microphone, physical routes or hardware qualification.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item5-shared-source-seek",
+        "featureCommit": "e2a84afa4190a504c461c1f69c606f7134751e3d",
+        "checks": {
+          "passed": 80,
+          "total": 80
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-source-seek-qa/seek-report.json",
+          "sha256": "3921781de49cb663227a8dbe76953a9305e003ec18ddc6277c94f27094ab7565"
+        },
+        "supportingReports": [
+          {
+            "path": "/private/tmp/rhapsodos-source-seek-qa/seek-classes.json",
+            "sha256": "2b1f18193ce1348b08e164e87af3250a31ad932826f6f81fa2a7dacf677db580"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-source-seek-qa/seek-source.json",
+            "sha256": "7f261c1c5963b8fac24a9ecdeb451e835cf8699c5711a11b1c2db3d9a3b8dded"
+          }
+        ],
+        "harness": {
+          "path": "/private/tmp/rhapsodos-source-seek-qa/SeekHarness.java",
+          "sha256": "3ba255d284fb173d2150c1f0d8811aaf5df1ef60592c34ecfc28b93c1cd64c08"
+        },
+        "association": {
+          "kind": "actual captured compiled JVM classes and working source digest",
+          "classSHA256": {
+            "com/ereader/shared/SourceSeekTarget.class": "21291635ab35b9d19f09bc7d0f9cef850db463102ebe1b2b5b57a700c0387156",
+            "com/ereader/shared/ReaderCore.class": "1fb435f179e1720453a08632e8b1dbd78510a28e890ecd6c1f331cdab9d61482",
+            "com/ereader/shared/database/ReaderQueries.class": "30e15bcdf46549afbd2c4eac01864f400bee2176807b2a6b82b51e8393090053",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl$Schema.class": "e07b3c7c937a346e968b3af12397dac7d337e1ee0156ff4753cf1a23105ca3bc"
+          },
+          "baseCommit": "388f1d60178d57af6bb7e6aac4f27bcf516f9161",
+          "workingSourceSha256": {
+            "shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt": "fb959784522606a6cfb035f9f6710aa2629fad4b5a27a15c315053c270156ede",
+            "shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt": "26f06bb125e790e0bc3ae12c57ff4d40d6237e4d3cd68f448deebf45fe0cb50b",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/Reader.sq": "f691b06eae350f7d32226a46addd8772b333151279dae218c98329215a1ec384"
+          },
+          "matchesFeatureCommit": {
+            "shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt": true,
+            "shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt": true,
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/Reader.sq": true
+          }
+        },
+        "scope": "ReaderCore + SQLDelight/JDBC SQLite read-only resolver: unequal lengths, gaps/boundaries, UTF16 Unicode offsets, interior/complete1, revision and finite guards, preparing/original-only rejection; all canonical tables/export/snapshot and SQLite bytes unchanged, retained note/audio/edit anchors.",
+        "limits": "Private synthetic resolver integration; no native clocks, consumer UI, microphone or physical-device qualification. Schema stays5.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item5-android-native-source-seek",
+        "featureCommit": "e2a84afa4190a504c461c1f69c606f7134751e3d",
+        "checks": {
+          "passed": 46,
+          "total": 46,
+          "resumeRegression": 18,
+          "sourceSeek": 24,
+          "installedMaterial3Semantics": 4
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-android-source-seek-native-qa/report.json",
+          "sha256": "4e21b87e8a95bf54d64fb5db4621e63fa8afc7cd51505ff9b9f384c2d7560b6e"
+        },
+        "harness": {
+          "path": "/private/tmp/rhapsodos-android-source-seek-native-qa/src/com/osuji/progressqa/ProgressInstrumentation.java",
+          "sha256": "b7b62b2dbac66c579ecc050be418154c182884845b23c40e1e80277a42fd4326"
+        },
+        "association": {
+          "kind": "consumer APK DEX loaded by DexClassLoader",
+          "consumerApkSHA256": "ba5290cf8c71057691a0457bcdd3ab90132f0f82b99335c5698ae035baa5095e",
+          "consumerApkPathAtRun": "/data/local/tmp/rhapsodos-progress-consumer.apk"
+        },
+        "scope": "Actual native coordinator/Media3/private canonical store: source weighting, durable paused target before synthesis, playing intent, exact end, delayed last-wins/stale session/capture guards, preview/note isolation; installed Material3 Slider semantics invokes one release callback. separate package, QA database, synthetic silent PCM, original consumer APK code loaded by DexClassLoader",
+        "limits": "18 resume assertions overlap item2 and are not unique additional feature coverage. Reflection fixtures and no-service context; installed semantics invocation is not GUI drag, VoiceOver/TalkBack participant testing or complete consumer lifecycle. No microphone, physical routes or model quality.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item5-ios-native-source-seek",
+        "featureCommit": "e2a84afa4190a504c461c1f69c606f7134751e3d",
+        "checks": {
+          "passed": 44,
+          "total": 44
+        },
+        "qualification": {
+          "path": "/private/tmp/rhapsodos-item5-ios/qualification.json",
+          "sha256": "9976a10f714b0d9903fd483764c5d1b91a4c071bb1ef9330af031700337d9a72"
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-item5-ios/native-report.json",
+          "sha256": "ef5d978ae780bbf824955237260153522e861678ee3336acdd1a1285fd2cb087"
+        },
+        "association": {
+          "recordedSourceSHA256": {
+            "iosApp/Sources/AudioCoordinator.swift": "9e048511d135f663f1526d3f7139a5bb78fa670698013c6334d49723cb01285d",
+            "iosApp/Sources/ReaderStore.swift": "953acd26b20a373c4332f8606127032df409b2db115a5823bd1044cef3040dd5",
+            "iosApp/Sources/ReaderViews.swift": "6c1e99e9abd3c45b6d96547048c9df18180d21ff4a25eb114c6d2f32bf38d80d",
+            "iosApp/Sources/SharedRepository.swift": "9147bf6ab1ab26a22a82264af035e03d05ee2001a2940101a46b8a1670e67e47"
+          },
+          "matchesFeatureCommit": {
+            "iosApp/Sources/AudioCoordinator.swift": true,
+            "iosApp/Sources/ReaderStore.swift": true,
+            "iosApp/Sources/ReaderViews.swift": true,
+            "iosApp/Sources/SharedRepository.swift": true
+          },
+          "productionAudioCopyMatches": true,
+          "associatedConsumerDebugBinarySHA256": {
+            "EReader": "dd2c9c78d537d25735a68139839ff5be8a880534f8f9f7f80cc870ed3b59c26d",
+            "EReader.debug.dylib": "8173e02749e26b265d545ba37d86846ee5972f2b5f0c60814eec4031200d8f29"
+          },
+          "associatedConsumerDebugPathAtRun": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app"
+        },
+        "scope": "Dedicated iOS18.4 simulator: actual current Core/KotlinNative resolver plus current native audio with synthetic PCM file and delegate injection; no microphone or consumer UI automation",
+        "limits": "Harness exercises CoreSeekProbe and copied production AudioCoordinator, not the full ReaderStore async seek transaction or SwiftUI slider. ReaderStore/Views hashes pin associated reviewed source; they do not imply those complete UI flows were runtime-exercised. Delegate injection and synthetic PCM; no microphone, physical routing or hardware qualification.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item7-android-native-volume",
+        "featureCommit": "3f7e41b48a2b00e5b6a47e3d587c130efdd62f18",
+        "checks": {
+          "passed": 19,
+          "total": 19
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-android-volume-native-qa/report.json",
+          "sha256": "629c508cfbf3120fe3c12dadc40c1f954894e72e08ea965c2fab6b5c2003bf6d"
+        },
+        "harness": {
+          "path": "/private/tmp/rhapsodos-android-volume-native-qa/src/com/osuji/progressqa/ProgressInstrumentation.java",
+          "sha256": "01decae7eebb403ebc3267ac1fbbc3da38241256b7c0eb78b1d08fa5b2c56dd9"
+        },
+        "association": {
+          "kind": "consumer APK DEX loaded by DexClassLoader",
+          "consumerApkSHA256": "27fab1b371e3be60a88c79d2c91c6fa3b7e056f6c8c8c3dd8cf72883e7d8d893",
+          "featureCommitSourceSHA256": {
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/MediaOutputVolume.kt": "029fb51b29ba66a7d277d7efca73c7d0e3161ce58bcbb539e76e6f1c4c0113ad"
+          }
+        },
+        "scope": "No implicit index change on construction/refresh/observe, explicit native readback and external public AudioManager change mirrored, resume reads current index, unavailable/fixed presentation guards. separate QA package; no consumer installation/database/document/recording/presentation-preference changes; system media index restored",
+        "originalVolumeIndex": 5,
+        "originalVolumeRestored": true,
+        "limits": "external media-volume change simulated through public AudioManager API; no hardware buttons/headphones/fixed-output physical qualification; fixed/no-range presentation uses synthetic snapshot; missing-service path uses ContextWrapper No GUI, audio playback or microphone; final item8 artifacts are not this tested APK.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      },
+      {
+        "id": "item7-ios-volume-build-and-review",
+        "featureCommit": "3f7e41b48a2b00e5b6a47e3d587c130efdd62f18",
+        "qualification": {
+          "path": "/private/tmp/rhapsodos-item7-ios-validation.json",
+          "sha256": "1617fa0930156fad60fc0d787179cb85afb253199f0f30b84daacc407ed17f3c"
+        },
+        "buildLogs": [
+          {
+            "path": "/private/tmp/rhapsodos-item7-ios-debug.log",
+            "sha256": "f7a5256a973804584a1a32ddad1776fe72c838301d233ce0ddbd23532774110d"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-item7-ios-release.log",
+            "sha256": "513e62d6c3c730b9d510e50a06a18fb70ad1182ea11dba6975c68f1d61620ae3"
+          }
+        ],
+        "checks": {
+          "debugBuildPassed": true,
+          "unsignedArm64ReleaseBuildPassed": true,
+          "readOnlySourceReview": "clear; public MPVolumeView wrapper, no programmatic volume write, preserved native control children, Done target44x44"
+        },
+        "association": {
+          "sourcePath": "iosApp/Sources/ReaderViews.swift",
+          "recordedSourceSHA256": "81251f066136905fcf238eb1b57a9f6d5130f907e6b19d252cc3b4a19bf86a9e",
+          "matchesFeatureCommit": true,
+          "recordedBuildApps": {
+            "Debug-iphonesimulator": {
+              "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app",
+              "metadata": {
+                "CFBundleDisplayName": "Rhapsodos",
+                "CFBundleIdentifier": "com.osuji.ereaderapp",
+                "CFBundleShortVersionString": "0.01",
+                "CFBundleVersion": "1",
+                "MinimumOSVersion": "17.0"
+              },
+              "executable_sha256": "43afb13c3ee8f4de95590da2a371b352ddc53d3f9f4d2d20e9851f4b67874150"
+            },
+            "Release-iphoneos": {
+              "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Release-iphoneos/EReader.app",
+              "metadata": {
+                "CFBundleDisplayName": "Rhapsodos",
+                "CFBundleIdentifier": "com.osuji.ereaderapp",
+                "CFBundleShortVersionString": "0.01",
+                "CFBundleVersion": "1",
+                "MinimumOSVersion": "17.0"
+              },
+              "executable_sha256": "cdb57d744a35891d043f5666f639371ea9f5041c7079866b1768b3e853725347"
+            }
+          }
+        },
+        "scope": "Consumer Debug simulator and unsigned ARM64 Release compilation/metadata; read-only source review of native MPVolumeView embedding.",
+        "limits": "Volume changing, route behavior and VoiceOver native adjustable control require a physical iPhone/iPad; no microphone or consumer simulator lifecycle ran. Simulator cannot verify changing output volume or routes. This validation records executable digests only, not a complete bundle or debug dylib digest; it does not replace final artifact hashing.",
+        "recorded_on": "2026-10-08",
+        "attribution": "Feature-specific earlier run; retain its own recorded source and artifact, not the latest output."
+      }
+    ],
+    "current_native_runs": [
+      {
+        "id": "final-android-completion-source-seek",
+        "recorded_on": "2026-10-08",
+        "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+        "checks": {
+          "passed": 53,
+          "total": 53,
+          "priorResumeSourceSemanticsChecks": 46,
+          "naturalCompletionRegressionChecks": 7
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-android-completed-seek-native-qa/report.json",
+          "sha256": "f7b46d260e1885c8c0942bb9cde51fa652adb55249230c6e489955a261b549d3"
+        },
+        "harness": {
+          "path": "/private/tmp/rhapsodos-android-completed-seek-native-qa/src/com/osuji/progressqa/ProgressInstrumentation.java",
+          "sha256": "021c57ecc6464f98ac3429d27321ca484f4ee95b21c26317151cb34664d149bf"
+        },
+        "association": {
+          "consumerApkSHA256": "b7ad5a74e15c479d440e53a642f3a19a3cf730ae7f2073041b20fa529328c503",
+          "productionSource": {
+            "path": "/Users/atlasmoth/Desktop/ereader/androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/PlaybackCoordinator.kt",
+            "sha256": "db5ab57c14d41d04179bf855f81e73c6f370001cf467c355d63923e467723ccd"
+          }
+        },
+        "scope": "separate package, QA database, synthetic silent PCM, original consumer APK code loaded by DexClassLoader; actual native Media3 clocks and installed Material3 slider semantics; Genuine muted 2-second Media3 ENDED; reflection only injects stale desiredPlaying=true after natural completion, then synthetic target audio is seeded without changing playWhenReady.",
+        "limits": "Synthetic silent PCM/private canonical store; reflection-controlled fixtures and no-service context. No microphone, consumer GUI dispatch, physical routes or model quality. Prior checks overlap and are not additional unique coverage."
+      },
+      {
+        "id": "current-ios-sleep-free-source-seek",
+        "recorded_on": "2026-10-08",
+        "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+        "checks": {
+          "passed": 44,
+          "total": 44
+        },
+        "qualification": {
+          "path": "/private/tmp/rhapsodos-item8-ios/qualification.json",
+          "sha256": "a4d7840c841b82b955e44f4b23dff8f9b248a9d190d5af7849f4bb41eeacfdc4"
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-item8-ios/native-report.json",
+          "sha256": "ef5d978ae780bbf824955237260153522e861678ee3336acdd1a1285fd2cb087"
+        },
+        "association": {
+          "productionSourceSHA256": {
+            "iosApp/Sources/AudioCoordinator.swift": "390380ce4ffcc5820612b0a285fe5b2f4b8593fc0ce498f470e07161a7b15cf2",
+            "iosApp/Sources/ReaderTools.swift": "b40badbd8c6f8a6e9375bfbbdf6db6a6bc2a9d3cc17c5b33015bd18f3d42c7ae",
+            "iosApp/Sources/ReaderViews.swift": "8256072c28f6999cd0e104284be2a266c32e8a2c881e2d81d530d504ac50aeab",
+            "iosApp/Sources/ReaderStore.swift": "953acd26b20a373c4332f8606127032df409b2db115a5823bd1044cef3040dd5",
+            "iosApp/Sources/SharedRepository.swift": "9147bf6ab1ab26a22a82264af035e03d05ee2001a2940101a46b8a1670e67e47"
+          },
+          "harnessSourceSHA256": {
+            "Sources/ProgressTypes.swift": "cd899f5e3ff983ffa3ba1e1872787776aa1a4a97bd5830fe057ae14f940a49ae",
+            "Sources/Support.swift": "fefef9a4397879f282fc39d3c2ad36625c673a2108e268085bb76380c154e17c",
+            "Sources/AudioCoordinatorQA.swift": "4e2e04de33f0b71b964fc031aa434b93c505f9997f2bd9d3f457e0852397c1e1",
+            "Sources/CoreSeekProbe.swift": "91ef5128223b9ec0580439c885b6abe627474b60ad341c20f6950437134ff71e",
+            "Sources/App.swift": "b89d90efd03bd8ede814cb40d1f7a93329df5ae55a5f33a52d7ae727a25cfc46"
+          },
+          "harnessBinarySHA256": {
+            "SourceSeekChecks": "6909b16a6a52326ca78254973c884de3c4d36bffaa2b9e1ad970edf528ddf986",
+            "SourceSeekChecks.debug.dylib": "fbcc22d75810538316cbc7069b2c90174d864379d6a5e9088083b237b7c0a75f"
+          },
+          "consumerBuilds": {
+            "Debug-iphonesimulator": {
+              "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app",
+              "metadata": {
+                "CFBundleDisplayName": "Rhapsodos",
+                "CFBundleIdentifier": "com.osuji.ereaderapp",
+                "CFBundleShortVersionString": "0.01",
+                "CFBundleVersion": "1",
+                "MinimumOSVersion": "17.0"
+              },
+              "binariesSHA256": {
+                "EReader": "abaf93abf4f81e3d1e8b4d6da91fcb049f45ea51dd6c1a72ab6d5116184f3ed3",
+                "EReader.debug.dylib": "28d3f16dee1709cd223d7600e8a5c6677a261ae128d7f6479d038328996996a8"
+              }
+            },
+            "Release-iphoneos": {
+              "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Release-iphoneos/EReader.app",
+              "metadata": {
+                "CFBundleDisplayName": "Rhapsodos",
+                "CFBundleIdentifier": "com.osuji.ereaderapp",
+                "CFBundleShortVersionString": "0.01",
+                "CFBundleVersion": "1",
+                "MinimumOSVersion": "17.0"
+              },
+              "binariesSHA256": {
+                "EReader": "201c244e3d29181af302d79575232dc431c3339a8aa3a306b2f465a4419323f2"
+              }
+            }
+          },
+          "nativeRunCreatedUTC": "2026-10-08T03:46:23.313264+00:00",
+          "harnessLaunchPID": 20925
+        },
+        "scope": "Dedicated iOS18.4 simulator: actual current Core/KotlinNative resolver plus exact current native audio with synthetic PCM file and delegate injection; no microphone or consumer UI automation",
+        "limits": "Actual resolver and copied production AudioCoordinator, not the complete ReaderStore asynchronous seek transaction or SwiftUI slider. Other pinned sources were reviewed. Delegate callbacks are injected, PCM is synthetic; no microphone or physical-device routes."
+      }
+    ],
+    "intermediate_reruns": [
+      {
+        "id": "sleep-removal-android-source-seek",
+        "recorded_on": "2026-10-08",
+        "featureCommit": "7ec873f0f420c62d2680672ab7ae6e99e0faa487",
+        "checks": {
+          "passed": 46,
+          "total": 46
+        },
+        "report": {
+          "path": "/private/tmp/rhapsodos-android-item8-native-qa/report.json",
+          "sha256": "de7f56e6b827bcffad752e864d8a749547d5257ea44a5090130d2f6403556d49"
+        },
+        "association": {
+          "consumerApkSHA256": "908d05efb8432743cdda7006404cee176a8211aa8e4bd112a43328901db9bf95"
+        },
+        "scope": "Rerun of prior native resume/source-seek/installed Material3 semantics harness after sleep removal; private QA store and muted synthetic PCM.",
+        "limits": "First run reached an eight-second synthetic transport-readiness timeout; unchanged rerun passed without a recorded player error. Cause is unassigned. This is the earlier sleep-removal APK, not the final completion-fix APK."
+      }
+    ],
+    "consolidation_report": {
+      "path": "/private/tmp/rhapsodos-library-player-evidence.json",
+      "sha256": "fc581cd04d3e0a74bc493826d19b36e64df3941b4a4d1a69c8bc4f5a821f647e"
+    },
+    "builds": [
+      {
+        "platform": "shared",
+        "result": "passed",
+        "scope": "Android compilation and Debug iOS simulator/device plus Release iOS device framework links; source-seek feature compilation",
+        "log": {
+          "path": "/private/tmp/rhapsodos-item5-shared-build.log",
+          "sha256": "02d250287efe37da1d43d56bb9ae0ba0c1dcbb9c025fad0c69c02094ab0ff11c"
+        },
+        "featureCommit": "e2a84afa4190a504c461c1f69c606f7134751e3d"
+      },
+      {
+        "platform": "Android",
+        "result": "passed",
+        "scope": "Strict offline JDK17 Debug, lint, unsigned Release APK and AAB",
+        "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+        "lint": {
+          "errors": 0,
+          "warnings": 13
+        },
+        "log": {
+          "path": "/private/tmp/rhapsodos-android-completed-seek-build.log",
+          "sha256": "d2aa7b547932382a35f4c29902ea14aeb27dc276bd0583fd70eb299ffaab8afa"
+        },
+        "artifactSHA256": [
+          "b7ad5a74e15c479d440e53a642f3a19a3cf730ae7f2073041b20fa529328c503",
+          "fec43a7b8b68efd60f3a1af52d6df0f7db07d97c87c400a19ecde66c01ad08b5",
+          "e03feaddf0f1b346341d18a8ec3ef6170a6beea6e530d003c8741c7c95df72fe"
+        ]
+      },
+      {
+        "platform": "iOS",
+        "result": "passed",
+        "scope": "Simulator Debug and unsigned ARM64 Release against matching rebuilt SharedCore; normal Xcode simulator signing",
+        "source_revision": "2c22e4e75da31125ebe9e6399f4cfb5a90a6fed1",
+        "logs": [
+          {
+            "path": "/private/tmp/rhapsodos-item8-ios-debug.log",
+            "sha256": "7bf837738e07ef81e4688757c7ac01da4485d5fd5c666a0d5291c141a4844d93"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-item8-ios-release.log",
+            "sha256": "f5704919f5d93fc05bd16f9042650e798e7ba286aea6ef31f440e25bc5179734"
+          }
+        ],
+        "qualification": {
+          "path": "/private/tmp/rhapsodos-item8-ios/qualification.json",
+          "sha256": "a4d7840c841b82b955e44f4b23dff8f9b248a9d190d5af7849f4bb41eeacfdc4"
+        },
+        "artifactBundleTreeSHA256": [
+          "06ae557f167df777dbc9fced4c9e5ae5a0f1b5a48a90413d1a6a637cc464bcb3",
+          "07a8caa2fc7e739c29d655fa51731e4e1e8f041f47e4cb7477350a7856a0884e"
+        ]
+      }
+    ],
+    "policy": {
+      "command": "python3 tools/check-workspace.py",
+      "result": "passed",
+      "scope": "Identity and repository/catalog/font/OCR consistency, including absence of unit-test source files"
+    },
+    "consumer_installation": {
+      "Android": "Final Debug installed by update without app-data reset; disposable QA APK staging copies alone removed for installation space. Existing library/notes retained.",
+      "iOS": "Current Debug installed and freshly launched on the preserved iPhone18Pro/iOS27 and iPadPro13M5/iPadOS26.3.1 containers without reset."
+    },
+    "remaining_gates": [
+      "Physical sustained listening/model qualification and memory/thermal/battery/device fleet remain separate.",
+      "Actual hardware volume buttons, headphones/AirPlay/fixed routes, denied-volume conditions and native adjustable-control accessibility require physical devices.",
+      "These harnesses do not constitute final item8 consumer GUI validation or microphone capture qualification."
+    ]
+  }
 }
