@@ -1,7 +1,6 @@
 package com.osuji.ereaderapp.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -93,7 +92,6 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
                                 else -> Button(onClick = { models.download(pack.id); haptic(view) }, enabled = reason == null) { Text(if (status == "paused") "Resume download" else if (status == "failed") "Retry download" else "Download") }
                             }
                             if (install != null && !removing && status !in setOf("downloading", "verifying")) TextButton(onClick = { models.remove(pack.id) }, enabled = !playback.capturing && !checking) { Text("Remove downloaded files") }
-                            TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pack.licenseUrl))) } }) { Text("License") }
                         }
                     }
                 }

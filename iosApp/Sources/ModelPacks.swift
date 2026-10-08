@@ -561,9 +561,9 @@ struct ModelGallery: View {
                     Task { await models.download(pack) }
                 }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(!pack.eligible || models.loading)
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) { packFooter(pack, install: install) }
-                VStack(alignment: .leading, spacing: 12) { packFooter(pack, install: install) }
+            if let install, !["downloading", "verifying"].contains(install.status) {
+                Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
+                    .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayingNote != nil || models.loading)
             }
         }
     }
@@ -574,11 +574,4 @@ struct ModelGallery: View {
         }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable)
     }
 
-    @ViewBuilder private func packFooter(_ pack: ModelPack, install: ModelInstall?) -> some View {
-        if let install, !["downloading", "verifying"].contains(install.status) {
-            Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
-                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayingNote != nil || models.loading)
-        }
-        if let url = URL(string: pack.licenseUrl) { Link("License", destination: url).frame(minHeight: 44) }
-    }
 }
