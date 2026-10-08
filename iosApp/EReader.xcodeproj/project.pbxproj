@@ -40,7 +40,6 @@
 		AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */; };
 		B1DA20F97D06996B4BAB9523 /* DocumentArchives.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613CD34F289B7C9CC25FC84 /* DocumentArchives.swift */; };
 		B382C6384FB9285D50B80F9D /* VoiceVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3557A4212E8E793E32F863DF /* VoiceVault.swift */; };
-		B5D0EE6734938E052F4CDF78 /* PDFReadingColours.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46BC49B9A014A855C2E82D22 /* PDFReadingColours.swift */; };
 		B605F37340FE6FD390A9E30B /* AudioCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */; };
 		BB26C55F2C9F2BE355562107 /* SpaceGrotesk.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BDEBD9E22BE867A6A944D44F /* SpaceGrotesk.ttf */; };
 		BCF5C7B21945430890E0FC2E /* CoreMLSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED43090DCE4C338A4514829E /* CoreMLSpeech.swift */; };
@@ -67,7 +66,6 @@
 		3557A4212E8E793E32F863DF /* VoiceVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceVault.swift; sourceTree = "<group>"; };
 		380BA033A09B115E1FA65D51 /* font-inter.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-inter.txt"; sourceTree = "<group>"; };
 		3FD6265C06D48EA489467BD6 /* google-ai-edge_LiteRT.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "google-ai-edge_LiteRT.txt"; sourceTree = "<group>"; };
-		46BC49B9A014A855C2E82D22 /* PDFReadingColours.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReadingColours.swift; sourceTree = "<group>"; };
 		4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EReaderApp.swift; sourceTree = "<group>"; };
 		51067617DC21E834D44D8570 /* ReaderTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderTools.swift; sourceTree = "<group>"; };
 		557290E63C255BEB5621E979 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
@@ -193,7 +191,6 @@
 				F38AAAFA5A978CBA22107C06 /* FileDurability.swift */,
 				DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */,
 				9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */,
-				46BC49B9A014A855C2E82D22 /* PDFReadingColours.swift */,
 				8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */,
 				3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */,
 				51067617DC21E834D44D8570 /* ReaderTools.swift */,
@@ -348,7 +345,6 @@
 				1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */,
 				AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */,
 				FD9A2B23D20329FDD060CA0E /* OnDeviceTranscriber.swift in Sources */,
-				B5D0EE6734938E052F4CDF78 /* PDFReadingColours.swift in Sources */,
 				AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */,
 				74DA643810151910DB13A018 /* Passage.metal in Sources */,
 				6129B2C910F6320DB613CCE2 /* ReaderStore.swift in Sources */,

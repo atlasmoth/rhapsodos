@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -142,7 +141,6 @@ fun ReaderApp() {
     var appearance by rememberSaveable { mutableStateOf(preferences.getString("appearance", "system") ?: "system") }
     var reducedMotion by rememberSaveable { mutableStateOf(preferences.getBoolean("reducedMotion", false)) }
     var touchFeedback by rememberSaveable { mutableStateOf(preferences.getBoolean("touchFeedback", true)) }
-    var originalPdfColours by rememberSaveable { mutableStateOf(preferences.getBoolean("originalPdfColours", false)) }
     var typedNote by rememberSaveable { mutableStateOf(false) }
     var typedText by rememberSaveable { mutableStateOf("") }
     var typedDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -255,7 +253,7 @@ fun ReaderApp() {
                         )
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, { recordThought(it) })
+                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, { recordThought(it) })
                     }
                 },
             )
@@ -280,13 +278,6 @@ fun ReaderApp() {
                     Text("Appearance", style = MaterialTheme.typography.labelLarge)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf("system", "light", "dark").forEach { mode -> FilterChip(appearance == mode, { appearance = mode; preferences.edit().putString("appearance", mode).apply(); haptic(view) }, { Text(mode.replaceFirstChar { it.uppercase() }) }) }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("Original colours")
-                            Text("Keep the PDF's paper and colours unchanged.", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Switch(originalPdfColours, { originalPdfColours = it; preferences.edit().putBoolean("originalPdfColours", it).apply(); haptic(view) })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Reduce decorative motion", Modifier.weight(1f))
@@ -508,7 +499,7 @@ private fun EmptyReader(import: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, originalColours: Boolean, back: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, back: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -596,7 +587,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         if (!prepared.running) TextButton(onClick = { preparation.prepare(id) }) { Text("Retry") }
                     }
                 }
-                OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, originalColours, active, recordAvailable,
+                OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, active, recordAvailable,
                     { browsePage(it) }, { browse() },
                     record, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
             }
@@ -680,7 +671,7 @@ internal class PdfHighlightTap(private val startX: Float, private val startY: Fl
 }
 
 @Composable
-private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
+private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val pager = rememberPagerState(initialPage = page) { contents.document.pageCount }
     val dragged by pager.interactionSource.collectIsDraggedAsState()
     val latestBrowse by rememberUpdatedState(browse)
@@ -713,13 +704,13 @@ private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, 
     }
     VerticalPager(pager, modifier, userScrollEnabled = zoomedPage != pager.currentPage, beyondViewportPageCount = 0, key = { it }) { index ->
         val visible = index == pager.currentPage || pager.layoutInfo.visiblePagesInfo.any { it.index == index }
-        OriginalPage(contents, index, pdf, originalColours, visible, activePassage, recordAvailable, selectPage, browse,
+        OriginalPage(contents, index, pdf, visible, activePassage, recordAvailable, selectPage, browse,
             { zoomed -> if (zoomed) zoomedPage = index else if (zoomedPage == index) zoomedPage = null }, record, geometryUpdated, Modifier.fillMaxSize())
     }
 }
 
 @Composable
-private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, visible: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, zoomed: (Boolean) -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
+private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, visible: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, zoomed: (Boolean) -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val document = contents.document
     var bitmap by remember(document.id, page) { mutableStateOf<Bitmap?>(null) }
     var error by remember(document.id, page) { mutableStateOf<String?>(null) }
@@ -737,23 +728,19 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
     val preparation = koinInject<DocumentPreparation>()
     val preparedPage = contents.pages.firstOrNull { it.pageIndex == page }
     val paper = MaterialTheme.colorScheme.background
-    val ink = MaterialTheme.colorScheme.onBackground
-    LaunchedEffect(document.id, page, renderAttempt, originalColours, paper, ink, visible) {
+    LaunchedEffect(document.id, page, renderAttempt, visible) {
         error = null
         if (!visible) { bitmap = null; return@LaunchedEffect }
         var raw: Bitmap? = null
-        var displayed: Bitmap? = null
         var delivered = false
         try {
             raw = pdf.render(document.filePath, page, 2400)
-            displayed = if (originalColours) raw else PdfDisplayColours.recolour(raw, paper.toArgb(), ink.toArgb())
-            bitmap = displayed
+            bitmap = raw
             delivered = true
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = failure.message ?: "This page could not be rendered." }
         finally {
-            if (raw !== displayed || !delivered) raw?.recycle()
-            if (!delivered && displayed !== raw) displayed?.recycle()
+            if (!delivered) raw?.recycle()
         }
     }
     LaunchedEffect(scale) { zoomed(scale > 1f) }
@@ -769,7 +756,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
     val active = activePassage?.takeIf { it.pageIndex == page }
     val displayRegions = if (preparedPage?.geometrySpace == "cropTopLeftV1" && geometry != null) preparedPage.regions.map { PdfPageCoordinates.displayed(it, geometry!!.rotation) } else emptyList()
     val regions = if (active != null) displayRegions.filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
-    val accent = if (originalColours) Color(0xFF9F3800) else MaterialTheme.colorScheme.primary
+    val accent = Color(0xFF9F3800)
     val highlight = accent.copy(alpha = 0.18f)
     val outline = accent.copy(alpha = 0.85f)
     Column(modifier.fillMaxWidth()) {

@@ -48,7 +48,7 @@ Both platforms open document search in a dedicated sheet with a fixed document s
 
 Page browsing and zoom use gestures and accessible actions; do not add a visible PDF control bar. Keep passage counts and routine voice-status labels out of the playback dock. Show actual preparation and failure states when they require attention. Import prompts use a short, single-sentence subtitle.
 
-The PDF display follows the app's light/dark background and contrasting ink for neutral and muted text. Recolour low-chroma pixels, preserve strongly coloured artwork, and offer **Original colours** in Appearance settings. This is a display transformation: it never rewrites the PDF, extraction input, source ranges or note anchors. Grayscale and muted-colour photographs and scanned illustrations also change because pixels cannot distinguish them from text; the original-colour option restores their appearance. Some coloured text can retain insufficient contrast in dark mode. Further automatic handling needs qualified text-aware rendering rather than treating artwork pixels as text.
+PDF pages retain their original colours, typography, text and artwork in every app theme. Light/dark appearance applies to the surrounding canvas and controls. Narration highlights remain a separate overlay; source PDFs, extraction inputs, source ranges and note anchors remain unchanged. There is no PDF recolouring preference.
 
 Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure.
 

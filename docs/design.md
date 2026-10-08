@@ -18,7 +18,7 @@ The Abuk case provides documented product breadth; not every linked image was av
 
 The user requires world-class UI craft from the first implementation: rich intentional haptics, carefully chosen shaders and native motion, very fast interaction and high sustained performance. [UI quality](ui-quality.md) defines feedback semantics, Metal/AGSL ownership, adaptive degradation and measurable budgets.
 
-Use a coherent, quiet visual system: warm neutral reading surfaces, comfortable typography, strong controls and one controlled accent for playback/current passage. Covers can contribute secondary color without compromising contrast. Offer light, dark and accessible reading themes.
+Use a coherent, quiet visual system: warm neutral interface surfaces, comfortable interface typography, strong controls and one controlled accent for playback/current passage. Covers can contribute secondary color without compromising interface contrast. Offer system, light and dark app appearance. PDF page colours, typography, text and artwork retain their original appearance in every theme; app typography and palette do not restyle the source document.
 
 The main screen should communicate **listen, follow, remember**. A large cover or waveform can establish identity, but should not displace the passage and recording action. The source text is the useful visual accompaniment to audio.
 

@@ -32,7 +32,7 @@ Android uses native view/Compose haptic feedback for standard semantics, with ca
 
 ## Shaders and GPU effects
 
-Use effects that reinforce listening: an ambient player surface, subtle depth, restrained passage transition or a responsive control treatment. Keep document layout and text legible. Neutral PDF paper and ink follow the app theme, with an Original colours option for source artwork. Effects must not hide state or interfere with hit testing/accessibility.
+Use effects that reinforce listening: an ambient player surface, subtle depth, restrained passage transition or a responsive control treatment. Keep document layout and text legible. PDF colours, typography, text and artwork preserve their source appearance in every app theme. Apply shaders to interface decoration rather than transforming PDF page content. Narration highlights remain separate overlays; effects must not hide state or interfere with hit testing/accessibility.
 
 iOS uses Metal-backed SwiftUI shader effects available from iOS 17, with a focused Metal renderer only if it solves a measured need. Prefer small bounded effect regions and reusable compiled pipelines. Android uses AGSL/RuntimeShader where supported, with native Compose rendering and a simple fallback on older APIs. Metal is the iOS implementation, not an Android dependency. [SwiftUI Shader](https://developer.apple.com/documentation/swiftui/shader), [Android AGSL](https://developer.android.com/develop/ui/views/graphics/agsl)
 

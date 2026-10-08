@@ -187,7 +187,6 @@ private struct ListeningView: View {
     let snapshot: DocumentSnapshot
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
-    @AppStorage("originalPDFColours") private var originalPDFColours = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -200,7 +199,7 @@ private struct ListeningView: View {
                     documentId: snapshot.document.id, sourceRevision: snapshot.document.sourceRevision,
                     geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
-                    originalColours: originalPDFColours, follow: store.follow, onBrowse: { store.pauseForBrowsing() },
+                    follow: store.follow, onBrowse: { store.pauseForBrowsing() },
                     onRecord: { anchor in store.beginNote(expected: anchor) },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
             } else {
@@ -328,7 +327,6 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var feedback: Feedback
     @State private var restorePicker = false
     @AppStorage("appearance") private var appearance = "system"
-    @AppStorage("originalPDFColours") private var originalPDFColours = false
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         NavigationStack {
@@ -350,8 +348,6 @@ private struct VoiceSettings: View {
                 }
                 Section("Appearance") {
                     Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
-                    Toggle("Original colours", isOn: $originalPDFColours)
-                    Text("Strong colours are preserved. Use original colours for photographs.").font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Feel") {
                     Toggle("Touch feedback", isOn: $feedback.enabled)

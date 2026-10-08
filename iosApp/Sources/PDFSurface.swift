@@ -286,25 +286,23 @@ struct PDFSurface: UIViewRepresentable {
     let anchor: PDFHighlightAnchor?
     let excerpt: String
     let recordingEnabled: Bool
-    var originalColours = false
     let follow: Bool
     let onBrowse: () -> Void
     let onRecord: (PDFHighlightAnchor) -> Bool
     let onLoadFailure: () -> Void
 
     func makeUIView(context: Context) -> PDFView {
-        let view = ThemedPDFView()
+        let view = ReaderPDFView()
         view.autoScales = true
         view.displayBox = .cropBox
         view.displayMode = .singlePageContinuous
         view.displayDirection = .vertical
-        view.configureColours(original: originalColours)
+        view.backgroundColor = UIColor(Palette.paper)
         context.coordinator.attach(to: view)
         return view
     }
 
     func updateUIView(_ view: PDFView, context: Context) {
-        (view as? ThemedPDFView)?.configureColours(original: originalColours)
         context.coordinator.onBrowse = onBrowse
         context.coordinator.onRecord = onRecord
         context.coordinator.onLoadFailure = onLoadFailure
@@ -372,8 +370,7 @@ struct PDFSurface: UIViewRepresentable {
 
         func attach(to view: PDFView) {
             self.view = view
-            (view as? ThemedPDFView)?.onColourChange = { [weak self] in self?.applyRequestedPosition() }
-            (view as? ThemedPDFView)?.onBrowse = { [weak self] in self?.suspendFollowing() }
+            (view as? ReaderPDFView)?.onBrowse = { [weak self] in self?.suspendFollowing() }
             spinner.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(spinner)
             NSLayoutConstraint.activate([spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor), spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
@@ -475,7 +472,7 @@ struct PDFSurface: UIViewRepresentable {
             generation = id
             let worker = Task.detached(priority: .userInitiated) { () -> PDFDocument? in
                 guard !Task.isCancelled else { return nil }
-                let document = ReadingPDFDocument(url: url)
+                let document = PDFDocument(url: url)
                 return Task.isCancelled ? nil : document
             }
             loadTask = Task { [weak self] in
@@ -526,7 +523,7 @@ struct PDFSurface: UIViewRepresentable {
             appliedPage = page
             appliedAnchor = requestedAnchor
             let bounds = page.bounds(for: .cropBox)
-            let narrationTraits = (view as? ThemedPDFView)?.narrationTraits ?? view.traitCollection
+            let narrationTraits = view.traitCollection.modifyingTraits { $0.userInterfaceStyle = .light }
             func paintRegions(_ regions: [SourceRegion], alpha: CGFloat) {
                 guard requestedGeometrySpace == "cropTopLeftV1" else { return }
                 for region in regions {
@@ -807,4 +804,60 @@ final class HighlightAccessibilityView: UIView {
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool { false }
     override var accessibilityFrame: CGRect { get { frameProvider?() ?? .zero } set { super.accessibilityFrame = newValue } }
     override func accessibilityActivate() -> Bool { activate?() ?? false }
+}
+
+@MainActor
+final class ReaderPDFView: PDFView {
+    var onBrowse: (() -> Void)?
+
+    override func accessibilityScroll(_ direction: UIAccessibilityScrollDirection) -> Bool {
+        onBrowse?()
+        return super.accessibilityScroll(direction)
+    }
+
+    override func goToFirstPage(_ sender: Any?) { onBrowse?(); super.goToFirstPage(sender) }
+    override func goToLastPage(_ sender: Any?) { onBrowse?(); super.goToLastPage(sender) }
+    override func goToNextPage(_ sender: Any?) { onBrowse?(); super.goToNextPage(sender) }
+    override func goToPreviousPage(_ sender: Any?) { onBrowse?(); super.goToPreviousPage(sender) }
+    override func goBack(_ sender: Any?) { onBrowse?(); super.goBack(sender) }
+    override func goForward(_ sender: Any?) { onBrowse?(); super.goForward(sender) }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let navigationKeys: Set<UIKeyboardHIDUsage> = [.keyboardPageUp, .keyboardPageDown, .keyboardUpArrow,
+            .keyboardDownArrow, .keyboardLeftArrow, .keyboardRightArrow, .keyboardHome, .keyboardEnd, .keyboardSpacebar]
+        if presses.contains(where: { $0.key.map { navigationKeys.contains($0.keyCode) } ?? false }) { onBrowse?() }
+        super.pressesBegan(presses, with: event)
+    }
+}
+
+struct PDFNarrationRect {
+    let bounds: CGRect
+    let colour: UIColor
+}
+
+final class PDFNarrationOverlay: UIView {
+    var rectangles: (() -> [PDFNarrationRect])?
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        isOpaque = false
+        isUserInteractionEnabled = false
+        accessibilityElementsHidden = true
+        clipsToBounds = true
+    }
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        backgroundColor = .clear
+        isOpaque = false
+        isUserInteractionEnabled = false
+        accessibilityElementsHidden = true
+        clipsToBounds = true
+    }
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        for rectangle in rectangles?() ?? [] {
+            context.setFillColor(rectangle.colour.cgColor)
+            context.fill(rectangle.bounds)
+        }
+    }
 }
