@@ -75,6 +75,14 @@ CREATE TABLE file_removal (
     path TEXT NOT NULL PRIMARY KEY
 );
 
+CREATE TABLE model_catalog (
+    singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+    revision INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    packs_json TEXT NOT NULL,
+    accepted_at INTEGER NOT NULL
+);
+
 CREATE TABLE document_section (
     id TEXT NOT NULL PRIMARY KEY,
     document_id TEXT NOT NULL REFERENCES document(id),
@@ -204,6 +212,12 @@ INSERT OR REPLACE INTO model_install VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteModelInstall:
 DELETE FROM model_install WHERE pack_id = ?;
+
+currentModelCatalog:
+SELECT * FROM model_catalog WHERE singleton = 1;
+
+saveModelCatalog:
+INSERT OR REPLACE INTO model_catalog VALUES (1, ?, ?, ?, ?);
 
 searchPassages:
 SELECT passage.*, document.title FROM passage JOIN document ON passage.document_id = document.id

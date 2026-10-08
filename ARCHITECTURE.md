@@ -163,7 +163,7 @@ The gallery borrows the discover/download/run pattern from [Google AI Edge Galle
 
 ### Pack manifest and installation
 
-A signed catalog identifies the task, exact artifact version, platform, minimum OS, runtime/ABI, tokenizer/frontend, language, license/provenance, sample rate, quantization, asset dependencies, checksums, download URL, storage estimates and tested device profiles. Voice assets can depend on a shared engine; installing several voices should not duplicate it.
+A signed catalog identifies the task, exact artifact version, platform, minimum OS, runtime/ABI, tokenizer/frontend, language, license/provenance, sample rate, quantization, asset dependencies, checksums, download URL, storage estimates and tested device profiles. Voice assets can depend on a shared engine; installing several voices should not duplicate it. The shared store accepts bounded, fresh, monotonic catalogue updates only after native P-256 signature verification. Supported adapter profiles and immutable model editions protect installed and unfinished packs. [Model manager](docs/model-manager.md) defines the actual update and release setup contract.
 
 Installation progresses through availability, download, verification, optional compilation, compatibility check and atomic activation. Resume partial downloads only after validating remote version/length. Validate hashes, archive paths and disk headroom. Keep a previously working artifact until its replacement is ready, and recover interrupted installs. Deleting a pack removes its regenerable resources; it never deletes voice notes.
 

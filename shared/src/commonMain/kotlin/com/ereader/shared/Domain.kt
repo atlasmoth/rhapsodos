@@ -101,7 +101,20 @@ data class ModelPack(
     val description: String,
     val files: List<ModelFile>,
     val totalBytes: Long = files.sumOf { it.bytes },
+    val adapter: String = id,
 )
+
+@Serializable
+data class ModelCatalogUpdate(
+    val formatVersion: Int,
+    val revision: Long,
+    val publishedAt: Long,
+    val expiresAt: Long,
+    val packs: List<ModelPack>,
+)
+
+@Serializable
+data class ModelCatalogStatus(val revision: Long, val acceptedAt: Long, val source: String)
 
 @Serializable
 data class ModelInstall(

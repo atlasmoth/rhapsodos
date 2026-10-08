@@ -28,6 +28,7 @@ The documentation records the implementation, product decisions and remaining qu
 | [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and LiteRT architecture |
 | [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 17 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
+| [Model manager](docs/model-manager.md) | Explicit selections, catalogue signing/refresh, supported adapter profiles and release setup |
 | [Roadmap](docs/roadmap.md) | Delivery stages, measurable acceptance criteria and collaboration boundaries |
 | [Development](docs/development.md) | Implemented workflows, build commands, measured evidence and release qualification |
 | [Build artifacts](docs/build-artifacts.json) | Produced metadata, hashes, source revisions and exact native check associations |

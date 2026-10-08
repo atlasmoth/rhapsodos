@@ -352,8 +352,42 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     @Throws(Exception::class)
     fun modelCatalogJson(platform: String): String = lock.withLock {
         require(platform in setOf("android", "ios"))
-        json.encodeToString(ModelCatalog.packs.filter { it.platform == platform })
+        json.encodeToString(catalogPacks().filter { it.platform == platform })
     }
+
+    @Throws(Exception::class)
+    fun modelCatalogStatusJson(): String = lock.withLock {
+        val catalog = queries.currentModelCatalog().executeAsOneOrNull()
+        json.encodeToString(ModelCatalogStatus(catalog?.revision ?: 0, catalog?.accepted_at ?: 0,
+            if (catalog == null) "bundled" else "verified"))
+    }
+
+    @Throws(Exception::class)
+    fun acceptModelCatalogJson(payloadJson: String): Boolean = lock.withLock {
+        require(payloadJson.encodeToByteArray().size <= 2 * 1_024 * 1_024) { "Catalogue is too large" }
+        val update = Json.decodeFromString<ModelCatalogUpdate>(payloadJson)
+        val previous = queries.currentModelCatalog().executeAsOneOrNull()
+        val current = catalogPacks()
+        CatalogValidation.validate(update, current, epochMillis())
+        require(update.revision >= (previous?.revision ?: 0)) { "Catalogue update is older than the saved version" }
+        if (update.revision == previous?.revision) {
+            require(update == Json.decodeFromString<ModelCatalogUpdate>(previous.payload_json)) { "Catalogue revision was reused with different contents" }
+            return@withLock false
+        }
+        previous?.let {
+            require(update.publishedAt >= Json.decodeFromString<ModelCatalogUpdate>(it.payload_json).publishedAt) { "Catalogue publication moved backwards" }
+        }
+        val installed = queries.allModelInstalls().executeAsList().map { it.pack_id }.toSet()
+        val incomingIds = update.packs.map { it.id }.toSet()
+        val retained = current.filter { it.id in installed && it.id !in incomingIds }
+        val merged = (ModelCatalog.packs + update.packs + retained).associateBy { it.id }.values.toList()
+        database.transaction { queries.saveModelCatalog(update.revision, payloadJson, json.encodeToString(merged), epochMillis()) }
+        true
+    }
+
+    private fun catalogPacks(): List<ModelPack> = queries.currentModelCatalog().executeAsOneOrNull()?.let {
+        json.decodeFromString<List<ModelPack>>(it.packs_json)
+    } ?: ModelCatalog.packs
 
     @Throws(Exception::class)
     fun modelInstallsJson(): String = lock.withLock { json.encodeToString(queries.allModelInstalls().executeAsList().map { it.toDomain() }) }
@@ -402,7 +436,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         saveInstall(previous.toDomain().copy(status = "failed", error = error.take(500), updatedAt = epochMillis()))
     }
 
-    private fun requirePack(id: String) = ModelCatalog.packs.firstOrNull { it.id == id } ?: error("Unknown speech pack")
+    private fun requirePack(id: String) = catalogPacks().firstOrNull { it.id == id } ?: error("Unknown speech pack")
 
     private fun saveInstall(install: ModelInstall) = queries.saveModelInstall(install.packId, install.generation, install.status, install.bytesDownloaded, install.totalBytes, install.installedPath, install.error, install.updatedAt)
 
