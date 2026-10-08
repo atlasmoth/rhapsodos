@@ -30,7 +30,7 @@ Motion explains transitions and preparation. It must respect reduced-motion pref
 
 Book thumbnails show the original first PDF page, including in the playback dock. Native adapters render small covers asynchronously with bounded caches. Covers retain their original colours in both themes; unavailable or damaged files receive a neutral document placeholder. Cover generation never changes the source PDF or reader geometry.
 
-Global search, offline voices, settings and import sit immediately beneath the Rhapsodos logo and name in the library pane. The file list follows these actions directly, without an introductory slogan section. The actions wrap when width or text size requires it. Compact readers return to the library for these actions without restarting narration; document-specific navigation, search, bookmarks and notes remain with the PDF.
+Global search, offline voices, settings and import sit immediately beneath the Rhapsodos logo and name in the library pane. The file list follows these actions directly, without an introductory slogan section. The actions wrap when width or text size requires it. Compact readers return to the library for these actions without restarting narration; document-specific navigation, search and notes remain with the PDF.
 
 The library ends with its files rather than a privacy/archive footer. Privacy information and archive restore belong in Settings on both platforms.
 
@@ -39,7 +39,7 @@ The PDF header shows the document title and document tools.
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Original covers, progress on each file, resume by opening a file, preparation/offline status and import action |
-| PDF reader | Original page, active narration highlight, tap-to-record, bookmarks, follow control and persistent playback dock |
+| PDF reader | Original page, active narration highlight, tap-to-record, follow control and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |
 | Offline voices | Preview, language/accent, recommendation, size, download and delete |

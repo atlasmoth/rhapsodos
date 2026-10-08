@@ -14,7 +14,6 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var preparingDocument = false
     @Published private(set) var preparationProgress = 0.0
-    @Published private(set) var bookmarks: [Bookmark] = []
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published var exportURL: URL?
@@ -117,7 +116,6 @@ final class ReaderStore: ObservableObject {
         guard let page = currentPage, page.geometrySpace == "cropTopLeftV1", let range = highlightSourceRange else { return [] }
         return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
-    var currentBookmarks: [Bookmark] { bookmarks.filter { $0.documentId == selectedId } }
     var documentListeningProgress: Double? {
         guard let document, document.document.extractionStatus != "preparing",
               let passage = audio.current, passage.documentId == document.document.id,
@@ -218,7 +216,6 @@ final class ReaderStore: ObservableObject {
         library = snapshot.documents
         notes = snapshot.notes
         positions = snapshot.positions
-        bookmarks = try await repository.bookmarks()
         if let cursor = selectedId.flatMap({ latestProgress[$0] }) { applyProgress(cursor) }
     }
 
@@ -406,15 +403,6 @@ final class ReaderStore: ObservableObject {
         }
         serviceTranscriptions()
         if sceneActive { repairCurrentGeometry(); Task { await models?.recheckReadyPacks() } }
-    }
-
-    func toggleBookmark(_ passage: Passage) async {
-        guard let repository else { return }
-        do {
-            _ = try await repository.toggleBookmark(id: UUID().uuidString, documentId: passage.documentId,
-                passageId: passage.id, label: String(passage.displayText.prefix(80)))
-            try await refresh(); feedback.play(.saved)
-        } catch { present(error) }
     }
 
     func search(_ query: String, entireLibrary: Bool) async -> [SearchHit] {

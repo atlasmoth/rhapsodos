@@ -37,7 +37,6 @@ import kotlinx.serialization.json.Json
 @Serializable data class ReaderSection(val id: String, val title: String, val passageId: String, val pageIndex: Int)
 @Serializable data class Pronunciation(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String)
 @Serializable data class ReaderContents(val document: LibraryDocument, val passages: List<ReaderPassage>, val pages: List<PdfSourcePage> = emptyList(), val sections: List<ReaderSection> = emptyList(), val pronunciations: List<Pronunciation> = emptyList())
-@Serializable data class Bookmark(val id: String, val documentId: String, val passageId: String, val label: String, val createdAt: Long)
 @Serializable data class SearchMatch(val kind: String, val id: String, val documentId: String, val passageId: String, val title: String, val text: String, val pageIndex: Int)
 @Serializable data class RemovedFiles(val paths: List<String> = emptyList())
 @Serializable data class PackFile(val path: String, val url: String, val sha256: String, val bytes: Long)
@@ -75,8 +74,6 @@ class ReaderStore(private val core: ReaderCore) {
     suspend fun updateTranscript(noteId: String, text: String, status: String) = locked { core.updateTranscript(noteId, text, status); updateSnapshot() }
     suspend fun discardDraft(noteId: String) = locked { core.discardDraft(noteId); updateSnapshot() }
     suspend fun editTranscript(noteId: String, text: String) = locked { core.editTranscript(noteId, text); updateSnapshot() }
-    suspend fun bookmarks(documentId: String): List<Bookmark> = locked { json.decodeFromString(core.bookmarksJson(documentId)) }
-    suspend fun toggleBookmark(id: String, documentId: String, passageId: String, label: String): List<Bookmark> = locked { json.decodeFromString(core.toggleBookmark(id, documentId, passageId, label)) }
     suspend fun search(documentId: String, query: String): List<SearchMatch> = locked { json.decodeFromString(core.searchJson(documentId, query)) }
     suspend fun rename(documentId: String, title: String) = locked { core.renameDocument(documentId, title); updateSnapshot() }
     suspend fun deleteDocument(documentId: String): List<String> = locked { json.decodeFromString<RemovedFiles>(core.deleteDocumentJson(documentId)).paths.also { updateSnapshot() } }

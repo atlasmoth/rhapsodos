@@ -64,9 +64,6 @@ data class DocumentSection(val id: String, val title: String, val passageId: Str
 data class PronunciationRule(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String = "en")
 
 @Serializable
-data class Bookmark(val id: String, val documentId: String, val passageId: String, val label: String, val createdAt: Long)
-
-@Serializable
 data class SearchHit(val kind: String, val id: String, val documentId: String, val passageId: String, val title: String, val text: String, val pageIndex: Int)
 
 @Serializable
@@ -82,7 +79,6 @@ data class DocumentArchive(
     val document: DocumentRecord,
     val pages: List<SourcePage>,
     val notes: List<VoiceNote>,
-    val bookmarks: List<Bookmark>,
     val position: PlaybackPosition?,
     val sections: List<DocumentSection> = emptyList(),
     val pronunciations: List<PronunciationRule> = emptyList(),
@@ -158,7 +154,6 @@ data class LibrarySnapshot(
     val documents: List<DocumentRecord>,
     val notes: List<VoiceNote>,
     val positions: List<PlaybackPosition>,
-    val bookmarks: List<Bookmark> = emptyList(),
     val version: String = "0.01",
     val privacyMode: String = "localOnly",
 )

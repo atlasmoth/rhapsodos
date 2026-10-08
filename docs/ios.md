@@ -159,7 +159,7 @@ The original PDF remains a faithful document canvas with zoom and the active nar
 
 ### Accessibility
 
-Provide meaningful VoiceOver order, stable focus, named controls and passage actions. Expose headings, bookmarks and notes through useful navigation semantics or rotors. Do not move accessibility focus on each word highlight or repeatedly announce partial transcripts. Validate narration with VoiceOver enabled: the user must be able to inspect and operate controls without losing their place or having two voices talk over each other.
+Provide meaningful VoiceOver order, stable focus, named controls and passage actions. Expose headings and notes through useful navigation semantics or rotors. Do not move accessibility focus on each word highlight or repeatedly announce partial transcripts. Validate narration with VoiceOver enabled: the user must be able to inspect and operate controls without losing their place or having two voices talk over each other.
 
 Support large Dynamic Type, sufficient contrast, reduced motion, Switch Control and Voice Control. Keyboard commands should help play/pause, navigate and add notes without intercepting text entry. Recording state needs text and semantics in addition to color or waveform animation. The transcript editor must retain the original recording and attachment context.
 

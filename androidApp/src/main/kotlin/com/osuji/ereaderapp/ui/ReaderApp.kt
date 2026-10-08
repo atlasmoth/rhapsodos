@@ -87,7 +87,6 @@ import com.osuji.ereaderapp.data.VoiceNote
 import com.osuji.ereaderapp.data.DocumentArchives
 import com.osuji.ereaderapp.data.OwnedFiles
 import com.osuji.ereaderapp.data.ReaderPassage
-import com.osuji.ereaderapp.data.Bookmark
 import com.osuji.ereaderapp.pdf.DocumentPreparation
 import com.osuji.ereaderapp.audio.TranscriptionCoordinator
 import com.osuji.ereaderapp.pdf.PdfAdapter
@@ -181,7 +180,7 @@ fun ReaderApp() {
     val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.rhapsodos.document+zip")) { uri ->
         val id = exportDocumentId
         if (uri != null && id != null) scope.launch {
-            try { check(playback.persist()) { "Your listening position could not be saved. Please retry before exporting." }; archives.export(id, uri); haptic(view, true); message = "Your PDF, thoughts, bookmarks and listening position were exported." }
+            try { check(playback.persist()) { "Your listening position could not be saved. Please retry before exporting." }; archives.export(id, uri); haptic(view, true); message = "Your PDF, thoughts and listening position were exported." }
             catch (failure: Exception) { message = failure.message ?: "The archive could not be saved." }
         }
     }
@@ -358,7 +357,7 @@ fun ReaderApp() {
             if (action.first in setOf("rename", "delete")) AlertDialog(
                 onDismissRequest = { if (!actionSaving) libraryAction = null },
                 title = { Text(if (action.first == "rename") "Rename your document" else "Delete this document?") },
-                text = { if (action.first == "rename") OutlinedTextField(renameText, { renameText = it }, enabled = !actionSaving, label = { Text("Title") }) else Text("This removes the imported PDF, its thoughts, bookmarks and listening position from this device. Export first to keep a copy.") },
+                text = { if (action.first == "rename") OutlinedTextField(renameText, { renameText = it }, enabled = !actionSaving, label = { Text("Title") }) else Text("This removes the imported PDF, its thoughts and listening position from this device. Export first to keep a copy.") },
                 confirmButton = { TextButton(enabled = !actionSaving && !playback.capturing && (action.first != "rename" || renameText.isNotBlank()), onClick = {
                     actionSaving = true
                     scope.launch {
@@ -530,7 +529,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var following by rememberSaveable(id) { mutableStateOf(true) }
     var page by rememberSaveable(id) { mutableIntStateOf(0) }
     var restored by remember(id) { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val view = LocalView.current
     val snapshot by store.snapshot.collectAsStateWithLifecycle()
     val metadata = snapshot.documents.firstOrNull { it.id == id }
@@ -541,8 +539,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showPronunciation by remember { mutableStateOf(false) }
     var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
     var showPassageTools by remember { mutableStateOf(false) }
-    var bookmarks by remember(id) { mutableStateOf<List<Bookmark>>(emptyList()) }
-    LaunchedEffect(id) { bookmarks = store.bookmarks(id) }
     LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
         try { document = store.contents(id) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -579,14 +575,10 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     IconButton(onClick = { haptic(view); back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to library") }
                     Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search document") }
-                    IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Pages and bookmarks") }
+                    IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Chapters and pages") }
                     Box {
                         IconButton(onClick = { showPassageTools = true; haptic(view) }) { Icon(Icons.Default.MoreVert, "Current passage actions") }
                         DropdownMenu(expanded = showPassageTools, onDismissRequest = { showPassageTools = false }) {
-                            DropdownMenuItem(text = { Text(if (bookmarks.any { it.passageId == active?.id }) "Remove current bookmark" else "Bookmark current passage") }, enabled = currentAvailable, onClick = {
-                                showPassageTools = false
-                                active?.let { passage -> scope.launch { bookmarks = store.toggleBookmark(java.util.UUID.randomUUID().toString(), id, passage.id, "Page ${passage.pageIndex + 1}"); haptic(view) } }
-                            })
                             DropdownMenuItem(text = { Text("Write a thought") }, enabled = currentAvailable, onClick = { showPassageTools = false; active?.let(write) })
                             DropdownMenuItem(text = { Text("Pronunciation") }, onClick = { showPassageTools = false; showPronunciation = true; haptic(view) })
                         }
@@ -638,10 +630,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     if (showSearch) SearchSheet(id, { hit -> returnToPassage(hit.passageId) }, { showSearch = false })
     if (showContents) AlertDialog(onDismissRequest = { showContents = false }, title = { Text("Find your place") }, text = {
         LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (bookmarks.isNotEmpty()) item { Text("BOOKMARKS", style = MaterialTheme.typography.labelSmall) }
-            items(bookmarks, key = { it.id }) { bookmark ->
-                TextButton(onClick = { returnToPassage(bookmark.passageId); showContents = false }) { Icon(Icons.Default.Bookmark, null); Spacer(Modifier.width(8.dp)); Text(bookmark.label) }
-            }
             if (contents.sections.isNotEmpty()) item { Text("CHAPTERS", style = MaterialTheme.typography.labelSmall) }
             items(contents.sections, key = { it.id }) { section ->
                 TextButton(onClick = { returnToPassage(section.passageId); showContents = false }) { Text(section.title) }
@@ -894,7 +882,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
     LazyColumn(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (notes.isEmpty()) item {
             Column(Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Default.BookmarkBorder, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
+                Icon(Icons.Default.EditNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
                 Text("A thought worth keeping", style = MaterialTheme.typography.titleMedium)
                 Text("Pause and record as you listen. Every thought keeps its place in the document.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

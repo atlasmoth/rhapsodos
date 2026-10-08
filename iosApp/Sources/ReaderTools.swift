@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ReaderTools: View {
-    enum Tab: Hashable { case contents, saved, search, voice }
+    enum Tab: Hashable { case contents, search, voice }
     @EnvironmentObject private var store: ReaderStore
     @Environment(\.dismiss) private var dismiss
     @State private var tab: Tab
@@ -19,7 +19,7 @@ struct ReaderTools: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Browse", selection: $tab) { Text("Contents").tag(Tab.contents); Text("Saved").tag(Tab.saved); Text("Search").tag(Tab.search); Text("Voice").tag(Tab.voice) }
+                Picker("Browse", selection: $tab) { Text("Contents").tag(Tab.contents); Text("Search").tag(Tab.search); Text("Voice").tag(Tab.voice) }
                     .pickerStyle(.segmented).padding()
                 if tab == .contents {
                     List(store.document?.sections ?? []) { section in
@@ -27,12 +27,6 @@ struct ReaderTools: View {
                             HStack { Label(section.title, systemImage: "doc.text"); Spacer(); Text("\(section.pageIndex + 1)").foregroundStyle(.secondary) }
                         }
                     }.overlay { if store.document?.sections.isEmpty != false { ContentUnavailableView("No prepared pages yet", systemImage: "doc.text") } }
-                } else if tab == .saved {
-                    List(store.currentBookmarks) { bookmark in
-                        Button { Task { await store.goToPassage(documentId: bookmark.documentId, passageId: bookmark.passageId); dismiss() } } label: {
-                            Label(bookmark.label, systemImage: "bookmark.fill").lineLimit(3)
-                        }
-                    }.overlay { if store.currentBookmarks.isEmpty { ContentUnavailableView("Keep your favorite passages", systemImage: "bookmark", description: Text("Use the bookmark button while following a passage.")) } }
                 } else if tab == .search {
                     VStack(spacing: 0) {
                         Toggle("Search the whole library", isOn: $librarySearch).font(.subheadline).padding(.horizontal)

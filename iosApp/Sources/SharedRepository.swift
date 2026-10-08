@@ -121,14 +121,6 @@ struct SourceSeekTarget: Codable {
     let passageFraction: Double
 }
 
-struct Bookmark: Codable, Identifiable {
-    let id: String
-    let documentId: String
-    let passageId: String
-    let label: String
-    let createdAt: Int64
-}
-
 struct SearchHit: Codable, Identifiable {
     let kind: String
     let id: String
@@ -186,10 +178,6 @@ actor SharedRepository {
     func updateGeometry(documentId: String, pageIndex: Int, regions: [SourceRegion]) throws -> DocumentSnapshot {
         let json = String(decoding: try JSONEncoder().encode(regions), as: UTF8.self)
         return try decode(core.updatePageGeometry(documentId: documentId, pageIndex: Int32(pageIndex), regionsJson: json, geometrySpace: "cropTopLeftV1"))
-    }
-    func bookmarks(documentId: String = "") throws -> [Bookmark] { try decode(core.bookmarksJson(documentId: documentId)) }
-    func toggleBookmark(id: String, documentId: String, passageId: String, label: String) throws -> [Bookmark] {
-        try decode(core.toggleBookmark(bookmarkId: id, documentId: documentId, passageId: passageId, label: label))
     }
     func search(documentId: String = "", query: String) throws -> [SearchHit] { try decode(core.searchJson(documentId: documentId, query: query)) }
     func rename(documentId: String, title: String) throws { try core.renameDocument(documentId: documentId, title: title) }

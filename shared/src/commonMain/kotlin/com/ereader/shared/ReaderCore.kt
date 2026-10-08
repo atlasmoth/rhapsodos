@@ -3,7 +3,6 @@ package com.ereader.shared
 import app.cash.sqldelight.db.SqlDriver
 import com.ereader.shared.database.ReaderDatabase
 import com.ereader.shared.database.Note
-import com.ereader.shared.database.Bookmark as StoredBookmark
 import com.ereader.shared.database.Model_install as StoredModelInstall
 import com.ereader.shared.database.Passage as StoredPassage
 import kotlinx.serialization.encodeToString
@@ -26,7 +25,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             positions = queries.allPositions().executeAsList().map {
                 PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction)
             },
-            bookmarks = queries.allBookmarks().executeAsList().map { it.toDomain() },
         ))
     }
 
@@ -214,11 +212,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     @Throws(Exception::class)
-    fun bookmarksJson(documentId: String): String = lock.withLock {
-        json.encodeToString(bookmarks(documentId))
-    }
-
-    @Throws(Exception::class)
     fun setDocumentSections(documentId: String, sectionsJson: String): String = lock.withLock {
         val sections = json.decodeFromString<List<DocumentSection>>(sectionsJson)
         require(sections.size <= 10_000 && sections.map { it.id }.distinct().size == sections.size)
@@ -272,18 +265,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     private fun pronunciations(documentId: String) = queries.pronunciationsForDocument(documentId).executeAsList().map { PronunciationRule(it.id, it.document_id, it.term, it.replacement, it.language_tag) }
 
     @Throws(Exception::class)
-    fun toggleBookmark(bookmarkId: String, documentId: String, passageId: String, label: String): String = lock.withLock {
-        require(bookmarkId.isNotBlank())
-        val passage = requirePassage(documentId, passageId)
-        database.transaction {
-            val existing = queries.bookmarkForPassage(passage.id).executeAsOneOrNull()
-            if (existing == null) queries.insertBookmark(bookmarkId, documentId, passage.id, label.trim().take(200), epochMillis())
-            else queries.deleteBookmark(existing.id)
-        }
-        json.encodeToString(bookmarks(documentId))
-    }
-
-    @Throws(Exception::class)
     fun searchJson(documentId: String, query: String): String = lock.withLock {
         val term = query.trim().take(200)
         val results = if (term.isEmpty()) emptyList() else {
@@ -314,7 +295,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         database.transaction {
             paths.forEach { queries.enqueueFileRemoval(it) }
             queries.deleteDocumentNotes(documentId)
-            queries.deleteDocumentBookmarks(documentId)
             queries.deleteDocumentSections(documentId)
             queries.deleteDocumentPronunciations(documentId)
             queries.deleteDocumentNarrationRevision(documentId)
@@ -353,7 +333,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val notes = queries.allNotes().executeAsList().filter { it.document_id == documentId }.map { it.toDomain() }
         require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
         json.encodeToString(DocumentArchive(document = snapshot.document, pages = pages,
-            notes = notes, bookmarks = bookmarks(documentId), position = queries.allPositions().executeAsList()
+            notes = notes, position = queries.allPositions().executeAsList()
                 .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction) },
             sections = snapshot.sections, pronunciations = snapshot.pronunciations))
     }
@@ -370,7 +350,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         validatePages(archive.pages, 0)
         require(archive.pages.sumOf { it.text.length.toLong() } <= 20_000_000L)
         val passages = PassageBuilder.build(document.id, archive.pages).associateBy { it.id }
-        require(archive.notes.size <= 100_000 && archive.bookmarks.size <= 100_000)
+        require(archive.notes.size <= 100_000)
         archive.notes.forEach { note ->
             val passage = passages[note.passageId] ?: error("Note source is missing")
             require(note.id.isNotBlank() && note.documentId == document.id && note.sourceRevision == document.sourceRevision && note.pageIndex == passage.pageIndex && note.sourceStart == passage.sourceStart && note.sourceEnd == passage.sourceEnd && note.quote == passage.sourceText) { "Note anchor does not match its source" }
@@ -378,7 +358,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             require(note.status in setOf("text", "pending", "pendingModel", "transcribing", "transcribed", "failed"))
             require(if (note.status == "text") note.recordingPath.isEmpty() && note.durationMillis == 0L else note.recordingPath.isNotBlank() && note.durationMillis > 0)
         }
-        archive.bookmarks.forEach { require(it.documentId == document.id && it.id.isNotBlank() && it.passageId in passages) }
         require(archive.sections.size <= 10_000 && archive.sections.map { it.id }.distinct().size == archive.sections.size)
         archive.sections.forEach { require(it.id.isNotBlank() && it.title.isNotBlank() && it.title.length <= 500 && passages[it.passageId]?.pageIndex == it.pageIndex) }
         require(archive.pronunciations.size <= 1_000)
@@ -394,7 +373,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
                 queries.insertNote(note.id, document.id, note.passageId, note.sourceRevision, note.pageIndex.toLong(), note.sourceStart.toLong(), note.sourceEnd.toLong(), note.quote, note.recordingPath,
                     note.durationMillis, note.offsetMillis, if (note.status == "transcribing") "pending" else note.status, note.machineTranscript, note.editedTranscript, note.transcriptRevision, note.createdAt)
             }
-            archive.bookmarks.forEach { queries.insertBookmark(it.id, it.documentId, it.passageId, it.label, it.createdAt) }
             archive.position?.let { queries.savePosition(it.documentId, it.passageId, it.offsetMillis, epochMillis(), it.passageFraction) }
             archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
             archive.pronunciations.forEach { queries.savePronunciation(it.id, it.documentId, it.term, it.replacement, it.languageTag, epochMillis()) }
@@ -460,8 +438,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
 
     private fun saveInstall(install: ModelInstall) = queries.saveModelInstall(install.packId, install.generation, install.status, install.bytesDownloaded, install.totalBytes, install.installedPath, install.error, install.updatedAt)
 
-    private fun bookmarks(documentId: String) = (if (documentId.isEmpty()) queries.allBookmarks().executeAsList() else queries.bookmarksForDocument(documentId).executeAsList()).map { it.toDomain() }
-
     private fun excerpt(text: String, query: String): String {
         val start = (text.indexOf(query, ignoreCase = true) - 60).coerceAtLeast(0)
         val safeStart = if (splitsSurrogate(text, start)) start - 1 else start
@@ -515,8 +491,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     private fun StoredPassage.toDomain() = Passage(id, document_id, page_index.toInt(),
         page_start.toInt(), page_end.toInt(), source_start.toInt(), source_end.toInt(), source_text, spoken_text,
         spokenMapping = PassageBuilder.mapping(source_text, page_start.toInt()))
-
-    private fun StoredBookmark.toDomain() = Bookmark(id, document_id, passage_id, label, created_at)
 
     private fun StoredModelInstall.toDomain() = ModelInstall(pack_id, generation, status, bytes_downloaded, total_bytes, installed_path, error, updated_at)
 

@@ -79,11 +79,8 @@ struct ReaderRoot: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if store.document != nil {
-                        Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages, bookmarks and search")
+                        Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages and search")
                         Menu {
-                            if let passage = store.currentPassage {
-                                Button(store.currentBookmarks.contains(where: { $0.passageId == passage.id }) ? "Remove bookmark" : "Bookmark this passage", systemImage: "bookmark") { Task { await store.toggleBookmark(passage) } }
-                            }
                             if !store.follow { Button("Follow narration", systemImage: "scope") { store.follow = true } }
                             Button("Export document and notes", systemImage: "square.and.arrow.up") { exportConfirm = true }
                         } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")

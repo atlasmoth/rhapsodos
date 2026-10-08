@@ -193,3 +193,7 @@ The `4100757` change removes the complete iOS **On this device** library footer.
 Complete real compilation, lint, model execution and relevant failure/recovery checks before atomic commits. Record UI inspections separately; a locked host can block native UI automation while build/model checks continue.
 
 Physical gates include microphone/route interruptions, locked-screen endurance, oldest supported devices, haptics, thermal/battery behavior, accessibility participants and sustained listening quality. Distribution needs the owner's signing configuration and separate publication authorization. [ui-quality.md](ui-quality.md) and [roadmap.md](roadmap.md) define the release bar.
+
+## Bookmark removal — 8 October 2026
+
+Removed bookmark UI, native adapters, shared contracts and the live table. Schema 5→6 drops only that table. Android Debug and iOS simulator Debug compiled with the matching updated shared framework; K/N device Release also linked. A private actual ReaderCore/SQLDelight/JDBC SQLite harness passed 71/71 checks plus four schema-5 seed checks: all other table rows and original PDF/audio bytes were retained, obsolete archive fields were discarded, and invalid anchors/geometry/progress, collision and SQL rollback protections still held. Evidence: `/private/tmp/rhapsodos-bookmarks-removal-qa/qualification.json`, SHA-256 `e60b8c17bbc2c6f478eb51aefe93701ebd9104ad065d087a15410be300984a72`. This is private persistence integration evidence, not consumer UI or physical-device qualification.
