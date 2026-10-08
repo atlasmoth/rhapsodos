@@ -28,6 +28,7 @@ final class ReaderStore: ObservableObject {
     private var latestProgress: [String: ListeningCursor] = [:]
     private var progressWrite: Task<Result<Void, Error>, Never>?
     private var sourceSeekRequest: UUID?
+    private var sourceSeekCancelled = false
     private var noteTask: Task<Void, Never>?
     private var capturedDuration: Int64 = 0
     private var transcriptionQueue: [String] = []
@@ -67,6 +68,15 @@ final class ReaderStore: ObservableObject {
         audio.onError = { [weak self] in self?.errorMessage = $0 }
         audio.onCaptureInterrupted = { [weak self] reason in Task { await self?.interruptedCapture(message: reason) } }
         audio.$playing.merge(with: audio.$recording).merge(with: audio.$previewing).merge(with: audio.$replayPaused).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
+        audio.$playing.removeDuplicates().sink { [weak self] playing in
+            guard playing else { return }
+            Task { @MainActor in
+                guard let self, self.audio.playing, self.selectedId == self.audio.current?.documentId,
+                      !self.audio.previewing, self.audio.replayingNote == nil, !self.audio.recording,
+                      !self.audio.capturePending, self.captureDraft == nil else { return }
+                self.follow = true
+            }
+        }.store(in: &subscriptions)
         $preparingDocument.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $captureDraft.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $busy.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions(); self?.repairCurrentGeometry() } }.store(in: &subscriptions)
@@ -132,11 +142,12 @@ final class ReaderStore: ObservableObject {
               snapshot.document.sourceRevision == sourceRevision, let repository else { return }
         let request = UUID(), initialTransport = audio.transportRevision
         sourceSeekRequest = request
+        sourceSeekCancelled = false
         busy = true
         preparation = "Moving to your place"
-        defer { if sourceSeekRequest == request { sourceSeekRequest = nil; busy = false; preparation = ""; serviceTranscriptions() } }
+        defer { if sourceSeekRequest == request { sourceSeekRequest = nil; sourceSeekCancelled = false; busy = false; preparation = ""; serviceTranscriptions() } }
         func currentRequest(_ transport: UUID) -> Bool {
-            sourceSeekRequest == request && selectedId == snapshot.document.id
+            sourceSeekRequest == request && !sourceSeekCancelled && selectedId == snapshot.document.id
                 && document?.document.sourceRevision == snapshot.document.sourceRevision
                 && audio.current?.documentId == snapshot.document.id && audio.transportRevision == transport
                 && captureDraft == nil && !audio.recording && !audio.capturePending
@@ -463,9 +474,19 @@ final class ReaderStore: ObservableObject {
     }
 
     func togglePlayback() { feedback.play(.playback); audio.toggle() }
+    func pauseForBrowsing() {
+        guard let selectedId, document?.document.id == selectedId, audio.current?.documentId == selectedId,
+              !loading, (!busy || sourceSeekRequest != nil), captureDraft == nil,
+              !audio.recording, !audio.capturePending, !audio.previewing, audio.replayingNote == nil else { return }
+        if sourceSeekRequest != nil { sourceSeekCancelled = true }
+        follow = false
+        audio.pause()
+    }
     func skip(_ amount: Int) { feedback.play(.selection); audio.move(by: amount); follow = true }
     func seek(_ passage: Passage) {
-        guard let index = document?.passages.firstIndex(where: { $0.id == passage.id }) else { return }
+        guard !busy, captureDraft == nil, passage.documentId == selectedId,
+              let index = document?.passages.firstIndex(where: { $0.id == passage.id }) else { return }
+        audio.pause()
         audio.seek(to: index)
         follow = true
         feedback.play(.selection)

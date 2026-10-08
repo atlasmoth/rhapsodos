@@ -155,7 +155,7 @@ Use actual available window size and accessibility text size, not device identit
 
 The playback dock is attached to a session-level container. Resizing, rotation or opening a note must not recreate playback, reload the model, move the frozen anchor or discard the draft. A large book cover must not displace the current passage and recording action in wide listening mode.
 
-The original PDF remains a faithful document canvas with zoom and the active narration highlight. Dynamic Type applies to controls and accessible source context. Expose the current excerpt and an equivalent pause-and-record action within the PDF surface without adding a visible reading pane. Two-page spreads are a reading preference, not the default layout for following narration.
+The original PDF remains a faithful document canvas with zoom and the active narration highlight. Dynamic Type applies to controls and accessible source context. Expose the current excerpt and an equivalent pause-and-record action within the PDF surface without adding a visible reading pane. Manual PDF browsing pauses narration and automatic following. Play resumes the native frozen cursor and returns to its passage; no follow control is exposed. Two-page spreads are a reading preference, not the default layout for following narration.
 
 ### Accessibility
 

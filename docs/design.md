@@ -39,7 +39,7 @@ The PDF header shows the document title and document tools.
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Original covers, progress on each file, resume by opening a file, preparation/offline status and import action |
-| PDF reader | Original page, active narration highlight, tap-to-record, follow control and persistent playback dock |
+| PDF reader | Original page, active narration highlight, tap-to-record and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |
 | Offline voices | Preview, language/accent, recommendation, size, download and delete |
@@ -61,7 +61,7 @@ Adapt to available **window space**, font scale and posture, not a tablet label 
 
 Wide listening shows the PDF in the center and can expose notes for the current document on the right. A library or outline belongs on the left. Do not force four simultaneous panes merely because a large display permits it. Offer a focused listening mode and explicit panel visibility.
 
-The source and notes scroll independently. Manual source scrolling suspends auto-follow and shows a return-to-current-passage action. Seeking moves narration only through an explicit listening command. Opening a note should expose its source context without inadvertently starting playback.
+The source and notes scroll independently. Manual source browsing pauses narration and auto-follow. Play resumes the frozen listening position and returns to its page. There is no follow toggle or separate return action. Seeking moves narration only through an explicit source destination or listening command. Opening a note should expose its source context without inadvertently starting playback.
 
 ### Android
 

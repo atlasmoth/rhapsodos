@@ -79,9 +79,6 @@ struct ReaderRoot: View {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if store.document != nil {
                         Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages and search")
-                        Menu {
-                            if !store.follow { Button("Follow narration", systemImage: "scope") { store.follow = true } }
-                        } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")
                         Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
                     }
                 }
@@ -199,7 +196,7 @@ private struct ListeningView: View {
                     regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" },
                     geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
-                    originalColours: originalPDFColours, follow: store.follow, onBrowse: { store.follow = false },
+                    originalColours: originalPDFColours, follow: store.follow, onBrowse: { store.pauseForBrowsing() },
                     onHighlight: { anchor in
                         guard store.canBeginNote, store.currentHighlightAnchor == anchor else { return false }
                         return store.beginNote(expected: anchor)

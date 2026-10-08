@@ -42,7 +42,7 @@ The dock provides output-volume controls through the native media-volume APIs. T
 
 Resume, scrubbing and chapter selection refer to the source, even if generated audio changes. If a requested section is not prepared, show that state and prepare it; do not pretend every PDF is instantly an offline audiobook.
 
-The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual browsing suspends automatic following until the listener chooses to return; narration does not force the page away while they inspect something.
+The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual page browsing, pan and zoom pause narration and automatic following immediately. Play resumes the saved listening position and returns the PDF to narration. There is no separate follow-narration control. Explicit chapter, note and search destinations can move the source position while leaving playback paused.
 
 Page browsing and zoom use gestures and accessible actions; do not add a visible PDF control bar. Keep passage counts and routine voice-status labels out of the playback dock. Show actual preparation and failure states when they require attention. Import prompts use a short, single-sentence subtitle.
 
@@ -108,7 +108,7 @@ Rich haptics, polished native motion and tasteful GPU effects should make listen
 
 Accessible listening is a core quality bar. Support screen readers, large text, high contrast, reduced motion, keyboard/pointer operation and non-color recording cues. The original PDF may need an accessible semantic companion; merely wrapping a canvas in native UI is insufficient.
 
-Do not move screen-reader focus with every highlight or speak every partial transcript over narration. Let people operate controls predictably with assistive speech enabled. Provide explicit settings for following, narration speed, pauses and source presentation.
+Do not move screen-reader focus with every highlight or speak every partial transcript over narration. Let people operate controls predictably with assistive speech enabled. Provide explicit settings for narration speed and source presentation.
 
 Use real accessibility participants during validation. Comfortable listening, simple recovery and useful source access matter more than decorative waveforms or an elaborate onboarding sequence.
 

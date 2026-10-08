@@ -343,6 +343,8 @@ struct PDFSurface: UIViewRepresentable {
         private var pageContexts: [SourcePage] = []
         private var pageAccessibility: [Int: HighlightAccessibilityView] = [:]
         private var requestedFollow = true
+        private var applyingNavigation = false
+        private weak var observedPage: PDFPage?
         private var generation = UUID()
         private var loadTask: Task<Void, Never>?
         private var observations: [NSObjectProtocol] = []
@@ -360,6 +362,7 @@ struct PDFSurface: UIViewRepresentable {
         func attach(to view: PDFView) {
             self.view = view
             (view as? ThemedPDFView)?.onColourChange = { [weak self] in self?.applyRequestedPosition() }
+            (view as? ThemedPDFView)?.onBrowse = { [weak self] in self?.suspendFollowing() }
             spinner.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(spinner)
             NSLayoutConstraint.activate([spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor), spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
@@ -367,6 +370,10 @@ struct PDFSurface: UIViewRepresentable {
             pan.delegate = self
             pan.cancelsTouchesInView = false
             view.addGestureRecognizer(pan)
+            let pinch = UIPinchGestureRecognizer(target: self, action: #selector(browsing(_:)))
+            pinch.delegate = self
+            pinch.cancelsTouchesInView = false
+            view.addGestureRecognizer(pinch)
             highlightTap.addTarget(self, action: #selector(tapped(_:)))
             highlightTap.delegate = self
             highlightTap.numberOfTapsRequired = 1
@@ -391,7 +398,10 @@ struct PDFSurface: UIViewRepresentable {
             accessibilityHighlight.activate = { [weak self] in self?.activateAccessibleHighlight() ?? false }
             accessibilityHighlight.accessibilityLabel = "Current narration passage"
             view.addSubview(accessibilityHighlight)
-            for name in [Notification.Name.PDFViewVisiblePagesChanged, .PDFViewScaleChanged, .PDFViewPageChanged, .PDFViewSelectionChanged] {
+            observations.append(NotificationCenter.default.addObserver(forName: .PDFViewPageChanged, object: view, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.pageChanged() }
+            })
+            for name in [Notification.Name.PDFViewVisiblePagesChanged, .PDFViewScaleChanged, .PDFViewSelectionChanged] {
                 observations.append(NotificationCenter.default.addObserver(forName: name, object: view, queue: .main) { [weak self] _ in
                     Task { @MainActor in self?.refreshAccessibility() }
                 })
@@ -433,15 +443,19 @@ struct PDFSurface: UIViewRepresentable {
                 let document = await withTaskCancellationHandler(operation: { await worker.value }, onCancel: { worker.cancel() })
                 guard !Task.isCancelled, let self, self.generation == id, self.url == url else { return }
                 self.spinner.stopAnimating()
+                self.applyingNavigation = true
                 self.view?.document = document
                 self.observeScrolling()
                 self.applyRequestedPosition()
+                self.observedPage = self.view?.currentPage
+                self.applyingNavigation = false
                 if document == nil { self.onLoadFailure() }
             }
         }
 
         func cancel() {
             generation = UUID(); loadTask?.cancel(); loadTask = nil
+            observedPage = nil
             appliedAnchor = nil; appliedPage = nil; touchAnchor = nil; hitRects = []
             accessibilityHighlight.isHidden = true
             paintedRects = []
@@ -502,7 +516,11 @@ struct PDFSurface: UIViewRepresentable {
             }
             if requestedFollow, self.page != requestedPage {
                 self.page = requestedPage
+                let wasApplying = applyingNavigation
+                applyingNavigation = true
                 view.go(to: page)
+                observedPage = view.currentPage
+                applyingNavigation = wasApplying
             }
             refreshAccessibility()
         }
@@ -589,8 +607,21 @@ struct PDFSurface: UIViewRepresentable {
         }
         @objc private func accessibleRecording(_ action: UIAccessibilityCustomAction) -> Bool { activateAccessibleHighlight() }
 
-        @objc func browsing(_ gesture: UIPanGestureRecognizer) {
-            if gesture.state == .began { page = -1; requestedFollow = false; touchAnchor = nil; onBrowse() }
+        private func suspendFollowing() {
+            guard !applyingNavigation else { return }
+            page = -1; requestedFollow = false; touchAnchor = nil
+            onBrowse()
+        }
+        private func pageChanged() {
+            guard let view, let currentPage = view.currentPage else { return }
+            let changed = observedPage !== currentPage
+            observedPage = currentPage
+            if changed, !applyingNavigation, requestedFollow,
+               currentPage !== view.document?.page(at: requestedPage) { suspendFollowing() }
+            refreshAccessibility()
+        }
+        @objc func browsing(_ gesture: UIGestureRecognizer) {
+            if gesture.state == .began { suspendFollowing() }
         }
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
             guard gestureRecognizer === highlightTap else { return true }

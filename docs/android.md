@@ -162,7 +162,7 @@ Material3 Adaptive and Navigation3 adaptive scenes map library/outline-to-source
 
 Choose layout from actual window constraints, font scaling and posture. Account for hinges and avoid placing important controls across an occlusion. Preserve source selection, scroll/zoom, auto-follow state, note draft, transcript edits and actual audio position as panes change.
 
-Manual scrolling suspends following until the listener chooses to return. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
+Manual PDF browsing pauses book audio and automatic following. Play resumes at the native frozen cursor and returns the PDF to narration; no follow control is exposed. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
 
 Expose current source text and a pause-and-record action on the PDF highlight, with useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
 

@@ -531,8 +531,15 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = "This document could not be opened." }
     }
-    LaunchedEffect(audio.passageId, audio.pageIndex, audio.documentId, audio.preview, following) {
-        if (following && audio.documentId == id && !audio.preview) page = audio.pageIndex
+    LaunchedEffect(audio.playing, audio.documentId, audio.preview, audio.noteId, audio.capturing) {
+        val current = playback.state.value
+        if (current.playing && current.documentId == id && !current.preview && current.noteId == null && !current.capturing) {
+            following = true
+            page = current.pageIndex
+        }
+    }
+    LaunchedEffect(audio.passageId, audio.pageIndex, audio.documentId, audio.preview, audio.noteId, audio.capturing, following) {
+        if (following && audio.documentId == id && !audio.preview && audio.noteId == null && !audio.capturing) page = audio.pageIndex
     }
     val contents = document
     LaunchedEffect(id, contents?.passages?.isNotEmpty()) {
@@ -550,9 +557,21 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     }
     val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && !audio.preview && audio.noteId == null }
     val currentAvailable = active != null && !audio.capturing
+    fun browse() {
+        following = false
+        playback.pauseForBrowsing(id)
+    }
+    fun browsePage(index: Int) {
+        browse()
+        page = index
+    }
     fun returnToPassage(passageId: String) {
         val index = contents.passages.indexOfFirst { it.id == passageId }
-        if (index >= 0 && !playback.capturing) { following = true; playback.listen(contents, index) }
+        if (index >= 0 && !playback.capturing) {
+            following = false
+            page = contents.passages[index].pageIndex
+            playback.listen(contents, index, startPlaying = false, saveTarget = true)
+        }
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 850.dp
@@ -578,8 +597,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     if (!wide) TextButton(onClick = { showThoughts = true; haptic(view) }) { Icon(Icons.Default.EditNote, null); Spacer(Modifier.width(6.dp)); Text("Thoughts (${notes.count { it.status != "draft" }})") }
-                    Spacer(Modifier.weight(1f))
-                    if (!following && audio.documentId == id && !audio.preview) TextButton(onClick = { following = true; haptic(view) }) { Text("Follow narration") }
                 }
                 progress[id]?.let { prepared ->
                     if (prepared.running || prepared.error != null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -590,7 +607,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     }
                 }
                 OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, originalColours, active, currentAvailable && audio.durationMillis > 0 && !audio.preparing,
-                    { page = it; following = false }, { following = false },
+                    { browsePage(it) }, { browse() },
                     { passageId, revision -> record(id, passageId, revision) }, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
             }
             if (wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -621,7 +638,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
             }
             item { Text("PAGES", style = MaterialTheme.typography.labelSmall) }
             items(contents.document.pageCount) { index ->
-                TextButton(onClick = { page = index; following = false; showContents = false }) { Text("Page ${index + 1}") }
+                TextButton(onClick = { browsePage(index); showContents = false }) { Text("Page ${index + 1}") }
             }
         }
     }, confirmButton = { TextButton(onClick = { showContents = false }) { Text("Close") } })

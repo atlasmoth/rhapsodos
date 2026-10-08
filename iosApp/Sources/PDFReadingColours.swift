@@ -77,6 +77,7 @@ final class ThemedPDFView: PDFView {
     private let colourLock = NSLock()
     private var configuration: PDFReadingConfiguration?
     var onColourChange: (() -> Void)?
+    var onBrowse: (() -> Void)?
     var narrationTraits: UITraitCollection {
         colourLock.lock()
         let original = configuration?.original ?? false
@@ -133,6 +134,25 @@ final class ThemedPDFView: PDFView {
         let original = configuration?.original ?? false
         colourLock.unlock()
         configureColours(original: original)
+    }
+
+    override func accessibilityScroll(_ direction: UIAccessibilityScrollDirection) -> Bool {
+        onBrowse?()
+        return super.accessibilityScroll(direction)
+    }
+
+    override func goToFirstPage(_ sender: Any?) { onBrowse?(); super.goToFirstPage(sender) }
+    override func goToLastPage(_ sender: Any?) { onBrowse?(); super.goToLastPage(sender) }
+    override func goToNextPage(_ sender: Any?) { onBrowse?(); super.goToNextPage(sender) }
+    override func goToPreviousPage(_ sender: Any?) { onBrowse?(); super.goToPreviousPage(sender) }
+    override func goBack(_ sender: Any?) { onBrowse?(); super.goBack(sender) }
+    override func goForward(_ sender: Any?) { onBrowse?(); super.goForward(sender) }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let navigationKeys: Set<UIKeyboardHIDUsage> = [.keyboardPageUp, .keyboardPageDown, .keyboardUpArrow,
+            .keyboardDownArrow, .keyboardLeftArrow, .keyboardRightArrow, .keyboardHome, .keyboardEnd, .keyboardSpacebar]
+        if presses.contains(where: { $0.key.map { navigationKeys.contains($0.keyCode) } ?? false }) { onBrowse?() }
+        super.pressesBegan(presses, with: event)
     }
 
 }

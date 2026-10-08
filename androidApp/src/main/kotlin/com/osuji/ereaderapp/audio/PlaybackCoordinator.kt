@@ -305,6 +305,13 @@ class PlaybackCoordinator(
         return FrozenPlayback(documentId, passageId, playingNote?.offsetMillis ?: snapshot.positionMillis)
     }
 
+    fun pauseForBrowsing(documentId: String) {
+        if (capturing || playingNote != null || state.value.preview || state.value.noteId != null ||
+            state.value.documentId != documentId || contents?.document?.id != documentId) return
+        sourceSeekRequest++
+        if (desiredPlaying || player?.playWhenReady == true || state.value.playing) pause()
+    }
+
     fun resume() { if (!capturing) { desiredPlaying = true; if (transportEpoch == epoch) player?.play() } }
 
     fun beginCapture(expectedDocumentId: String? = null, expectedPassageId: String? = null, expectedSourceRevision: String? = null): FrozenPlayback? {
