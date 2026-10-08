@@ -60,6 +60,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -986,13 +987,40 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
             }
             }
             }
-            if (audio.durationMillis > 0) {
-                Slider(value = audio.positionMillis.toFloat().coerceIn(0f, audio.durationMillis.toFloat()), onValueChange = { playback.seek(it.toLong()) }, valueRange = 0f..audio.durationMillis.toFloat(), enabled = available, modifier = Modifier.fillMaxWidth().height(28.dp))
-            }
+            SourceProgressMeter(audio, playback, available)
             if (audio.sleepRemainingMillis > 0) Text("Sleep in ${clock(audio.sleepRemainingMillis)}", style = MaterialTheme.typography.labelSmall)
             if (audio.preview) TextButton(onClick = { playback.returnFromPreview() }) { Text("End voice preview") }
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean) {
+    val documentId = audio.documentId
+    val revision = audio.sourceRevision
+    val progress = audio.sourceProgress
+    var scrub by remember(documentId, revision, audio.preview, audio.noteId, available) { mutableStateOf<Float?>(null) }
+    val slider = remember(documentId, revision, audio.preview, audio.noteId, available) { SliderState(value = progress?.toFloat() ?: 0f) }
+    val enabled = available && documentId != null && revision != null && progress != null && !audio.preview && audio.noteId == null
+    LaunchedEffect(progress, scrub) { if (scrub == null) slider.value = progress?.toFloat() ?: 0f }
+    if (progress == null) {
+        Text("Preparing document progress…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    } else {
+        val shown = (scrub ?: progress.toFloat()).coerceIn(0f, 1f)
+        Slider(
+            state = slider,
+            onValueChange = { scrub = it; slider.value = it },
+            onValueChangeFinished = {
+                val requested = scrub
+                scrub = null
+                if (enabled && requested != null) playback.seekSource(documentId, revision, requested.toDouble())
+            },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Document progress"; stateDescription = "${(shown * 100).toInt()} percent of document" },
+        )
+        Text("${(shown * 100).toInt()}% of document", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

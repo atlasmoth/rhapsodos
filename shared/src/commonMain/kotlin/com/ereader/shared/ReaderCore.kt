@@ -125,6 +125,20 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     @Throws(Exception::class)
+    fun resolveSourceSeekJson(documentId: String, sourceRevision: String, fraction: Double): String = lock.withLock {
+        require(fraction.isFinite() && fraction in 0.0..1.0) { "Invalid document progress" }
+        val document = queries.documentById(documentId).executeAsOne()
+        require(document.source_revision == sourceRevision) { "The document source changed" }
+        require(document.extraction_status != "preparing") { "The document is still being prepared" }
+        val last = queries.lastPassageForDocument(documentId).executeAsOneOrNull()
+        require(last != null && last.source_end > 0) { "This document has no listening text" }
+        val offset = last.source_end * fraction
+        val passage = if (fraction == 1.0) last else queries.passageAfterSourceOffset(documentId, offset.toLong()).executeAsOneOrNull() ?: last
+        val passageFraction = if (fraction == 1.0) 1.0 else ((offset - passage.source_start) / (passage.source_end - passage.source_start)).coerceIn(0.0, 1.0)
+        json.encodeToString(SourceSeekTarget(documentId, sourceRevision, passage.id, passageFraction))
+    }
+
+    @Throws(Exception::class)
     fun createNoteDraft(noteId: String, documentId: String, passageId: String, recordingPath: String, offsetMillis: Long): String = lock.withLock {
         require(noteId.isNotBlank() && recordingPath.isNotBlank() && offsetMillis >= 0) { "Invalid note draft" }
         val passage = requirePassage(documentId, passageId)

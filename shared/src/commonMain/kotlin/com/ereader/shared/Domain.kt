@@ -73,6 +73,9 @@ data class SearchHit(val kind: String, val id: String, val documentId: String, v
 data class FileRemoval(val paths: List<String>)
 
 @Serializable
+data class SourceSeekTarget(val documentId: String, val sourceRevision: String, val passageId: String, val passageFraction: Double)
+
+@Serializable
 data class DocumentArchive(
     val format: String = "rhapsodos-document",
     val formatVersion: Int = 1,

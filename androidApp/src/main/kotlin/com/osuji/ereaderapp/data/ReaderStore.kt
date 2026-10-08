@@ -32,6 +32,7 @@ import kotlinx.serialization.json.Json
     val status: String, val machineTranscript: String? = null, val editedTranscript: String? = null, val createdAt: Long = 0,
 )
 @Serializable data class SavedPosition(val documentId: String, val passageId: String, val offsetMillis: Long = 0, val passageFraction: Double = 0.0)
+@Serializable data class SourceSeekTarget(val documentId: String, val sourceRevision: String, val passageId: String, val passageFraction: Double)
 @Serializable data class ReaderSnapshot(val version: String = "0.01", val documents: List<LibraryDocument> = emptyList(), val notes: List<VoiceNote> = emptyList(), val positions: List<SavedPosition> = emptyList())
 @Serializable data class ReaderSection(val id: String, val title: String, val passageId: String, val pageIndex: Int)
 @Serializable data class Pronunciation(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String)
@@ -66,6 +67,7 @@ class ReaderStore(private val core: ReaderCore) {
         json.decodeFromString<ReaderContents>(core.updatePageGeometry(documentId, pageIndex, json.encodeToString(regions), geometrySpace))
     }
     suspend fun saveProgress(documentId: String, passageId: String, offsetMillis: Long, passageFraction: Double = 0.0) = locked { core.saveProgress(documentId, passageId, offsetMillis, passageFraction); updateSnapshot() }
+    suspend fun resolveSourceSeek(documentId: String, sourceRevision: String, fraction: Double): SourceSeekTarget = locked { json.decodeFromString(core.resolveSourceSeekJson(documentId, sourceRevision, fraction)) }
     suspend fun createDraft(noteId: String, documentId: String, passageId: String, path: String, offsetMillis: Long): VoiceNote = mutate { core.createNoteDraft(noteId, documentId, passageId, path, offsetMillis) }
     suspend fun commit(noteId: String, path: String, durationMillis: Long): VoiceNote = mutate { core.commitNote(noteId, path, durationMillis) }
     suspend fun saveText(noteId: String, documentId: String, passageId: String, text: String, offsetMillis: Long): VoiceNote = mutate { core.saveTextNote(noteId, documentId, passageId, text, offsetMillis) }

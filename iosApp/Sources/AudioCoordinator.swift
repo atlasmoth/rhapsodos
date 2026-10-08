@@ -25,6 +25,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     var onCaptureInterrupted: ((String?) -> Void)?
     var passages: [Passage] = []
     var title = ""
+    private(set) var transportRevision = UUID()
     private var speech = AVSpeechSynthesizer()
     private var utterance: AVSpeechUtterance?
     private var engine: AVAudioEngine?
@@ -135,6 +136,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     func play() {
         guard !recording, !capturePending, current != nil else { return }
+        transportRevision = UUID()
         if currentFraction >= 1 {
             guard index + 1 < passages.count || documentComplete else { onError?("The next passage is still being prepared."); return }
             index = index + 1 < passages.count ? index + 1 : 0
@@ -198,6 +200,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
 
     func pause(restart: Bool = false) {
+        transportRevision = UUID()
         pauseReplay()
         preloadTask?.cancel()
         stopPreview()
@@ -267,12 +270,14 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         if voiceChangeID == operation, current?.id == passageId { pendingFraction = fraction; positionAvailable = true; if resume { play() } }
     }
 
-    func pauseAndJoinGeneration(restart: Bool = false) async {
+    @discardableResult func pauseAndJoinGeneration(restart: Bool = false) async -> UUID {
         let currentTask = narrationTask, nextTask = preloadTask, sampleTask = previewTask
         pause(restart: restart)
+        let revision = transportRevision
         await currentTask?.value
         await nextTask?.value
         await sampleTask?.value
+        return revision
     }
 
     private func preloadNextPassage() {
@@ -519,6 +524,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
     func seekOffset(_ offsetMillis: Int64) {
         guard !recording, !capturePending, selectedVoice.hasPrefix("kokoro:") else { return }
+        transportRevision = UUID()
         if let player = narrationPlayer { player.currentTime = min(max(0, Double(offsetMillis) / 1000), player.duration); elapsed = player.currentTime; reportPosition(); updateNowPlaying() }
         else { pendingOffset = Double(max(0, offsetMillis)) / 1000 }
     }

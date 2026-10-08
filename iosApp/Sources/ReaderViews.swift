@@ -238,25 +238,59 @@ private struct ListeningView: View {
                 ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { PlaybackDock(count: snapshot.passages.count) }
+        .safeAreaInset(edge: .bottom, spacing: 0) { PlaybackDock(document: snapshot.document, count: snapshot.passages.count).id(snapshot.document.id) }
         .background(Palette.paper)
     }
 }
 
 private struct PlaybackDock: View {
+    let document: LibraryDocument
     let count: Int
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
+    @State private var seekPreview: Double?
     var body: some View {
         VStack(spacing: 14) {
             if store.preparingDocument { ProgressView(store.preparation, value: store.preparationProgress).font(.caption2) }
-            ProgressView(value: Double(audio.index) + (audio.duration > 0 ? audio.elapsed / audio.duration : 0), total: Double(max(1, count))).tint(Palette.accent)
-                .accessibilityLabel("Listening progress")
+            documentProgress
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) { playbackStatus; controls }
                 VStack(spacing: 10) { playbackStatus; controls }
             }.disabled(count == 0 || store.busy || store.captureDraft != nil)
         }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
+            .onChange(of: store.canSeekDocument) { _, enabled in if !enabled { seekPreview = nil } }
+    }
+
+    @ViewBuilder private var documentProgress: some View {
+        if let progress = store.documentListeningProgress {
+            HStack(spacing: 12) {
+                Slider(value: Binding(get: { seekPreview ?? progress }, set: { seekPreview = $0 }), in: 0...1) { editing in
+                    if editing { seekPreview = progress }
+                    else if let value = seekPreview { commitSeek(value) }
+                }.tint(Palette.accent)
+                    .accessibilityLabel("Document listening progress")
+                    .accessibilityValue("\(percent(seekPreview ?? progress)) percent")
+                    .accessibilityAdjustableAction { direction in
+                        switch direction {
+                        case .increment: commitSeek(min(1, progress + 0.05))
+                        case .decrement: commitSeek(max(0, progress - 0.05))
+                        @unknown default: break
+                        }
+                    }
+                    .disabled(!store.canSeekDocument)
+                Text("\(percent(seekPreview ?? progress))%").font(BrandFont.mono()).fixedSize().accessibilityHidden(true)
+            }
+        } else {
+            Text(document.extractionStatus == "preparing" ? "Document progress is available after preparation." : "No listening text is available.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func percent(_ progress: Double) -> Int { Int((min(1, max(0, progress)) * 100).rounded(.down)) }
+    private func commitSeek(_ value: Double) {
+        let id = document.id, revision = document.sourceRevision
+        seekPreview = nil
+        Task { await store.seekDocument(to: value, documentId: id, sourceRevision: revision) }
     }
 
     private var playbackStatus: some View {
@@ -267,7 +301,6 @@ private struct PlaybackDock: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
-                if audio.duration > 0 { Text("\(Duration.seconds(audio.elapsed).formatted(.time(pattern: .minuteSecond))) / \(Duration.seconds(audio.duration).formatted(.time(pattern: .minuteSecond)))").font(BrandFont.mono()) }
                 if let end = audio.sleepUntil { Label(end.formatted(date: .omitted, time: .shortened), systemImage: "moon.zzz").font(.caption2) }
             }
         }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: true, vertical: false)

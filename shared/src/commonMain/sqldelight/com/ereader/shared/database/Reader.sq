@@ -173,6 +173,12 @@ SELECT * FROM playback_position WHERE document_id = ?;
 lastPassageEnd:
 SELECT source_end FROM passage WHERE document_id = ? ORDER BY ordinal DESC LIMIT 1;
 
+lastPassageForDocument:
+SELECT * FROM passage WHERE document_id = ? ORDER BY ordinal DESC LIMIT 1;
+
+passageAfterSourceOffset:
+SELECT * FROM passage WHERE document_id = ? AND source_end > ? ORDER BY ordinal LIMIT 1;
+
 savePosition:
 INSERT OR REPLACE INTO playback_position(document_id, passage_id, offset_millis, updated_at, passage_fraction)
 VALUES (?, ?, ?, ?, ?);

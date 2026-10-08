@@ -114,6 +114,13 @@ struct PlaybackPosition: Codable {
     }
 }
 
+struct SourceSeekTarget: Codable {
+    let documentId: String
+    let sourceRevision: String
+    let passageId: String
+    let passageFraction: Double
+}
+
 struct Bookmark: Codable, Identifiable {
     let id: String
     let documentId: String
@@ -166,6 +173,9 @@ actor SharedRepository {
 
     func snapshot() throws -> LibrarySnapshot { try decode(core.snapshotJson()) }
     func document(_ id: String) throws -> DocumentSnapshot { try decode(core.documentJson(documentId: id)) }
+    func resolveSourceSeek(documentId: String, sourceRevision: String, fraction: Double) throws -> SourceSeekTarget {
+        try decode(core.resolveSourceSeekJson(documentId: documentId, sourceRevision: sourceRevision, fraction: fraction))
+    }
     func beginDocument(id: String, title: String, path: String, pageCount: Int) throws -> DocumentSnapshot {
         try decode(core.beginDocument(id: id, title: title, filePath: path, pageCount: Int32(pageCount)))
     }

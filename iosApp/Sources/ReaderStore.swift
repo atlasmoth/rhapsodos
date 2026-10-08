@@ -29,6 +29,7 @@ final class ReaderStore: ObservableObject {
     private var positions: [PlaybackPosition] = []
     private var latestProgress: [String: ListeningCursor] = [:]
     private var progressWrite: Task<Result<Void, Error>, Never>?
+    private var sourceSeekRequest: UUID?
     private var noteTask: Task<Void, Never>?
     private var capturedDuration: Int64 = 0
     private var transcriptionQueue: [String] = []
@@ -117,6 +118,55 @@ final class ReaderStore: ObservableObject {
         return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
     var currentBookmarks: [Bookmark] { bookmarks.filter { $0.documentId == selectedId } }
+    var documentListeningProgress: Double? {
+        guard let document, document.document.extractionStatus != "preparing",
+              let passage = audio.current, passage.documentId == document.document.id,
+              let end = document.passages.last?.sourceEnd, end > 0 else { return nil }
+        return min(1, max(0, (Double(passage.sourceStart) + Double(passage.sourceEnd - passage.sourceStart) * audio.currentFraction) / Double(end)))
+    }
+    var canSeekDocument: Bool {
+        documentListeningProgress != nil && !busy && !loading && sceneActive && captureDraft == nil
+            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
+    }
+
+    func seekDocument(to fraction: Double, documentId: String, sourceRevision: String) async {
+        guard fraction.isFinite, (0...1).contains(fraction), canSeekDocument,
+              let snapshot = document, snapshot.document.id == documentId,
+              snapshot.document.sourceRevision == sourceRevision, let repository else { return }
+        let request = UUID(), initialTransport = audio.transportRevision
+        sourceSeekRequest = request
+        busy = true
+        preparation = "Moving to your place"
+        defer { if sourceSeekRequest == request { sourceSeekRequest = nil; busy = false; preparation = ""; serviceTranscriptions() } }
+        func currentRequest(_ transport: UUID) -> Bool {
+            sourceSeekRequest == request && selectedId == snapshot.document.id
+                && document?.document.sourceRevision == snapshot.document.sourceRevision
+                && audio.current?.documentId == snapshot.document.id && audio.transportRevision == transport
+                && captureDraft == nil && !audio.recording && !audio.capturePending
+                && !audio.previewing && audio.replayingNote == nil && sceneActive
+        }
+        do {
+            let target = try await repository.resolveSourceSeek(documentId: snapshot.document.id,
+                sourceRevision: snapshot.document.sourceRevision, fraction: fraction)
+            guard currentRequest(initialTransport), target.documentId == snapshot.document.id,
+                  target.sourceRevision == snapshot.document.sourceRevision,
+                  target.passageFraction.isFinite, (0...1).contains(target.passageFraction),
+                  let index = snapshot.passages.firstIndex(where: { $0.id == target.passageId }) else { return }
+            let resume = audio.playing && fraction < 1
+            let pausedTransport = await audio.pauseAndJoinGeneration()
+            guard currentRequest(pausedTransport) else { return }
+            try await flushProgress()
+            guard currentRequest(pausedTransport) else { return }
+            audio.load(snapshot.passages, title: snapshot.document.title, at: index,
+                passageFraction: target.passageFraction, complete: true)
+            let appliedTransport = audio.transportRevision
+            follow = true
+            try await flushProgress()
+            guard currentRequest(appliedTransport) else { return }
+            feedback.play(.selection)
+            if resume { audio.play() }
+        } catch { present(error) }
+    }
 
     private func openLibrary() async {
         do {
