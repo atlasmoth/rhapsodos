@@ -250,7 +250,7 @@ fun ReaderApp() {
                 onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
                 sceneStrategies = listOf(sceneStrategy),
                 entryProvider = entryProvider {
-                    entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyListeningRoom { importPicker.launch(arrayOf("application/pdf")) } })) {
+                    entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyReader { importPicker.launch(arrayOf("application/pdf")) } })) {
                         LibraryPane(
                             documents = library.documents,
                             pdf = pdf,
@@ -511,11 +511,10 @@ private fun LibraryPane(
 }
 
 @Composable
-private fun EmptyListeningRoom(import: () -> Unit) {
+private fun EmptyReader(import: () -> Unit) {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp), modifier = Modifier.widthIn(max = 420.dp)) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) { Icon(Icons.Default.Headphones, null, Modifier.padding(30.dp).size(52.dp), tint = MaterialTheme.colorScheme.primary) }
-            Text("Your listening room", style = MaterialTheme.typography.displaySmall)
             Text("Open a document from your shelf.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = import) { Text("Import a PDF") }
         }
@@ -577,7 +576,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
             Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 22.dp)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { haptic(view); back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to library") }
-                    Column(Modifier.weight(1f)) { Label("THE LISTENING ROOM"); Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                    Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search document") }
                     IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Pages and bookmarks") }
                     Box {

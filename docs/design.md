@@ -32,6 +32,8 @@ Book thumbnails show the original first PDF page, including in the playback dock
 
 Global search, offline voices, settings and import sit immediately beneath the Rhapsodos logo and name in the library pane. The actions wrap when width or text size requires it. Compact readers return to the library for these actions without restarting narration; document-specific navigation, search, bookmarks and notes remain with the PDF.
 
+The PDF header shows the document title and document tools.
+
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Original covers, progress on each file, resume by opening a file, preparation/offline status and import action |
