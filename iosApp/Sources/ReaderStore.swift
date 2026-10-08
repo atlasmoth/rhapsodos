@@ -69,12 +69,12 @@ final class ReaderStore: ObservableObject {
         }
         audio.onError = { [weak self] in self?.errorMessage = $0 }
         audio.onCaptureInterrupted = { [weak self] reason in Task { await self?.interruptedCapture(message: reason) } }
-        audio.$playing.merge(with: audio.$recording).merge(with: audio.$previewing).merge(with: audio.$replayPaused).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
+        audio.$playing.merge(with: audio.$recording).merge(with: audio.$replayPaused).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         audio.$playing.removeDuplicates().sink { [weak self] playing in
             guard playing else { return }
             Task { @MainActor in
                 guard let self, self.audio.playing, self.selectedId == self.audio.current?.documentId,
-                      !self.audio.previewing, self.audio.replayingNote == nil, !self.audio.recording,
+                      self.audio.replayingNote == nil, !self.audio.recording,
                       !self.audio.capturePending, self.captureDraft == nil else { return }
                 self.pageDestination = nil
                 self.follow = true
@@ -106,7 +106,7 @@ final class ReaderStore: ObservableObject {
         }
     }
     var canBeginNote: Bool {
-        !busy && !loading && sceneActive && captureDraft == nil && !audio.recording && !audio.previewing && audio.replayingNote == nil && !audio.capturePending && currentHighlightAnchor != nil
+        !busy && !loading && sceneActive && captureDraft == nil && !audio.recording && audio.replayingNote == nil && !audio.capturePending && currentHighlightAnchor != nil
     }
     var highlightSourceRange: NSRange? {
         guard let passage = currentPassage else { return nil }
@@ -144,7 +144,7 @@ final class ReaderStore: ObservableObject {
     }
     var canSeekDocument: Bool {
         documentListeningProgress != nil && !busy && !loading && sceneActive && captureDraft == nil
-            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
+            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
     }
 
     func seekDocument(to fraction: Double, documentId: String, sourceRevision: String) async {
@@ -162,7 +162,7 @@ final class ReaderStore: ObservableObject {
                 && document?.document.sourceRevision == snapshot.document.sourceRevision
                 && audio.current?.documentId == snapshot.document.id && audio.transportRevision == transport
                 && captureDraft == nil && !audio.recording && !audio.capturePending
-                && !audio.previewing && audio.replayingNote == nil && sceneActive
+                && audio.replayingNote == nil && sceneActive
         }
         do {
             let target = try await repository.resolveSourceSeek(documentId: snapshot.document.id,
@@ -194,7 +194,7 @@ final class ReaderStore: ObservableObject {
             repository = try await SharedRepository.open(path: files.database.path)
             if let repository { models = ModelPacks(repository: repository, files: files) { [weak self] pack, folder in
                 guard let self else { throw CancellationError() }
-                while self.audio.playing || self.audio.previewing || self.audio.replayPlaying || self.audio.recording || self.captureDraft != nil || self.preparingDocument || self.busy || !self.sceneActive {
+                while self.audio.playing || self.audio.replayPlaying || self.audio.recording || self.captureDraft != nil || self.preparingDocument || self.busy || !self.sceneActive {
                     try Task.checkCancellation(); try await Task.sleep(for: .milliseconds(100))
                 }
                 if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
@@ -429,7 +429,7 @@ final class ReaderStore: ObservableObject {
 
     var canNavigatePreparedSource: Bool {
         !busy && !loading && sceneActive && repository != nil && captureDraft == nil
-            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
+            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
     }
 
     func search(_ query: String, documentId: String) async throws -> [SearchHit] {
@@ -450,7 +450,7 @@ final class ReaderStore: ObservableObject {
         func currentRequest(_ transport: UUID, documentId: String?) -> Bool {
             audio.transportRevision == transport && selectedId == documentId && sceneActive
                 && captureDraft == nil && !audio.recording && !audio.capturePending
-                && !audio.previewing && audio.replayingNote == nil
+                && audio.replayingNote == nil
         }
         guard currentRequest(stoppedTransport, documentId: originalId) else { return false }
         try await flushProgress()
@@ -527,7 +527,7 @@ final class ReaderStore: ObservableObject {
     }
     var canBrowseDocumentPages: Bool {
         !busy && !loading && sceneActive && document != nil && captureDraft == nil
-            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
+            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
     }
     @discardableResult func browseToPage(_ index: Int, documentId: String, sourceRevision: String) -> Bool {
         guard canBrowseDocumentPages, let document, selectedId == documentId,
@@ -543,7 +543,7 @@ final class ReaderStore: ObservableObject {
         pageDestination = nil
         guard let selectedId, document?.document.id == selectedId, audio.current?.documentId == selectedId,
               !loading, (!busy || sourceSeekRequest != nil), captureDraft == nil,
-              !audio.recording, !audio.capturePending, !audio.previewing, audio.replayingNote == nil else { return }
+              !audio.recording, !audio.capturePending, audio.replayingNote == nil else { return }
         if sourceSeekRequest != nil { sourceSeekCancelled = true }
         follow = false
         audio.pause()
@@ -590,7 +590,7 @@ final class ReaderStore: ObservableObject {
         await voicePacks.unload()
         func validAttachment() -> Bool {
             preparedPassage(at: anchor) == passage && currentHighlightAnchor == bookAnchor
-                && audio.transportRevision == stoppedTransport && !audio.previewing
+                && audio.transportRevision == stoppedTransport
                 && audio.replayingNote == nil && sceneActive
         }
         guard validAttachment() else { audio.endCaptureMode(); busy = false; return }
@@ -768,7 +768,7 @@ final class ReaderStore: ObservableObject {
     }
 
     func removePack(_ pack: ModelPack) async {
-        guard !busy, !audio.playing, !audio.previewing, !audio.replayPlaying, !audio.recording, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
+        guard !busy, !audio.playing, !audio.replayPlaying, !audio.recording, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
         busy = true
         defer { busy = false; serviceTranscriptions() }
         let worker = transcriptionTask
@@ -788,10 +788,10 @@ final class ReaderStore: ObservableObject {
     }
 
     private var transcriptionDeferred: Bool {
-        !sceneActive || audio.playing || audio.previewing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || busy
+        !sceneActive || audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || busy
     }
     private func serviceTranscriptions() {
-        if audio.playing || audio.previewing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || busy || !sceneActive { models?.cancelRuntimeChecks() }
+        if audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || busy || !sceneActive { models?.cancelRuntimeChecks() }
         else if models?.loading == false && models?.validationActive == false { Task { await models?.recheckReadyPacks() } }
         if transcriptionDeferred { transcriptionTask?.cancel(); return }
         guard transcriptionTask == nil, !transcriptionQueue.isEmpty else { return }

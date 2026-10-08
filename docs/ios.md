@@ -191,7 +191,7 @@ The implemented enhanced voice uses the pinned FP32 end-to-end Kokoro export on 
 
 ### Curated gallery
 
-Settings provides voice selection and access to a curated gallery of voices and transcription packs. Show an audible voice sample, language, quality description, download size, installed size, privacy behavior and a truthful suitability result for the current device. Offer “Recommended for this device”, with optional advanced choices.
+Settings provides voice selection and access to a curated gallery of voices and transcription packs. Show language, quality description, download size, installed size, privacy behavior and a truthful suitability result for the current device. Offer “Recommended for this device”, with optional advanced choices. Voice selection applies to document narration without a separate sample player.
 
 Each signed catalog entry needs model/voice identity and version, exact runtime and minimum OS, tokenizer/frontend version, required shared base assets, language coverage, sample rate, license, download/installed/temporary storage estimates, tested peak memory, thermal behavior and sustained performance measurements. Define cancellation, integrity verification, atomic activation and rollback. Downloads can use native background URLSession transfers; download success is distinct from a usable compiled model. [Background downloads](https://developer.apple.com/documentation/foundation/downloading-files-from-websites), [CoreML download and compilation](https://developer.apple.com/documentation/coreml/downloading-and-compiling-a-model-on-the-user-s-device)
 

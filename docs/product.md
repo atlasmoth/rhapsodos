@@ -27,7 +27,7 @@ The left library pane can be hidden with its sidebar button. Show library or a s
 
 The library has no separate continue-listening hero. Each file shows its own source-based listening progress. Opening it restores its saved passage and position without resetting an already active session. Progress remains unknown while document preparation is incomplete; it does not imply a known full-book audio duration.
 
-The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Voice previews and replayed notes retain the saved book progress, and seeking to the end leaves playback paused.
+The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Replayed notes retain the saved book progress, and seeking to the end leaves playback paused.
 
 Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next/record controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption. Exactly three icon-only library actions sit below branding in one row: Search → Import → Settings. Each retains an accessible name without a visible title. Voice selection, downloads and transcription configuration are reached through Settings.
 
@@ -37,7 +37,7 @@ Use the system file picker. Prefer a dependable local copy for the initial imple
 
 Preparation is progressive. Prioritize the first/current passage and nearby content. A full document scan must not block the first useful listen when the start is ready. Show uncertainty or preparation failure in context, with access to the original page.
 
-The first-run model choice should be simple: recommend one compatible voice, provide a short audible sample and explain size and offline use. System speech can support immediate use where available. A gallery of technical model names is not the first screen.
+The first-run model choice should be simple: recommend one compatible voice and explain size and offline use. System speech can support immediate use where available. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
 
 ### Listening
 

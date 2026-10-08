@@ -483,7 +483,7 @@ struct ModelGallery: View {
         store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
     }
     private var changingVoiceUnavailable: Bool {
-        transportUnavailable || audio.previewing || audio.replayingNote != nil
+        transportUnavailable || audio.replayingNote != nil
     }
     private var systemVoice: String? {
         if !audio.selectedVoice.hasPrefix("kokoro:"), audio.voices.contains(where: { $0.identifier == audio.selectedVoice }) { return audio.selectedVoice }
@@ -498,10 +498,7 @@ struct ModelGallery: View {
                     Text("Downloads contain public model files. Your documents, recordings and words stay on your device.")
                     ReaderSheetCard(title: "Installed iOS voice") {
                         Text("System voices remain available. Additional voices can be managed in iOS Accessibility settings.").font(.subheadline).foregroundStyle(Palette.muted)
-                        ViewThatFits(in: .horizontal) {
-                            HStack(spacing: 12) { systemVoiceActions }
-                            VStack(alignment: .leading, spacing: 12) { systemVoiceActions }
-                        }
+                        systemVoiceAction
                     }
                     if models.loading { ProgressView("Checking available downloads…") }
                     ForEach(models.catalog) { pack in
@@ -516,14 +513,10 @@ struct ModelGallery: View {
             } message: { Text(models.message ?? "") }
     }
 
-    @ViewBuilder private var systemVoiceActions: some View {
+    private var systemVoiceAction: some View {
         Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Use system voice" : "Selected") {
             if let systemVoice { Task { await audio.changeVoice(systemVoice) } }
         }.buttonStyle(.borderedProminent).frame(minHeight: 44).disabled(changingVoiceUnavailable || systemVoice == nil)
-        Button(audio.previewing ? "Stop sample" : "Listen to a sample") {
-            if audio.previewing { audio.stopPreview() }
-            else if let systemVoice { audio.audition(voiceIdentifier: systemVoice) }
-        }.frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil || systemVoice == nil)
     }
 
     private func packCard(_ pack: ModelPack) -> some View {
@@ -555,10 +548,7 @@ struct ModelGallery: View {
                         Text("Bella").tag("kokoro:af_bella")
                         Text("Michael").tag("kokoro:am_michael")
                     }.pickerStyle(.menu).disabled(changingVoiceUnavailable)
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 12) { voiceActions }
-                        VStack(alignment: .leading, spacing: 12) { voiceActions }
-                    }
+                    voiceAction
                 } else {
                     Text("Ready for saved voice notes").font(.headline)
                 }
@@ -578,20 +568,16 @@ struct ModelGallery: View {
         }
     }
 
-    @ViewBuilder private var voiceActions: some View {
+    private var voiceAction: some View {
         Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Selected" : "Use this voice") {
             Task { await audio.changeVoice(audio.selectedVoice.hasPrefix("kokoro:") ? audio.selectedVoice : "kokoro:af_heart") }
         }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable)
-        Button(audio.previewing ? "Stop sample" : "Listen to a sample") {
-            if audio.previewing { audio.stopPreview() }
-            else { audio.audition(voiceIdentifier: audio.selectedVoice.hasPrefix("kokoro:") ? audio.selectedVoice : "kokoro:af_heart") }
-        }.frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
     }
 
     @ViewBuilder private func packFooter(_ pack: ModelPack, install: ModelInstall?) -> some View {
         if let install, !["downloading", "verifying"].contains(install.status) {
             Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
-                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.previewing || audio.replayingNote != nil || models.loading)
+                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayingNote != nil || models.loading)
         }
         if let url = URL(string: pack.licenseUrl) { Link("License", destination: url).frame(minHeight: 44) }
     }

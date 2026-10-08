@@ -16,7 +16,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     @Published private(set) var elapsed = 0.0
     @Published private(set) var duration = 0.0
     @Published var selectedVoice = UserDefaults.standard.string(forKey: "voiceIdentifier") ?? ""
-    @Published private(set) var previewing = false
     @Published private(set) var pace: Float = {
         let stored = UserDefaults.standard.float(forKey: "speechPace")
         guard stored.isFinite, stored > 0 else { return AVSpeechUtteranceDefaultSpeechRate }
@@ -55,12 +54,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var lastProgressTime = 0.0
     private var positionAvailable = false
     private var documentComplete = true
-    private var previewPlayer: AVAudioPlayer?
-    private var previewSpeech: AVSpeechSynthesizer?
-    private var previewUtterance: AVSpeechUtterance?
-    private var previewTask: Task<Void, Never>?
-    private var previewTaskID: UUID?
-    private var previewGeneration: UUID?
 
     private struct PaceChange {
         let id: UUID
@@ -161,7 +154,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         }
         guard let current else { return }
         stopReplay()
-        stopPreview()
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio)
@@ -217,7 +209,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         transportRevision = UUID()
         pauseReplay()
         preloadTask?.cancel()
-        stopPreview()
         narrationTask?.cancel(); narrationTask = nil; narrationGeneration = nil; generating = false
         if let narrationPlayer { narrationPlayer.pause(); elapsed = narrationPlayer.currentTime }
         reportPosition()
@@ -264,7 +255,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
 
     func changePace(_ value: Float) async {
-        guard value.isFinite, !recording, !capturePending, !previewing, replayingNote == nil else { return }
+        guard value.isFinite, !recording, !capturePending, replayingNote == nil else { return }
         let operation = UUID(); voiceChangeID = operation
         let prior = paceChange.flatMap { intent in
             intent.documentId == current?.documentId && intent.passageId == current?.id && intent.transport == transportRevision ? intent : nil
@@ -276,7 +267,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         pace = min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate,
             min(2, max(0.75, value / AVSpeechUtteranceDefaultSpeechRate)) * AVSpeechUtteranceDefaultSpeechRate))
         UserDefaults.standard.set(pace, forKey: "speechPace")
-        let tasks = (prior?.tasks ?? []) + [narrationTask, preloadTask, previewTask].compactMap { $0 }
+        let tasks = (prior?.tasks ?? []) + [narrationTask, preloadTask].compactMap { $0 }
         pause(restart: true)
         let stoppedTransport = transportRevision
         pendingFraction = fraction
@@ -287,20 +278,19 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         for task in tasks { await task.value }
         guard voiceChangeID == operation, transportRevision == stoppedTransport,
               current?.documentId == documentId, current?.id == passageId,
-              !recording, !capturePending, !previewing, replayingNote == nil else { return }
+              !recording, !capturePending, replayingNote == nil else { return }
         pendingFraction = fraction
         positionAvailable = current != nil
         if resume { play() }
     }
 
     @discardableResult func pauseAndJoinGeneration(restart: Bool = false) async -> UUID {
-        let currentTask = narrationTask, nextTask = preloadTask, sampleTask = previewTask
+        let currentTask = narrationTask, nextTask = preloadTask
         let paceTasks = paceChange?.tasks ?? []
         pause(restart: restart)
         let revision = transportRevision
         await currentTask?.value
         await nextTask?.value
-        await sampleTask?.value
         for task in paceTasks { await task.value }
         return revision
     }
@@ -317,60 +307,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         }
     }
 
-    func audition(voiceIdentifier: String? = nil) {
-        guard !recording, !capturePending else { return }
-        let identifier = voiceIdentifier ?? selectedVoice
-        pause()
-        let generation = UUID()
-        previewGeneration = generation
-        previewing = true
-        let text = "Listening begins here. Notes stay with the source."
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .spokenAudio)
-            try session.setActive(true)
-            if identifier.hasPrefix("kokoro:") {
-                guard let renderVoice else { throw PackFailure.notReady }
-                let voice = String(identifier.dropFirst(7)), speed = pace
-                let sample = Passage(id: "voice-sample", documentId: "", pageIndex: 0, pageStart: 0, pageEnd: text.utf16.count, sourceStart: 0, sourceEnd: text.utf16.count, sourceText: text, spokenText: text, displayText: text, languageTag: "en", mappingVersion: "sample-v1", spokenMapping: [], provenance: "embedded")
-                previewTaskID = generation
-                previewTask = Task { [weak self] in
-                    defer { if self?.previewTaskID == generation { self?.previewTask = nil; self?.previewTaskID = nil } }
-                    do {
-                        let file = try await renderVoice(sample, voice, speed)
-                        try Task.checkCancellation()
-                        guard let self, self.previewGeneration == generation, self.previewing else { return }
-                        let player = try AVAudioPlayer(contentsOf: file)
-                        player.delegate = self
-                        guard player.play() else { throw VaultFailure.noAudio }
-                        self.previewPlayer = player
-                    } catch is CancellationError {
-                    } catch {
-                        guard let self, self.previewGeneration == generation else { return }
-                        self.stopPreview(); self.onError?(error.localizedDescription)
-                    }
-                }
-            } else {
-                let synthesizer = previewSpeech ?? AVSpeechSynthesizer()
-                previewSpeech = synthesizer; synthesizer.delegate = self; synthesizer.usesApplicationAudioSession = true
-                let item = AVSpeechUtterance(string: text)
-                item.voice = AVSpeechSynthesisVoice(identifier: identifier) ?? AVSpeechSynthesisVoice(language: "en-US")
-                item.rate = pace
-                previewUtterance = item
-                synthesizer.speak(item)
-            }
-        } catch { stopPreview(); onError?(error.localizedDescription) }
-    }
-
-    func stopPreview() {
-        previewTask?.cancel()
-        previewGeneration = nil
-        previewPlayer?.stop(); previewPlayer = nil
-        previewUtterance = nil
-        previewSpeech?.stopSpeaking(at: .immediate)
-        previewing = false
-    }
-
     struct CapturePreparation {
         fileprivate let tasks: [Task<Void, Never>]
         let offsetMillis: Int64
@@ -378,7 +314,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     func reserveCapture() -> CapturePreparation {
         capturePending = true
-        let tasks = [narrationTask, preloadTask, previewTask].compactMap { $0 } + (paceChange?.tasks ?? [])
+        let tasks = [narrationTask, preloadTask].compactMap { $0 } + (paceChange?.tasks ?? [])
         let fraction = currentFraction
         pause(restart: narrationPlayer == nil)
         pendingFraction = fraction
@@ -390,7 +326,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     func finishPreparingCapture(_ preparation: CapturePreparation) async {
         for task in preparation.tasks { await task.value }
         for _ in 0..<20 {
-            if !speech.isSpeaking && previewSpeech?.isSpeaking != true { break }
+            if !speech.isSpeaking { break }
             try? await Task.sleep(for: .milliseconds(25))
         }
     }
@@ -401,7 +337,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     func startCapture(at url: URL, ifStillValid: () -> Bool) async throws -> Bool {
         guard capturePending, ifStillValid() else { throw CaptureFailure.attachmentChanged }
-        guard !speech.isSpeaking, previewSpeech?.isSpeaking != true else { throw CaptureFailure.narrationStillStopping }
+        guard !speech.isSpeaking else { throw CaptureFailure.narrationStillStopping }
         let permitted = await withCheckedContinuation { continuation in
             AVAudioApplication.requestRecordPermission { continuation.resume(returning: $0) }
         }
@@ -497,7 +433,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor [weak self] in
-            if let self, self.previewUtterance === utterance { self.stopPreview(); return }
             guard let self, self.utterance === utterance, self.playing else { return }
             self.pendingFraction = 1
             self.reportPosition()
@@ -531,7 +466,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                 if self.index + 1 < self.passages.count { self.index += 1; self.pendingFraction = 0; self.pendingOffset = 0; self.play() }
                 else { self.playing = false; self.updateNowPlaying() }
             } else if self.notePlayer === player { self.stopReplay() }
-            else if self.previewPlayer === player { self.stopPreview() }
         }
     }
 

@@ -139,7 +139,7 @@ At 2× playback, live generation needs sustained RTF below 0.5 with headroom. If
 
 Settings → Documents exports the selected document through the native Storage Access Framework save picker. Export stages immutable PDF/WAV copies, validates their checksums and durations, then writes a manifest-first portable ZIP. Cancellation and failure remove transient assets and attempt to remove an incomplete destination; a provider that denies deletion requires explicit user cleanup. Portable recordings use mono/stereo PCM16 WAV at 8–192 kHz, with a 30-minute maximum per note and a 600 MiB total asset limit. The same archive restores on either platform.
 
-Settings provides voice selection and access to the **Offline voices** and **Voice-note transcription** gallery surfaces. Show samples, language, storage, suitability, privacy and actual readiness. Recommend a compact choice; advanced users can select heavier qualified packs.
+Settings provides voice selection and access to the **Offline voices** and **Voice-note transcription** gallery surfaces. Show language, storage, suitability, privacy and actual readiness. Recommend a compact choice; advanced users can select heavier qualified packs. Voice selection applies to document narration without a separate sample player.
 
 Borrow discovery/download/run ideas from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery), while retaining this app's Koin stack, speech-specific contracts and privacy rules. Gallery's device warnings or demonstration benchmarks are not our compatibility guarantee.
 

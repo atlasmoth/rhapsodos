@@ -187,7 +187,7 @@ fun ReaderApp() {
     val archiveTransportReady = !exporting && exportDocumentId == null
     val archiveSheetDismissal = rememberUpdatedState(archiveTransportReady)
     val archiveBusy = importing || exporting || exportDocumentId != null || actionSaving || recordRequestPending || typedNote ||
-        playback.capturing || noteCapture.draft != null || noteCapture.saving || audio.preview || audio.noteId != null
+        playback.capturing || noteCapture.draft != null || noteCapture.saving || audio.noteId != null
     LaunchedEffect(recordRequestPending, typedNote, audio.capturing, typedReservationId) {
         if ((recordRequestPending || typedNote) && !playback.isCaptureReservationValid(typedReservationId)) {
             recordRequestPending = false
@@ -250,7 +250,7 @@ fun ReaderApp() {
                 var archiveStarted = false
                 try {
                     check(documentId != null) { "Choose a document before exporting its archive." }
-                    check(!importing && !recordRequestPending && !typedNote && !playback.capturing && capture.state.value.draft == null && !capture.state.value.saving && !playback.state.value.preview && playback.state.value.noteId == null) { "Finish your current action before exporting an archive." }
+                    check(!importing && !recordRequestPending && !typedNote && !playback.capturing && capture.state.value.draft == null && !capture.state.value.saving && playback.state.value.noteId == null) { "Finish your current action before exporting an archive." }
                     playback.pause()
                     check(playback.persist()) { "Your listening position could not be saved. Please retry." }
                     archiveStarted = true
@@ -283,7 +283,7 @@ fun ReaderApp() {
     fun recordThought(expected: PreparedCaptureTarget? = null): Boolean {
         if (importing || exporting || exportDocumentId != null || recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
         val current = playback.state.value
-        if (current.preview || current.noteId != null) return false
+        if (current.noteId != null) return false
         val reservation = playback.beginCapture(expected) ?: return false
         val frozen = reservation.attachment
         recordRequestPending = true
@@ -398,16 +398,13 @@ fun ReaderApp() {
                                 }
                             }
                         }
-                        TextButton(onClick = { if (audio.preview) playback.returnFromPreview() else playback.previewVoice(modelState.selectedVoice); haptic(view) }, enabled = archiveTransportReady && !playback.capturing) {
-                            Text(if (audio.preview) "Stop sample" else "Listen to a sample")
-                        }
                         OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }, enabled = archiveTransportReady) { Text("Download voices and transcription") }
                         modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     }
                     SettingsSection("Playback speed") {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
-                                FilterChip(audio.speed == speed, onClick = { playback.setSpeed(speed); haptic(view) }, label = { Text("${speed}×") }, enabled = archiveTransportReady && !playback.capturing && !audio.preview && audio.noteId == null)
+                                FilterChip(audio.speed == speed, onClick = { playback.setSpeed(speed); haptic(view) }, label = { Text("${speed}×") }, enabled = archiveTransportReady && !playback.capturing && audio.noteId == null)
                             }
                         }
                     }
@@ -567,7 +564,7 @@ private fun LibraryPane(
                     if (hide != null) IconButton(onClick = hide) { Icon(Icons.Outlined.ViewSidebar, "Hide library") }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LibraryActionButton(Icons.Outlined.Search, "Search the library", search, enabled = !importing && !audio.capturing && !audio.preview && audio.noteId == null)
+                    LibraryActionButton(Icons.Outlined.Search, "Search the library", search, enabled = !importing && !audio.capturing && audio.noteId == null)
                     LibraryActionButton(Icons.Outlined.Add, "Import PDF", import, enabled = !importing && !audio.capturing, busy = importing)
                     LibraryActionButton(Icons.Outlined.Tune, "Settings", settings)
                 }
@@ -679,22 +676,22 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = "This document could not be opened." }
     }
-    LaunchedEffect(audio.playing, audio.documentId, audio.preview, audio.noteId, audio.capturing) {
+    LaunchedEffect(audio.playing, audio.documentId, audio.noteId, audio.capturing) {
         val current = playback.state.value
-        if (current.playing && current.documentId == id && !current.preview && current.noteId == null && !current.capturing) {
+        if (current.playing && current.documentId == id && current.noteId == null && !current.capturing) {
             following = true
             page = current.pageIndex
         }
     }
-    LaunchedEffect(audio.passageId, audio.pageIndex, audio.documentId, audio.preview, audio.noteId, audio.capturing, following) {
-        if (following && audio.documentId == id && !audio.preview && audio.noteId == null && !audio.capturing) page = audio.pageIndex
+    LaunchedEffect(audio.passageId, audio.pageIndex, audio.documentId, audio.noteId, audio.capturing, following) {
+        if (following && audio.documentId == id && audio.noteId == null && !audio.capturing) page = audio.pageIndex
     }
     val contents = document
     LaunchedEffect(id, contents?.passages?.isNotEmpty()) {
         if (contents != null && !restored) {
             val current = playback.state.value
             val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
-            page = if (current.documentId == id && !current.preview) current.pageIndex else contents.passages.firstOrNull { it.id == saved?.passageId }?.pageIndex ?: 0
+            page = if (current.documentId == id) current.pageIndex else contents.passages.firstOrNull { it.id == saved?.passageId }?.pageIndex ?: 0
             playback.openSaved(contents)
             restored = contents.passages.isNotEmpty() || contents.document.extractionStatus != "preparing"
         }
@@ -706,8 +703,8 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         }
         return
     }
-    val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && !audio.preview && audio.noteId == null }
-    val recordAvailable = !audio.capturing && !audio.preview && audio.noteId == null
+    val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && audio.noteId == null }
+    val recordAvailable = !audio.capturing && audio.noteId == null
     fun browse() {
         following = false
         playback.pauseForBrowsing(id)
@@ -1157,7 +1154,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                     Text(audio.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && !audio.preview && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
+                TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
                 MediaVolumeControl()
                 if (!compact) TransportControls(audio, playback, available, record)
             }
@@ -1167,7 +1164,6 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
             }
             }
             SourceProgressMeter(audio, playback, available)
-            if (audio.preview) TextButton(onClick = { playback.returnFromPreview() }) { Text("End voice preview") }
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
         }
     }
@@ -1211,9 +1207,9 @@ private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoord
     val documentId = audio.documentId
     val revision = audio.sourceRevision
     val progress = audio.sourceProgress
-    var scrub by remember(documentId, revision, audio.preview, audio.noteId, available) { mutableStateOf<Float?>(null) }
-    val slider = remember(documentId, revision, audio.preview, audio.noteId, available) { SliderState(value = progress?.toFloat() ?: 0f) }
-    val enabled = available && documentId != null && revision != null && progress != null && !audio.preview && audio.noteId == null
+    var scrub by remember(documentId, revision, audio.noteId, available) { mutableStateOf<Float?>(null) }
+    val slider = remember(documentId, revision, audio.noteId, available) { SliderState(value = progress?.toFloat() ?: 0f) }
+    val enabled = available && documentId != null && revision != null && progress != null && audio.noteId == null
     LaunchedEffect(progress, scrub) { if (scrub == null) slider.value = progress?.toFloat() ?: 0f }
     if (progress == null) {
         Text("Preparing document progress…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1240,13 +1236,13 @@ private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoord
 @Composable
 private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit) {
     val view = LocalView.current
-    IconButton(onClick = { haptic(view); playback.skip(-1) }, enabled = available && audio.noteId == null && !audio.preview && !audio.preparing) { Icon(Icons.Default.SkipPrevious, "Previous passage") }
+    IconButton(onClick = { haptic(view); playback.skip(-1) }, enabled = available && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipPrevious, "Previous passage") }
     FilledIconButton(onClick = { haptic(view, true); playback.toggle() }, enabled = available, modifier = Modifier.size(52.dp)) {
         if (audio.preparing) CircularProgressIndicator(Modifier.size(22.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
         else Icon(if (audio.playing) Icons.Default.Pause else Icons.Default.PlayArrow, if (audio.playing) "Pause" else "Play")
                 }
-    IconButton(onClick = { haptic(view); playback.skip(1) }, enabled = available && audio.noteId == null && !audio.preview && !audio.preparing) { Icon(Icons.Default.SkipNext, "Next passage") }
-    IconButton(onClick = record, enabled = available && audio.noteId == null && !audio.preview && audio.durationMillis > 0 && !audio.preparing) { Icon(Icons.Default.Mic, "Pause and record a thought") }
+    IconButton(onClick = { haptic(view); playback.skip(1) }, enabled = available && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipNext, "Next passage") }
+    IconButton(onClick = record, enabled = available && audio.noteId == null && audio.durationMillis > 0 && !audio.preparing) { Icon(Icons.Default.Mic, "Pause and record a thought") }
 }
 
 @Composable

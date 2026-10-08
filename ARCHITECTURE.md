@@ -157,7 +157,7 @@ Translation is a separate later operation on the transcript; it retains original
 
 ## 7. Local model and resource strategy
 
-Ship a usable native/system speech path and qualify a compact enhanced local voice where feasible. Settings owns voice selection and access to curated **Offline voices** and **Voice-note transcription** packs, with samples, language, storage, suitability and readiness. Model execution is task-specific; do not force TTS and ASR into a large general model.
+Ship a usable native/system speech path and qualify a compact enhanced local voice where feasible. Settings owns voice selection and access to curated **Offline voices** and **Voice-note transcription** packs, with language, storage, suitability and readiness. Voices are used for document narration; there is no separate sample-playback feature. Model execution is task-specific; do not force TTS and ASR into a large general model.
 
 The gallery borrows the discover/download/run pattern from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery). Its implementation and benchmarks are references, not our production architecture or a guarantee that arbitrary imported models run on both platforms.
 

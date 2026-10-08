@@ -62,8 +62,8 @@ class OfflineSynthesizer(private val context: Context, private val models: Model
         initialized = true
     }
 
-    suspend fun synthesize(text: String, packId: String? = null): File = serial.withLock {
-        val selected = when (packId) { null -> models.selectedDirectory(); "system" -> null; else -> models.installed(packId) ?: error("Download and verify this voice first.") }
+    suspend fun synthesize(text: String): File = serial.withLock {
+        val selected = models.selectedDirectory()
         selected?.let { directory ->
             val voiceId = models.state.value.voiceId
             voiceLabel = "${voiceId.replaceFirstChar { it.uppercase() }} · offline"

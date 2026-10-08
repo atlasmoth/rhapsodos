@@ -332,7 +332,7 @@ private struct PlaybackDock: View {
             .accessibilityLabel("Playback speed")
             .accessibilityValue("\(audio.playbackSpeed.formatted(.number.precision(.fractionLength(0...2)))) times normal")
             .accessibilityHint("Cycles from three quarters to twice normal speed")
-            .disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
+            .disabled(transportUnavailable || audio.replayingNote != nil)
     }
 
     private var volumeControl: some View {
@@ -354,12 +354,12 @@ private struct PlaybackDock: View {
 
     private var controls: some View {
             HStack(spacing: 14) {
-                Button { store.skip(-1) } label: { Image(systemName: "backward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Previous passage").disabled(audio.previewing || audio.replayingNote != nil)
+                Button { store.skip(-1) } label: { Image(systemName: "backward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Previous passage").disabled(audio.replayingNote != nil)
                 Button { store.togglePlayback() } label: {
                     Image(systemName: audio.playing ? "pause.fill" : "play.fill").font(.title2).frame(width: 52, height: 52)
                         .foregroundStyle(Palette.onAccent).background(Palette.accent, in: Circle())
                 }.accessibilityLabel(audio.playing ? "Pause narration" : "Play narration")
-                Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Next passage").disabled(audio.previewing || audio.replayingNote != nil)
+                Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Next passage").disabled(audio.replayingNote != nil)
                 Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
             }.foregroundStyle(Palette.accent)
     }
@@ -475,12 +475,8 @@ private struct VoiceSettings: View {
                             if audio.selectedVoice.hasPrefix("kokoro:"), store.models?.ready(capability: "tts") == nil { Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true) }
                             if store.models?.ready(capability: "tts") != nil { Text("Preview · Heart").tag("kokoro:af_heart"); Text("Preview · Bella").tag("kokoro:af_bella"); Text("Preview · Michael").tag("kokoro:am_michael") }
                             ForEach(audio.voices, id: \.identifier) { voice in Text("\(voice.name) · \(voice.language)").tag(voice.identifier) }
-                        }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
-                        Button(audio.previewing ? "Stop sample" : "Listen to a sample", systemImage: audio.previewing ? "stop.fill" : "play.fill") {
-                            if audio.previewing { audio.stopPreview() } else { audio.audition() }
-                        }.frame(minHeight: 44).buttonStyle(.bordered)
-                            .disabled(transportUnavailable || (audio.selectedVoice.hasPrefix("kokoro:") && store.models?.ready(capability: "tts") == nil))
-                        Button("Download voices and transcription", systemImage: "arrow.down.circle") { audio.stopPreview(); gallery = true }
+                        }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
+                        Button("Download voices and transcription", systemImage: "arrow.down.circle") { gallery = true }
                             .frame(minHeight: 44).disabled(store.models == nil || transportUnavailable)
                         Text("Additional system voices can be managed in iOS Accessibility settings.").font(.caption).foregroundStyle(Palette.muted)
                     }
@@ -495,7 +491,7 @@ private struct VoiceSettings: View {
                                 }.buttonStyle(.plain).accessibilityLabel("\(multiplier.formatted(.number.precision(.fractionLength(0...2)))) times normal speed")
                                     .accessibilityAddTraits(audio.playbackSpeed == multiplier ? .isSelected : [])
                             }
-                        }.disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
+                        }.disabled(transportUnavailable || audio.replayingNote != nil)
                     }
                     ReaderSheetCard(title: "Appearance") {
                         Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
@@ -540,7 +536,7 @@ private struct VoiceSettings: View {
                 case .failure(let error): store.errorMessage = error.localizedDescription
                 }
             }
-            .onDisappear { audio.stopPreview(); exportTask?.cancel() }
+            .onDisappear { exportTask?.cancel() }
     }
 }
 

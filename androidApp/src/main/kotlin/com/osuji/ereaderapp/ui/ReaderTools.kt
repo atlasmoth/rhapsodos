@@ -53,7 +53,6 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
                         Text("Offline availability is checked when listening starts.", style = MaterialTheme.typography.bodySmall)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilledTonalButton(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing) { Text(if (state.selectedVoice == "system") "Selected" else "Use system voice") }
-                            TextButton(onClick = { playback.previewVoice("system") }, enabled = !playback.capturing) { Text("Listen to a sample") }
                             TextButton(onClick = { runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) } }) { Text("Android voice settings") }
                         }
                     }
@@ -89,7 +88,6 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
                                 "ready" -> {
                                     if (pack.capability == "tts") Button(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing && !checking) { Text(if (state.selectedVoice == pack.id) "Selected" else "Use this voice") }
                                     else Text("Ready for saved voice notes", style = MaterialTheme.typography.labelLarge)
-                                    if (pack.capability == "tts") TextButton(onClick = { playback.previewVoice(pack.id) }, enabled = !playback.capturing && !checking) { Text("Listen to a sample") }
                                 }
                                 "downloading", "verifying" -> OutlinedButton(onClick = { models.pause(pack.id); haptic(view) }) { Text("Pause download") }
                                 else -> Button(onClick = { models.download(pack.id); haptic(view) }, enabled = reason == null) { Text(if (status == "paused") "Resume download" else if (status == "failed") "Retry download" else "Download") }
@@ -150,7 +148,7 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
                 val accepted = select(hit)
                 if (query == expectedQuery && searchAttempt == expectedAttempt) {
                     if (accepted) dismiss()
-                    else { failedTarget = hit; navigationError = "This passage could not be opened. Finish any recording or preview, then try again." }
+                    else { failedTarget = hit; navigationError = "This passage could not be opened. Finish recording or playing your note, then try again." }
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled

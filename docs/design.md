@@ -54,7 +54,7 @@ Touch feedback and decorative motion are enabled app behavior without app-level 
 | PDF reader | Original page, active narration highlight, double-tap passage-to-record and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |
-| Offline voices | Preview, language/accent, recommendation, size, download and delete |
+| Offline voices | Selection, language/accent, recommendation, size, download and delete |
 | Voice-note transcription | Language, device suitability, installation and privacy status |
 | Preparation/storage | Chapters ready offline, pending work and separate controls for caches, models and user data |
 
