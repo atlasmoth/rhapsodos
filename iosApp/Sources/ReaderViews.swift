@@ -8,7 +8,6 @@ struct ReaderRoot: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @EnvironmentObject private var feedback: Feedback
     @State private var importer = false
-    @State private var restorePicker = false
     @State private var exportConfirm = false
     @State private var settings = false
     @State private var gallery = false
@@ -60,11 +59,6 @@ struct ReaderRoot: View {
                             .disabled(store.busy)
                     }
                 }
-                Section {
-                    Label("On this device", systemImage: "lock.shield").font(.footnote).foregroundStyle(.secondary)
-                    Text("Your PDFs and voice notes stay here. No account or cloud processing.").font(.caption).foregroundStyle(.secondary)
-                    Button("Restore a portable archive", systemImage: "square.and.arrow.down") { restorePicker = true }.disabled(store.busy)
-                }
             }
             .navigationTitle("Library")
             .navigationSplitViewColumnWidth(min: 240, ideal: 290, max: 350)
@@ -106,10 +100,6 @@ struct ReaderRoot: View {
             case .success(let url): Task { await store.importPDF(url) }
             case .failure(let error): store.errorMessage = error.localizedDescription
             }
-        }
-        .fileImporter(isPresented: $restorePicker, allowedContentTypes: [.rhapsodos, .zip, .archive]) { result in
-            if case .success(let url) = result { Task { await store.restoreArchive(url) } }
-            if case .failure(let error) = result { store.errorMessage = error.localizedDescription }
         }
         .sheet(isPresented: Binding(get: { store.exportURL != nil }, set: { if !$0 { store.exportURL = nil } })) { if let url = store.exportURL { ExportPicker(url: url) } }
         .confirmationDialog("This archive is not encrypted. It contains your PDF, notes and playable recordings. Save it somewhere you trust.", isPresented: $exportConfirm, titleVisibility: .visible) {
@@ -347,6 +337,7 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var feedback: Feedback
+    @State private var restorePicker = false
     @AppStorage("appearance") private var appearance = "system"
     @AppStorage("originalPDFColours") private var originalPDFColours = false
     @Environment(\.dismiss) private var dismiss
@@ -377,6 +368,10 @@ private struct VoiceSettings: View {
                     Toggle("Touch feedback", isOn: $feedback.enabled)
                     Text("Motion and visual effects respect Reduce Motion, Low Power Mode and thermal conditions.").font(.caption).foregroundStyle(.secondary)
                 }
+                Section("Documents") {
+                    Button("Restore an exported document", systemImage: "square.and.arrow.down") { restorePicker = true }
+                        .disabled(store.busy || store.captureDraft != nil || audio.recording)
+                }
                 Section("Privacy & readiness") {
                     Label("Narration stays on this device", systemImage: "lock.shield")
                     Text("Saved voice notes use on-device transcription when English recognition is available. Otherwise the recording remains saved for later.").font(.footnote).foregroundStyle(.secondary)
@@ -386,6 +381,13 @@ private struct VoiceSettings: View {
             }.navigationTitle("Make it your voice").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }.presentationDetents([.medium, .large])
+            .fileImporter(isPresented: $restorePicker, allowedContentTypes: [.rhapsodos, .zip, .archive]) { result in
+                dismiss()
+                switch result {
+                case .success(let url): Task { await store.restoreArchive(url) }
+                case .failure(let error): store.errorMessage = error.localizedDescription
+                }
+            }
             .onDisappear { audio.stopPreview() }
     }
 }
