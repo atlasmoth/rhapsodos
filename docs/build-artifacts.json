@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "recorded_on": "2026-10-08",
-  "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+  "source_revision": "95514f17b26d02c5799c46950de382b21b0e4fd3",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -9,14 +9,14 @@
     "build": 1
   },
   "android": {
-    "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+    "source_revision": "95514f17b26d02c5799c46950de382b21b0e4fd3",
     "min_sdk": 28,
     "target_sdk": 37,
     "artifacts": [
       {
         "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
         "bytes": 155048380,
-        "sha256": "8289b29ada1ca9ea004791b94da11eb4481b7972070825bc600a4f8e5f44b9a8",
+        "sha256": "1d8a9ad57e88e52b8043dde60409cad3ee317ba854d6faad1742b0341e8ad870",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -34,8 +34,8 @@
       },
       {
         "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
-        "bytes": 130610800,
-        "sha256": "70a6f01a7621e750115cabe54cda7a75043b4ef887c28feeccfc0a23fab08d7d",
+        "bytes": 130709104,
+        "sha256": "e0e57ccaa4af148c6629fa1dbbcb922fa8c7ff0236cfe9f2c298b4ba0a6375f0",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -53,8 +53,8 @@
       },
       {
         "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
-        "bytes": 52974769,
-        "sha256": "878ee08f8743d2b9d690f149ec742a777522912c8078c99672d5ffe0814ff91c",
+        "bytes": 53005775,
+        "sha256": "2da62d82317b05aef6ec5a360f31ecb9185086576af42ea249b3fca4eb5ca959",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "version": "0.01",
@@ -82,24 +82,24 @@
     "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
   },
   "ios": {
-    "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+    "source_revision": "95514f17b26d02c5799c46950de382b21b0e4fd3",
     "min_ios": "17.0",
     "artifacts": [
       {
         "path": "iosApp/build/Debug-iphonesimulator/EReader.app",
-        "bundle_bytes": 38755813,
+        "bundle_bytes": 39268277,
         "bundle_files": 63,
-        "bundle_tree_sha256": "f7aa2c7a3bb124eca6834be6ffb75fae618458549d362cc55dd7eb956caad73e",
+        "bundle_tree_sha256": "08b0e1cd61c09983e045b74029bd0d4ab90052c9c6b2a08423771dfe7a85ddc0",
         "binaries": [
           {
             "path": "EReader",
             "bytes": 40496,
-            "sha256": "3d3c22ca085946ac46b1c1c625ffa6b247837e842db976d0d34b1fd78214b487"
+            "sha256": "ceeded75f431f45abde0c1402fc4512242d844044f6760c52aa234b53caaa928"
           },
           {
             "path": "EReader.debug.dylib",
-            "bytes": 27188624,
-            "sha256": "8f9a0bedbd018ddb981759a4368c7782047a109589b1f6b63d26476b62b477fe"
+            "bytes": 27701088,
+            "sha256": "aa928683582061ed2cef183a03c1844672d0ef8486473b76d83f6ad615044928"
           }
         ],
         "metadata": {
@@ -113,14 +113,14 @@
       },
       {
         "path": "iosApp/build/Release-iphoneos/EReader.app",
-        "bundle_bytes": 28568784,
+        "bundle_bytes": 28925384,
         "bundle_files": 44,
-        "bundle_tree_sha256": "2e1c002bed98ede2ca98920b032201e693d730845f8d3dc7abcd2eb42837063d",
+        "bundle_tree_sha256": "5cd77ac5e4a83a2532b1b0fbdd66f38cf9be057a59b72d5ba78b32c11b7a2f80",
         "binaries": [
           {
             "path": "EReader",
-            "bytes": 17065840,
-            "sha256": "370914aa9a2b26fa4928cc82db3999f071a9a76a8758c6b289007a5cbff470a8"
+            "bytes": 17422440,
+            "sha256": "490e5798999075408d5ea6fc0fa98176c3efd0cd6d87812006dd9d6d600e925b"
           }
         ],
         "metadata": {
@@ -1809,6 +1809,146 @@
         "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
       },
       "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+      "identity": {
+        "name": "Rhapsodos",
+        "application_id": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": 1
+      },
+      "android": {
+        "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+        "min_sdk": 28,
+        "target_sdk": 37,
+        "artifacts": [
+          {
+            "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+            "bytes": 155048380,
+            "sha256": "8289b29ada1ca9ea004791b94da11eb4481b7972070825bc600a4f8e5f44b9a8",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "debug development key"
+          },
+          {
+            "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+            "bytes": 130610800,
+            "sha256": "70a6f01a7621e750115cabe54cda7a75043b4ef887c28feeccfc0a23fab08d7d",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "owner distribution signing required"
+          },
+          {
+            "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
+            "bytes": 52974769,
+            "sha256": "878ee08f8743d2b9d690f149ec742a777522912c8078c99672d5ffe0814ff91c",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "display_name": "Rhapsodos",
+              "internet_permission": true,
+              "inspection": "Actual base manifest decoded with installed AAPT2 protobuf classes; no APK-to-AAB metadata inference."
+            },
+            "signing": "owner distribution signing required"
+          }
+        ],
+        "metadata_and_arm64_native_16k_alignment": {
+          "result": "passed",
+          "debug": {
+            "libraries": 7,
+            "status": "passed"
+          },
+          "release": {
+            "libraries": 7,
+            "status": "passed"
+          }
+        },
+        "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
+      },
+      "ios": {
+        "source_revision": "81ecefc77d9d573d6fad49710d5665d63435d530",
+        "min_ios": "17.0",
+        "artifacts": [
+          {
+            "path": "iosApp/build/Debug-iphonesimulator/EReader.app",
+            "bundle_bytes": 38755813,
+            "bundle_files": 63,
+            "bundle_tree_sha256": "f7aa2c7a3bb124eca6834be6ffb75fae618458549d362cc55dd7eb956caad73e",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 40496,
+                "sha256": "3d3c22ca085946ac46b1c1c625ffa6b247837e842db976d0d34b1fd78214b487"
+              },
+              {
+                "path": "EReader.debug.dylib",
+                "bytes": 27188624,
+                "sha256": "8f9a0bedbd018ddb981759a4368c7782047a109589b1f6b63d26476b62b477fe"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "ad-hoc simulator"
+          },
+          {
+            "path": "iosApp/build/Release-iphoneos/EReader.app",
+            "bundle_bytes": 28568784,
+            "bundle_files": 44,
+            "bundle_tree_sha256": "2e1c002bed98ede2ca98920b032201e693d730845f8d3dc7abcd2eb42837063d",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 17065840,
+                "sha256": "370914aa9a2b26fa4928cc82db3999f071a9a76a8758c6b289007a5cbff470a8"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "unsigned; owner provisioning required"
+          }
+        ],
+        "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+        "metadata_inspection": "passed",
+        "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
+      },
+      "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
     }
   ],
   "artifact_inspection": {
@@ -3365,5 +3505,362 @@
       "Physical audio routes, microphone capture, downloaded-model inference and iOS 17 runtime not newly qualified",
       "iOS Settings/gallery interaction and ready enhanced-pack UI not exercised in this task"
     ]
+  },
+  "model_manager_verification": {
+    "recorded_on": "2026-10-08",
+    "source_revision": "95514f17b26d02c5799c46950de382b21b0e4fd3",
+    "atomic_feature_commits": [
+      "2be4414",
+      "46f3764",
+      "95514f1"
+    ],
+    "builds": {
+      "android": "Debug APK, unsigned Release APK, Release AAB and lint passed; zero errors, nine warnings",
+      "ios": "arm64 simulator Debug and unsigned arm64 device Release passed; iOS17 deployment baseline"
+    },
+    "logs": {
+      "shared": {
+        "path": "/private/tmp/rhapsodos-model-manager-core-build.log",
+        "sha256": "859ee8557a63087719918e3424693527ebf1bd230769636a44e2dcbff92b0f99"
+      },
+      "android": {
+        "path": "/private/tmp/rhapsodos-model-manager-android-build.log",
+        "sha256": "90d765d05a79eda13bbc9c60b9e7c8bb168b51dd0fbdd3a95a9d75fb5638268f"
+      },
+      "ios_debug": {
+        "path": "/private/tmp/rhapsodos-model-manager-ios-debug-build.log",
+        "sha256": "2c15aa7af15bb8fa18d96b5984cf037532f98b5cdba3311d1cf3e6d1b7fe4174"
+      },
+      "ios_release": {
+        "path": "/private/tmp/rhapsodos-model-manager-ios-release-build.log",
+        "sha256": "1833587235c8e95392e6dfe429aa76a9dd9140ffd5c882a67c095bc91bda8d12"
+      },
+      "policy": {
+        "path": "/private/tmp/rhapsodos-model-manager-policy.log",
+        "sha256": "231da80e036ca5427329a331fb53b63920bb14c3a24d9f93ffaf0a582c2a5319"
+      }
+    },
+    "checks": [
+      {
+        "component": "shared:report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-shared/report.json",
+        "report_sha256": "d949a321e0602b2a06b182bb2207f01317c7e9c009d2ceab6f2da74bccc07bdc",
+        "passed": 116,
+        "total": 116,
+        "scope": "Actual compiled shared ReaderCore, SQLDelight generated queries and JDBC SQLite. Native signature proof is intentionally outside this domain seam; no inference or device qualification.",
+        "provenance": {
+          "baseCommit": "82bce3613cf58cd1dc6b5bd4ab96c5561b03c0b0",
+          "workingSourceSha256": {
+            "shared/src/androidMain/kotlin/com/ereader/shared/Platform.android.kt": "484cac7c064ed5957b9ffb2f678ff796f3454c6c6917cc105a7739ca1ad8c885",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/7.sqm": "3072ec1baa7d03257d99debaf2c015d2c816b2cd4343f2bd12bc382426e0b0fe",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/6.sqm": "b8502e41c439699a9631754cd58313aa3d3e7d112686ada073e674eec6b7c3dd",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/4.sqm": "b6985ccf28b46468033d6552aa81f260cf51c4b9ba5d35a8f3e74a6258bbaede",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/5.sqm": "6e559247c2e56db4a8724d1d1d79c513b69024a0e6b5d2082179b77eb5d57670",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/1.sqm": "2ca1df0e2e3233d6e38541e0cdb292ad06b242b8e6764f6a3090ea9ffe2cb6bd",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/2.sqm": "73872baa403e19fc9c92ddf63b28a6911d5d4c360715028c6682a4cc91b8c86b",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/3.sqm": "d3ad99674706a2e31c72835d693e1f643336b232f14909b340a03fdf15d1e349",
+            "shared/src/commonMain/sqldelight/com/ereader/shared/database/Reader.sq": "dbc3249718347d72bfce5a42e583c7d9b86cc8da207ce758667272697986859d",
+            "shared/src/commonMain/kotlin/com/ereader/shared/CatalogValidation.kt": "095ad642ec90e29d93af90e9234bcb2f29719705735c11a3ed000cf7a4ac381d",
+            "shared/src/commonMain/kotlin/com/ereader/shared/Platform.kt": "34b8f61d5534d2b83d4444d71877680ddacb94f326c4f9146bc011e560168896",
+            "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalogSource.kt": "2d203905f0bfce84dce70d176ba30eb3e1a5fef9649812f778b56a221715feb2",
+            "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt": "c15eab7d6a4d32d8d2986147d76f1038e40aaed356295fc5bcb80364f30fb76b",
+            "shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt": "bb318846d37f26e7d9cdb27a2c08fc85759e8449460aa4961d10c55e7a0bd19d",
+            "shared/src/commonMain/kotlin/com/ereader/shared/PassageBuilder.kt": "530e2f6b7e7e84bd27e11d23af3c11f5fa87bdfbce9c728222cc094e3162ebfc",
+            "shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt": "bf332debb95c34be6ffa1ca793b1e224654ca367e3f45c76b13e970e9161238b",
+            "shared/src/iosMain/kotlin/com/ereader/shared/Platform.ios.kt": "20dbcc4f94a42c0e54de70756f72ee22988f5db8d261b0a11862faf03a7bc553"
+          },
+          "compiledClassSha256": {
+            "com/ereader/shared/ModelCatalogStatus$Companion.class": "f92147112f9bd3156601aae46b964c66c979d4fcfdd0f3b7680cb2e1972b3069",
+            "com/ereader/shared/Passage$Companion.class": "824444f1d1abbd8dc58a4b4dd1cec7b3751a8243254258684ce6b1009cfe126d",
+            "com/ereader/shared/Passage.class": "32b247d988e59f0ebde51239dc43fd041fec8215f7847f4ebcdd70c6bc272090",
+            "com/ereader/shared/FileRemoval.class": "e6fcaabec7e272112ace2512e628ba5a5ce0522021e7466642e0646b2910908a",
+            "com/ereader/shared/ContentEgressPolicy.class": "8525316ada9b8bd4165cc0e2e391be23def8b08d6c00053af9acc4bd670e8c4f",
+            "com/ereader/shared/VoiceNote$Companion.class": "9fa546cb46dc2e235e72a1ed37e3f1485c89671bd240ec1813b37230b455fc08",
+            "com/ereader/shared/SourceRegion.class": "4c6cdf12392c85b040a0a07f1dd73dc249667863997e5183618077b1fb81989a",
+            "com/ereader/shared/SourceSeekTarget$$serializer.class": "71d2a895438c7ceb107860d859620f0d6f6cca65b17bee98e26e570a06cca07e",
+            "com/ereader/shared/ModelFile$Companion.class": "4a0bbce2dfee1579ca81dbbed4b507e9eabcb97a09810cb6781f4dafffbb32a6",
+            "com/ereader/shared/ModelFile$$serializer.class": "51b1968f649601e45039f1dfab2315c66ac7df2e391f6bb51524fd2b82aa82c7",
+            "com/ereader/shared/StoreLock.class": "ca545b216da493900c686f7dfc7b8851a0c7a36a7e9ba149873ec72ed03ea88d",
+            "com/ereader/shared/ModelInstall$$serializer.class": "475be4a72c9214909e4d2713e74566f66b21c81fdc38138629d01ca8f0b89058",
+            "com/ereader/shared/DocumentArchive$$serializer.class": "530bdfd716e7f10c8c3b867cb34a354687d830a05d2fe7b6cb981e4c56d48ba7",
+            "com/ereader/shared/DocumentRecord$Companion.class": "9fb03f2c09664f34659a45b2935096d05b5f30610e023a2a9a4a9639b48e1e90",
+            "com/ereader/shared/VerifiedModelFile.class": "c31625472e2abdc8d992e4b641a6cdf55e97775d9218ff4673880331afd48910",
+            "com/ereader/shared/SourceSeekTarget.class": "f42ee16e929945fa5055722b23be9c4e0afe51ac8ae4f21f72de86059d81c84b",
+            "com/ereader/shared/DocumentSnapshot$$serializer.class": "c48d57c416cf2aef4e429d30ae903e718c550339d714ddb2ab7d2a407f76254c",
+            "com/ereader/shared/LibrarySnapshot$$serializer.class": "b75ea22c765fb06581b04ea4f37898651e341a356d59e668fd1883ff4ed106e7",
+            "com/ereader/shared/LibrarySnapshot$Companion.class": "1c7d8761d2d86ca8b6a591b0b48150d80132760a972e3db8bb67f1cb5322adcf",
+            "com/ereader/shared/CatalogValidation.class": "10b5289471d4f5722a3d4f51ff76305f2298e69335aefcf1e84be6e2d9db8500",
+            "com/ereader/shared/ModelPack$Companion.class": "ba711db7876953568be8405fc562b1ba259b5d255f19d30d851ba46c1e174341",
+            "com/ereader/shared/VoiceNote$$serializer.class": "778beea0475a8f7f9a3b31ec67563cd586afa5f971e60cafc56119b5072a3ce1",
+            "com/ereader/shared/AndroidCoreFactory.class": "d567a8fce54299f73100b5b555028134df3795f22bd0e148ad2bcfaa0be1b18c",
+            "com/ereader/shared/PlaybackPosition$Companion.class": "19aaa04c8fd06c18bf6856e00c23ec6b4d6bee1e4d4bdd6c64e3474cc1b8f1db",
+            "com/ereader/shared/DocumentSnapshot$Companion.class": "2ae5add71076086a22980302b52a68dc4d9268e754637e9b4cbb0a3e1efd7bde",
+            "com/ereader/shared/VerifiedModelFile$$serializer.class": "5541727e516ab693cca8e491b62532f8c2521fc1622d1b67b76e0f6e1b4069af",
+            "com/ereader/shared/Passage$$serializer.class": "898f388e8265ce5d5244b6e661f8996caf0a7ff31e3daf9d76b0498c85389e02",
+            "com/ereader/shared/DocumentArchive.class": "20eabec9e6b59992cef23ee096b792bfbf7a48d56f3e650939b6e8f16ef395e6",
+            "com/ereader/shared/PassageBuilder.class": "9edc2350ca56e57a0ebfe6f9627eb5b965464128527ddbbfc92eef3e53e92b18",
+            "com/ereader/shared/DocumentSection$Companion.class": "dd70d038e7f033157c3a12c88b967bef0d66fa0726c539e78ed194aa4511b8a9",
+            "com/ereader/shared/SourceRegion$$serializer.class": "c9ed3023181ddfb7468a1bfb05e143d6e71b8b68d9ce027104c5bd0b795c7da6",
+            "com/ereader/shared/PlaybackPosition$$serializer.class": "700d88f429b052b1c8e3ea9926b483f40792dd582e7c2e35391c67946500d521",
+            "com/ereader/shared/ModelFile.class": "d180a01f340570b5ab960dc1f73dd6736d4f95ed5eebe71b29ed132a1b54ed60",
+            "com/ereader/shared/SpokenMapping$$serializer.class": "49a9b53eafe18871f47018dab3d890a230b70e16f15044d7eee73427ee55f80c",
+            "com/ereader/shared/SearchHit.class": "f61bca9351eca989ad40fd575d9cea1cdb57810ed31a969a04f4bff90a3138ce",
+            "com/ereader/shared/DocumentArchive$Companion.class": "f5d5815daad89b1e921e9d6dac031d57e6cf0ab2e42aee8a075269b0799fea4b",
+            "com/ereader/shared/SourcePage$Companion.class": "cde4de761bbf2c0005ae803f6f2bdb1139f076ae74ea47d5f2ec3bde6b808220",
+            "com/ereader/shared/ModelCatalog.class": "e381c6d29be9b2f75ecd06cbedbe70b7f8414492f29c9271b9a672b7e07e080d",
+            "com/ereader/shared/ModelCatalogStatus.class": "20df9a6cbba7426bb34f307bf3e1d5d5f585044b7699baea3ea1d6180ac4a381",
+            "com/ereader/shared/SourceRegion$Companion.class": "20be9e26f82314b26bf769ebd5ab8ed7ff1a4cb1eabe351e58deef5e85de1011",
+            "com/ereader/shared/ModelPack$$serializer.class": "398fc5153754661cdeb2fe35080d0f5f6add3a1dcd839b4a1203139aadfda586",
+            "com/ereader/shared/LibrarySnapshot.class": "1936b1e82be5cf2b5edf61f0d6d45f50a07637d9f061963d20665ff3026e0de6",
+            "com/ereader/shared/FileRemoval$Companion.class": "b5ca1075212a424437d464daf69034632e75c4df1b36dd1a4f67e2661c90274d",
+            "com/ereader/shared/SpokenMapping$Companion.class": "370a109a0aef9c0d2ce0ba61084d6e5aaeb16241b2db45f450d3695dc36cdb24",
+            "com/ereader/shared/ModelCatalogUpdate$$serializer.class": "3ba18a3b50f9f25546b51eefcaec44c6c93b460fd22d0438fe295a0972623311",
+            "com/ereader/shared/ModelPack.class": "7ebe293f2452dfd63c6a72bf1761f562c628acf306396413680a1cd732981cd3",
+            "com/ereader/shared/Platform_androidKt.class": "c246e3cf0e838f96f89d74dce2931950990f7cfe9c4e7490e472cb6b7fefab85",
+            "com/ereader/shared/DocumentRecord$$serializer.class": "ead9fe0c5a8550a9bfcbfa0010d70165c00a7cce74fd71e3ea6b126fa7aec8c1",
+            "com/ereader/shared/ModelCatalogStatus$$serializer.class": "fd45aa0793f7e71b4f21f952f6ce9c73aaa846d3021e5e27c1bd0c9d772e715b",
+            "com/ereader/shared/SearchHit$Companion.class": "fcb2d04ca0fc45da19ab655353262025c135e7f2116bfa1b8194251e12fe55a3",
+            "com/ereader/shared/ModelCatalogSource.class": "ac4101c2ce7d54c14214ecc5f856245de888a1f304ae0603821bc6f7a5cc626e",
+            "com/ereader/shared/DocumentSection$$serializer.class": "4db39f9dd2b6218136359c1ae6c748a2625ee3965f340c2d59d534b6a3920d1d",
+            "com/ereader/shared/ModelCatalogUpdate$Companion.class": "bf3719b5da1a748997e2a6ee770bac1fd0d5558913499029a39b898416d502e7",
+            "com/ereader/shared/PlaybackPosition.class": "53a962a491c0a9ec93b606adf36874d54ee614f28a22e51eff11d7c101d3e439",
+            "com/ereader/shared/SpokenMapping.class": "0760768916d29ba4c01ecb7fb0471a0484a369c15f22c66fcd41f8b1d104b404",
+            "com/ereader/shared/DocumentSection.class": "ec2fa95bdf2ec57998420cff13641a2125626058dab06324722515c0a387a1b3",
+            "com/ereader/shared/ModelCatalogUpdate.class": "8b61fc39c67e51c8615a58dc66ba4e3032ec88418846bd491839f3d5139b5e02",
+            "com/ereader/shared/SourceSeekTarget$Companion.class": "701124a27ef9e3ed3d4ba13ce6c4c1a7cf38a06c134c03fa9b442ee417dcae0d",
+            "com/ereader/shared/SearchHit$$serializer.class": "26037d1ab999e22e6faece1eb6a6ab8c47485e138eaa2ba3f6972299b25724e5",
+            "com/ereader/shared/ReaderCore.class": "d30c8d1f8ae9c9a70b41d49b60358b3e312f00bb40aafb1d77bc680e2dd062ba",
+            "com/ereader/shared/DocumentSnapshot.class": "e15baa9dcf97dbfae4c225e7089c6917fca2bb07496cabf4cff503010c228596",
+            "com/ereader/shared/ModelInstall$Companion.class": "6310db2d9844f8739345f55e2856aee56c09fa13e5e7033a392a3f1c49eae971",
+            "com/ereader/shared/SourcePage$$serializer.class": "bdbe814061ebb77c7ec77fb6daca1065fe0d4852db35d64462714ed35e2202d8",
+            "com/ereader/shared/DocumentRecord.class": "533923a8f9026bb07c2c244c8cee061880d778df57798e1f636b28aa577a6fb7",
+            "com/ereader/shared/ModelInstall.class": "b67e8bfc9902a56bbfd8eaeef2058165ff008ddd587bb2b9c8511c39e4282489",
+            "com/ereader/shared/VerifiedModelFile$Companion.class": "6f40b0bf8a6b86d6f20d2c8bb41f27e9aa2db0add35454b2a0a16679fb1e18ac",
+            "com/ereader/shared/SourcePage.class": "157b5c88e79619c0e68fa4804ceffc97c9fd64602aae165d7f7b173dccaff8bc",
+            "com/ereader/shared/VoiceNote.class": "38241c0684afd3351656382f13138d27d1b010810ef55fb9ec68196cb7b3576e",
+            "com/ereader/shared/FileRemoval$$serializer.class": "888d64f405d61b348cfef085da85354b0417d116046d77899dad3b46dd1cfadd",
+            "com/ereader/shared/database/ReaderQueries$SearchNotesQuery.class": "8927afe85ac4f4181330c87fbe9a0071e59db7f5a4b8420d7606c0fbe5975063",
+            "com/ereader/shared/database/Passage.class": "69e10533c1eb8f4966e364d8e897ded06c163eba916856581732e8b3326462e2",
+            "com/ereader/shared/database/ReaderQueries$searchNotes$2.class": "81848cc4fe51f869c212ec91992cbe8326db94baef8d1923329e3113553e0d24",
+            "com/ereader/shared/database/ReaderQueries$lastPassageForDocument$2.class": "3187c736e35a9d5533816d5d2c1a19e858638c64232de7a75eca4d4c545c786e",
+            "com/ereader/shared/database/ReaderQueries$passagesForDocument$2.class": "4e67201bb3a85741e582e887c2ab68e86289a77ad3635c4891e648b0e95d4395",
+            "com/ereader/shared/database/Playback_position.class": "25c30a3e21461902868b3b6ccc96c5b457311a8b6f095ec01754e01cf680e902",
+            "com/ereader/shared/database/ReaderQueries$modelInstallById$2.class": "f2c2913e49166bec2907fad544c003081cc6eb25e63f8317edb1af3947b006f0",
+            "com/ereader/shared/database/ReaderQueries$PassageAfterSourceOffsetQuery.class": "5ef7b1d3cafde59de6e207a48502750475950373635d0a670ee6bb842f334f4c",
+            "com/ereader/shared/database/ReaderQueries$SectionsForDocumentQuery.class": "430f8b92a878dd29833d7608c5be2bc3a39555578f794238fe8b730101d853a9",
+            "com/ereader/shared/database/ReaderQueries$LastPassageForDocumentQuery.class": "f0d33bb23f2ac0322b3639e8db96961f8a30eb95b820326860b45444ae770915",
+            "com/ereader/shared/database/ReaderQueries$ModelInstallByIdQuery.class": "04206e7ea11a916a8900ff35e7c58976c872051db7e66b9fc5d3771e90023322",
+            "com/ereader/shared/database/File_removal.class": "f18b4b58d3256e3db7fef50b963df127e4d1ec9bbc7035dfd083f0f671bd837c",
+            "com/ereader/shared/database/ReaderQueries$DocumentByIdQuery.class": "bdf8b8d89df199803e54205ecb6cd605442b14b297f1e58cd2a6c5c1c8466914",
+            "com/ereader/shared/database/ReaderQueries$passageAfterSourceOffset$2.class": "22e5077463793b0b2269aa239c4b9a9b0a6e5994a0078cf6836f4ee06f476b7e",
+            "com/ereader/shared/database/ReaderDatabase$Companion.class": "0b3bc047e0817a3e22408e9a79c2e516700f4886f79e16b98ac76e4eb510e65e",
+            "com/ereader/shared/database/SearchPassages.class": "72cc7fa26918840ad48fde29a957239af3f5f1957ae57d5dbd15f3a6de167402",
+            "com/ereader/shared/database/ReaderQueries$PositionForDocumentQuery.class": "4d5fb9d64d6b229a5bcdecf72a684958bb53f05a2c3df67b1937c5aa17852b60",
+            "com/ereader/shared/database/ReaderDatabase.class": "2c7e43c9cbaf69a3445fbeae366cc95003b8c77bfbf82e09e8eb41f9a9ba2394",
+            "com/ereader/shared/database/ReaderQueries$PassagesForDocumentQuery.class": "d747b6a4d10bbd8ebcba53398a83875c2434ef96a591da730ea0c09c2485a592",
+            "com/ereader/shared/database/ReaderQueries$SourcePageByIndexQuery.class": "0405e611764469ff6880ce84c45c7ae980cbf5ec7408b0865c05f6ede7d75d12",
+            "com/ereader/shared/database/ReaderQueries$allDocuments$2.class": "0da48d5356b432c85b2c4289d356239d7176dee0552f58629be6b11d123c1d33",
+            "com/ereader/shared/database/ReaderQueries$noteById$2.class": "891c915e2d718728aaa100949b13e95edd61bc7b3aff1cc3c9b42773f99d11ad",
+            "com/ereader/shared/database/ReaderQueries$NoteByIdQuery.class": "b347c00113a007d2f80b302ce522f7ab7f59c3f2dd870cf95c0e1b901cbdba5b",
+            "com/ereader/shared/database/ReaderQueries$SearchPassagesQuery.class": "57cf496321ffd14572e4ef703a349b8d8c04de2bea4d70aeb8954355a24f4ac3",
+            "com/ereader/shared/database/Document_section.class": "bc47ac3f3c614da53fe60c18a8f8b90af04a28282ddd4a72c0c42db660182396",
+            "com/ereader/shared/database/ReaderQueries$allPositions$2.class": "12ddb3859bb7640b8c85c785c2452b88de7919eb0de55f53f761de86759c5e84",
+            "com/ereader/shared/database/Model_install.class": "9e35daed005b3dc8137c4f8be6a519c949b037f877361d6c248ddd340f3c975a",
+            "com/ereader/shared/database/DocumentById.class": "b56f3d107a8db54ddccb2d023e1d602c731f8cfec5c850aff3c21eb847750653",
+            "com/ereader/shared/database/ReaderQueries$positionForDocument$2.class": "2ac20300fd25a6c620af2fa7c47d230ae1c7b47da6f07bfa23e06430416f745a",
+            "com/ereader/shared/database/Note.class": "ee1261c8b808414cf240aca408a3c8c6027cc5730421efe0ca19bda47d94b9f0",
+            "com/ereader/shared/database/SearchNotes.class": "ff629f71327d2553262903617d471ec5e790f9db56bab88c758fd92cb49c51f8",
+            "com/ereader/shared/database/ReaderQueries$sourcePageByIndex$2.class": "40cc5e02e5b2381aa22d27568d9217ea72d8353f2a9d0a27c9865017bf50332d",
+            "com/ereader/shared/database/ReaderQueries$currentModelCatalog$2.class": "7dac5cfe182018b4faa6a1c210e08b2ef5b1a620af1491602049a8605057151c",
+            "com/ereader/shared/database/ReaderQueries$allNotes$2.class": "23569f11ddf39f51d9ab8aa44b60e343d6a4664dceec33835dc4405edcab3247",
+            "com/ereader/shared/database/AllDocuments.class": "e37fa42d8b86ee514fd10051dee1bb7abfc4293253589bbc134dd9bb10483967",
+            "com/ereader/shared/database/ReaderQueries$pagesForDocument$2.class": "cbc5d2560e0587d684fcb3f9dbae5fb21b89bf1374412c4f1285479db02e6e3c",
+            "com/ereader/shared/database/Document.class": "a21db12f7af6a11d712c08897f130647ae132466da542abe52058ec9694c1437",
+            "com/ereader/shared/database/ReaderQueries$LastPassageEndQuery.class": "72a3a327f516e6421aba0757d2f60360cdc1b1679ccc0a19340c948c18595549",
+            "com/ereader/shared/database/ReaderQueries$passageById$2.class": "b725bfb3718315e11cddf4ee28fc9fad607845e847ca400bbe7286f53403d0b2",
+            "com/ereader/shared/database/Source_page.class": "a2f66cb565aa400edc1fd2d388afb6ec2e9fc7aa3ef22934d732d5413e04a4fe",
+            "com/ereader/shared/database/ReaderQueries$PagesForDocumentQuery.class": "b33b30222c23d52d8ed9d63a767e6b42c68d5df6e19df2533aad30a30b86b573",
+            "com/ereader/shared/database/ReaderQueries$documentById$2.class": "dc99b650afa2379d0507a4f4db7ba4f6fcd0aebc65561462ee3dcd4941e3cedd",
+            "com/ereader/shared/database/ReaderQueries.class": "5dfec15c1f071fdb0cd4f83ac076926dd8d60a6ffc0ecd505704aa3a603ef0e8",
+            "com/ereader/shared/database/ReaderQueries$PassageByIdQuery.class": "19ba62b806f1070577e3cd9dc7a05a334ec16fc0e7987d2d2448bceab48a14e9",
+            "com/ereader/shared/database/ReaderQueries$allModelInstalls$2.class": "9500affdfe8b8ec7fb6826fc741c8166744695ab7cc6afa4c8d92b078d43dcdb",
+            "com/ereader/shared/database/Model_catalog.class": "561134dfaf51a72fc2b60f297ea242f40850ae08d0307115e49862cc41f76859",
+            "com/ereader/shared/database/ReaderQueries$sectionsForDocument$2.class": "519c785383ecfa113ea755845c7f5afc21f5360d39b4ec817f8f04d5f02a6d9c",
+            "com/ereader/shared/database/ReaderQueries$searchPassages$2.class": "aee80ae4e6eed50218377e118c1ad6754ff2ad50edadb93a823b222218fe8a60",
+            "com/ereader/shared/database/shared/ReaderDatabaseImplKt.class": "b20eba2721e48d0621658586abbc1e6a2a5e03eb3409618265ade28d6972c15a",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl.class": "56996b82b92a3315ac8b8c77d142680db0625f191d2e777ae5efbb432a3a1b7f",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl$Schema.class": "669a231f3ef2505e546df1144d7e79614ecf32579fc830eb6a3f98f8573a24d7",
+            "com/ereader/shared/database/shared/ReaderDatabaseImpl$Schema$migrate-zeHU3Mk$$inlined$sortedBy$1.class": "b42cac1961e69a8e75792dadba53591c0d487b5c484535d8f37a663861490bc2"
+          },
+          "harnessSha256": "2a5bd5a9decc2f69e9c3be210c44a7d79654251d0491bdd96d77f50c86f1015c",
+          "scope": "Actual compiled shared ReaderCore, SQLDelight generated queries and JDBC SQLite. Native signature proof is intentionally outside this domain seam; no inference or device qualification."
+        }
+      },
+      {
+        "component": "shared:migration-report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-shared/migration-report.json",
+        "report_sha256": "39c49993086e1a5fa11c9b1cab3b85dff112041dd64844950d393f2f79d270d1",
+        "passed": 8,
+        "total": 8,
+        "scope": "Actual earlier schema7/shared core seed with JDBC SQLite, then actual current generated schema8 migration. Original source pages, audio-note metadata, manual edits, anchor ranges, source cursor, ready/paused packs and generations compared exactly; no native files or inference.",
+        "provenance": {
+          "oldEvidence": "/private/tmp/rhapsodos-archive-export-qa/provenance.json",
+          "oldReaderCoreSha256": "8268a99b53ad1716ae2a88cdb495ce03a674f6eb773f0a1c6a9488947658e5de",
+          "newReaderCoreSha256": "d30c8d1f8ae9c9a70b41d49b60358b3e312f00bb40aafb1d77bc680e2dd062ba",
+          "migrationSourceSha256": "3072ec1baa7d03257d99debaf2c015d2c816b2cd4343f2bd12bc382426e0b0fe",
+          "harnessSha256": {
+            "OldSchemaSeed.java": "05d0487b008c42c4b77cbdef4c9473c245624c76ec581d6e0c01a8403173de62",
+            "MigrationHarness.java": "ffe9c57360db856cf173cc38ce017cbec3275371cfe2d521531175a021c3b31e",
+            "run-migration.py": "47fcd2bc54bfde6c19b9f71b3b96a7aab1081a477f7fdb1852d51fb192572d19"
+          },
+          "scope": "Actual earlier schema7/shared core seed with JDBC SQLite, then actual current generated schema8 migration. Original source pages, audio-note metadata, manual edits, anchor ranges, source cursor, ready/paused packs and generations compared exactly; no native files or inference."
+        }
+      },
+      {
+        "component": "crypto:jca-report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-crypto/jca-report.json",
+        "report_sha256": "c249b3ea06b314442dfaf9e9aaaccbcd9fd598919805bf355bb547ac8f4c3040",
+        "passed": 22,
+        "total": 22,
+        "scope": "Actual standalone Android ModelCatalogVerifier source compiled for JVM; JCA secp256r1. No Android API, network, UI or inference.",
+        "provenance": {
+          "source": "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelCatalogVerifier.kt",
+          "sourceSha256": "b8aa2760eadd66ffcb96c09b0eab2d2b61adeaf1b160f998bcedc227ef842ff1",
+          "harnessSha256": "d464d7d182caab806fc83a4a4b111e3a41531752a8f58e92917c7c740bbe5d6e",
+          "compilerVersion": "2.4.20",
+          "scope": "Actual standalone Android ModelCatalogVerifier source compiled for JVM; JCA secp256r1. No Android API, network, UI or inference."
+        }
+      },
+      {
+        "component": "crypto:swift-report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-crypto/swift-report.json",
+        "report_sha256": "4710dd96a9a7461b436dc62904b75484b5a1c02060bb7342499ae3d188429f0d",
+        "passed": 22,
+        "total": 22,
+        "scope": "Actual iOS ModelCatalogClient source with only SharedCore import/configuration dependency stubbed. Native macOS CryptoKit cross-verifies JCA DER signatures; no transport/network, iOS UI or device qualification.",
+        "provenance": {
+          "source": "iosApp/Sources/ModelCatalogClient.swift",
+          "sourceSha256": "8eff0339e3b8b0170110bfda21f92c63ab6ad5ec1cbe055775a2926c040f6fd9",
+          "copiedSourceSha256": "cae07d271f562652b56d3191d04320bf6ecf4b0f924d1f5da4e29b8eb7fa659c",
+          "harnessSha256": "0c0c682f6b59d17db8afd1d0cf6dd0cc8d26998be431d56104de73403f810e5f",
+          "vectorsSha256": "ff960c5172a6b272830e41fcf3c61dbcfc2e6ed1ee55d40b73726685d8574992",
+          "scope": "Actual iOS ModelCatalogClient source with only SharedCore import/configuration dependency stubbed. Native macOS CryptoKit cross-verifies JCA DER signatures; no transport/network, iOS UI or device qualification."
+        }
+      },
+      {
+        "component": "android:report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-android/report.json",
+        "report_sha256": "8ba14a8e84390c41436c3cd2d10ee55554271dc1b69a74921466a357ca12d4d2",
+        "passed": 22,
+        "total": 22,
+        "scope": "Actual current consumer DEX ModelManager, ReaderStore, Android canonical SQLite and SharedPreferences in isolated QA context. Synthetic ready/runtime-validated eligibility injected; suspend old-worker join callback and native capture predicate controlled. No real model files/inference, runtime validation, microphone, capture, GUI or physical-device qualification.",
+        "provenance": {
+          "consumerApk": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+          "consumerApkSha256": "1d8a9ad57e88e52b8043dde60409cad3ee317ba854d6faad1742b0341e8ad870",
+          "qaApkSha256": "799965d0e0ae2e641ff472a68c1d3c3c7ee67f9eafff0cae19a89d8b0756a2a4",
+          "harnessSourceSha256": "5a57dc063ce055c73ce29e1860794a273dc4d926a406776acc38aab6d30ac28e",
+          "productionSourceSha256": {
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "0a2aa318756530ac757ea4ebc0f56151e69eba4ddcea98a00200e6073051a1d7",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/data/ReaderStore.kt": "29ebf434650e096740b0ef802580e27b3d2487fc1fe30c9bc9c4e9af04be0752",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/TranscriptionCoordinator.kt": "c45f2bdf1e3316a8a2d4ae93fe3b65924424727be979675c5334f02e1cf5b549",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/ReaderApplication.kt": "581ff072f37a8bc226bdd0b8858c883e2cf628bd5a6312a8c97c93df83fc2080"
+          },
+          "scope": "Preparation/build only. Actual DEX loads from pushed matching APK in isolated com.osuji.modelmanagerqa. No model inference or runtime/device qualification."
+        }
+      },
+      {
+        "component": "ios:report.json",
+        "report_path": "/private/tmp/rhapsodos-model-manager-qa-ios/report.json",
+        "report_sha256": "a79856c3fc61087942fbe081271d68c86806f998665df281404584818c9b65e8",
+        "passed": 21,
+        "total": 21,
+        "scope": "Actual copied ReaderStore, canonical KMP SQLite and VoiceVault. Only ASR engine boundary substituted with controllable noncancellable result. No OS permission API, microphone, model inference, user interaction or physical-device qualification.",
+        "provenance": {
+          "productionSourceSha256": {
+            "iosApp/Sources/ModelPacks.swift": "70c363da29ae946c93d1ec17568434deaac660488857e588c3f2693478c70da4",
+            "iosApp/Sources/ReaderStore.swift": "26a555ae531f4ed25bebdc316a69b8ae330e4c0735ed17587454c41e1ffac6f2",
+            "iosApp/Sources/DocumentArchives.swift": "c83913d216748b2599123152165777b2464742becbc9973405cbbf33f3b9dbab",
+            "iosApp/Sources/ModelCatalogClient.swift": "8eff0339e3b8b0170110bfda21f92c63ab6ad5ec1cbe055775a2926c040f6fd9",
+            "iosApp/Sources/FileDurability.swift": "51be283a89e9e7a52c680ead19c1a9bba91327ce855205f5d766b6117efd132a",
+            "iosApp/Sources/OnDeviceTranscriber.swift": "6bec62ded6bac66b43b04cde58e0c1db76fa25663a1b8414ceff707f2d595fb4",
+            "iosApp/Sources/ReaderViews.swift": "45b53605ea79d76a28890422a1f6f3cd05751c75c659af55c34448ddb349882f",
+            "iosApp/Sources/ReaderTools.swift": "1bbbbd2779262b67e5f078fd78ed08af0234ba1d93dab100580daf55cedfee38",
+            "iosApp/Sources/PDFSurface.swift": "f7af9d1bb47aba28967e87eff3d658d970f8338f17445614f996c8cc8dd1bb5b",
+            "iosApp/Sources/VoiceVault.swift": "c848c53c90a6961c52b41af78c7e59695ad14c97a6e8ed8bc775425d36d77df3",
+            "iosApp/Sources/CoreMLSpeech.swift": "cff479b3427b330405957b8e95c6be7a79029e06b129b1106f6a623e2fe8e9f7",
+            "iosApp/Sources/AudioCoordinator.swift": "6449a68af31d945f046866e71df02bc6d453098dba86ddb6b2b58eaf1f57acb6",
+            "iosApp/Sources/Brand.swift": "1e6932c7ab677fedfba307ee1a8a3c240a5202412bd78406f72895d69a4afead",
+            "iosApp/Sources/CoreMLVoice.swift": "6e74d16809086da8e42cbdfedea186608d037c5fa9d9346231ac8d736fc6f773",
+            "iosApp/Sources/SharedRepository.swift": "7dfb40c62b3dd3d1f352cf5f1851af45d9c4f37d40d456d529e5fccd7cfd8556",
+            "iosApp/Sources/EReaderApp.swift": "8c50875bb4302ff2065c590b47b498767e161824b2ead29eec5993fbdd34a1ee",
+            "iosApp/Sources/Feedback.swift": "99fbfce4766a658c0df0ea585e4ed2757455c099251a9114134c9250f4a62a05"
+          },
+          "harnessSourceSha256": {
+            "Sources/ModelPacks.swift": "70c363da29ae946c93d1ec17568434deaac660488857e588c3f2693478c70da4",
+            "Sources/ReaderStore.swift": "45f70b6efb4819977229326086304b33204e126d6d3d5cad462a63c8063ea428",
+            "Sources/DocumentArchives.swift": "c83913d216748b2599123152165777b2464742becbc9973405cbbf33f3b9dbab",
+            "Sources/ModelCatalogClient.swift": "8eff0339e3b8b0170110bfda21f92c63ab6ad5ec1cbe055775a2926c040f6fd9",
+            "Sources/EngineBoundary.swift": "120c160ecb00ba24756473138e9ead31c7e36fcdd271da6e5ee762d84dfdfa03",
+            "Sources/FileDurability.swift": "51be283a89e9e7a52c680ead19c1a9bba91327ce855205f5d766b6117efd132a",
+            "Sources/ReaderViews.swift": "45b53605ea79d76a28890422a1f6f3cd05751c75c659af55c34448ddb349882f",
+            "Sources/ReaderTools.swift": "1bbbbd2779262b67e5f078fd78ed08af0234ba1d93dab100580daf55cedfee38",
+            "Sources/PDFSurface.swift": "f7af9d1bb47aba28967e87eff3d658d970f8338f17445614f996c8cc8dd1bb5b",
+            "Sources/VoiceVault.swift": "c848c53c90a6961c52b41af78c7e59695ad14c97a6e8ed8bc775425d36d77df3",
+            "Sources/AudioCoordinator.swift": "6449a68af31d945f046866e71df02bc6d453098dba86ddb6b2b58eaf1f57acb6",
+            "Sources/Brand.swift": "1e6932c7ab677fedfba307ee1a8a3c240a5202412bd78406f72895d69a4afead",
+            "Sources/App.swift": "d3c33949243a7cec69ac9a638ca42a26f3e67bfaead7d22bda6bd939832fc743",
+            "Sources/CoreMLVoice.swift": "6e74d16809086da8e42cbdfedea186608d037c5fa9d9346231ac8d736fc6f773",
+            "Sources/SharedRepository.swift": "7dfb40c62b3dd3d1f352cf5f1851af45d9c4f37d40d456d529e5fccd7cfd8556",
+            "Sources/Feedback.swift": "99fbfce4766a658c0df0ea585e4ed2757455c099251a9114134c9250f4a62a05"
+          },
+          "scope": "Preparation only until report.json produced. Engine boundary substituted; ReaderStore cancellation, selection persistence, VoiceVault, repository and canonical store remain actual source."
+        }
+      }
+    ],
+    "passed": 211,
+    "total": 211,
+    "policy": {
+      "android_artifact": {
+        "application_id": "com.osuji.ereaderapp",
+        "arm64_native_16k_alignment": {
+          "libraries": 7,
+          "status": "passed"
+        },
+        "build": "1",
+        "display_name": "Rhapsodos",
+        "internet_permission": true,
+        "min_sdk": "28",
+        "target_sdk": "37",
+        "version": "0.01"
+      },
+      "device_qualification": "not_run",
+      "ios_artifact": {
+        "application_id": "com.osuji.ereaderapp",
+        "build": "1",
+        "display_name": "Rhapsodos",
+        "min_ios": "17.0",
+        "version": "0.01"
+      },
+      "pinned_assets": {
+        "bundled_ocr_models": 1,
+        "font_families": 3,
+        "model_packs": 4,
+        "status": "passed"
+      },
+      "unit_source_policy": "passed"
+    },
+    "publisher_tool": "Generated task-private P-256 fixture key, signed bundled catalogue and verified envelope with OpenSSL. No production key or source configured.",
+    "live_catalogue": "unconfigured; bundled catalogue available; no host published",
+    "limits": [
+      "No current real model inference or download was rerun",
+      "No live HTTPS transport fault qualification",
+      "No microphone, OS permission, physical device or sustained performance qualification",
+      "Final gallery GUI not yet inspected"
+    ],
+    "consumer_installation": {
+      "ios": "Final matching EReader.app installed and launched on dedicated iOS18.4 simulator; consumer data not cleared.",
+      "android": "Final matching Debug APK installed with -r and launched on preserved Pixel_10_Pro_Fold API37 emulator; consumer data not cleared."
+    },
+    "interface_observation": "Android Studio could not attach a viewer to the running headless emulator. Its embedded relaunch did not register with adb; a preserved-data cold boot restored the usable CLI device. Final consumer was installed/launched, but model-gallery GUI was not qualified."
   }
 }
