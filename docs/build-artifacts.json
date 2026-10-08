@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "recorded_on": "2026-10-08",
-  "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+  "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -9,14 +9,14 @@
     "build": 1
   },
   "android": {
-    "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+    "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
     "min_sdk": 28,
     "target_sdk": 37,
     "artifacts": [
       {
         "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
         "bytes": 155048380,
-        "sha256": "1b1970d90ab80f2d811638d193b15342e18aa696c22ed8951a5bb7fd01479620",
+        "sha256": "c048b2be8237e5cf8d3e06e7d134f907afda47107dada16a2b4f2c63a88c40b3",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -35,7 +35,7 @@
       {
         "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
         "bytes": 130578032,
-        "sha256": "0f795515844235802d5dd4dcecc60f275aa2fdfaf652da4c71d4bfe267bd8243",
+        "sha256": "0b630ecf27dddfd4110737a7179e94764ee4740b898a3ee6e8173bb13efcc939",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -53,8 +53,8 @@
       },
       {
         "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
-        "bytes": 52957439,
-        "sha256": "eb92877f3b1c6fcd5fffed7618cfe01bb07b7d531156368ba5562101a0f7e220",
+        "bytes": 52957016,
+        "sha256": "a7e6a75d7dc33a0499397341a359c73b6f3c9597c938b76e7a1acc033f9a4494",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "version": "0.01",
@@ -135,7 +135,7 @@
     ],
     "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
     "metadata_inspection": "passed",
-    "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
+    "build_launch_and_runtime_attribution": "Retained byte-identical apps from the recorded iOS source revision. No iOS source changes, builds, installs or consumer UI qualification in this Android-only header task."
   },
   "evidence": [
     {
@@ -1232,6 +1232,146 @@
                 "path": "EReader",
                 "bytes": 16997232,
                 "sha256": "588b7050178a0ac85f3072d43f5834c68c101c040bdfc9bceed1b683035fc0f3"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "unsigned; owner provisioning required"
+          }
+        ],
+        "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+        "metadata_inspection": "passed",
+        "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
+      },
+      "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+      "identity": {
+        "name": "Rhapsodos",
+        "application_id": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": 1
+      },
+      "android": {
+        "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+        "min_sdk": 28,
+        "target_sdk": 37,
+        "artifacts": [
+          {
+            "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+            "bytes": 155048380,
+            "sha256": "1b1970d90ab80f2d811638d193b15342e18aa696c22ed8951a5bb7fd01479620",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "debug development key"
+          },
+          {
+            "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+            "bytes": 130578032,
+            "sha256": "0f795515844235802d5dd4dcecc60f275aa2fdfaf652da4c71d4bfe267bd8243",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "owner distribution signing required"
+          },
+          {
+            "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
+            "bytes": 52957439,
+            "sha256": "eb92877f3b1c6fcd5fffed7618cfe01bb07b7d531156368ba5562101a0f7e220",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "display_name": "Rhapsodos",
+              "internet_permission": true,
+              "inspection": "Actual base manifest decoded with installed AAPT2 protobuf classes; no APK-to-AAB metadata inference."
+            },
+            "signing": "owner distribution signing required"
+          }
+        ],
+        "metadata_and_arm64_native_16k_alignment": {
+          "result": "passed",
+          "debug": {
+            "libraries": 7,
+            "status": "passed"
+          },
+          "release": {
+            "libraries": 7,
+            "status": "passed"
+          }
+        },
+        "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
+      },
+      "ios": {
+        "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+        "min_ios": "17.0",
+        "artifacts": [
+          {
+            "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
+            "bundle_bytes": 38079685,
+            "bundle_files": 63,
+            "bundle_tree_sha256": "cc2bf9436d2571141f21bc8c9431e23ef609d74aabf18c42d23127c1b36800b7",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 40496,
+                "sha256": "dcac6e506cbd44899162984dc60fa2f0d4c476599c1749101ebad71bae7cff52"
+              },
+              {
+                "path": "EReader.debug.dylib",
+                "bytes": 26512416,
+                "sha256": "47bbdabca6a20b996edb92fe942ae2d4c31d2977999323598e913e51a90a29c4"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "ad-hoc simulator"
+          },
+          {
+            "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
+            "bundle_bytes": 28127696,
+            "bundle_files": 44,
+            "bundle_tree_sha256": "7d8f87eef980a2b19d58fea7523e9e16b706e6bc132c2779a66fd0897bff101b",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 16624752,
+                "sha256": "46bcd6d18529fe29567b10f16786112bac0d0e664bc57ee122ba44c3160694f5"
               }
             ],
             "metadata": {
@@ -2404,6 +2544,73 @@
       "Assistive-technology and large-type/compact interaction",
       "Sustained performance and thermal/battery qualification",
       "Owner distribution signing and separate publication authorization"
+    ]
+  },
+  "reader_header_parity_verification": {
+    "recorded_on": "2026-10-08",
+    "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
+    "scope": "Android header matches existing iOS Contents, Search, anchored-notes order; notes visibility selects one wide panel or narrow sheet; one document-mounted owner retains operation and editor state through presentation changes.",
+    "android_build": {
+      "result": "passed",
+      "tasks": [
+        ":androidApp:assembleDebug",
+        ":androidApp:assembleRelease",
+        ":androidApp:bundleRelease",
+        ":androidApp:lintDebug"
+      ],
+      "offline": true,
+      "elapsed_seconds": 20,
+      "log": {
+        "path": "/private/tmp/rhapsodos-header-parity-final-android-build.log",
+        "sha256": "6bf7c197b9f41890679f0765cbf0dab9f616097ba35850f4a345953936bcf16e"
+      }
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 13,
+      "report": {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/reports/lint-results-debug.xml",
+        "sha256": "3cb206d8555450953c5e0b141ececf00f107d163777d645dfc75a52d80df3d5e"
+      }
+    },
+    "policy": {
+      "result": "passed",
+      "record": {
+        "path": "/private/tmp/rhapsodos-header-parity-final-policy.json",
+        "sha256": "d56ba646f3c3014473a4e67f97da093b969c46f34288fcb2e98f70e816b5daea"
+      }
+    },
+    "final_consumer_ui": {
+      "method": "CUA native app interaction in Android Studio embedded unfolded API 37 emulator",
+      "apk_sha256": "c048b2be8237e5cf8d3e06e7d134f907afda47107dada16a2b4f2c63a88c40b3",
+      "observations": [
+        "Library retains all nine documents and public sample 54% progress after update and fresh launch.",
+        "Contents, Search, Notes icons appear in matching order; extra Thoughts row absent.",
+        "Notes opens Anchored notes sheet; Done dismisses it.",
+        "Page-two highlight, 54% whole-document source and paused transport remain visible after dismissal."
+      ],
+      "user_data_changes": "No recordings, transcripts or notes created, edited or deleted; no permission changes."
+    },
+    "initial_draft_ui": {
+      "apk_sha256": "9f36a31fa027d364eeeb3d4cdb7a1502e4dd0932b759e16e5a85e5b6e48c751a",
+      "scope": "Before retaining one notes owner across presentation branches. Contents and Search icons opened their respective sheets; notes opened and Done dismissed. These action-opening observations are not reassigned to the final artifact."
+    },
+    "independent_source_review": {
+      "result": "passed",
+      "scope": "Exactly one unconditional notes owner; coroutine/editor/delete/list state above mutually exclusive presentation branches; dialogs outside branches; toggling and Done change only presentation."
+    },
+    "ios": {
+      "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+      "source_changed": false,
+      "artifacts_byte_identical": true,
+      "new_build_or_ui_run": false,
+      "scope": "Existing header order audited in ReaderViews.swift; retained app metadata and hashes inspected only."
+    },
+    "limits": [
+      "Reader-width 850 dp threshold crossing and unsaved transcript edits during resize are source-reviewed, not interactively qualified.",
+      "Existing non-saveable editor state does not promise Activity-recreation recovery.",
+      "No live-audio notes-toggle, compact/large-type, assistive-technology or physical-device qualification in this task.",
+      "No speech models downloaded or inference rerun; historical native/model checks retain original associations."
     ]
   }
 }
