@@ -59,6 +59,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import com.osuji.ereaderapp.R
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -1051,18 +1052,21 @@ private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoord
         Text("Preparing document progress…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     } else {
         val shown = (scrub ?: progress.toFloat()).coerceIn(0f, 1f)
-        Slider(
-            state = slider,
-            onValueChange = { scrub = it; slider.value = it },
-            onValueChangeFinished = {
-                val requested = scrub
-                scrub = null
-                if (enabled && requested != null) playback.seekSource(documentId, revision, requested.toDouble())
-            },
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Document progress"; stateDescription = "${(shown * 100).toInt()} percent of document" },
-        )
-        Text("${(shown * 100).toInt()}% of document", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Slider(
+                state = slider,
+                onValueChange = { scrub = it; slider.value = it },
+                onValueChangeFinished = {
+                    val requested = scrub
+                    scrub = null
+                    if (enabled && requested != null) playback.seekSource(documentId, revision, requested.toDouble())
+                },
+                enabled = enabled,
+                modifier = Modifier.weight(1f).semantics { contentDescription = "Document progress"; stateDescription = "${(shown * 100).toInt()} percent" },
+            )
+            Text("${(shown * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clearAndSetSemantics {})
+        }
     }
 }
 
