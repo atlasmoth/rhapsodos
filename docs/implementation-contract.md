@@ -4,7 +4,7 @@ The shared `ReaderCore` is the canonical synchronous store. Native adapters call
 
 ## Library and source
 
-Canonical playback cursors include `passageFraction` in `0...1`, alongside passage identity and native `offsetMillis`. `saveProgress(documentId,passageId,offsetMillis,passageFraction)` rejects non-finite or out-of-range fractions. Migration `4.sqm` advances SQLite schema version 4 to 5, retaining existing user data and giving retained cursors a fraction of zero. Portable archives carry the fraction; earlier archives restore with zero when it is absent. Migration `5.sqm` advances schema 5 to 6 by dropping the removed bookmark table; documents, notes, edits, recordings and playback cursors remain intact. Restore ignores obsolete bookmark fields in existing archives.
+Canonical playback cursors include `passageFraction` in `0...1`, alongside passage identity and native `offsetMillis`. `saveProgress(documentId,passageId,offsetMillis,passageFraction)` rejects non-finite or out-of-range fractions. Migration `4.sqm` advances SQLite schema version 4 to 5, retaining existing user data and giving retained cursors a fraction of zero. Portable archives carry the fraction; earlier archives restore with zero when it is absent. Migration `5.sqm` advances schema 5 to 6 by dropping the removed bookmark table; documents, notes, edits, recordings and playback cursors remain intact. Migration `6.sqm` advances schema 6 to 7 by dropping custom pronunciation rules and their narration revision table. Plain whitespace normalization regenerates spoken text without changing source or note anchors. For documents with removed corrections, migration clears the obsolete playback audio offset but retains the passage and source fraction; native transports resolve that fraction against the new audio duration. Uncorrected-document cursors and all note offsets remain unchanged. Restore ignores obsolete bookmark and pronunciation fields in existing archives.
 
 `DocumentRecord.listeningProgress` is derived from the canonical source cursor, weighted by cumulative UTF-16 source ranges. It is `null` during preparation, zero before listening, and reaches one only when the last passage is saved at completion. Native audio supplies the measured within-passage fraction; live system speech uses conservative source callbacks. Preview and note-replay clocks never write reading progress. This is source progress, not a fabricated full-file audio duration or a replacement note anchor.
 
@@ -16,12 +16,12 @@ Canonical playback cursors include `passageFraction` in `0...1`, alongside passa
 - `searchJson(documentId,query)` returns up to 100 `{kind,id,documentId,passageId,title,text,pageIndex}`. Empty document ID searches the library. Search is literal and local.
 - `renameDocument(documentId,title)` updates the canonical title.
 - `deleteDocumentJson(documentId)` and `deleteNoteJson(noteId)` return `{paths:[...]}`. Stop playback/capture for the affected document before invoking deletion. Files become pending garbage in the same transaction; native adapters remove only owned files and call `acknowledgeFileRemoval(path)` after successful removal. `pendingFileRemovalsJson()` recovers cleanup after a crash. Never delete a current recording.
-- `restoreDocumentJson(archiveJson)` atomically validates and restores the manifest into a vacant document ID. Native importers copy/verify owned files first and replace manifest file locators before calling this method. A collision is rejected without replacing existing data. Existing portable archives use relative asset paths. Archive creation has been removed; restore remains available for previously created user archives.
+- `restoreDocumentJson(archiveJson)` atomically validates and restores the manifest into a vacant document ID. Native importers copy/verify owned files first and replace manifest file locators before calling this method. A collision is rejected without replacing existing data. Existing portable archives use relative asset paths. Archive creation has been removed; restore remains available for previously created user archives. Imported playback retains its passage/source fraction and clears the foreign audio offset because the receiving narration edition may differ; all note offsets remain intact.
 
 `SourcePage` includes `provenance` (`embedded` or `ocr`), `languageTag` (default `en`), `geometrySpace` and `regions`, an array of `{start,end,x,y,width,height}`. Region ranges are page UTF-16 offsets. The supported tag `cropTopLeftV1` means normalized top-left coordinates in the **unrotated PDF crop box**; native rendering applies the original page's rotation. Nonempty geometry requires that explicit tag on new pages and archive restore. Untagged stored rows read as `unspecified` and cannot supply a painted/hit target until exact-text geometry repair succeeds. Embedded PDF selection and OCR regions are different geometries. `Passage` includes `displayText`, `languageTag`, `mappingVersion`, `spokenMapping` with `{spokenStart,spokenEnd,sourceStart,sourceEnd}` page-relative ranges, and `provenance`. `documentJson` includes `pages` and page-based `sections` with `{id,title,passageId,pageIndex}`. Do not fabricate heading detection.
 
 
-Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear intervals with equal source/spoken lengths interpolate an intersecting spoken subrange to obtain its exact source subrange. Other intervals map to the whole source interval. Adjacent linear intervals are coalesced to keep ordinary documents compact; an interval is not a word boundary. `mappingVersion` includes the document's pronunciation revision.
+Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear intervals with equal source/spoken lengths interpolate an intersecting spoken subrange to obtain its exact source subrange. Other intervals map to the whole source interval. Adjacent linear intervals are coalesced to keep ordinary documents compact; an interval is not a word boundary. `mappingVersion` is `whitespace-v1` for the current source-preserving whitespace transform.
 
 ## Anchored notes
 
@@ -34,14 +34,9 @@ Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear 
 
 Saving or recovering audio does not depend on ASR. Native adapters finalize and synchronize audio before canonical commit, preserve original recovery data, and keep post-commit presentation failures from changing the saved note's status or attachment.
 
-## Outline and pronunciation
+## Outline
 
 - `setDocumentSections(documentId,sectionsJson)` accepts a bounded array of genuine PDF outline destinations resolved to prepared passage IDs. Each section is `{id,title,passageId,pageIndex}`. Store the original PDF's outline, not guessed headings. If no outline is available, page sections remain a truthful fallback. Returns the document snapshot.
-- `savePronunciation(ruleId,documentId,term,replacement,languageTag)` stores a literal whole-term, case-insensitive spoken correction and returns the updated snapshot. `removePronunciation(ruleId)` removes it and returns the snapshot. `documentJson` includes `pronunciations:[{id,documentId,term,replacement,languageTag}]`. The source/display text and every note anchor stay unchanged. Rule changes update `mappingVersion` and spoken text; they affect only narration.
-
-Combining marks and connector punctuation continue a word. A correction for `cafe` therefore leaves a decomposed `café` and `_cafe` intact. Corrections never normalize or rewrite the canonical source to make a match.
-
-Pause before changing pronunciation, invalidate the affected prepared narration, reload the same source passage and resume explicitly. Old audio offsets cannot be silently applied to a new spoken edition. Model/cache keys include the spoken text and voice artifact version. Archives carry outline and pronunciation choices with their source.
 
 ## Downloadable speech
 

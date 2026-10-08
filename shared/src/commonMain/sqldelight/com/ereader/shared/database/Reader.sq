@@ -84,21 +84,6 @@ CREATE TABLE document_section (
     ordinal INTEGER NOT NULL
 );
 
-CREATE TABLE pronunciation_rule (
-    id TEXT NOT NULL PRIMARY KEY,
-    document_id TEXT NOT NULL REFERENCES document(id),
-    term TEXT NOT NULL,
-    replacement TEXT NOT NULL,
-    language_tag TEXT NOT NULL,
-    updated_at INTEGER NOT NULL,
-    UNIQUE(document_id, term)
-);
-
-CREATE TABLE narration_revision (
-    document_id TEXT NOT NULL PRIMARY KEY REFERENCES document(id),
-    revision INTEGER NOT NULL
-);
-
 allDocuments:
 SELECT document.*, (SELECT COUNT(*) FROM passage WHERE document_id = document.id) AS passage_count
 FROM document ORDER BY created_at DESC;
@@ -239,27 +224,3 @@ INSERT INTO document_section VALUES (?, ?, ?, ?, ?, ?);
 
 deleteDocumentSections:
 DELETE FROM document_section WHERE document_id = ?;
-
-pronunciationsForDocument:
-SELECT * FROM pronunciation_rule WHERE document_id = ? ORDER BY updated_at DESC;
-
-pronunciationById:
-SELECT * FROM pronunciation_rule WHERE id = ?;
-
-savePronunciation:
-INSERT OR REPLACE INTO pronunciation_rule VALUES (?, ?, ?, ?, ?, ?);
-
-deletePronunciation:
-DELETE FROM pronunciation_rule WHERE id = ?;
-
-deleteDocumentPronunciations:
-DELETE FROM pronunciation_rule WHERE document_id = ?;
-
-revisionForDocument:
-SELECT revision FROM narration_revision WHERE document_id = ?;
-
-saveNarrationRevision:
-INSERT OR REPLACE INTO narration_revision VALUES (?, ?);
-
-deleteDocumentNarrationRevision:
-DELETE FROM narration_revision WHERE document_id = ?;

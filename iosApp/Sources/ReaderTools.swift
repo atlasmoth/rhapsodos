@@ -1,15 +1,13 @@
 import SwiftUI
 
 struct ReaderTools: View {
-    enum Tab: Hashable { case contents, search, voice }
+    enum Tab: Hashable { case contents, search }
     @EnvironmentObject private var store: ReaderStore
     @Environment(\.dismiss) private var dismiss
     @State private var tab: Tab
     @State private var query = ""
     @State private var librarySearch: Bool
     @State private var results: [SearchHit] = []
-    @State private var term = ""
-    @State private var replacement = ""
 
     init(initialTab: Tab = .contents, wholeLibrary: Bool = false) {
         _tab = State(initialValue: initialTab)
@@ -19,7 +17,7 @@ struct ReaderTools: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Browse", selection: $tab) { Text("Contents").tag(Tab.contents); Text("Search").tag(Tab.search); Text("Voice").tag(Tab.voice) }
+                Picker("Browse", selection: $tab) { Text("Contents").tag(Tab.contents); Text("Search").tag(Tab.search) }
                     .pickerStyle(.segmented).padding()
                 if tab == .contents {
                     List(store.document?.sections ?? []) { section in
@@ -46,21 +44,6 @@ struct ReaderTools: View {
                             let hits = await store.search(query, entireLibrary: librarySearch)
                             if !Task.isCancelled { results = hits }
                         }
-                } else {
-                    Form {
-                        Section("Say it your way") {
-                            TextField("Written term", text: $term).textInputAutocapitalization(.never)
-                            TextField("Speak as", text: $replacement)
-                            Button("Save pronunciation") { Task { await store.savePronunciation(term: term, replacement: replacement); term = ""; replacement = "" } }
-                                .disabled(term.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || store.busy)
-                            Text("Changes the narration for this document. The original text and note attachments stay intact. Playback pauses while the speech text is rebuilt.").font(.footnote).foregroundStyle(.secondary)
-                        }
-                        Section("This document") {
-                            ForEach(store.document?.pronunciations ?? []) { rule in
-                                HStack { VStack(alignment: .leading) { Text(rule.term).font(.headline); Text(rule.replacement).font(.subheadline).foregroundStyle(.secondary) }; Spacer(); Button("Remove", role: .destructive) { Task { await store.removePronunciation(rule) } } }
-                            }
-                        }
-                    }
                 }
             }
             .navigationTitle(librarySearch && tab == .search ? "Search your library" : "Find your place").navigationBarTitleDisplayMode(.inline)

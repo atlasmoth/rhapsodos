@@ -227,44 +227,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     @Throws(Exception::class)
-    fun savePronunciation(ruleId: String, documentId: String, term: String, replacement: String, languageTag: String): String = lock.withLock {
-        validateRule(PronunciationRule(ruleId, documentId, term, replacement, languageTag))
-        queries.documentById(documentId).executeAsOne()
-        val existing = queries.pronunciationById(ruleId).executeAsOneOrNull()
-        require(existing == null || existing.document_id == documentId) { "Rule belongs to another document" }
-        val rules = pronunciations(documentId)
-        val matching = rules.firstOrNull { it.term.equals(term.trim(), ignoreCase = true) }
-        require(rules.size < 1_000 || existing != null || matching != null) { "This document has reached its pronunciation rule limit" }
-        database.transaction {
-            if (matching != null && matching.id != ruleId) queries.deletePronunciation(matching.id)
-            queries.savePronunciation(ruleId, documentId, term.trim(), replacement.trim(), languageTag, epochMillis())
-            incrementNarrationRevision(documentId)
-        }
-        json.encodeToString(documentSnapshot(documentId))
-    }
-
-    @Throws(Exception::class)
-    fun removePronunciation(ruleId: String): String = lock.withLock {
-        val rule = queries.pronunciationById(ruleId).executeAsOne()
-        database.transaction {
-            queries.deletePronunciation(ruleId)
-            incrementNarrationRevision(rule.document_id)
-        }
-        json.encodeToString(documentSnapshot(rule.document_id))
-    }
-
-    private fun validateRule(rule: PronunciationRule) {
-        require(rule.id.isNotBlank() && rule.documentId.isNotBlank() && rule.term.trim().length in 1..80 && rule.replacement.trim().length in 1..200 && rule.languageTag.isNotBlank()) { "Enter a term and how it should sound" }
-        require(!rule.term.any { it.isISOControl() } && !rule.replacement.any { it.isISOControl() }) { "Pronunciation rules must be plain text" }
-    }
-
-    private fun incrementNarrationRevision(documentId: String) {
-        queries.saveNarrationRevision(documentId, (queries.revisionForDocument(documentId).executeAsOneOrNull() ?: 0L) + 1L)
-    }
-
-    private fun pronunciations(documentId: String) = queries.pronunciationsForDocument(documentId).executeAsList().map { PronunciationRule(it.id, it.document_id, it.term, it.replacement, it.language_tag) }
-
-    @Throws(Exception::class)
     fun searchJson(documentId: String, query: String): String = lock.withLock {
         val term = query.trim().take(200)
         val results = if (term.isEmpty()) emptyList() else {
@@ -296,8 +258,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             paths.forEach { queries.enqueueFileRemoval(it) }
             queries.deleteDocumentNotes(documentId)
             queries.deleteDocumentSections(documentId)
-            queries.deleteDocumentPronunciations(documentId)
-            queries.deleteDocumentNarrationRevision(documentId)
             queries.deleteDocumentPosition(documentId)
             queries.deleteDocumentPassages(documentId)
             queries.deleteDocumentPages(documentId)
@@ -347,8 +307,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         }
         require(archive.sections.size <= 10_000 && archive.sections.map { it.id }.distinct().size == archive.sections.size)
         archive.sections.forEach { require(it.id.isNotBlank() && it.title.isNotBlank() && it.title.length <= 500 && passages[it.passageId]?.pageIndex == it.pageIndex) }
-        require(archive.pronunciations.size <= 1_000)
-        archive.pronunciations.forEach { validateRule(it); require(it.documentId == document.id) }
         archive.position?.let {
             require(it.documentId == document.id && it.passageId in passages && it.offsetMillis >= 0)
             require(it.passageFraction.isFinite() && it.passageFraction in 0.0..1.0) { "Invalid archived passage progress" }
@@ -360,10 +318,8 @@ class ReaderCore internal constructor(driver: SqlDriver) {
                 queries.insertNote(note.id, document.id, note.passageId, note.sourceRevision, note.pageIndex.toLong(), note.sourceStart.toLong(), note.sourceEnd.toLong(), note.quote, note.recordingPath,
                     note.durationMillis, note.offsetMillis, if (note.status == "transcribing") "pending" else note.status, note.machineTranscript, note.editedTranscript, note.transcriptRevision, note.createdAt)
             }
-            archive.position?.let { queries.savePosition(it.documentId, it.passageId, it.offsetMillis, epochMillis(), it.passageFraction) }
+            archive.position?.let { queries.savePosition(it.documentId, it.passageId, 0, epochMillis(), it.passageFraction) }
             archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
-            archive.pronunciations.forEach { queries.savePronunciation(it.id, it.documentId, it.term, it.replacement, it.languageTag, epochMillis()) }
-            if (archive.pronunciations.isNotEmpty()) incrementNarrationRevision(document.id)
         }
         json.encodeToString(documentSnapshot(document.id))
     }
@@ -441,12 +397,9 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val row = queries.documentById(id).executeAsOne()
         val pages = sourcePages(id)
         val pagesByIndex = pages.associateBy { it.pageIndex }
-        val rules = pronunciations(id)
-        val revision = queries.revisionForDocument(id).executeAsOneOrNull() ?: 0L
         val passages = queries.passagesForDocument(id).executeAsList().map { stored ->
             val page = pagesByIndex.getValue(stored.page_index.toInt())
-            val speech = SpokenText.build(stored.source_text, stored.page_start.toInt(), rules.filter { it.languageTag.substringBefore('-').equals(page.languageTag.substringBefore('-'), ignoreCase = true) })
-            stored.toDomain().copy(spokenText = speech.text, spokenMapping = speech.mapping, mappingVersion = "whitespace-v1:pronunciation-$revision", languageTag = page.languageTag, provenance = page.provenance)
+            stored.toDomain().copy(languageTag = page.languageTag, provenance = page.provenance)
         }
         val sections = queries.sectionsForDocument(id).executeAsList().map { DocumentSection(it.id, it.title, it.passage_id, it.page_index.toInt()) }
         return DocumentSnapshot(
@@ -455,7 +408,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             passages,
             pages,
             sections.ifEmpty { passages.distinctBy { it.pageIndex }.map { DocumentSection("$id:page:${it.pageIndex}", "Page ${it.pageIndex + 1}", it.id, it.pageIndex) } },
-            rules,
         )
     }
 
@@ -476,7 +428,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     private fun StoredPassage.toDomain() = Passage(id, document_id, page_index.toInt(),
-        page_start.toInt(), page_end.toInt(), source_start.toInt(), source_end.toInt(), source_text, spoken_text,
+        page_start.toInt(), page_end.toInt(), source_start.toInt(), source_end.toInt(), source_text, PassageBuilder.normalize(source_text),
         spokenMapping = PassageBuilder.mapping(source_text, page_start.toInt()))
 
     private fun StoredModelInstall.toDomain() = ModelInstall(pack_id, generation, status, bytes_downloaded, total_bytes, installed_path, error, updated_at)

@@ -524,7 +524,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     val progress by preparation.progress.collectAsStateWithLifecycle()
     var showSearch by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
-    var showPronunciation by remember { mutableStateOf(false) }
     var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
     var showPassageTools by remember { mutableStateOf(false) }
     LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
@@ -568,7 +567,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         IconButton(onClick = { showPassageTools = true; haptic(view) }) { Icon(Icons.Default.MoreVert, "Current passage actions") }
                         DropdownMenu(expanded = showPassageTools, onDismissRequest = { showPassageTools = false }) {
                             DropdownMenuItem(text = { Text("Write a thought") }, enabled = currentAvailable, onClick = { showPassageTools = false; active?.let(write) })
-                            DropdownMenuItem(text = { Text("Pronunciation") }, onClick = { showPassageTools = false; showPronunciation = true; haptic(view) })
                         }
                     }
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
@@ -614,7 +612,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
             NotesPane(notes, store, { note -> returnToPassage(note.passageId); showThoughts = false }, Modifier.weight(1f))
         }
     }
-    if (showPronunciation) PronunciationDialog(contents, { document = it }, { showPronunciation = false })
     if (showSearch) SearchSheet(id, { hit -> returnToPassage(hit.passageId) }, { showSearch = false })
     if (showContents) AlertDialog(onDismissRequest = { showContents = false }, title = { Text("Find your place") }, text = {
         LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

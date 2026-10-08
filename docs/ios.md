@@ -136,7 +136,7 @@ The primary interaction can expose “Pause and record note” as one action. Sa
 
 For custom generated audio, cache segment files with durations and alignment metadata. Derive source position from the native playback clock and the segment's validated alignment. If a model cannot supply dependable word timing, use sentence or passage highlighting and seek boundaries. Do not present fabricated word precision. Preserve source mapping when pronunciation fixes or excluded headers change the spoken string.
 
-Maintain a small look-ahead buffer and bounded audio cache. Cache keys include source/normalization versions, voice and model version, language, pronunciation settings and synthesis parameters that affect audio. Playback-speed changes applied by the player should be distinguished from synthesis-speed changes that require different audio.
+Maintain a small look-ahead buffer and bounded audio cache. Cache keys include source/normalization versions, voice and model version, language and synthesis parameters that affect audio. Playback-speed changes applied by the player should be distinguished from synthesis-speed changes that require different audio.
 
 ## SwiftUI and wide-screen policy
 
@@ -234,7 +234,7 @@ Track work in validated, coherent [atomic commits](../AGENTS.md#atomic-commits),
 Before calling the listening loop ready, validate:
 
 - Embedded-text, scanned, rotated, multi-column and long PDFs; incorrect order and low-confidence OCR remain reviewable.
-- Source highlighting and frozen anchors through pronunciation changes, PDF zoom/page browsing, seek, app restart and document reprocessing.
+- Source highlighting and frozen anchors through voice changes, PDF zoom/page browsing, seek, app restart and document reprocessing.
 - Active-highlight taps, blank-space taps, text selection, pan/pinch, rapid taps and passage-boundary races; only the confirmed current source may enter capture.
 - Pause, denied permissions, capture, save, immediate resume, delayed/failed ASR and edited-transcript conflicts.
 - Calls, Siri, route loss, Bluetooth microphones, lock/unlock, protected-data availability, low storage and termination during recording/finalization.

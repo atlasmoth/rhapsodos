@@ -42,8 +42,6 @@ struct SpokenMapping: Codable, Hashable {
     let kind: String
 }
 
-struct PronunciationRule: Codable, Identifiable { let id: String; let documentId: String; let term: String; let replacement: String; let languageTag: String }
-
 struct SourcePage: Codable {
     let pageIndex: Int
     let text: String
@@ -146,7 +144,6 @@ struct DocumentSnapshot: Codable {
     let passages: [Passage]
     let pages: [SourcePage]
     let sections: [DocumentSection]
-    let pronunciations: [PronunciationRule]
 }
 
 actor SharedRepository {
@@ -190,10 +187,6 @@ actor SharedRepository {
         let json = String(decoding: try JSONEncoder().encode(sections), as: UTF8.self)
         return try decode(core.setDocumentSections(documentId: documentId, sectionsJson: json))
     }
-    func pronunciation(id: String, documentId: String, term: String, replacement: String) throws -> DocumentSnapshot {
-        try decode(core.savePronunciation(ruleId: id, documentId: documentId, term: term, replacement: replacement, languageTag: "en"))
-    }
-    func removePronunciation(_ id: String) throws -> DocumentSnapshot { try decode(core.removePronunciation(ruleId: id)) }
     func invalidateModel(id: String, generation: String, error: String) throws { _ = try core.invalidateModel(packId: id, generation: generation, error: error) }
     func catalog() throws -> [ModelPack] { try decode(core.modelCatalogJson(platform: "ios")) }
     func installs() throws -> [ModelInstall] { try decode(core.modelInstallsJson()) }

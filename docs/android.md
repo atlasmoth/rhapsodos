@@ -92,7 +92,7 @@ The native transport's media position is authoritative. Map it through segment a
 
 Cache audio with its narration edition, source mappings and declared alignment precision. If a provider has only sentence timing, highlight and attach notes at that explicit precision. Android `onRangeStart` support depends on the engine supplying timing; do not infer sample-accurate cached alignment from callback availability. [UtteranceProgressListener](https://developer.android.com/reference/android/speech/tts/UtteranceProgressListener)
 
-The edition identity includes document/normalization/pronunciation revisions, provider/model/voice and synthesis settings. Player speed changes normally reuse audio. Voice changes create a new edition, retain the source position and prepare it explicitly. Do not silently switch voices when a selected model falls behind.
+The edition identity includes document/normalization revisions, provider/model/voice and synthesis settings. Player speed changes normally reuse audio. Voice changes create a new edition, retain the source position and prepare it explicitly. Do not silently switch voices when a selected model falls behind.
 
 Prefetch a bounded nearby queue. Cancel or ignore stale work after seeks using input revisions and generation epochs. Prepared chapter audio can support offline listening and slow compatible models. A live seek into unprepared content may require generation; surface that state clearly.
 

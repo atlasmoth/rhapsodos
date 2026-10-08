@@ -6,7 +6,7 @@ Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform cor
 
 | Path | Responsibility |
 | --- | --- |
-| `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search, pronunciation and model inventory |
+| `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search and model inventory |
 | `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers and LiteRT speech |
 | `iosApp/` | SwiftUI split navigation, PDFKit/Vision, native audio and protected capture, background URLSession transfers and CoreML speech |
 | `tools/` | Build/policy checks, artifact metadata and pinned asset inspection |
@@ -14,7 +14,7 @@ Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform cor
 
 The shared store owns documents, source positions and notes. Native code owns files, PCM, inference, OS services and views. Harmless presentation preferences and generated caches are separate from durable user data.
 
-Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spoken normalization and pronunciation corrections preserve source/display text and note anchors through compact versioned mappings. Audio attachments currently have **passage precision with a native transport offset**. Word/sample alignment requires further work and is not advertised.
+Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spoken normalization preserves source/display text and note anchors through compact versioned mappings. Audio attachments currently have **passage precision with a native transport offset**. Word/sample alignment requires further work and is not advertised.
 
 ## Implemented paths
 
@@ -23,7 +23,7 @@ Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spok
 | Import | App-owned PDF, bounded progressive extraction, scan OCR, original-page access and preparation retry |
 | Listen | Original PDF with active-passage highlights, system/installed or downloaded local voices, native playback controls, rate, progress, following and manual browsing |
 | Remember | Tap the active PDF highlight to pause and freeze the source before capture; durable audio, typed notes, transcript editing and deferred local transcription |
-| Navigate | Literal passage/note search, PDF outline destinations with page fallback, pronunciation corrections |
+| Navigate | Literal passage/note search, PDF outline destinations with page fallback |
 | Manage | Rename/delete, owned-file cleanup and restore of existing portable document/audio/note archives |
 | Offline speech | Curated platform catalog, explicit downloads, pause/resume, pinned verification, runtime checks, atomic activation, repair and removal |
 | Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, haptic preferences and wide layouts |
@@ -201,3 +201,7 @@ Removed bookmark UI, native adapters, shared contracts and the live table. Schem
 ## Archive creation removal — 8 October 2026
 
 Removed export actions, native archive writers and the shared export producer. Settings retains validated restore for existing user archives. Android Debug and iOS simulator Debug built with the updated shared core. A private compiled ReaderCore/SQLDelight/JDBC SQLite check passed 50/50 assertions for producer API absence, unchanged schema/data and legacy archive restore/rejection/rollback safeguards. Evidence: `/private/tmp/rhapsodos-export-removal-qa/qualification.json`, SHA-256 `85c5851fc068d429bde751393bc927c4d567f2e6e724aefc2c468760fc7b4315`. No microphone or consumer database was used.
+
+## Pronunciation editor removal — 8 October 2026
+
+Removed the editor, native adapters, shared rules/revisions and replacement engine. Schema 6→7 retains source, notes and their offsets; only corrected-document playback clocks are cleared while preserving source fractions for the new plain narration. Archive restore also retains source fractions rather than applying a foreign audio clock. Android Debug and matching iOS simulator Debug builds passed; the final shared device Release link is rebuilt with the final app artifacts. A private actual ReaderCore/SQLDelight/JDBC check passed 73/73 checks plus four schema-6 seed checks, including corrected/uncorrected cursor treatment, durable-data equality, plain mappings, legacy archives and strict rejection/rollback safeguards. Evidence: `/private/tmp/rhapsodos-pronunciation-removal-qa/qualification.json`, SHA-256 `e9fb1f32e533f35e8c3bfa333621b8b7f5e3cc55e711bcec003a5cd29b757345`. Cache inputs were checked; native inference/cache execution was not repeated for this removal.

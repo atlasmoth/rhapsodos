@@ -1,0 +1,5 @@
+UPDATE playback_position SET offset_millis = 0
+WHERE document_id IN (SELECT document_id FROM pronunciation_rule);
+
+DROP TABLE pronunciation_rule;
+DROP TABLE narration_revision;

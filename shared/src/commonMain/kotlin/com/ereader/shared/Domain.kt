@@ -54,14 +54,10 @@ data class DocumentSnapshot(
     val passages: List<Passage>,
     val pages: List<SourcePage> = emptyList(),
     val sections: List<DocumentSection> = emptyList(),
-    val pronunciations: List<PronunciationRule> = emptyList(),
 )
 
 @Serializable
 data class DocumentSection(val id: String, val title: String, val passageId: String, val pageIndex: Int)
-
-@Serializable
-data class PronunciationRule(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String = "en")
 
 @Serializable
 data class SearchHit(val kind: String, val id: String, val documentId: String, val passageId: String, val title: String, val text: String, val pageIndex: Int)
@@ -81,7 +77,6 @@ data class DocumentArchive(
     val notes: List<VoiceNote>,
     val position: PlaybackPosition?,
     val sections: List<DocumentSection> = emptyList(),
-    val pronunciations: List<PronunciationRule> = emptyList(),
 )
 
 @Serializable

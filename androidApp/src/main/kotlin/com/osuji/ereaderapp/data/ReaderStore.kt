@@ -23,7 +23,7 @@ import kotlinx.serialization.json.Json
 @Serializable data class ReaderPassage(
     val id: String, val documentId: String, val pageIndex: Int, val pageStart: Int = 0, val pageEnd: Int = 0,
     val sourceStart: Int, val sourceEnd: Int, val sourceText: String, val spokenText: String,
-    val displayText: String = sourceText, val languageTag: String = "en", val mappingVersion: String = "1",
+    val displayText: String = sourceText, val languageTag: String = "en", val mappingVersion: String = "whitespace-v1",
     val spokenMapping: List<SpokenMapping> = emptyList(), val provenance: String = "embedded",
 )
 @Serializable data class VoiceNote(
@@ -35,8 +35,7 @@ import kotlinx.serialization.json.Json
 @Serializable data class SourceSeekTarget(val documentId: String, val sourceRevision: String, val passageId: String, val passageFraction: Double)
 @Serializable data class ReaderSnapshot(val version: String = "0.01", val documents: List<LibraryDocument> = emptyList(), val notes: List<VoiceNote> = emptyList(), val positions: List<SavedPosition> = emptyList())
 @Serializable data class ReaderSection(val id: String, val title: String, val passageId: String, val pageIndex: Int)
-@Serializable data class Pronunciation(val id: String, val documentId: String, val term: String, val replacement: String, val languageTag: String)
-@Serializable data class ReaderContents(val document: LibraryDocument, val passages: List<ReaderPassage>, val pages: List<PdfSourcePage> = emptyList(), val sections: List<ReaderSection> = emptyList(), val pronunciations: List<Pronunciation> = emptyList())
+@Serializable data class ReaderContents(val document: LibraryDocument, val passages: List<ReaderPassage>, val pages: List<PdfSourcePage> = emptyList(), val sections: List<ReaderSection> = emptyList())
 @Serializable data class SearchMatch(val kind: String, val id: String, val documentId: String, val passageId: String, val title: String, val text: String, val pageIndex: Int)
 @Serializable data class RemovedFiles(val paths: List<String> = emptyList())
 @Serializable data class PackFile(val path: String, val url: String, val sha256: String, val bytes: Long)
@@ -85,8 +84,6 @@ class ReaderStore(private val core: ReaderCore) {
     suspend fun modelInstalls(): List<ModelInstall> = locked { json.decodeFromString(core.modelInstallsJson()) }
     suspend fun invalidateModel(packId: String, generation: String, error: String) = locked { core.invalidateModel(packId, generation, error) }
     suspend fun sections(documentId: String, sections: List<ReaderSection>): ReaderContents = locked { json.decodeFromString(core.setDocumentSections(documentId, json.encodeToString(sections))) }
-    suspend fun savePronunciation(id: String, documentId: String, term: String, replacement: String): ReaderContents = locked { json.decodeFromString(core.savePronunciation(id, documentId, term, replacement, "en")) }
-    suspend fun removePronunciation(id: String): ReaderContents = locked { json.decodeFromString(core.removePronunciation(id)) }
     suspend fun beginModelInstall(packId: String, generation: String): ModelInstall = locked { json.decodeFromString(core.beginModelInstall(packId, generation)) }
     suspend fun updateModelInstall(packId: String, generation: String, status: String, bytes: Long, error: String = "") = locked { core.updateModelInstall(packId, generation, status, bytes, error) }
     suspend fun activateModel(packId: String, generation: String, path: String, files: List<VerifiedPackFile>) = locked { core.activateModel(packId, generation, path, json.encodeToString(files)) }

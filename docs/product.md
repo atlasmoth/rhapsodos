@@ -8,7 +8,7 @@ Make an ordinary PDF something people actively want to listen to. Narration shou
 
 Reading serves listening: the app shows the active passage, lets a person check the original page and helps them revisit a note's context. A useful source view remains available, but the home and player should communicate a listening product rather than a document editor with a play button.
 
-The first audience is everyday readers and people using listening for accessibility. English gets launch-level speech and extraction quality. The architecture carries language tags, locale-aware segmentation, pronunciation and transcript metadata for later multilingual expansion.
+The first audience is everyday readers and people using listening for accessibility. English gets launch-level speech and extraction quality. The architecture carries language tags, locale-aware segmentation and transcript metadata for later multilingual expansion.
 
 ## Primary journeys
 
@@ -48,7 +48,7 @@ Page browsing and zoom use gestures and accessible actions; do not add a visible
 
 The PDF display follows the app's light/dark background and contrasting ink for neutral and muted text. Recolour low-chroma pixels, preserve strongly coloured artwork, and offer **Original colours** in Appearance settings. This is a display transformation: it never rewrites the PDF, extraction input, source ranges or note anchors. Grayscale and muted-colour photographs and scanned illustrations also change because pixels cannot distinguish them from text; the original-colour option restores their appearance. Some coloured text can retain insufficient contrast in dark mode. Further automatic handling needs qualified text-aware rendering rather than treating artwork pixels as text.
 
-Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure. Pronunciation corrections should preserve the source text and regenerate only the affected narration edition/segments.
+Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure.
 
 ### Voice note
 

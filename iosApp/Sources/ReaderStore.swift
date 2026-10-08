@@ -731,31 +731,6 @@ final class ReaderStore: ObservableObject {
         }
     }
 
-    func savePronunciation(term: String, replacement: String) async {
-        guard !busy, captureDraft == nil, let id = selectedId, let repository else { return }
-        busy = true
-        defer { busy = false; serviceTranscriptions() }
-        await audio.pauseAndJoinGeneration(restart: true)
-        do { applyPronunciation(try await repository.pronunciation(id: UUID().uuidString, documentId: id, term: term, replacement: replacement)); try await refresh() }
-        catch { present(error) }
-    }
-    func removePronunciation(_ rule: PronunciationRule) async {
-        guard !busy, captureDraft == nil, let repository else { return }
-        busy = true
-        defer { busy = false; serviceTranscriptions() }
-        await audio.pauseAndJoinGeneration(restart: true)
-        do { applyPronunciation(try await repository.removePronunciation(rule.id)); try await refresh() }
-        catch { present(error) }
-    }
-    private func applyPronunciation(_ snapshot: DocumentSnapshot) {
-        let passageId = currentPassage?.id
-        let fraction = positions.first(where: { $0.documentId == snapshot.document.id && $0.passageId == passageId })?.passageFraction ?? 0
-        document = snapshot
-        audio.load(snapshot.passages, title: snapshot.document.title, at: snapshot.passages.firstIndex(where: { $0.id == passageId }) ?? 0,
-            passageFraction: fraction, complete: snapshot.document.extractionStatus != "preparing")
-        feedback.play(.saved)
-    }
-
     func restoreArchive(_ url: URL) async {
         guard !busy, captureDraft == nil, let repository, let files else { return }
         busy = true; preparation = "Verifying your archive"

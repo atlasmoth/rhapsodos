@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.osuji.ereaderapp.audio.PlaybackCoordinator
-import com.osuji.ereaderapp.data.ReaderContents
 import com.osuji.ereaderapp.data.ReaderStore
 import com.osuji.ereaderapp.data.SearchMatch
 import com.osuji.ereaderapp.models.ModelManager
@@ -145,53 +144,6 @@ fun SearchSheet(documentId: String, select: (SearchMatch) -> Unit, dismiss: () -
             }
         }
     }
-}
-
-@Composable
-fun PronunciationDialog(document: ReaderContents, changed: (ReaderContents) -> Unit, dismiss: () -> Unit) {
-    val store = koinInject<ReaderStore>()
-    val playback = koinInject<PlaybackCoordinator>()
-    val scope = rememberCoroutineScope()
-    val view = LocalView.current
-    var term by remember { mutableStateOf("") }
-    var replacement by remember { mutableStateOf("") }
-    var working by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(onDismissRequest = { if (!working) dismiss() }, title = { Text("Say it your way") }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Change how a name or term sounds. The original text and every thought stay in place. Listening remains paused until you resume.")
-            OutlinedTextField(term, { term = it }, enabled = !working, singleLine = true, label = { Text("Name or term in the PDF") })
-            OutlinedTextField(replacement, { replacement = it }, enabled = !working, label = { Text("Say it like this") })
-            if (document.pronunciations.isNotEmpty()) LazyColumn(Modifier.heightIn(max = 160.dp)) {
-                items(document.pronunciations, key = { it.id }) { rule ->
-                    Row(Modifier.fillMaxWidth()) {
-                        Text("${rule.term} → ${rule.replacement}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                        IconButton(enabled = !working && !playback.capturing, onClick = {
-                            working = true
-                            scope.launch {
-                                try { playback.pause(); val updated = store.removePronunciation(rule.id); playback.reloadSpokenEdition(updated); changed(updated); haptic(view, true) }
-                                catch (failure: Exception) { error = "This pronunciation could not be removed." }
-                                finally { working = false }
-                            }
-                        }) { Icon(Icons.Default.DeleteOutline, "Remove pronunciation") }
-                    }
-                }
-            }
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        }
-    }, confirmButton = {
-        TextButton(enabled = !working && !playback.capturing && term.isNotBlank() && replacement.isNotBlank(), onClick = {
-            working = true
-            scope.launch {
-                try {
-                    playback.pause()
-                    val updated = store.savePronunciation(java.util.UUID.randomUUID().toString(), document.document.id, term, replacement)
-                    playback.reloadSpokenEdition(updated); changed(updated); haptic(view, true); term = ""; replacement = ""
-                } catch (failure: Exception) { error = failure.message ?: "This pronunciation could not be saved." }
-                finally { working = false }
-            }
-        }) { Text(if (working) "Saving…" else "Save pronunciation") }
-    }, dismissButton = { TextButton(enabled = !working, onClick = dismiss) { Text("Done") } })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -419,17 +419,6 @@ class PlaybackCoordinator(
 
     suspend fun stopAndWait() { generation?.cancelAndJoin(); stop() }
 
-    suspend fun reloadSpokenEdition(document: ReaderContents) {
-        if (state.value.documentId != document.document.id) return
-        publish()
-        val current = state.value
-        player?.pause()
-        check(persistSnapshot(current)) { "Your listening position could not be saved. Please retry." }
-        generation?.cancelAndJoin()
-        val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
-        listen(document, index, 0, false, current.passageFraction)
-    }
-
     fun skip(direction: Int) {
         val document = contents ?: return
         val index = document.passages.indexOfFirst { it.id == state.value.passageId }

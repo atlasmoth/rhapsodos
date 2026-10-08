@@ -45,7 +45,7 @@ These are responsibility boundaries. Start with a small number of modules and ad
 | Area | Shared KMP responsibility | Native responsibility |
 | --- | --- | --- |
 | Documents | Identity, graph, reading order contracts, normalization, source mappings and search rules | Import access, PDF rendering/extraction, OCR and coordinate conversion |
-| Narration | Segments, editions, pronunciation, queue plans, cache identity and source alignment contracts | Model/system speech execution, audio output and validated timing |
+| Narration | Segments, editions, queue plans, cache identity and source alignment contracts | Model/system speech execution, audio output and validated timing |
 | Playback | User commands, durable progress, preparation policy and presentation snapshots | Transport clock, media session, audio focus/routes, interruptions and background lifetime |
 | Notes | Frozen anchors, records, transcript revisions, job state and conflict rules | Microphone permission, capture, recoverable files and audio-session transitions |
 | Persistence | One schema, repositories, transactions, outbox and recovery rules | Database driver, protected files, keys and backup exclusions |
@@ -97,7 +97,7 @@ Page colours are a native display concern. Neutral paper/ink follow the app appe
 | --- | --- |
 | Document | Logical ID, source revision, file fingerprint/access manifest, title/language, graph version and preparation state |
 | SourceAnchor | Document/revision/graph IDs, block ID, source range, page geometry, quote and context fallback |
-| NarrationEdition | Document revision, normalization/pronunciation versions, provider/model/voice snapshot and synthesis settings |
+| NarrationEdition | Document revision, normalization versions, provider/model/voice snapshot and synthesis settings |
 | NarrationSegment | Spoken text/range, source mappings, audio manifest, duration and alignment precision/version |
 | PlaybackCursor | Source anchor plus narration edition, segment, native audio offset and measured passage fraction; save time and local session identity |
 | Note | Stable ID, frozen source and narration anchors, capture status, recording manifest, timestamps and optional user text |
@@ -121,7 +121,7 @@ Maintain segment audio together with source-to-spoken mappings and alignment met
 
 Provider timestamps, native live speech callbacks and optional post-generation alignment have different guarantees. Qualify each path. Prefer system speech rendered into sentence/segment buffers or files and played through the native transport where that route is supported. A direct live-speech fallback must declare coarser precision and cannot claim a seekable sample clock from a text-range callback. Only one transport adapter is active at a time. The player maps its actual media position, or explicitly limited live progress, through the edition's alignment to the source graph. Speed changes must not rely on a separate wall-clock estimate.
 
-Cache keys include document/graph and normalization revisions, pronunciation, model/voice version, language and audio-affecting synthesis settings. Changing playback speed at transport level normally does not require regeneration. A voice or pronunciation change creates a new edition and maps the current source point into it; do not mix incompatible segment/alignment files.
+Cache keys include document/graph and normalization revisions, model/voice version, language and audio-affecting synthesis settings. Changing playback speed at transport level normally does not require regeneration. A voice change creates a new edition and maps the current source point into it; do not mix incompatible segment/alignment files.
 
 Bound near-term prefetch by readiness, battery, memory and thermal state. Arbitrary source seeking may require generation; show that preparation truthfully. Keep the selected voice stable, and ask through an explicit product choice before changing providers or voice quality. Prepare selected chapters in advance when generation is slower than consumption.
 
