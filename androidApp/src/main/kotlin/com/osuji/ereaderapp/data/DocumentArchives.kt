@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -18,52 +17,12 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
-import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 import kotlin.coroutines.coroutineContext
 
 @Serializable private data class ArchiveFile(val path: String, val sha256: String, val bytes: Long)
 
 class DocumentArchives(private val context: Context, private val store: ReaderStore) {
-    suspend fun export(documentId: String, destination: Uri) = withContext(Dispatchers.IO) {
-        val manifest = store.json.parseToJsonElement(store.exportManifest(documentId)).jsonObject
-        val files = linkedMapOf<String, File>()
-        val document = manifest.getValue("document").jsonObject
-        files["document.pdf"] = owned(document.getValue("filePath").jsonPrimitive.content)
-        val notes = manifest.getValue("notes").jsonArray.mapIndexed { index, element ->
-            val note = element.jsonObject
-            val original = note.getValue("recordingPath").jsonPrimitive.content
-            if (original.isNotBlank()) {
-                val path = "audio/$index.wav"
-                files[path] = owned(original)
-                validateRecording(files.getValue(path))
-                replace(note, "recordingPath", JsonPrimitive(path))
-            } else note
-        }
-        require(files.values.all { it.isFile }) { "A referenced PDF or recording is missing. Your data has not been changed." }
-        require(files.values.sumOf { it.length() } <= 600L * 1024 * 1024) { "This archive exceeds the 600 MB export limit." }
-        val portable = replace(replace(manifest, "document", replace(document, "filePath", JsonPrimitive("document.pdf"))), "notes", JsonArray(notes))
-        val assets = files.map { (path, file) -> ArchiveFile(path, digest(file), file.length()) }
-        require(assets.size <= 100_001) { "This document contains too many recordings to export safely." }
-        val envelope = JsonObject(mapOf("manifest" to portable, "files" to store.json.parseToJsonElement(store.json.encodeToString(assets))))
-        val manifestBytes = envelope.toString().toByteArray(Charsets.UTF_8)
-        require(manifestBytes.size <= 50_000_000) { "This document's prepared text and thoughts exceed the 50 MB archive manifest limit. Your data has not been changed." }
-        context.contentResolver.openOutputStream(destination, "wt")?.use { target ->
-            ZipOutputStream(target.buffered()).use { zip ->
-                zip.putNextEntry(ZipEntry("manifest.json"))
-                zip.write(manifestBytes)
-                zip.closeEntry()
-                files.forEach { (path, file) ->
-                    coroutineContext.ensureActive()
-                    zip.putNextEntry(ZipEntry(path))
-                    file.inputStream().use { it.copyTo(zip, 64 * 1024) }
-                    zip.closeEntry()
-                }
-            }
-        } ?: error("The file provider could not save the archive.")
-    }
-
     suspend fun restore(source: Uri): String = withContext(Dispatchers.IO) {
         val token = UUID.randomUUID().toString()
         val staging = File(context.filesDir, "restored/.$token").apply { check(mkdirs() || isDirectory) }
@@ -133,10 +92,6 @@ class DocumentArchives(private val context: Context, private val store: ReaderSt
         } finally { if (!committed) { staging.deleteRecursively(); destination.deleteRecursively() } }
     }
 
-    private fun owned(path: String): File {
-        val root = context.filesDir.canonicalFile
-        return File(path).canonicalFile.also { require(it.path.startsWith(root.path + File.separator)) { "Only app-owned files can be exported." } }
-    }
     private fun replace(source: JsonObject, key: String, value: JsonElement) = JsonObject(source.toMutableMap().apply { put(key, value) })
     private fun readBounded(input: java.io.InputStream, maximum: Int): ByteArray {
         val output = java.io.ByteArrayOutputStream()

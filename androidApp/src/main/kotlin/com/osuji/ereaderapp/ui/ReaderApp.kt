@@ -135,7 +135,6 @@ fun ReaderApp() {
     var libraryAction by remember { mutableStateOf<Pair<String, LibraryDocument>?>(null) }
     var renameText by remember { mutableStateOf("") }
     var actionSaving by remember { mutableStateOf(false) }
-    var exportDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
     val preferences = remember { context.getSharedPreferences("presentation", android.content.Context.MODE_PRIVATE) }
     var appearance by rememberSaveable { mutableStateOf(preferences.getString("appearance", "system") ?: "system") }
     var reducedMotion by rememberSaveable { mutableStateOf(preferences.getBoolean("reducedMotion", false)) }
@@ -177,22 +176,11 @@ fun ReaderApp() {
             } finally { importing = false }
         }
     }
-    val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.rhapsodos.document+zip")) { uri ->
-        val id = exportDocumentId
-        if (uri != null && id != null) scope.launch {
-            try { check(playback.persist()) { "Your listening position could not be saved. Please retry before exporting." }; archives.export(id, uri); haptic(view, true); message = "Your PDF, thoughts and listening position were exported." }
-            catch (failure: Exception) { message = failure.message ?: "The archive could not be saved." }
-        }
-    }
     val restorePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
             try { val id = archives.restore(uri); openDocument(id); haptic(view, true) }
             catch (failure: Exception) { message = failure.message ?: "The archive could not be restored." }
         }
-    }
-    LaunchedEffect(libraryAction) {
-        val action = libraryAction ?: return@LaunchedEffect
-        if (action.first == "export") { exportDocumentId = action.second.id; exportPicker.launch("${action.second.title}.rhapsodos"); libraryAction = null }
     }
     val microphone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
         if (recordRequestPending) {
@@ -312,7 +300,7 @@ fun ReaderApp() {
                         Text("Touch feedback", Modifier.weight(1f))
                         Switch(touchFeedback, { touchFeedback = it; preferences.edit().putBoolean("touchFeedback", it).apply(); haptic(view) })
                     }
-                    OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }) { Text("Restore an exported document") }
+                    OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }) { Text("Restore a document archive") }
                     TextButton(onClick = { showSettings = false; showAbout = true }) { Text("About, privacy & offline notices") }
                     Text("Rhapsodos 0.01 · local content processing", style = MaterialTheme.typography.bodySmall)
                 }
@@ -357,7 +345,7 @@ fun ReaderApp() {
             if (action.first in setOf("rename", "delete")) AlertDialog(
                 onDismissRequest = { if (!actionSaving) libraryAction = null },
                 title = { Text(if (action.first == "rename") "Rename your document" else "Delete this document?") },
-                text = { if (action.first == "rename") OutlinedTextField(renameText, { renameText = it }, enabled = !actionSaving, label = { Text("Title") }) else Text("This removes the imported PDF, its thoughts and listening position from this device. Export first to keep a copy.") },
+                text = { if (action.first == "rename") OutlinedTextField(renameText, { renameText = it }, enabled = !actionSaving, label = { Text("Title") }) else Text("This removes the imported PDF, its thoughts and listening position from this device.") },
                 confirmButton = { TextButton(enabled = !actionSaving && !playback.capturing && (action.first != "rename" || renameText.isNotBlank()), onClick = {
                     actionSaving = true
                     scope.launch {
@@ -500,7 +488,7 @@ private fun LibraryPane(
                     Box {
                         IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "Document actions") }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                            listOf("Rename", "Export", "Delete").forEach { label -> DropdownMenuItem(text = { Text(label) }, onClick = { menu = false; action(label.lowercase(), document) }) }
+                            listOf("Rename", "Delete").forEach { label -> DropdownMenuItem(text = { Text(label) }, onClick = { menu = false; action(label.lowercase(), document) }) }
                         }
                     }
                 }

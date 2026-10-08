@@ -16,7 +16,6 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var preparationProgress = 0.0
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
-    @Published var exportURL: URL?
     @Published var errorMessage: String?
     @Published var captureDraft: VoiceNote?
     @Published var captureMessage = ""
@@ -755,17 +754,6 @@ final class ReaderStore: ObservableObject {
         audio.load(snapshot.passages, title: snapshot.document.title, at: snapshot.passages.firstIndex(where: { $0.id == passageId }) ?? 0,
             passageFraction: fraction, complete: snapshot.document.extractionStatus != "preparing")
         feedback.play(.saved)
-    }
-
-    func exportSelected() async {
-        guard !busy, captureDraft == nil, let id = selectedId, let repository, let files else { return }
-        busy = true; preparation = "Preparing portable archive"
-        defer { busy = false; preparation = ""; serviceTranscriptions() }
-        do {
-            try await flushProgress()
-            let manifest = try await repository.exportDocument(id)
-            exportURL = try await Task.detached(priority: .utility) { try DocumentArchives.export(manifest, files: files) }.value
-        } catch { present(error) }
     }
 
     func restoreArchive(_ url: URL) async {

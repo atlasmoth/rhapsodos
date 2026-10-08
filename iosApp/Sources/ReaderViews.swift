@@ -8,7 +8,6 @@ struct ReaderRoot: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @EnvironmentObject private var feedback: Feedback
     @State private var importer = false
-    @State private var exportConfirm = false
     @State private var settings = false
     @State private var gallery = false
     @State private var tools = false
@@ -82,7 +81,6 @@ struct ReaderRoot: View {
                         Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages and search")
                         Menu {
                             if !store.follow { Button("Follow narration", systemImage: "scope") { store.follow = true } }
-                            Button("Export document and notes", systemImage: "square.and.arrow.up") { exportConfirm = true }
                         } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")
                         Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
                     }
@@ -97,10 +95,6 @@ struct ReaderRoot: View {
             case .success(let url): Task { await store.importPDF(url) }
             case .failure(let error): store.errorMessage = error.localizedDescription
             }
-        }
-        .sheet(isPresented: Binding(get: { store.exportURL != nil }, set: { if !$0 { store.exportURL = nil } })) { if let url = store.exportURL { ExportPicker(url: url) } }
-        .confirmationDialog("This archive is not encrypted. It contains your PDF, notes and playable recordings. Save it somewhere you trust.", isPresented: $exportConfirm, titleVisibility: .visible) {
-            Button("Create portable archive") { Task { await store.exportSelected() } }
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
         .sheet(isPresented: $gallery) { if let models = store.models { ModelGallery(models: models) } }
@@ -366,7 +360,7 @@ private struct VoiceSettings: View {
                     Text("Motion and visual effects respect Reduce Motion, Low Power Mode and thermal conditions.").font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Documents") {
-                    Button("Restore an exported document", systemImage: "square.and.arrow.down") { restorePicker = true }
+                    Button("Restore a document archive", systemImage: "square.and.arrow.down") { restorePicker = true }
                         .disabled(store.busy || store.captureDraft != nil || audio.recording)
                 }
                 Section("Privacy & readiness") {

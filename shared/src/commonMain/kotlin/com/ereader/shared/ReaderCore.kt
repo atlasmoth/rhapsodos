@@ -326,19 +326,6 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     fun acknowledgeFileRemoval(path: String) = lock.withLock { queries.acknowledgeFileRemoval(path) }
 
     @Throws(Exception::class)
-    fun exportDocumentJson(documentId: String): String = lock.withLock {
-        val snapshot = documentSnapshot(documentId)
-        val pages = snapshot.pages.map { if (it.geometrySpace == "cropTopLeftV1") it else it.copy(regions = emptyList(), geometrySpace = "unspecified") }
-        validatePages(pages, 0)
-        val notes = queries.allNotes().executeAsList().filter { it.document_id == documentId }.map { it.toDomain() }
-        require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
-        json.encodeToString(DocumentArchive(document = snapshot.document, pages = pages,
-            notes = notes, position = queries.allPositions().executeAsList()
-                .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction) },
-            sections = snapshot.sections, pronunciations = snapshot.pronunciations))
-    }
-
-    @Throws(Exception::class)
     fun restoreDocumentJson(archiveJson: String): String = lock.withLock {
         require(archiveJson.length <= 50_000_000) { "Archive manifest exceeds limit" }
         val archive = json.decodeFromString<DocumentArchive>(archiveJson)

@@ -1,12 +1,11 @@
 import AVFoundation
 import CryptoKit
 import Foundation
-import SwiftUI
 import UniformTypeIdentifiers
 import ZIPFoundation
 
 extension UTType { static let rhapsodos = UTType(exportedAs: "com.osuji.rhapsodos.document", conformingTo: .archive) }
-private struct ArchiveAsset: Codable { let path: String; let sha256: String; let bytes: Int64 }
+private struct ArchiveAsset: Decodable { let path: String; let sha256: String; let bytes: Int64 }
 enum ArchiveFailure: LocalizedError {
     case invalid, oversized, collision
     var errorDescription: String? {
@@ -19,40 +18,6 @@ enum ArchiveFailure: LocalizedError {
 }
 
 enum DocumentArchives {
-    static func export(_ json: String, files: LocalFiles) throws -> URL {
-        guard var manifest = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
-              var document = manifest["document"] as? [String: Any], let path = document["filePath"] as? String,
-              let original = files.ownedURL(path), var notes = manifest["notes"] as? [[String: Any]] else { throw ArchiveFailure.invalid }
-        let staging = files.transient.appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: staging) }
-        let pdf = staging.appendingPathComponent("document.pdf")
-        try FileManager.default.copyItem(at: original, to: pdf)
-        document["filePath"] = "document.pdf"; manifest["document"] = document
-        var assets: [ArchiveAsset] = [try describe(pdf, path: "document.pdf")]
-        for index in notes.indices {
-            guard let locator = notes[index]["recordingPath"] as? String, !locator.isEmpty else { continue }
-            guard let original = files.ownedURL(locator) else { throw ArchiveFailure.invalid }
-            let portable = "audio/\(index).wav"
-            let audio = staging.appendingPathComponent(portable)
-            try FileManager.default.createDirectory(at: audio.deletingLastPathComponent(), withIntermediateDirectories: true)
-            guard let duration = notes[index]["durationMillis"] as? NSNumber else { throw ArchiveFailure.invalid }
-            _ = try VoiceVault.render(original, to: audio, expectedDurationMillis: duration.int64Value)
-            assets.append(try describe(audio, path: portable)); notes[index]["recordingPath"] = portable
-        }
-        manifest["notes"] = notes
-        guard assets.reduce(Int64(0), { $0 + $1.bytes }) <= 600 * 1024 * 1024 else { throw ArchiveFailure.oversized }
-        let descriptors = try JSONSerialization.jsonObject(with: JSONEncoder().encode(assets))
-        let envelope = try JSONSerialization.data(withJSONObject: ["manifest": manifest, "files": descriptors], options: [.sortedKeys])
-        try envelope.write(to: staging.appendingPathComponent("manifest.json"), options: .atomic)
-        let title = (document["title"] as? String ?? "Document").components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
-        let output = files.transient.appendingPathComponent(String(title.prefix(80)) + "-" + UUID().uuidString.prefix(8) + ".rhapsodos")
-        let archive = try Archive(url: output, accessMode: .create)
-        for path in ["manifest.json"] + assets.map(\.path) { try Task.checkCancellation(); try archive.addEntry(with: path, relativeTo: staging, compressionMethod: .deflate) }
-        try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: output.path)
-        return output
-    }
-
     static func prepareRestore(_ source: URL, files: LocalFiles, existing: Set<String>) throws -> (String, [URL]) {
         let granted = source.startAccessingSecurityScopedResource(); defer { if granted { source.stopAccessingSecurityScopedResource() } }
         let archive = try Archive(url: source, accessMode: .read)
@@ -121,10 +86,4 @@ enum DocumentArchives {
         while let block = try handle.read(upToCount: 1_048_576), !block.isEmpty { bytes += Int64(block.count); guard bytes <= 600 * 1024 * 1024 else { throw ArchiveFailure.oversized }; digest.update(data: block) }
         return ArchiveAsset(path: path, sha256: digest.finalize().map { String(format: "%02x", $0) }.joined(), bytes: bytes)
     }
-}
-
-struct ExportPicker: UIViewControllerRepresentable {
-    let url: URL
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController { UIDocumentPickerViewController(forExporting: [url], asCopy: true) }
-    func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {}
 }

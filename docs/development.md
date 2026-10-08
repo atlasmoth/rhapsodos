@@ -6,7 +6,7 @@ Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform cor
 
 | Path | Responsibility |
 | --- | --- |
-| `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search, bookmarks, pronunciation and model inventory |
+| `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search, pronunciation and model inventory |
 | `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers and LiteRT speech |
 | `iosApp/` | SwiftUI split navigation, PDFKit/Vision, native audio and protected capture, background URLSession transfers and CoreML speech |
 | `tools/` | Build/policy checks, artifact metadata and pinned asset inspection |
@@ -23,8 +23,8 @@ Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spok
 | Import | App-owned PDF, bounded progressive extraction, scan OCR, original-page access and preparation retry |
 | Listen | Original PDF with active-passage highlights, system/installed or downloaded local voices, native playback controls, rate, progress, following and manual browsing |
 | Remember | Tap the active PDF highlight to pause and freeze the source before capture; durable audio, typed notes, transcript editing and deferred local transcription |
-| Navigate | Literal passage/note search, bookmarks, PDF outline destinations with page fallback, pronunciation corrections |
-| Manage | Rename/delete, owned-file cleanup and portable document/audio/note archive export/restore |
+| Navigate | Literal passage/note search, PDF outline destinations with page fallback, pronunciation corrections |
+| Manage | Rename/delete, owned-file cleanup and restore of existing portable document/audio/note archives |
 | Offline speech | Curated platform catalog, explicit downloads, pause/resume, pinned verification, runtime checks, atomic activation, repair and removal |
 | Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, haptic preferences and wide layouts |
 
@@ -40,7 +40,7 @@ Native managers verify all artifacts, check runtime execution, install atomicall
 
 Android now uses bundled Tesseract and a pinned English OCR model. ML Kit was removed after its documented diagnostic telemetry conflicted with the network boundary. See [third-party.md](third-party.md) for provenance and redistribution notices.
 
-iOS recordings use authenticated encrypted chunks and a non-synchronizing, device-bound Keychain key. Android recordings use app-private OS-protected storage. Automatic backup/transfer is disabled. Explicit `.rhapsodos` export contains the original PDF, notes and portable audio in a plaintext ZIP archive. Restore verifies safe paths, bounds, digests and canonical anchors; iOS seals restored audio with the local vault key. This provides deliberate local export/restore, without a cloud key-recovery promise.
+iOS recordings use authenticated encrypted chunks and a non-synchronizing, device-bound Keychain key. Android recordings use app-private OS-protected storage. Automatic backup/transfer is disabled. Archive creation has been removed. Existing `.rhapsodos` archives contain the original PDF, notes and portable audio in a plaintext ZIP archive. Settings retains restore with safe-path, size, digest, strict-audio and canonical-anchor validation; iOS seals restored audio with the local vault key. There is no cloud key-recovery promise.
 
 ## Building
 
@@ -197,3 +197,7 @@ Physical gates include microphone/route interruptions, locked-screen endurance, 
 ## Bookmark removal — 8 October 2026
 
 Removed bookmark UI, native adapters, shared contracts and the live table. Schema 5→6 drops only that table. Android Debug and iOS simulator Debug compiled with the matching updated shared framework; K/N device Release also linked. A private actual ReaderCore/SQLDelight/JDBC SQLite harness passed 71/71 checks plus four schema-5 seed checks: all other table rows and original PDF/audio bytes were retained, obsolete archive fields were discarded, and invalid anchors/geometry/progress, collision and SQL rollback protections still held. Evidence: `/private/tmp/rhapsodos-bookmarks-removal-qa/qualification.json`, SHA-256 `e60b8c17bbc2c6f478eb51aefe93701ebd9104ad065d087a15410be300984a72`. This is private persistence integration evidence, not consumer UI or physical-device qualification.
+
+## Archive creation removal — 8 October 2026
+
+Removed export actions, native archive writers and the shared export producer. Settings retains validated restore for existing user archives. Android Debug and iOS simulator Debug built with the updated shared core. A private compiled ReaderCore/SQLDelight/JDBC SQLite check passed 50/50 assertions for producer API absence, unchanged schema/data and legacy archive restore/rejection/rollback safeguards. Evidence: `/private/tmp/rhapsodos-export-removal-qa/qualification.json`, SHA-256 `85c5851fc068d429bde751393bc927c4d567f2e6e724aefc2c468760fc7b4315`. No microphone or consumer database was used.
