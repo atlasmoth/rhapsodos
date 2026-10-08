@@ -492,7 +492,13 @@ private fun LibraryPane(
                         Text("${document.pageCount} pages · ${if (document.extractionStatus == "preparing") "Preparing locally" else if (document.passageCount > 0) "Ready to listen" else "Original pages"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         document.listeningProgress?.let { progress ->
                             val fraction = progress.coerceIn(0.0, 1.0)
-                            LinearProgressIndicator(progress = { fraction.toFloat() }, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Listening progress" })
+                            LinearProgressIndicator(
+                                progress = { fraction.toFloat() },
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f),
+                                drawStopIndicator = {},
+                                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Listening progress" },
+                            )
                             Text(if (fraction == 1.0) "Finished" else if (fraction == 0.0) "Not started" else "${(fraction * 100).toInt()}% listened", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
