@@ -34,7 +34,7 @@ Global search, offline voices, settings and import sit immediately beneath the R
 
 The library ends with its files rather than a privacy/archive footer. Privacy information and archive restore belong in Settings on both platforms.
 
-The PDF header shows the document title, a dedicated search action, contents and notes. Search opens its own native sheet on both apps; it is not a tab inside another tool sheet. In-file scope stays fixed to that document; only the library entry searches all files. Both sheets use the same query prompt, loading/error/retry behavior and page-labelled passage/note results. Keep the query header stable as loading, errors and results change; scroll the bounded content area. Selecting a result moves the source position while remaining paused.
+The PDF header shows the document title followed by **Contents → Search → Notes** on both apps, using equivalent native icons and accessible names. Notes toggles the anchored-notes panel on wide readers or a sheet on narrower readers; opening or closing it does not pause or seek narration. Do not add a separate notes row below the header. Search opens its own native sheet on both apps; it is not a tab inside another tool sheet. In-file scope stays fixed to that document; only the library entry searches all files. Both sheets use the same query prompt, loading/error/retry behavior and page-labelled passage/note results. Keep the query header stable as loading, errors and results change; scroll the bounded content area. Selecting a result moves the source position while remaining paused.
 
 | Surface | Content and primary action |
 | --- | --- |

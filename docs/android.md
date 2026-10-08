@@ -164,6 +164,8 @@ Choose layout from actual window constraints, font scaling and posture. Account 
 
 Manual PDF browsing pauses book audio and automatic following. Play resumes at the native frozen cursor and returns the PDF to narration; no follow control is exposed. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
 
+The reader's trailing actions match iOS: Contents, Search, then the anchored-notes bubble. The notes toggle opens/closes a 310 dp trailing panel when the reader has at least 850 dp, otherwise a native sheet. One saved visibility state owns both presentations, so resizing never presents a panel and sheet together. A single notes owner retains transcript edits, edit/delete operation state and list position while the presentation changes; its coroutine scope belongs to the document rather than the temporary sheet. The notes header also provides Done. Opening notes is a presentation action; passage jumps and note replay remain explicit navigation/audio actions.
+
 Expose prepared source text and a record action for each visible prepared passage, with useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
 
 ## Persistence and privacy

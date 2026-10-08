@@ -24,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -574,17 +576,17 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { haptic(view); back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to library") }
                     Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search document") }
-                    IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Chapters and pages") }
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
                         val index = contents.passages.indexOfFirst { it.id == saved?.passageId }.coerceAtLeast(0)
                         following = true
                         playback.listen(contents, index, saved?.offsetMillis ?: 0, passageFraction = saved?.passageFraction ?: 0.0); haptic(view, true)
                     }, enabled = !audio.capturing) { Icon(Icons.Default.PlayArrow, "Start listening") }
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    if (!wide) TextButton(onClick = { showThoughts = true; haptic(view) }) { Icon(Icons.Default.EditNote, null); Spacer(Modifier.width(6.dp)); Text("Thoughts (${notes.count { it.status != "draft" }})") }
+                    IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Document contents") }
+                    IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Find a passage") }
+                    IconToggleButton(checked = showThoughts, onCheckedChange = { showThoughts = it; haptic(view) }) {
+                        Icon(Icons.AutoMirrored.Outlined.Comment, if (showThoughts) "Hide anchored notes" else "Show anchored notes")
+                    }
                 }
                 progress[id]?.let { prepared ->
                     if (prepared.running || prepared.error != null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -598,23 +600,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     { browsePage(it) }, { browse() },
                     record, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
             }
-            if (wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
-                Column(Modifier.padding(20.dp)) {
-                    Label("KEEP WHAT MATTERS")
-                    Spacer(Modifier.height(8.dp)); Text("Your thoughts", style = MaterialTheme.typography.headlineMedium)
-                    Spacer(Modifier.height(18.dp))
-                    NotesPane(notes, store, { note -> returnToPassage(note.passageId) }, Modifier.weight(1f))
-                }
-            }
-        }
-    }
-    if (showThoughts) ModalBottomSheet(onDismissRequest = { showThoughts = false }) {
-        Column(Modifier.fillMaxWidth().heightIn(max = 620.dp).navigationBarsPadding().padding(horizontal = 22.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Your thoughts", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-                TextButton(onClick = { showThoughts = false }) { Text("Close") }
-            }
-            NotesPane(notes, store, { note -> returnToPassage(note.passageId); showThoughts = false }, Modifier.weight(1f))
+            NotesPane(notes, store, { note -> returnToPassage(note.passageId) }, showThoughts, wide, { showThoughts = false })
         }
     }
     if (showSearch) SearchSheet(id, { hit ->
@@ -896,9 +882,12 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNote) -> Unit, modifier: Modifier) {
+private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNote) -> Unit, visible: Boolean, wide: Boolean, close: () -> Unit) {
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+    val listState = rememberLazyListState()
     var editing by remember { mutableStateOf<VoiceNote?>(null) }
     var text by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
@@ -912,39 +901,53 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
     var deletingError by remember { mutableStateOf<String?>(null) }
     var showDownloads by remember { mutableStateOf(false) }
     val audio by playback.state.collectAsStateWithLifecycle()
-    LazyColumn(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        if (notes.isEmpty()) item {
-            Column(Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Default.EditNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
-                Text("A thought worth keeping", style = MaterialTheme.typography.titleMedium)
-                Text("Pause and record as you listen. Every thought keeps its place in the document.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val content: @Composable (Modifier) -> Unit = { modifier ->
+        Column(modifier) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Anchored notes", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                TextButton(onClick = { close(); haptic(view) }) { Text("Done") }
             }
-        }
-        items(notes.filter { it.status != "draft" }, key = { it.id }) { note ->
-            Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("PAGE ${note.pageIndex + 1} · ${if (note.durationMillis > 0) clock(note.durationMillis) else "THOUGHT"}", style = MaterialTheme.typography.labelSmall)
-                    Text(note.quote, fontFamily = ReaderFont, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                    Text(note.editedTranscript ?: note.machineTranscript?.takeIf { it.isNotBlank() } ?: when (note.status) {
-                        "interrupted" -> "Recording was interrupted. Reopen the app to recover any captured audio."
-                        "transcribing" -> "Recognizing your saved recording on this device…"
-                        "pending" -> "Recording saved · waiting for a quiet moment to transcribe"
-                        "pendingModel" -> "Recording saved · download offline transcription to recognize your words"
-                        "failed" -> "Transcription did not finish. Your recording is safe; retry when you are ready."
-                        else -> "Recording saved"
-                    }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (note.durationMillis > 0 && note.recordingPath.isNotBlank() && java.io.File(note.recordingPath).exists()) IconButton(onClick = {
-                            playback.playNote(note)
-                        }) { Icon(if (audio.noteId == note.id && audio.playing) Icons.Default.Pause else Icons.Default.PlayArrow, if (audio.noteId == note.id && audio.playing) "Pause voice note" else "Play voice note") }
-                        TextButton(onClick = { jump(note) }) { Text("Return to passage") }
-                        if (note.durationMillis > 0) TextButton(onClick = { if (models.asrDirectory() == null) showDownloads = true else transcription.retry(note.id) }, enabled = note.status != "transcribing") { Text(if (note.status == "failed") "Retry transcript" else "Transcribe") }
-                        IconButton(onClick = { deleting = note; deletingError = null }, enabled = !playback.capturing) { Icon(Icons.Default.DeleteOutline, "Delete thought") }
-                        IconButton(onClick = { editing = note; text = note.editedTranscript ?: note.machineTranscript.orEmpty(); saveError = null }) { Icon(Icons.Default.Edit, "Write or edit transcript") }
+            Spacer(Modifier.height(12.dp))
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (notes.isEmpty()) item {
+                    Column(Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Icon(Icons.Default.EditNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
+                        Text("A thought worth keeping", style = MaterialTheme.typography.titleMedium)
+                        Text("Pause and record as you listen. Every thought keeps its place in the document.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                items(notes.filter { it.status != "draft" }, key = { it.id }) { note ->
+                    Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("PAGE ${note.pageIndex + 1} · ${if (note.durationMillis > 0) clock(note.durationMillis) else "THOUGHT"}", style = MaterialTheme.typography.labelSmall)
+                            Text(note.quote, fontFamily = ReaderFont, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            Text(note.editedTranscript ?: note.machineTranscript?.takeIf { it.isNotBlank() } ?: when (note.status) {
+                                "interrupted" -> "Recording was interrupted. Reopen the app to recover any captured audio."
+                                "transcribing" -> "Recognizing your saved recording on this device…"
+                                "pending" -> "Recording saved · waiting for a quiet moment to transcribe"
+                                "pendingModel" -> "Recording saved · download offline transcription to recognize your words"
+                                "failed" -> "Transcription did not finish. Your recording is safe; retry when you are ready."
+                                else -> "Recording saved"
+                            }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (note.durationMillis > 0 && note.recordingPath.isNotBlank() && java.io.File(note.recordingPath).exists()) IconButton(onClick = {
+                                    playback.playNote(note)
+                                }) { Icon(if (audio.noteId == note.id && audio.playing) Icons.Default.Pause else Icons.Default.PlayArrow, if (audio.noteId == note.id && audio.playing) "Pause voice note" else "Play voice note") }
+                                TextButton(onClick = { jump(note); if (!wide) close() }) { Text("Return to passage") }
+                                if (note.durationMillis > 0) TextButton(onClick = { if (models.asrDirectory() == null) showDownloads = true else transcription.retry(note.id) }, enabled = note.status != "transcribing") { Text(if (note.status == "failed") "Retry transcript" else "Transcribe") }
+                                IconButton(onClick = { deleting = note; deletingError = null }, enabled = !playback.capturing) { Icon(Icons.Default.DeleteOutline, "Delete thought") }
+                                IconButton(onClick = { editing = note; text = note.editedTranscript ?: note.machineTranscript.orEmpty(); saveError = null }) { Icon(Icons.Default.Edit, "Write or edit transcript") }
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+    if (visible && wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
+        content(Modifier.fillMaxSize().padding(20.dp))
+    } else if (visible) ModalBottomSheet(onDismissRequest = close) {
+        content(Modifier.fillMaxWidth().heightIn(max = 620.dp).navigationBarsPadding().padding(horizontal = 22.dp))
     }
     if (showDownloads) OfflineSpeechSheet { showDownloads = false }
     deleting?.let { note -> AlertDialog(onDismissRequest = { if (!deletingBusy) deleting = null }, title = { Text("Delete this thought?") }, text = { Column { Text("The recording and its transcript will be removed from this device."); deletingError?.let { Text(it, color = MaterialTheme.colorScheme.error) } } }, confirmButton = {
