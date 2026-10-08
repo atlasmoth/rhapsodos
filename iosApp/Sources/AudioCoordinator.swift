@@ -80,7 +80,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         super.init()
         speech.delegate = self
         speech.usesApplicationAudioSession = true
-        if !selectedVoice.hasPrefix("kokoro:"), AVSpeechSynthesisVoice(identifier: selectedVoice) == nil {
+        if selectedVoice.hasPrefix("kokoro:") {
+            selectedVoice = DownloadedVoice(packId: "kokoro-english-coreml", voiceId: String(selectedVoice.dropFirst(7))).identifier
+            UserDefaults.standard.set(selectedVoice, forKey: "voiceIdentifier")
+        }
+        if DownloadedVoice(selectedVoice) == nil, AVSpeechSynthesisVoice(identifier: selectedVoice) == nil {
             selectedVoice = voices.first(where: { $0.language == "en-US" })?.identifier ?? voices.first?.identifier ?? ""
         }
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification,
@@ -158,7 +162,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio)
             try session.setActive(true)
-            if selectedVoice.hasPrefix("kokoro:") {
+            if DownloadedVoice(selectedVoice) != nil {
                 if let narrationPlayer {
                     guard narrationPlayer.play() else { throw VaultFailure.noAudio }
                     playing = true; reportPosition(); startPlaybackClock(); preloadNextPassage(); updateNowPlaying(); return
@@ -166,7 +170,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                 guard !generating, let renderVoice else { return }
                 let generation = UUID(); narrationGeneration = generation; generating = true; playing = true
                 reportPosition()
-                let voice = String(selectedVoice.dropFirst(7)), pace = self.pace
+                let voice = selectedVoice, pace = self.pace
                 narrationTask = Task(priority: .utility) { [weak self] in
                     defer { if self?.narrationGeneration == generation { self?.narrationTask = nil } }
                     do {
@@ -296,10 +300,10 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
 
     private func preloadNextPassage() {
-        guard playing, selectedVoice.hasPrefix("kokoro:"), passages.indices.contains(index + 1), let renderVoice else { return }
+        guard playing, DownloadedVoice(selectedVoice) != nil, passages.indices.contains(index + 1), let renderVoice else { return }
         preloadTask?.cancel()
         let operation = UUID(); preloadID = operation
-        let next = passages[index + 1], voice = String(selectedVoice.dropFirst(7)), speed = pace
+        let next = passages[index + 1], voice = selectedVoice, speed = pace
         preloadTask = Task(priority: .utility) { [weak self] in
             defer { if self?.preloadID == operation { self?.preloadTask = nil; self?.preloadID = nil } }
             do { _ = try await renderVoice(next, voice, speed); try Task.checkCancellation() }
@@ -485,7 +489,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             passageFraction: fraction, sourcePosition: Double(current.sourceStart) + Double(current.sourceEnd - current.sourceStart) * fraction))
     }
     func seekOffset(_ offsetMillis: Int64) {
-        guard !recording, !capturePending, selectedVoice.hasPrefix("kokoro:") else { return }
+        guard !recording, !capturePending, DownloadedVoice(selectedVoice) != nil else { return }
         transportRevision = UUID()
         if let player = narrationPlayer { player.currentTime = min(max(0, Double(offsetMillis) / 1000), player.duration); elapsed = player.currentTime; reportPosition(); updateNowPlaying() }
         else { pendingOffset = Double(max(0, offsetMillis)) / 1000 }

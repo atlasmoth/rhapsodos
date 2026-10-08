@@ -472,13 +472,25 @@ private struct VoiceSettings: View {
                     ReaderSheetCard(title: "Voices") {
                         Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
                             Text("System voice").tag("")
-                            if audio.selectedVoice.hasPrefix("kokoro:"), store.models?.ready(capability: "tts") == nil { Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true) }
-                            if store.models?.ready(capability: "tts") != nil { Text("Preview · Heart").tag("kokoro:af_heart"); Text("Preview · Bella").tag("kokoro:af_bella"); Text("Preview · Michael").tag("kokoro:am_michael") }
+                            if let choice = DownloadedVoice(audio.selectedVoice), store.models?.ready(capability: "tts", id: choice.packId) == nil {
+                                Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true)
+                            }
+                            if let models = store.models {
+                                ForEach(models.catalog.filter { $0.capability == "tts" && models.ready(capability: "tts", id: $0.id) != nil }) { pack in
+                                    ForEach(DownloadedVoice.voices, id: \.0) { voice in
+                                        Text("\(pack.name) · \(voice.1)").tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
+                                    }
+                                }
+                            }
                             ForEach(audio.voices, id: \.identifier) { voice in Text("\(voice.name) · \(voice.language)").tag(voice.identifier) }
                         }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
                         Button("Download voices and transcription", systemImage: "arrow.down.circle") { gallery = true }
                             .frame(minHeight: 44).disabled(store.models == nil || transportUnavailable)
                         Text("Additional system voices can be managed in iOS Accessibility settings.").font(.caption).foregroundStyle(Palette.muted)
+                    }
+                    ReaderSheetCard(title: "Voice-note transcription") {
+                        TranscriptionChoices().disabled(transportUnavailable || store.models?.refreshingCatalog == true)
+                        Text("Recordings are saved before transcription. Off keeps your recordings available for later.").font(.caption).foregroundStyle(Palette.muted)
                     }
                     ReaderSheetCard(title: "Playback speed") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], spacing: 8) {

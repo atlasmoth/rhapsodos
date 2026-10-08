@@ -14,6 +14,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var preparingDocument = false
     @Published private(set) var preparationProgress = 0.0
+    @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "system"
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published private(set) var preparedArchive: PreparedDocumentArchive?
@@ -54,11 +55,13 @@ final class ReaderStore: ObservableObject {
     init() {
         audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
-            guard let self, let files = self.files, let (pack, folder) = self.models?.ready(capability: "tts") else { throw PackFailure.notReady }
+            guard let self, let files = self.files, let choice = DownloadedVoice(voice),
+                  let (pack, folder) = self.models?.ready(capability: "tts", id: choice.packId),
+                  pack.adapter == "kokoro-english-coreml" else { throw PackFailure.notReady }
             if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
             try Task.checkCancellation()
             await self.speechPacks.unload()
-            do { return try await self.voicePacks.render(passage, voice: voice, pace: pace, pack: pack, folder: folder, cache: files.transient) }
+            do { return try await self.voicePacks.render(passage, voice: choice.voiceId, pace: pace, pack: pack, folder: folder, cache: files.transient) }
             catch {
                 if let installation = self.models?.installs.first(where: { $0.packId == pack.id }), !(error is CancellationError), !(error is NarrationFailure) {
                     try? await self.repository?.invalidateModel(id: pack.id, generation: installation.generation, error: error.localizedDescription)
@@ -192,24 +195,31 @@ final class ReaderStore: ObservableObject {
             let files = try LocalFiles()
             self.files = files
             repository = try await SharedRepository.open(path: files.database.path)
-            if let repository { models = ModelPacks(repository: repository, files: files) { [weak self] pack, folder in
+            if let repository { models = ModelPacks(repository: repository, files: files, isIdle: { [weak self] in
+                guard let self else { return false }
+                return self.sceneActive && !self.audio.playing && !self.audio.generating && !self.audio.replayPlaying
+                    && !self.audio.recording && !self.audio.capturePending && self.captureDraft == nil
+                    && !self.preparingDocument && !self.busy && self.transcriptionTask == nil
+            }) { [weak self] pack, folder in
                 guard let self else { throw CancellationError() }
                 while self.audio.playing || self.audio.replayPlaying || self.audio.recording || self.captureDraft != nil || self.preparingDocument || self.busy || !self.sceneActive {
                     try Task.checkCancellation(); try await Task.sleep(for: .milliseconds(100))
                 }
                 if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
                 try Task.checkCancellation()
-                if pack.capability == "asr" { await self.voicePacks.unload(); try await self.speechPacks.validateASR(at: folder) }
-                else if pack.capability == "tts" { await self.speechPacks.unload(); try await self.voicePacks.validate(at: folder) }
-                else { throw PackFailure.incompatible }
+                switch pack.adapter {
+                case "whisper-tiny-en-coreml": await self.voicePacks.unload(); try await self.speechPacks.validateASR(at: folder)
+                case "kokoro-english-coreml": await self.speechPacks.unload(); try await self.voicePacks.validate(at: folder)
+                default: throw PackFailure.incompatible
+                }
             } }
             models?.onReady = { [weak self] pack in
-                guard let self, pack.capability == "asr" else { return }
+                guard let self, pack.capability == "asr", self.selectedTranscription == pack.id else { return }
                 for note in self.notes where ["pending", "pendingModel"].contains(note.status) && !(note.recordingPath ?? "").isEmpty { self.enqueue(note.id) }
             }
             models?.objectWillChange.sink { [weak self] _ in Task { @MainActor in self?.objectWillChange.send(); self?.serviceTranscriptions() } }.store(in: &subscriptions)
             if let models {
-                models.$loading.merge(with: models.$validationActive).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
+                models.$loading.merge(with: models.$validationActive).merge(with: models.$refreshingCatalog).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
             }
             try await refresh()
             await removePendingFiles()
@@ -779,6 +789,32 @@ final class ReaderStore: ObservableObject {
         catch { present(error) }
     }
 
+    func selectTranscription(_ value: String) async {
+        guard value != selectedTranscription, !busy, !loading, !audio.recording, !audio.capturePending,
+              captureDraft == nil, models?.refreshingCatalog != true else { return }
+        guard value == "off" || value == "system" || models?.ready(capability: "asr", id: value) != nil else {
+            errorMessage = "Finish downloading and checking this transcription pack before selecting it."
+            return
+        }
+        busy = true
+        defer { busy = false; serviceTranscriptions() }
+        let worker = transcriptionTask
+        worker?.cancel()
+        await worker?.value
+        await speechPacks.unload()
+        guard !audio.recording, !audio.capturePending, captureDraft == nil,
+              value == "off" || value == "system" || models?.ready(capability: "asr", id: value) != nil else {
+            errorMessage = "Transcription selection stopped because recording started or the pack became unavailable."
+            return
+        }
+        selectedTranscription = value
+        UserDefaults.standard.set(value, forKey: "transcriptionModel")
+        for note in notes where ["pending", "pendingModel", "failed"].contains(note.status) && !note.isDraft && !(note.recordingPath ?? "").isEmpty {
+            if !transcriptionQueue.contains(note.id) { transcriptionQueue.append(note.id) }
+        }
+        feedback.play(.selection)
+    }
+
     func retry(_ note: VoiceNote) { enqueue(note.id) }
 
     private func enqueue(_ id: String) {
@@ -788,11 +824,11 @@ final class ReaderStore: ObservableObject {
     }
 
     private var transcriptionDeferred: Bool {
-        !sceneActive || audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || busy
+        selectedTranscription == "off" || !sceneActive || audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || models?.refreshingCatalog == true || busy
     }
     private func serviceTranscriptions() {
         if audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || busy || !sceneActive { models?.cancelRuntimeChecks() }
-        else if models?.loading == false && models?.validationActive == false { Task { await models?.recheckReadyPacks() } }
+        else if models?.loading == false && models?.validationActive == false && models?.refreshingCatalog == false { Task { await models?.recheckReadyPacks() } }
         if transcriptionDeferred { transcriptionTask?.cancel(); return }
         guard transcriptionTask == nil, !transcriptionQueue.isEmpty else { return }
         let generation = UUID(); transcriptionGeneration = generation
@@ -800,6 +836,7 @@ final class ReaderStore: ObservableObject {
     }
     private func processTranscriptions(generation: UUID) async {
         guard !transcribing, let repository, let files else { transcriptionTask = nil; return }
+        let choice = selectedTranscription
         transcribing = true
         defer {
             transcribing = false; activeTranscription = nil
@@ -818,10 +855,12 @@ final class ReaderStore: ObservableObject {
                 try Task.checkCancellation()
                 await voicePacks.unload()
                 let text: String
-                if let (_, folder) = models?.ready(capability: "asr") { text = try await speechPacks.transcribe(output, using: folder) }
-                else { text = try await transcriber.transcribe(output) }
+                if choice == "system" { text = try await transcriber.transcribe(output) }
+                else if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-tiny-en-coreml" {
+                    text = try await speechPacks.transcribe(output, using: folder)
+                } else { throw TranscriptionFailure.unavailable }
                 try Task.checkCancellation()
-                guard transcriptionGeneration == generation else { throw CancellationError() }
+                guard transcriptionGeneration == generation, selectedTranscription == choice else { throw CancellationError() }
                 try await repository.transcript(id: id, text: text, status: "transcribed")
             } catch is CancellationError {
                 try? await repository.status(id: id, value: "pending")

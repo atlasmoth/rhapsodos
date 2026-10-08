@@ -6,10 +6,14 @@ import Darwin
 struct ModelAsset: Codable { let path: String; let url: String; let sha256: String; let bytes: Int64 }
 struct ModelPack: Codable, Identifiable {
     let id: String; let name: String; let capability: String; let platform: String
-    let runtime: String; let version: String; let languageTags: [String]
+    let runtime: String; let adapter: String; let version: String; let languageTags: [String]
     let minimumOS: Int; let minimumMemoryMB: Int; let license: String; let licenseUrl: String
     let description: String; let files: [ModelAsset]; let totalBytes: Int64
-    var eligible: Bool { ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= minimumOS && ProcessInfo.processInfo.physicalMemory / 1_048_576 >= minimumMemoryMB }
+    var requiredStorageBytes: Int64 { totalBytes * 4 + 100_000_000 }
+    var supported: Bool {
+        capability == "tts" && adapter == "kokoro-english-coreml" || capability == "asr" && adapter == "whisper-tiny-en-coreml"
+    }
+    var eligible: Bool { supported && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= minimumOS && ProcessInfo.processInfo.physicalMemory / 1_048_576 >= minimumMemoryMB }
 }
 struct ModelInstall: Codable, Identifiable {
     let packId: String; let generation: String; let status: String; let bytesDownloaded: Int64
@@ -17,6 +21,10 @@ struct ModelInstall: Codable, Identifiable {
     var id: String { packId }
 }
 struct VerifiedModelFile: Codable { let path: String; let sha256: String; let bytes: Int64 }
+struct ModelReadinessCheck {
+    let completedAt: Date
+    let seconds: TimeInterval
+}
 private struct Transfer: Codable { let packId: String; let generation: String; let fileIndex: Int }
 
 enum PackFailure: LocalizedError {
@@ -40,9 +48,14 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var message: String?
     @Published private(set) var loading = true
     @Published private(set) var validationActive = false
+    @Published private(set) var refreshingCatalog = false
+    @Published private(set) var catalogStatus: ModelCatalogStatus?
+    @Published private(set) var catalogMessage: String?
+    @Published private(set) var checks: [String: ModelReadinessCheck] = [:]
     var onReady: ((ModelPack) -> Void)?
     private let repository: SharedRepository
     private let files: LocalFiles
+    private let isIdle: () -> Bool
     private let validate: (ModelPack, URL) async throws -> Void
     private var jobs: [String: Transfer] = [:]
     private var active: [String: URLSessionDownloadTask] = [:]
@@ -67,8 +80,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }()
     var backgroundCompletion: (() -> Void)?
 
-    init(repository: SharedRepository, files: LocalFiles, validate: @escaping (ModelPack, URL) async throws -> Void) {
-        self.repository = repository; self.files = files; self.validate = validate
+    init(repository: SharedRepository, files: LocalFiles, isIdle: @escaping () -> Bool = { true }, validate: @escaping (ModelPack, URL) async throws -> Void) {
+        self.repository = repository; self.files = files; self.isIdle = isIdle; self.validate = validate
         super.init()
         ModelBackgroundBridge.manager = self
         backgroundCompletion = ModelBackgroundBridge.pendingCompletion
@@ -78,6 +91,41 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
 
     func refresh() async throws {
         catalog = try await repository.catalog(); installs = try await repository.installs()
+        catalogStatus = try await repository.catalogStatus()
+    }
+    var liveCatalogConfigured: Bool { ModelCatalogClient.configured }
+    private var catalogRefreshSafe: Bool {
+        !loading && !validationActive && active.isEmpty && operations.isEmpty && removing.isEmpty && isIdle()
+    }
+    var canRefreshCatalog: Bool { liveCatalogConfigured && !refreshingCatalog && catalogRefreshSafe }
+    func refreshCatalog() async {
+        guard liveCatalogConfigured else { catalogMessage = ModelCatalogFailure.configuration.localizedDescription; return }
+        guard canRefreshCatalog else { catalogMessage = ModelCatalogFailure.busy.localizedDescription; return }
+        refreshingCatalog = true
+        catalogMessage = nil
+        defer { refreshingCatalog = false }
+        do {
+            let payload = try await ModelCatalogClient.fetch()
+            try Task.checkCancellation()
+            guard catalogRefreshSafe else { throw ModelCatalogFailure.busy }
+            let changed: Bool
+            do { changed = try await repository.acceptCatalog(payload) }
+            catch { throw ModelCatalogFailure.payload }
+            try await refresh()
+            catalogMessage = changed ? "Catalogue updated. Existing downloads and choices are preserved." : "Catalogue is up to date."
+        } catch is CancellationError { }
+        catch { catalogMessage = error is ModelCatalogFailure ? error.localizedDescription : ModelCatalogFailure.transport.localizedDescription }
+    }
+    func state(_ pack: ModelPack, active selected: Bool) -> String {
+        guard let install = installs.first(where: { $0.packId == pack.id }) else { return "Download" }
+        switch install.status {
+        case "ready": return !pack.eligible ? "Unavailable" : ready(capability: pack.capability, id: pack.id) == nil ? "Checking" : selected ? "Active" : "Ready"
+        case "verifying": return "Checking"
+        case "downloading": return "Downloading"
+        case "paused": return "Paused"
+        case "failed": return "Failed"
+        default: return "Download"
+        }
     }
     func ready(capability: String, id: String? = nil) -> (ModelPack, URL)? {
         for pack in catalog where pack.capability == capability && pack.eligible && (id == nil || pack.id == id) {
@@ -103,6 +151,16 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             await recheckReadyPacks()
         } catch { message = error.localizedDescription }
     }
+    func canCheck(_ pack: ModelPack) -> Bool {
+        !refreshingCatalog && !loading && !validationActive && pack.eligible && isIdle() && active.isEmpty && operations.isEmpty
+            && installs.contains(where: { $0.packId == pack.id && $0.status == "ready" }) && !removing.contains(pack.id)
+    }
+    func checkOnDevice(_ pack: ModelPack) async {
+        guard canCheck(pack) else { return }
+        qualified.remove(pack.id)
+        checks.removeValue(forKey: pack.id)
+        await recheckReadyPacks()
+    }
     func cancelRuntimeChecks() {
         readyChecks.values.forEach { $0.cancel() }
         validationTasks.values.forEach { $0.cancel() }
@@ -115,6 +173,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         for validation in validations { _ = try? await validation.value }
     }
     func recheckReadyPacks() async {
+        guard !refreshingCatalog, installs.contains(where: { item in
+            item.status == "ready" && !qualified.contains(item.packId) && readyChecks[item.packId] == nil
+                && catalog.contains(where: { $0.id == item.packId && $0.eligible })
+        }) else { return }
         do { try await refresh() } catch { message = error.localizedDescription; return }
         for item in installs where item.status == "ready" && !qualified.contains(item.packId) {
             guard readyChecks[item.packId] == nil, !removing.contains(item.packId), operations[item.packId] == nil else { continue }
@@ -128,7 +190,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
     private func checkReady(_ item: ModelInstall) async {
         guard UIApplication.shared.applicationState == .active else { return }
-        guard let pack = catalog.first(where: { $0.id == item.packId }), let folder = files.modelURL(item.installedPath) else { return }
+        guard let pack = catalog.first(where: { $0.id == item.packId }), pack.eligible, let folder = files.modelURL(item.installedPath) else { return }
         do {
             for asset in pack.files { _ = try await verifyAsset(try assetURL(asset.path, in: folder), asset: asset) }
             try Task.checkCancellation()
@@ -148,23 +210,27 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     private func updateValidationState() { validationActive = !finalizing.isEmpty || !readyChecks.isEmpty }
     private func runtimeCheck(_ pack: ModelPack, folder: URL) async throws {
         try Task.checkCancellation()
+        checks.removeValue(forKey: pack.id)
+        let started = ProcessInfo.processInfo.systemUptime
         let task = Task { try await self.validate(pack, folder); try Task.checkCancellation() }
         validationTasks[pack.id] = task
         defer { validationTasks.removeValue(forKey: pack.id) }
         try await withTaskCancellationHandler(operation: { try await task.value }, onCancel: { task.cancel() })
+        try Task.checkCancellation()
+        checks[pack.id] = ModelReadinessCheck(completedAt: Date(), seconds: ProcessInfo.processInfo.systemUptime - started)
     }
     private func verifyAsset(_ url: URL, asset: ModelAsset) async throws -> VerifiedModelFile {
         let task = Task.detached(priority: .utility) { try Self.verify(url, asset: asset) }
         return try await withTaskCancellationHandler(operation: { try await task.value }, onCancel: { task.cancel() })
     }
     func download(_ pack: ModelPack) async {
-        guard active[pack.id] == nil, operations[pack.id] == nil, !finalizing.contains(pack.id), !removing.contains(pack.id), readyChecks[pack.id] == nil else { return }
+        guard !refreshingCatalog, active[pack.id] == nil, operations[pack.id] == nil, !finalizing.contains(pack.id), !removing.contains(pack.id), readyChecks[pack.id] == nil else { return }
         let generation = UUID().uuidString
         let transfer = Transfer(packId: pack.id, generation: generation, fileIndex: 0)
         let task = beginOperation(transfer) {
             guard pack.eligible else { throw PackFailure.incompatible }
             let free = try self.files.staging.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
-            guard free > pack.totalBytes * 4 + 100_000_000 else { throw PackFailure.space }
+            guard free > pack.requiredStorageBytes else { throw PackFailure.space }
             let existing = self.installs.first { $0.packId == pack.id }
             _ = try await self.repository.beginInstall(id: pack.id, generation: generation)
             try Task.checkCancellation()
@@ -210,9 +276,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         }
     }
     func remove(_ pack: ModelPack) async throws {
-        guard !removing.contains(pack.id) else { throw PackFailure.transport }
+        guard !refreshingCatalog, !removing.contains(pack.id) else { throw PackFailure.transport }
         removing.insert(pack.id)
         qualified.remove(pack.id)
+        checks.removeValue(forKey: pack.id)
         defer { removing.remove(pack.id) }
         active.removeValue(forKey: pack.id)?.cancel()
         jobs.removeValue(forKey: pack.id)
@@ -472,6 +539,26 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
+struct TranscriptionChoices: View {
+    @EnvironmentObject private var store: ReaderStore
+    var body: some View {
+        Picker("Transcription", selection: Binding(get: { store.selectedTranscription }, set: { value in
+            Task { await store.selectTranscription(value) }
+        })) {
+            Text("System on-device").tag("system")
+            Text("Off").tag("off")
+            if let models = store.models {
+                if !["system", "off"].contains(store.selectedTranscription), models.ready(capability: "asr", id: store.selectedTranscription) == nil {
+                    Text("Unavailable downloaded transcription").tag(store.selectedTranscription).disabled(true)
+                }
+                ForEach(models.catalog.filter { $0.capability == "asr" && models.ready(capability: "asr", id: $0.id) != nil }) { pack in
+                    Text(pack.name).tag(pack.id)
+                }
+            }
+        }.pickerStyle(.menu).frame(minHeight: 44)
+    }
+}
+
 struct ModelGallery: View {
     @ObservedObject var models: ModelPacks
     @EnvironmentObject private var store: ReaderStore
@@ -480,13 +567,11 @@ struct ModelGallery: View {
     @State private var detent: PresentationDetent = .large
 
     private var transportUnavailable: Bool {
-        store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
+        store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending || models.refreshingCatalog
     }
-    private var changingVoiceUnavailable: Bool {
-        transportUnavailable || audio.replayingNote != nil
-    }
+    private var changingVoiceUnavailable: Bool { transportUnavailable || audio.replayingNote != nil }
     private var systemVoice: String? {
-        if !audio.selectedVoice.hasPrefix("kokoro:"), audio.voices.contains(where: { $0.identifier == audio.selectedVoice }) { return audio.selectedVoice }
+        if DownloadedVoice(audio.selectedVoice) == nil, audio.voices.contains(where: { $0.identifier == audio.selectedVoice }) { return audio.selectedVoice }
         return audio.voices.first(where: { $0.language == "en-US" })?.identifier ?? audio.voices.first?.identifier
     }
 
@@ -496,14 +581,37 @@ struct ModelGallery: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     Text("Downloads contain public model files. Your documents, recordings and words stay on your device.")
-                    ReaderSheetCard(title: "Installed iOS voice") {
-                        Text("System voices remain available. Additional voices can be managed in iOS Accessibility settings.").font(.subheadline).foregroundStyle(Palette.muted)
-                        systemVoiceAction
+                    ReaderSheetCard(title: "Catalogue") {
+                        if let status = models.catalogStatus, status.acceptedAt > 0 {
+                            Text("Catalogue revision \(status.revision)").font(.subheadline)
+                            Text("Updated \(Date(timeIntervalSince1970: Double(status.acceptedAt) / 1000).formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(Palette.muted)
+                        } else { Text("Bundled catalogue").font(.subheadline) }
+                        if models.liveCatalogConfigured {
+                            Button("Refresh catalogue", systemImage: "arrow.clockwise") { Task { await models.refreshCatalog() } }
+                                .frame(minHeight: 44).disabled(!models.canRefreshCatalog)
+                            if models.refreshingCatalog { ProgressView("Refreshing catalogue…") }
+                        } else {
+                            Text("Live catalogue updates are not configured yet.").font(.caption).foregroundStyle(Palette.muted)
+                        }
+                        if let message = models.catalogMessage { Text(message).font(.caption).foregroundStyle(Palette.muted) }
                     }
                     if models.loading { ProgressView("Checking available downloads…") }
-                    ForEach(models.catalog) { pack in
-                        packCard(pack)
+                    Text("Narration").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+                    ReaderSheetCard(title: "System voice") {
+                        Text(DownloadedVoice(audio.selectedVoice) == nil ? "Active" : "Ready").font(.headline).foregroundStyle(Palette.accent)
+                        Text("System voices remain available. Additional voices can be managed in iOS Accessibility settings.").font(.subheadline).foregroundStyle(Palette.muted)
+                        Button(DownloadedVoice(audio.selectedVoice) == nil ? "Active" : "Use system voice") {
+                            if let systemVoice { Task { await audio.changeVoice(systemVoice) } }
+                        }.buttonStyle(.borderedProminent).frame(minHeight: 44)
+                            .disabled(changingVoiceUnavailable || systemVoice == nil || DownloadedVoice(audio.selectedVoice) == nil)
                     }
+                    ForEach(models.catalog.filter { $0.capability == "tts" }) { pack in packCard(pack) }
+                    Text("Voice-note transcription").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+                    ReaderSheetCard(title: "Transcription") {
+                        TranscriptionChoices().disabled(transportUnavailable)
+                        Text("Choose on-device system recognition, a checked downloaded pack, or Off. Recordings are saved independently.").font(.subheadline).foregroundStyle(Palette.muted)
+                    }
+                    ForEach(models.catalog.filter { $0.capability == "asr" }) { pack in packCard(pack) }
                 }.padding(.horizontal, 24).padding(.vertical, 16).frame(maxWidth: 640).frame(maxWidth: .infinity)
             }
         }.background(Palette.paper).foregroundStyle(Palette.ink)
@@ -513,53 +621,60 @@ struct ModelGallery: View {
             } message: { Text(models.message ?? "") }
     }
 
-    private var systemVoiceAction: some View {
-        Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Use system voice" : "Selected") {
-            if let systemVoice { Task { await audio.changeVoice(systemVoice) } }
-        }.buttonStyle(.borderedProminent).frame(minHeight: 44).disabled(changingVoiceUnavailable || systemVoice == nil)
-    }
-
     private func packCard(_ pack: ModelPack) -> some View {
         let install = models.installs.first { $0.packId == pack.id }
         let status = install?.status ?? "notInstalled"
         let ready = status == "ready" && models.ready(capability: pack.capability, id: pack.id) != nil
+        let selected = pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : store.selectedTranscription == pack.id
         return ReaderSheetCard(title: pack.name) {
+            Text(models.state(pack, active: selected)).font(.headline).foregroundStyle(Palette.accent)
             Text(pack.description)
-            Text("\(pack.totalBytes / (1024 * 1024)) MB · English · \(pack.capability == "tts" ? "Narration" : "Voice-note transcription")")
+            Text("\(size(pack.totalBytes)) · \(pack.languageTags.map { Locale.current.localizedString(forIdentifier: $0) ?? $0 }.joined(separator: ", "))")
                 .font(.caption).foregroundStyle(Palette.muted)
-            if pack.capability == "tts" {
-                Text("Narration preview · Performance and long playback depend on your device. Built-in voices remain available.")
-                    .font(.caption).foregroundStyle(Palette.muted)
-            }
-            if let install, ["downloading", "verifying"].contains(status) {
+            Text("Requires iOS \(pack.minimumOS)+, \(size(Int64(pack.minimumMemoryMB) * 1_048_576)) device memory and \(size(pack.requiredStorageBytes)) free storage.")
+                .font(.caption).foregroundStyle(pack.eligible ? Palette.muted : .red)
+            if let install, ["downloading", "verifying", "paused"].contains(status) {
                 ProgressView(value: Double(install.bytesDownloaded), total: Double(max(1, install.totalBytes)))
-                Text(status == "verifying" ? "Checking files and trying the model on this device…" : "\(install.bytesDownloaded / (1024 * 1024)) of \(pack.totalBytes / (1024 * 1024)) MB downloaded")
+                Text(status == "verifying" ? "Files downloaded. Checking waits until playback and recording are idle." : "\(size(install.bytesDownloaded)) of \(size(pack.totalBytes)) downloaded")
                     .font(.caption)
             }
             if let install, !install.error.isEmpty { Text(install.error).font(.caption).foregroundStyle(.red) }
-            if !pack.eligible {
-                Text("Requires iOS \(pack.minimumOS)+ and \(pack.minimumMemoryMB) MB of device memory.").font(.caption).foregroundStyle(.red)
-            }
             if ready {
+                Text("Checked on this device. Longer-session performance varies.").font(.caption).foregroundStyle(Palette.muted)
+                if let check = models.checks[pack.id] {
+                    Text("Last compatibility check: \(check.completedAt.formatted(date: .omitted, time: .shortened)) · \(check.seconds.formatted(.number.precision(.fractionLength(1)))) s").font(.caption).foregroundStyle(Palette.muted)
+                }
+                Button("Check on this device", systemImage: "checkmark.shield") { Task { await models.checkOnDevice(pack) } }
+                    .frame(minHeight: 44).disabled(!models.canCheck(pack))
                 if pack.capability == "tts" {
-                    Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
-                        if !audio.selectedVoice.hasPrefix("kokoro:") { Text("System voice").tag(audio.selectedVoice) }
-                        Text("Heart").tag("kokoro:af_heart")
-                        Text("Bella").tag("kokoro:af_bella")
-                        Text("Michael").tag("kokoro:am_michael")
-                    }.pickerStyle(.menu).disabled(changingVoiceUnavailable)
-                    voiceAction
+                    Picker("Voice", selection: Binding(get: {
+                        DownloadedVoice(audio.selectedVoice)?.packId == pack.id ? audio.selectedVoice : DownloadedVoice(packId: pack.id, voiceId: "af_heart").identifier
+                    }, set: { value in Task { await audio.changeVoice(value) } })) {
+                        ForEach(DownloadedVoice.voices, id: \.0) { voice in
+                            Text(voice.1).tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
+                        }
+                    }.pickerStyle(.menu).frame(minHeight: 44).disabled(changingVoiceUnavailable)
+                    Button(selected ? "Active" : "Use this voice") {
+                        Task { await audio.changeVoice(DownloadedVoice(packId: pack.id, voiceId: "af_heart").identifier) }
+                    }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable || selected)
                 } else {
-                    Text("Ready for saved voice notes").font(.headline)
+                    Button(selected ? "Active" : "Use for voice notes") { Task { await store.selectTranscription(pack.id) } }
+                        .frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(transportUnavailable || selected)
                 }
             } else if status == "ready" {
-                ProgressView("Checking installed files on this device…")
+                if pack.eligible {
+                    ProgressView("Checking installed files on this device…")
+                    Text("Checks wait until playback and recording are idle.").font(.caption).foregroundStyle(Palette.muted)
+                } else {
+                    Text("This installed pack is unavailable on this device. Its downloaded files and your selected choice are retained.")
+                        .font(.caption).foregroundStyle(Palette.muted)
+                }
             } else if ["downloading", "verifying"].contains(status) {
                 Button("Pause download") { models.pause(pack) }.frame(minHeight: 44).buttonStyle(.bordered)
             } else {
                 Button(status == "paused" ? "Resume download" : status == "failed" ? "Retry download" : "Download") {
                     Task { await models.download(pack) }
-                }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(!pack.eligible || models.loading)
+                }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(!pack.eligible || models.loading || models.refreshingCatalog)
             }
             if let install, !["downloading", "verifying"].contains(install.status) {
                 Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
@@ -567,11 +682,5 @@ struct ModelGallery: View {
             }
         }
     }
-
-    private var voiceAction: some View {
-        Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Selected" : "Use this voice") {
-            Task { await audio.changeVoice(audio.selectedVoice.hasPrefix("kokoro:") ? audio.selectedVoice : "kokoro:af_heart") }
-        }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable)
-    }
-
+    private func size(_ bytes: Int64) -> String { ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) }
 }
