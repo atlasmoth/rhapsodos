@@ -28,6 +28,8 @@ Motion explains transitions and preparation. It must respect reduced-motion pref
 
 ## Main surfaces
 
+Book thumbnails show the original first PDF page, including in the playback dock. Native adapters render small covers asynchronously with bounded caches. Covers retain their original colours in both themes; unavailable or damaged files receive a neutral document placeholder. Cover generation never changes the source PDF or reader geometry.
+
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Continue listening, recent imports, prepared/offline status and import action |

@@ -32,7 +32,7 @@ class IsolatedPdfService : Service() {
     private var document: PDDocument? = null
     private val binder = object : IPdfWorker.Stub() {
         override fun request(pdf: ParcelFileDescriptor, token: String, operation: String, pageIndex: Int, targetWidth: Int): ParcelFileDescriptor {
-            require(token.length <= 128 && operation in setOf("inspect", "text", "render", "outline", "geometry"))
+            require(token.length <= 128 && operation in setOf("inspect", "text", "render", "cover", "outline", "geometry"))
             val pipe = ParcelFileDescriptor.createReliablePipe()
             if (queued.incrementAndGet() > 2) { queued.decrementAndGet(); pdf.close(); pipe.forEach { it.close() }; error("The PDF worker is busy.") }
             worker.execute {
@@ -40,8 +40,8 @@ class IsolatedPdfService : Service() {
                     val data = DataOutputStream(output)
                     try {
                         pdf.use { open(it, token) }
-                        if (operation == "render") {
-                            val bitmap = render(pageIndex, targetWidth)
+                        if (operation == "render" || operation == "cover") {
+                            val bitmap = render(pageIndex, targetWidth, operation == "cover")
                             try {
                                 data.writeByte(2); data.writeInt(bitmap.width); data.writeInt(bitmap.height)
                                 check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, data))
@@ -157,9 +157,11 @@ class IsolatedPdfService : Service() {
         return pdf.openPage(index).use { displayed -> PdfPageGeometry(rotation, page.cropBox.width, page.cropBox.height, displayed.width.toFloat(), displayed.height.toFloat()) }
     }
 
-    private fun render(index: Int, requestedWidth: Int): Bitmap = checkNotNull(renderer).openPage(index).use { page ->
-        val width = requestedWidth.coerceIn(400, 2400)
-        val scale = min(width.toFloat() / page.width, min(6000f / page.height, sqrt(6_000_000.0 / (page.width.toDouble() * page.height)).toFloat()))
+    private fun render(index: Int, requestedWidth: Int, cover: Boolean = false): Bitmap = checkNotNull(renderer).openPage(index).use { page ->
+        val width = if (cover) requestedWidth.coerceIn(96, 256) else requestedWidth.coerceIn(400, 2400)
+        val heightLimit = if (cover) 384f else 6000f
+        val pixelLimit = if (cover) 98_304.0 else 6_000_000.0
+        val scale = min(width.toFloat() / page.width, min(heightLimit / page.height, sqrt(pixelLimit / (page.width.toDouble() * page.height)).toFloat()))
         val bitmap = Bitmap.createBitmap((page.width * scale).toInt().coerceAtLeast(1), (page.height * scale).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
         try { bitmap.eraseColor(Color.WHITE); page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY); bitmap }
         catch (failure: Exception) { bitmap.recycle(); throw failure }

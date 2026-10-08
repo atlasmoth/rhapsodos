@@ -271,7 +271,7 @@ fun ReaderApp() {
                 }
             },
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, playback, !playback.capturing, { recordThought() }, { showSleep = true })
+                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing, { recordThought() }, { showSleep = true })
             },
         ) { padding ->
             NavDisplay(
@@ -281,7 +281,7 @@ fun ReaderApp() {
                 sceneStrategies = listOf(sceneStrategy),
                 entryProvider = entryProvider {
                     entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyListeningRoom { importPicker.launch(arrayOf("application/pdf")) } })) {
-                        LibraryPane(library.documents, audio, reducedMotion, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
+                        LibraryPane(library.documents, pdf, audio, reducedMotion, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
                         DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
@@ -432,7 +432,7 @@ fun ReaderApp() {
 }
 
 @Composable
-private fun LibraryPane(documents: List<LibraryDocument>, audio: PlaybackSnapshot, reducedMotion: Boolean, importing: Boolean, import: () -> Unit, open: (String) -> Unit, action: (String, LibraryDocument) -> Unit) {
+private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio: PlaybackSnapshot, reducedMotion: Boolean, importing: Boolean, import: () -> Unit, open: (String) -> Unit, action: (String, LibraryDocument) -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             Label("YOUR LISTENING LIBRARY")
@@ -474,7 +474,7 @@ private fun LibraryPane(documents: List<LibraryDocument>, audio: PlaybackSnapsho
         items(documents, key = { it.id }) { document ->
             Surface(onClick = { open(document.id) }, shape = RoundedCornerShape(24.dp), color = if (audio.documentId == document.id) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    BookMark(document.title, Modifier.size(56.dp, 72.dp))
+                    PdfCover(document, pdf, Modifier.size(56.dp, 72.dp))
                     Spacer(Modifier.width(18.dp))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text(document.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -937,7 +937,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit, sleep: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit, sleep: () -> Unit) {
     val view = LocalView.current
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
@@ -946,7 +946,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, playback: PlaybackCoordinator
             val compact = maxWidth < 600.dp
             Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                BookMark(audio.title, Modifier.size(36.dp, 46.dp))
+                PdfCover(document, pdf, Modifier.size(36.dp, 46.dp))
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(audio.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -984,9 +984,20 @@ private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordin
 }
 
 @Composable
-private fun BookMark(title: String, modifier: Modifier) {
-    Box(modifier.clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 12.dp, bottomEnd = 12.dp)).background(Ember), contentAlignment = Alignment.Center) {
-        Text(title.take(1).uppercase(), color = Color(0xFFF0ECD9), fontFamily = ReaderFont, fontSize = 22.sp)
+private fun PdfCover(document: LibraryDocument?, pdf: PdfAdapter, modifier: Modifier) {
+    var bitmap by remember(document?.id, document?.filePath, document?.sourceRevision) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(document?.id, document?.filePath, document?.sourceRevision, pdf) {
+        bitmap = null
+        if (document != null) {
+            try { bitmap = pdf.cover(document.filePath, document.sourceRevision) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { bitmap = null }
+        }
+    }
+    Box(modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
+        val cover = bitmap
+        if (cover != null) Image(cover.asImageBitmap(), null, modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+        else Icon(Icons.Default.PictureAsPdf, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
     }
 }
 

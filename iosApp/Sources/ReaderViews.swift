@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import CoreGraphics
 
 struct ReaderRoot: View {
     @EnvironmentObject private var store: ReaderStore
@@ -32,8 +33,8 @@ struct ReaderRoot: View {
                     ForEach(store.library) { document in
                         NavigationLink(value: document.id) {
                             HStack(spacing: 12) {
-                                Image(systemName: "book.closed.fill").font(.title3).foregroundStyle(Palette.accent)
-                                    .frame(width: 44, height: 54).background(Palette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                                BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath))
+                                    .frame(width: 44, height: 58)
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(document.title).font(.subheadline.weight(.semibold)).lineLimit(2)
                                     Text("\(document.pageCount) pages · \(document.passageCount == 0 ? "Source only" : "Ready to listen")")
@@ -195,10 +196,16 @@ private struct PlaybackDock: View {
     }
 
     private var playbackStatus: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
-            if audio.duration > 0 { Text("\(Duration.seconds(audio.elapsed).formatted(.time(pattern: .minuteSecond))) / \(Duration.seconds(audio.duration).formatted(.time(pattern: .minuteSecond)))").font(BrandFont.mono()) }
-            if let end = audio.sleepUntil { Label(end.formatted(date: .omitted, time: .shortened), systemImage: "moon.zzz").font(.caption2) }
+        HStack(spacing: 12) {
+            if let document = store.document?.document {
+                BookThumbnail(document: document, url: store.originalURL)
+                    .frame(width: 36, height: 48)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
+                if audio.duration > 0 { Text("\(Duration.seconds(audio.elapsed).formatted(.time(pattern: .minuteSecond))) / \(Duration.seconds(audio.duration).formatted(.time(pattern: .minuteSecond)))").font(BrandFont.mono()) }
+                if let end = audio.sleepUntil { Label(end.formatted(date: .omitted, time: .shortened), systemImage: "moon.zzz").font(.caption2) }
+            }
         }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: true, vertical: false)
     }
 
@@ -382,5 +389,88 @@ private struct NotesPanel: View {
         Text(note.isDraft ? "Draft" : ["transcribed", "text"].contains(note.status) ? "Saved" : note.status == "transcribing" ? "Transcribing" : "Pending")
             .font(.caption2.weight(.medium)).foregroundStyle(Palette.accent)
             .padding(.horizontal, 8).padding(.vertical, 5).background(Palette.accent.opacity(0.08), in: Capsule())
+    }
+}
+
+private struct BookThumbnail: View {
+    let document: LibraryDocument
+    let url: URL?
+    @State private var image: UIImage?
+    @State private var loadedIdentity: String?
+
+    private var identity: String { document.id + ":" + document.sourceRevision + ":" + (url?.path ?? "") }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 5).fill(Palette.soft)
+            if loadedIdentity == identity, let image {
+                Image(uiImage: image).resizable().scaledToFit()
+            } else {
+                Image(systemName: "doc.richtext").font(.title3).foregroundStyle(Palette.muted)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+        .overlay { RoundedRectangle(cornerRadius: 5).strokeBorder(Palette.muted.opacity(0.18), lineWidth: 0.5) }
+        .accessibilityHidden(true)
+        .task(id: identity, priority: .utility) {
+            image = nil
+            loadedIdentity = nil
+            guard let url else { return }
+            let requested = identity
+            let thumbnail = await BookThumbnailCache.shared.image(document: document, url: url)
+            guard !Task.isCancelled else { return }
+            image = thumbnail
+            loadedIdentity = requested
+        }
+    }
+}
+
+private actor BookThumbnailCache {
+    static let shared = BookThumbnailCache()
+    private let images = NSCache<NSString, UIImage>()
+    private let pixelLimit = 256
+
+    init() {
+        images.countLimit = 48
+        images.totalCostLimit = 8 * 1024 * 1024
+    }
+
+    func image(document: LibraryDocument, url: URL) -> UIImage? {
+        guard !Task.isCancelled, let signature = fileSignature(url) else { return nil }
+        let key = ["original-cover-v1", document.id, document.sourceRevision, url.lastPathComponent, signature, String(pixelLimit)]
+            .joined(separator: "\u{0}") as NSString
+        if let cached = images.object(forKey: key) { return cached }
+        let rendered = autoreleasepool { render(url) }
+        guard !Task.isCancelled, fileSignature(url) == signature, let rendered else { return nil }
+        let cost = (rendered.cgImage?.bytesPerRow ?? 0) * (rendered.cgImage?.height ?? 0)
+        images.setObject(rendered, forKey: key, cost: cost)
+        return rendered
+    }
+
+    private func render(_ url: URL) -> UIImage? {
+        guard let pdf = CGPDFDocument(url as CFURL), pdf.isUnlocked, let page = pdf.page(at: 1) else { return nil }
+        let bounds = page.getBoxRect(.cropBox).intersection(page.getBoxRect(.mediaBox))
+        guard bounds.width.isFinite, bounds.height.isFinite, bounds.width > 0, bounds.height > 0 else { return nil }
+        let quarterTurn = abs(page.rotationAngle % 180) == 90
+        let size = CGSize(width: quarterTurn ? bounds.height : bounds.width, height: quarterTurn ? bounds.width : bounds.height)
+        let scale = CGFloat(pixelLimit) / max(size.width, size.height)
+        let width = max(1, min(pixelLimit, Int((size.width * scale).rounded())))
+        let height = max(1, min(pixelLimit, Int((size.height * scale).rounded())))
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let target = CGRect(x: 0, y: 0, width: width, height: height)
+        context.setFillColor(UIColor.white.cgColor)
+        context.fill(target)
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: target, rotate: 0, preserveAspectRatio: true))
+        context.drawPDFPage(page)
+        guard let image = context.makeImage() else { return nil }
+        return UIImage(cgImage: image)
+    }
+
+    private func fileSignature(_ url: URL) -> String? {
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey]),
+            values.isRegularFile == true, let bytes = values.fileSize, bytes > 0, bytes <= 512 * 1024 * 1024,
+            let modified = values.contentModificationDate else { return nil }
+        return String(bytes) + ":" + String(modified.timeIntervalSince1970)
     }
 }

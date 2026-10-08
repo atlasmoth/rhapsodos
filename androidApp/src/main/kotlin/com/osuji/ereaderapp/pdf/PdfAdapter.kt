@@ -5,10 +5,13 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.LruCache
 import com.osuji.ereaderapp.data.syncDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -34,6 +37,10 @@ data class ImportedPdf(val id: String, val title: String, val path: String, val 
 
 class PdfAdapter(private val context: Context) {
     private val rasterSlots = Semaphore(2)
+    private val coverRequests = Mutex()
+    private val covers = object : LruCache<String, Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
+    }
     private val ocr = LocalOcr(context)
     var beforeOcr: (suspend () -> Unit)? = null
 
@@ -106,10 +113,25 @@ class PdfAdapter(private val context: Context) {
         checkNotNull(remote.request(path, "render", index, targetWidth.coerceIn(400, 2400)).bitmap)
     }
 
+    suspend fun cover(path: String, sourceRevision: String): Bitmap = withContext(Dispatchers.IO) {
+        coverRequests.withLock {
+            val file = File(path)
+            require(file.isFile && file.length() > 0)
+            val key = "${file.canonicalPath}:${file.length()}:${file.lastModified()}:$sourceRevision"
+            covers.get(key)?.let { return@withLock it }
+            val bitmap = rasterSlots.withPermit { checkNotNull(remote.request(path, "cover", 0, 256).bitmap) }
+            try {
+                coroutineContext.ensureActive()
+                covers.put(key, bitmap)
+                bitmap
+            } catch (failure: Exception) { bitmap.recycle(); throw failure }
+        }
+    }
+
     suspend fun outline(path: String): List<PdfOutlineDestination> = Json.decodeFromString(checkNotNull(remote.request(path, "outline").json))
 
     fun releaseParser() { remote.release() }
-    fun releaseParserWhenIdle() { remote.releaseWhenIdle() }
+    fun releaseParserWhenIdle() { covers.evictAll(); remote.releaseWhenIdle() }
 
     private fun usableText(text: String): Boolean = text.count { it.isLetterOrDigit() } >= 3 && text.count { it == '\uFFFD' } * 5 < text.length
 
