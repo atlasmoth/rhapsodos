@@ -178,7 +178,7 @@ fun ReaderApp() {
     val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.rhapsodos.document+zip")) { uri ->
         val id = exportDocumentId
         if (uri != null && id != null) scope.launch {
-            try { archives.export(id, uri); haptic(view, true); message = "Your PDF, thoughts, bookmarks and listening position were exported." }
+            try { check(playback.persist()) { "Your listening position could not be saved. Please retry before exporting." }; archives.export(id, uri); haptic(view, true); message = "Your PDF, thoughts, bookmarks and listening position were exported." }
             catch (failure: Exception) { message = failure.message ?: "The archive could not be saved." }
         }
     }
@@ -281,7 +281,7 @@ fun ReaderApp() {
                 sceneStrategies = listOf(sceneStrategy),
                 entryProvider = entryProvider {
                     entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyListeningRoom { importPicker.launch(arrayOf("application/pdf")) } })) {
-                        LibraryPane(library.documents, pdf, audio, reducedMotion, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
+                        LibraryPane(library.documents, pdf, audio, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
                         DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
@@ -432,7 +432,7 @@ fun ReaderApp() {
 }
 
 @Composable
-private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio: PlaybackSnapshot, reducedMotion: Boolean, importing: Boolean, import: () -> Unit, open: (String) -> Unit, action: (String, LibraryDocument) -> Unit) {
+private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio: PlaybackSnapshot, importing: Boolean, import: () -> Unit, open: (String) -> Unit, action: (String, LibraryDocument) -> Unit) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             Label("YOUR LISTENING LIBRARY")
@@ -440,19 +440,6 @@ private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio
             Text("A little more room\nfor a good book.", style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() })
             Spacer(Modifier.height(10.dp))
             Text("Bring your PDFs.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        item {
-            Box(Modifier.fillMaxWidth().heightIn(min = 180.dp).clip(RoundedCornerShape(28.dp))) {
-                ListeningAtmosphere(Modifier.matchParentSize(), audio.playing, reducedMotion)
-                Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(if (audio.documentId != null) "PICK UP WHERE YOU LEFT OFF" else "YOUR NEXT LISTEN", color = Color(0xFFFFE3CC), style = MaterialTheme.typography.labelSmall)
-                    Text(if (audio.documentId != null) audio.title else "Let the page\ncome to you.", color = Color.White, style = MaterialTheme.typography.headlineMedium, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                    FilledTonalButton(onClick = { audio.documentId?.let(open) ?: import() }, enabled = !importing) {
-                        Icon(if (audio.documentId == null) Icons.Default.Add else Icons.Default.PlayArrow, null)
-                        Spacer(Modifier.width(6.dp)); Text(if (audio.documentId == null) "Import a PDF" else "Return to your passage")
-                    }
-                }
-            }
         }
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -479,6 +466,11 @@ private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text(document.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text("${document.pageCount} pages · ${if (document.extractionStatus == "preparing") "Preparing locally" else if (document.passageCount > 0) "Ready to listen" else "Original pages"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        document.listeningProgress?.let { progress ->
+                            val fraction = progress.coerceIn(0.0, 1.0)
+                            LinearProgressIndicator(progress = { fraction.toFloat() }, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Listening progress" })
+                            Text(if (fraction == 1.0) "Finished" else if (fraction == 0.0) "Not started" else "${(fraction * 100).toInt()}% listened", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                     var menu by remember(document.id) { mutableStateOf(false) }
                     Box {
@@ -513,6 +505,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
     var page by rememberSaveable(id) { mutableIntStateOf(0) }
+    var restored by remember(id) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val view = LocalView.current
     val snapshot by store.snapshot.collectAsStateWithLifecycle()
@@ -526,7 +519,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showPassageTools by remember { mutableStateOf(false) }
     var bookmarks by remember(id) { mutableStateOf<List<Bookmark>>(emptyList()) }
     LaunchedEffect(id) { bookmarks = store.bookmarks(id) }
-    LaunchedEffect(id, metadata, progress[id]?.running) {
+    LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
         try { document = store.contents(id) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) { error = "This document could not be opened." }
@@ -535,6 +528,15 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         if (following && audio.documentId == id && !audio.preview) page = audio.pageIndex
     }
     val contents = document
+    LaunchedEffect(id, contents?.passages?.isNotEmpty()) {
+        if (contents != null && !restored) {
+            val current = playback.state.value
+            val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
+            page = if (current.documentId == id && !current.preview) current.pageIndex else contents.passages.firstOrNull { it.id == saved?.passageId }?.pageIndex ?: 0
+            playback.openSaved(contents)
+            restored = contents.passages.isNotEmpty() || contents.document.extractionStatus != "preparing"
+        }
+    }
     if (contents == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { if (error == null) CircularProgressIndicator() else Text(error!!) }
         return
@@ -569,7 +571,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
                         val index = contents.passages.indexOfFirst { it.id == saved?.passageId }.coerceAtLeast(0)
                         following = true
-                        playback.listen(contents, index, saved?.offsetMillis ?: 0); haptic(view, true)
+                        playback.listen(contents, index, saved?.offsetMillis ?: 0, passageFraction = saved?.passageFraction ?: 0.0); haptic(view, true)
                     }, enabled = !audio.capturing) { Icon(Icons.Default.PlayArrow, "Start listening") }
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

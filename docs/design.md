@@ -32,7 +32,7 @@ Book thumbnails show the original first PDF page, including in the playback dock
 
 | Surface | Content and primary action |
 | --- | --- |
-| Library | Continue listening, recent imports, prepared/offline status and import action |
+| Library | Original covers, progress on each file, resume by opening a file, preparation/offline status and import action |
 | PDF reader | Original page, active narration highlight, tap-to-record, bookmarks, follow control and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |

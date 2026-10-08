@@ -22,6 +22,8 @@ The first audience is everyday readers and people using listening for accessibil
 | Prepare for offline | Download a compatible voice if desired and prepare selected chapters; see exactly which content is ready |
 | Use a wide window | Keep outline, source and anchored notes in useful panes without restarting audio or losing a draft |
 
+The library has no separate continue-listening hero. Each file shows its own source-based listening progress. Opening it restores its saved passage and position without resetting an already active session. Progress remains unknown while document preparation is incomplete; it does not imply a known full-book audio duration.
+
 ### First listen
 
 Use the system file picker. Prefer a dependable local copy for the initial implementation, with clear storage management. Show the document title, preparation state, available voice and a prominent listen action. Start with embedded-text PDFs and scanned PDFs that the native OCR pipeline can handle reliably.

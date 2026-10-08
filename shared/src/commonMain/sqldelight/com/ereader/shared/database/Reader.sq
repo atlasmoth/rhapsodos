@@ -56,7 +56,8 @@ CREATE TABLE playback_position (
     document_id TEXT NOT NULL PRIMARY KEY REFERENCES document(id),
     passage_id TEXT NOT NULL REFERENCES passage(id),
     offset_millis INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    passage_fraction REAL NOT NULL DEFAULT 0
 );
 
 CREATE TABLE bookmark (
@@ -166,8 +167,15 @@ DELETE FROM note WHERE id = ? AND status IN ('draft', 'interrupted') AND duratio
 allPositions:
 SELECT * FROM playback_position;
 
+positionForDocument:
+SELECT * FROM playback_position WHERE document_id = ?;
+
+lastPassageEnd:
+SELECT source_end FROM passage WHERE document_id = ? ORDER BY ordinal DESC LIMIT 1;
+
 savePosition:
-INSERT OR REPLACE INTO playback_position VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO playback_position(document_id, passage_id, offset_millis, updated_at, passage_fraction)
+VALUES (?, ?, ?, ?, ?);
 
 allBookmarks:
 SELECT * FROM bookmark ORDER BY created_at DESC;

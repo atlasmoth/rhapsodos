@@ -20,11 +20,11 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         json.encodeToString(LibrarySnapshot(
             documents = queries.allDocuments().executeAsList().map { row ->
                 DocumentRecord(row.id, row.title, row.file_path, row.source_revision,
-                    row.page_count.toInt(), row.passage_count.toInt(), row.extraction_status)
+                    row.page_count.toInt(), row.passage_count.toInt(), row.extraction_status, listeningProgress(row.id, row.extraction_status))
             },
             notes = queries.allNotes().executeAsList().map { it.toDomain() },
             positions = queries.allPositions().executeAsList().map {
-                PlaybackPosition(it.document_id, it.passage_id, it.offset_millis)
+                PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction)
             },
             bookmarks = queries.allBookmarks().executeAsList().map { it.toDomain() },
         ))
@@ -117,10 +117,11 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     private fun splitsSurrogate(text: String, offset: Int) = offset > 0 && offset < text.length && text[offset - 1].isHighSurrogate() && text[offset].isLowSurrogate()
 
     @Throws(Exception::class)
-    fun saveProgress(documentId: String, passageId: String, offsetMillis: Long) = lock.withLock {
+    fun saveProgress(documentId: String, passageId: String, offsetMillis: Long, passageFraction: Double) = lock.withLock {
         val passage = requirePassage(documentId, passageId)
         require(offsetMillis >= 0) { "Negative playback position" }
-        queries.savePosition(documentId, passage.id, offsetMillis, epochMillis())
+        require(passageFraction.isFinite() && passageFraction in 0.0..1.0) { "Invalid passage progress" }
+        queries.savePosition(documentId, passage.id, offsetMillis, epochMillis(), passageFraction)
     }
 
     @Throws(Exception::class)
@@ -339,7 +340,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
         json.encodeToString(DocumentArchive(document = snapshot.document, pages = pages,
             notes = notes, bookmarks = bookmarks(documentId), position = queries.allPositions().executeAsList()
-                .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis) },
+                .firstOrNull { it.document_id == documentId }?.let { PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction) },
             sections = snapshot.sections, pronunciations = snapshot.pronunciations))
     }
 
@@ -368,7 +369,10 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         archive.sections.forEach { require(it.id.isNotBlank() && it.title.isNotBlank() && it.title.length <= 500 && passages[it.passageId]?.pageIndex == it.pageIndex) }
         require(archive.pronunciations.size <= 1_000)
         archive.pronunciations.forEach { validateRule(it); require(it.documentId == document.id) }
-        archive.position?.let { require(it.documentId == document.id && it.passageId in passages && it.offsetMillis >= 0) }
+        archive.position?.let {
+            require(it.documentId == document.id && it.passageId in passages && it.offsetMillis >= 0)
+            require(it.passageFraction.isFinite() && it.passageFraction in 0.0..1.0) { "Invalid archived passage progress" }
+        }
         database.transaction {
             queries.insertDocument(document.id, document.title, document.filePath, "1", document.pageCount.toLong(), "preparing", epochMillis())
             appendPages(document.id, archive.pages, true)
@@ -377,7 +381,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
                     note.durationMillis, note.offsetMillis, if (note.status == "transcribing") "pending" else note.status, note.machineTranscript, note.editedTranscript, note.transcriptRevision, note.createdAt)
             }
             archive.bookmarks.forEach { queries.insertBookmark(it.id, it.documentId, it.passageId, it.label, it.createdAt) }
-            archive.position?.let { queries.savePosition(it.documentId, it.passageId, it.offsetMillis, epochMillis()) }
+            archive.position?.let { queries.savePosition(it.documentId, it.passageId, it.offsetMillis, epochMillis(), it.passageFraction) }
             archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
             archive.pronunciations.forEach { queries.savePronunciation(it.id, it.documentId, it.term, it.replacement, it.languageTag, epochMillis()) }
             if (archive.pronunciations.isNotEmpty()) incrementNarrationRevision(document.id)
@@ -470,12 +474,22 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val sections = queries.sectionsForDocument(id).executeAsList().map { DocumentSection(it.id, it.title, it.passage_id, it.page_index.toInt()) }
         return DocumentSnapshot(
             DocumentRecord(row.id, row.title, row.file_path, row.source_revision,
-                row.page_count.toInt(), row.passage_count.toInt(), row.extraction_status),
+                row.page_count.toInt(), row.passage_count.toInt(), row.extraction_status, listeningProgress(row.id, row.extraction_status)),
             passages,
             pages,
             sections.ifEmpty { passages.distinctBy { it.pageIndex }.map { DocumentSection("$id:page:${it.pageIndex}", "Page ${it.pageIndex + 1}", it.id, it.pageIndex) } },
             rules,
         )
+    }
+
+    private fun listeningProgress(documentId: String, extractionStatus: String): Double? {
+        if (extractionStatus == "preparing") return null
+        val position = queries.positionForDocument(documentId).executeAsOneOrNull() ?: return 0.0
+        val passage = queries.passageById(position.passage_id).executeAsOneOrNull() ?: return 0.0
+        if (passage.document_id != documentId) return 0.0
+        val total = queries.lastPassageEnd(documentId).executeAsOneOrNull() ?: return 0.0
+        if (total <= 0) return 0.0
+        return ((passage.source_start + (passage.source_end - passage.source_start) * position.passage_fraction) / total).coerceIn(0.0, 1.0)
     }
 
     private fun requirePassage(documentId: String, passageId: String): StoredPassage {

@@ -37,11 +37,10 @@ struct ReaderRoot: View {
                                     .frame(width: 44, height: 58)
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(document.title).font(.subheadline.weight(.semibold)).lineLimit(2)
-                                    Text("\(document.pageCount) pages · \(document.passageCount == 0 ? "Source only" : "Ready to listen")")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                    LibraryProgress(document: document)
                                 }
                             }.padding(.vertical, 5)
-                        }.contextMenu {
+                        }.accessibilityHint("Opens this book at your saved listening position.").contextMenu {
                             Button("Rename", systemImage: "pencil") { renameTarget = document; renamedTitle = document.title }
                             if document.extractionStatus == "preparing" { Button("Resume preparation", systemImage: "arrow.clockwise") { store.resumePreparation(document.id) } }
                             Button("Delete from this device", systemImage: "trash", role: .destructive) { deleteTarget = document }
@@ -128,6 +127,25 @@ struct ReaderRoot: View {
                     .padding(14).background(.regularMaterial, in: Capsule()).padding(.top, 10)
             }
         }
+    }
+}
+
+private struct LibraryProgress: View {
+    let document: LibraryDocument
+    private var status: String {
+        if document.extractionStatus == "preparing" { return "Preparing listening text" }
+        guard document.passageCount > 0 else { return "Source only" }
+        guard let progress = document.listeningProgress, progress > 0 else { return "Not started" }
+        if progress >= 1 { return "Finished" }
+        return "\(Int((progress * 100).rounded(.down)))% listened"
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("\(document.pageCount) pages · \(status)").font(.caption).foregroundStyle(.secondary)
+            if let progress = document.listeningProgress, document.passageCount > 0 {
+                ProgressView(value: min(1, max(0, progress))).tint(Palette.accent).accessibilityHidden(true)
+            }
+        }.accessibilityElement(children: .ignore).accessibilityLabel("\(document.pageCount) pages").accessibilityValue(status)
     }
 }
 

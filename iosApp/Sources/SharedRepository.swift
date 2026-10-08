@@ -9,6 +9,12 @@ struct LibraryDocument: Codable, Identifiable, Hashable {
     let pageCount: Int
     let passageCount: Int
     let extractionStatus: String
+    let listeningProgress: Double?
+
+    func withListeningProgress(_ value: Double?) -> LibraryDocument {
+        LibraryDocument(id: id, title: title, filePath: filePath, sourceRevision: sourceRevision,
+            pageCount: pageCount, passageCount: passageCount, extractionStatus: extractionStatus, listeningProgress: value)
+    }
 }
 
 struct Passage: Codable, Identifiable, Hashable {
@@ -92,6 +98,20 @@ struct PlaybackPosition: Codable {
     let documentId: String
     let passageId: String
     let offsetMillis: Int64
+    let passageFraction: Double
+
+    init(documentId: String, passageId: String, offsetMillis: Int64, passageFraction: Double = 0) {
+        self.documentId = documentId; self.passageId = passageId; self.offsetMillis = offsetMillis
+        self.passageFraction = passageFraction
+    }
+    private enum CodingKeys: String, CodingKey { case documentId, passageId, offsetMillis, passageFraction }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        documentId = try values.decode(String.self, forKey: .documentId)
+        passageId = try values.decode(String.self, forKey: .passageId)
+        offsetMillis = try values.decode(Int64.self, forKey: .offsetMillis)
+        passageFraction = try values.decodeIfPresent(Double.self, forKey: .passageFraction) ?? 0
+    }
 }
 
 struct Bookmark: Codable, Identifiable {
@@ -195,8 +215,8 @@ actor SharedRepository {
         return try decode(core.importDocument(id: id, title: title, filePath: filePath, pagesJson: json))
     }
 
-    func saveProgress(documentId: String, passageId: String, offsetMillis: Int64 = 0) throws {
-        try core.saveProgress(documentId: documentId, passageId: passageId, offsetMillis: offsetMillis)
+    func saveProgress(documentId: String, passageId: String, offsetMillis: Int64 = 0, passageFraction: Double = 0) throws {
+        try core.saveProgress(documentId: documentId, passageId: passageId, offsetMillis: offsetMillis, passageFraction: passageFraction)
     }
 
     func createDraft(id: String, documentId: String, passageId: String, recordingPath: String, offsetMillis: Int64 = 0) throws -> VoiceNote {
@@ -314,5 +334,57 @@ struct LocalFiles {
         do { try FileDurability.syncDirectory(target.deletingLastPathComponent()) }
         catch { try? FileManager.default.removeItem(at: target); throw error }
         return target
+    }
+}
+
+struct ListeningCursor {
+    let documentId: String
+    let passageId: String
+    let offsetMillis: Int64
+    let passageFraction: Double
+    let sourcePosition: Double
+}
+
+struct ProgressSaveFailure: LocalizedError {
+    var errorDescription: String? { "Your listening position could not be saved. Try again before switching books or exporting." }
+}
+
+extension Passage {
+    func sourceFraction(spokenOffset: Int) -> Double {
+        let offset = max(0, min(spokenOffset, spokenText.utf16.count))
+        guard sourceEnd > sourceStart else { return 0 }
+        if offset >= spokenText.utf16.count { return 1 }
+        let mapping = spokenMapping.first { $0.spokenStart <= offset && $0.spokenEnd > offset }
+        let pageOffset: Int
+        if let mapping {
+            pageOffset = mapping.kind == "linear" && mapping.spokenEnd - mapping.spokenStart == mapping.sourceEnd - mapping.sourceStart
+                ? mapping.sourceStart + offset - mapping.spokenStart : mapping.sourceStart
+        } else {
+            pageOffset = spokenMapping.last(where: { $0.spokenEnd <= offset })?.sourceEnd ?? pageStart
+        }
+        return min(1, max(0, Double(pageOffset - pageStart) / Double(sourceEnd - sourceStart)))
+    }
+
+    func spokenResumeOffset(fraction: Double) -> Int {
+        guard fraction.isFinite, fraction > 0 else { return 0 }
+        if fraction >= 1 { return spokenText.utf16.count }
+        let sourceOffset = pageStart + Int((Double(sourceEnd - sourceStart) * fraction).rounded(.down))
+        let mapping = spokenMapping.first { $0.sourceStart <= sourceOffset && $0.sourceEnd > sourceOffset }
+        let proposed: Int
+        if let mapping {
+            proposed = mapping.kind == "linear" && mapping.spokenEnd - mapping.spokenStart == mapping.sourceEnd - mapping.sourceStart
+                ? mapping.spokenStart + sourceOffset - mapping.sourceStart : mapping.spokenStart
+        } else {
+            proposed = spokenMapping.last(where: { $0.sourceEnd <= sourceOffset })?.spokenStart ?? 0
+        }
+        let units = Array(spokenText.utf16)
+        var offset = min(max(0, proposed), units.count)
+        if offset > 0, offset < units.count, (0xDC00...0xDFFF).contains(units[offset]) { offset -= 1 }
+        if offset < units.count { offset = (spokenText as NSString).rangeOfComposedCharacterSequence(at: offset).location }
+        spokenText.enumerateSubstrings(in: spokenText.startIndex..<spokenText.endIndex, options: [.byWords, .substringNotRequired]) { _, range, _, stop in
+            let word = NSRange(range, in: spokenText)
+            if word.location <= offset && NSMaxRange(word) > offset { offset = word.location; stop = true }
+        }
+        return offset
     }
 }

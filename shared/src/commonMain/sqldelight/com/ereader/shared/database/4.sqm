@@ -1,0 +1,1 @@
+ALTER TABLE playback_position ADD COLUMN passage_fraction REAL NOT NULL DEFAULT 0;

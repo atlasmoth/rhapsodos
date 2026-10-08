@@ -99,7 +99,7 @@ Page colours are a native display concern. Neutral paper/ink follow the app appe
 | SourceAnchor | Document/revision/graph IDs, block ID, source range, page geometry, quote and context fallback |
 | NarrationEdition | Document revision, normalization/pronunciation versions, provider/model/voice snapshot and synthesis settings |
 | NarrationSegment | Spoken text/range, source mappings, audio manifest, duration and alignment precision/version |
-| PlaybackCursor | Source anchor plus narration edition, segment and played audio offset; save time and local session identity |
+| PlaybackCursor | Source anchor plus narration edition, segment, native audio offset and measured passage fraction; save time and local session identity |
 | Note | Stable ID, frozen source and narration anchors, capture status, recording manifest, timestamps and optional user text |
 | TranscriptRevision | Machine output, language/provider provenance, user-edited text and edit revision; original recording retained |
 | Job | Stable ID, task, input revision/hash, selected model, checkpoints, attempts, output manifest and cancel/generation state |

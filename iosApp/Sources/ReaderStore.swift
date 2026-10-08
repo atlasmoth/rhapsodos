@@ -27,6 +27,8 @@ final class ReaderStore: ObservableObject {
     var repository: SharedRepository?
     var files: LocalFiles?
     private var positions: [PlaybackPosition] = []
+    private var latestProgress: [String: ListeningCursor] = [:]
+    private var progressWrite: Task<Result<Void, Error>, Never>?
     private var noteTask: Task<Void, Never>?
     private var capturedDuration: Int64 = 0
     private var transcriptionQueue: [String] = []
@@ -48,20 +50,7 @@ final class ReaderStore: ObservableObject {
     private var sceneActive = true
 
     init() {
-        audio.onPassage = { [weak self] index in
-            guard let self, let document = self.document, document.passages.indices.contains(index), let repository = self.repository else { return }
-            let passage = document.passages[index]
-            let offset = self.audio.offsetMillis
-            Task {
-                do { try await repository.saveProgress(documentId: document.document.id, passageId: passage.id, offsetMillis: offset) }
-                catch { self.present(error) }
-            }
-        }
-        audio.onPosition = { [weak self] index, offset in
-            guard let self, let document = self.document, document.passages.indices.contains(index), let repository = self.repository else { return }
-            let passage = document.passages[index]
-            Task { do { try await repository.saveProgress(documentId: document.document.id, passageId: passage.id, offsetMillis: offset) } catch { self.present(error) } }
-        }
+        audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
             guard let self, let files = self.files, let (pack, folder) = self.models?.ready(capability: "tts") else { throw PackFailure.notReady }
             if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
@@ -180,6 +169,39 @@ final class ReaderStore: ObservableObject {
         notes = snapshot.notes
         positions = snapshot.positions
         bookmarks = try await repository.bookmarks()
+        if let cursor = selectedId.flatMap({ latestProgress[$0] }) { applyProgress(cursor) }
+    }
+
+    private func saveProgress(_ cursor: ListeningCursor) {
+        guard let repository else { return }
+        latestProgress[cursor.documentId] = cursor
+        applyProgress(cursor)
+        let previous = progressWrite
+        progressWrite = Task { [weak self] in
+            _ = await previous?.value
+            do {
+                try await repository.saveProgress(documentId: cursor.documentId, passageId: cursor.passageId,
+                    offsetMillis: cursor.offsetMillis, passageFraction: cursor.passageFraction)
+                return .success(())
+            } catch { self?.present(error); return .failure(error) }
+        }
+    }
+
+    private func applyProgress(_ cursor: ListeningCursor) {
+        positions.removeAll { $0.documentId == cursor.documentId }
+        positions.append(PlaybackPosition(documentId: cursor.documentId, passageId: cursor.passageId,
+            offsetMillis: cursor.offsetMillis, passageFraction: cursor.passageFraction))
+        guard let snapshot = document, snapshot.document.id == cursor.documentId,
+              let end = snapshot.passages.last?.sourceEnd, end > 0,
+              let index = library.firstIndex(where: { $0.id == cursor.documentId }) else { return }
+        let value = library[index].extractionStatus == "preparing" ? nil : min(1, max(0,
+            cursor.sourcePosition / Double(end)))
+        library[index] = library[index].withListeningProgress(value)
+    }
+
+    private func flushProgress() async throws {
+        audio.reportPosition()
+        if let progressWrite, case .failure = await progressWrite.value { throw ProgressSaveFailure() }
     }
 
     func select(_ id: String) async {
@@ -190,6 +212,7 @@ final class ReaderStore: ObservableObject {
         audio.stopReplay()
         defer { busy = false; preparation = ""; serviceTranscriptions() }
         do {
+            try await flushProgress()
             try await refresh()
             let selected = try await repository.document(id)
             document = selected
@@ -197,7 +220,8 @@ final class ReaderStore: ObservableObject {
             UserDefaults.standard.set(id, forKey: "selectedDocument")
             let saved = positions.first { $0.documentId == id }
             let index = selected.passages.firstIndex { $0.id == saved?.passageId } ?? 0
-            audio.load(selected.passages, title: selected.document.title, at: index, offsetMillis: saved?.offsetMillis ?? 0)
+            audio.load(selected.passages, title: selected.document.title, at: index, offsetMillis: saved?.offsetMillis ?? 0,
+                passageFraction: saved?.passageFraction ?? 0, complete: selected.document.extractionStatus != "preparing")
             follow = true
             feedback.play(.selection)
         } catch { present(error) }
@@ -213,6 +237,7 @@ final class ReaderStore: ObservableObject {
         var copiedFile: URL?
         var registered = false
         do {
+            try await flushProgress()
             let title = url.deletingPathExtension().lastPathComponent
             let copied = try await Task.detached(priority: .userInitiated) { try files.importPDF(url, id: id) }.value
             copiedFile = copied
@@ -223,7 +248,7 @@ final class ReaderStore: ObservableObject {
             document = imported
             selectedId = id
             UserDefaults.standard.set(id, forKey: "selectedDocument")
-            audio.load(imported.passages, title: title, at: 0)
+            audio.load(imported.passages, title: title, at: 0, complete: false)
             follow = true
             feedback.play(.saved)
             busy = false
@@ -274,7 +299,7 @@ final class ReaderStore: ObservableObject {
                     self.preparationProgress = Double(next) / Double(max(1, total))
                     if self.selectedId == id {
                         self.document = updated
-                        self.audio.updatePassages(updated.passages)
+                        self.audio.updatePassages(updated.passages, complete: updated.document.extractionStatus != "preparing")
                     }
                     try await self.refresh()
                 }
@@ -325,6 +350,7 @@ final class ReaderStore: ObservableObject {
     func sceneChanged(_ phase: ScenePhase) {
         sceneActive = phase == .active
         if phase == .background { preparationTask?.cancel(); geometryRepairTask?.cancel() }
+        if phase != .active { audio.reportPosition() }
         if phase == .active, !preparingDocument, let unfinished = library.first(where: { $0.extractionStatus == "preparing" }) {
             resumePreparation(unfinished.id)
         }
@@ -369,9 +395,14 @@ final class ReaderStore: ObservableObject {
         geometryRepairTask?.cancel()
         await preparationTask?.value
         await geometryRepairTask?.value
-        if selectedId == id { await audio.pauseAndJoinGeneration(restart: true); audio.load([], title: "", at: 0); audio.stopReplay(); document = nil; selectedId = nil }
         do {
+            if selectedId == id {
+                await audio.pauseAndJoinGeneration()
+                try await flushProgress()
+                audio.load([], title: "", at: 0); audio.stopReplay(); document = nil; selectedId = nil
+            }
             _ = try await repository.deleteDocument(id)
+            latestProgress.removeValue(forKey: id)
             await removePendingFiles()
             try await refresh()
         } catch { present(error) }
@@ -681,8 +712,10 @@ final class ReaderStore: ObservableObject {
     }
     private func applyPronunciation(_ snapshot: DocumentSnapshot) {
         let passageId = currentPassage?.id
+        let fraction = positions.first(where: { $0.documentId == snapshot.document.id && $0.passageId == passageId })?.passageFraction ?? 0
         document = snapshot
-        audio.load(snapshot.passages, title: snapshot.document.title, at: snapshot.passages.firstIndex(where: { $0.id == passageId }) ?? 0)
+        audio.load(snapshot.passages, title: snapshot.document.title, at: snapshot.passages.firstIndex(where: { $0.id == passageId }) ?? 0,
+            passageFraction: fraction, complete: snapshot.document.extractionStatus != "preparing")
         feedback.play(.saved)
     }
 
@@ -691,6 +724,7 @@ final class ReaderStore: ObservableObject {
         busy = true; preparation = "Preparing portable archive"
         defer { busy = false; preparation = ""; serviceTranscriptions() }
         do {
+            try await flushProgress()
             let manifest = try await repository.exportDocument(id)
             exportURL = try await Task.detached(priority: .utility) { try DocumentArchives.export(manifest, files: files) }.value
         } catch { present(error) }
@@ -703,6 +737,7 @@ final class ReaderStore: ObservableObject {
         defer { busy = false; preparation = ""; serviceTranscriptions() }
         var copied: [URL] = []
         do {
+            try await flushProgress()
             let existing = Set(library.map(\.id))
             let (manifest, installed) = try await Task.detached(priority: .utility) { try DocumentArchives.prepareRestore(url, files: files, existing: existing) }.value
             copied = installed
@@ -712,7 +747,8 @@ final class ReaderStore: ObservableObject {
             document = restored; selectedId = restored.document.id
             let saved = positions.first { $0.documentId == restored.document.id }
             let index = restored.passages.firstIndex { $0.id == saved?.passageId } ?? 0
-            audio.load(restored.passages, title: restored.document.title, at: index, offsetMillis: saved?.offsetMillis ?? 0)
+            audio.load(restored.passages, title: restored.document.title, at: index, offsetMillis: saved?.offsetMillis ?? 0,
+                passageFraction: saved?.passageFraction ?? 0, complete: restored.document.extractionStatus != "preparing")
             UserDefaults.standard.set(restored.document.id, forKey: "selectedDocument")
             feedback.play(.saved)
             for note in notes where note.documentId == restored.document.id && ["pending", "pendingModel", "transcribing"].contains(note.status) {

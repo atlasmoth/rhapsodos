@@ -27,6 +27,7 @@ data class DocumentRecord(
     val pageCount: Int,
     val passageCount: Int,
     val extractionStatus: String,
+    val listeningProgress: Double? = null,
 )
 
 @Serializable
@@ -146,6 +147,7 @@ data class PlaybackPosition(
     val documentId: String,
     val passageId: String,
     val offsetMillis: Long,
+    val passageFraction: Double = 0.0,
 )
 
 @Serializable

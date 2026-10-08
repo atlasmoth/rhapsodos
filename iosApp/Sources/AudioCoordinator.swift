@@ -19,8 +19,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     @Published var selectedVoice = UserDefaults.standard.string(forKey: "voiceIdentifier") ?? ""
     @Published private(set) var previewing = false
     @Published var pace = UserDefaults.standard.float(forKey: "speechPace") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "speechPace")
-    var onPassage: ((Int) -> Void)?
-    var onPosition: ((Int, Int64) -> Void)?
+    var onProgress: ((ListeningCursor) -> Void)?
     var renderVoice: ((Passage, String, Float) async throws -> URL)?
     var onError: ((String) -> Void)?
     var onCaptureInterrupted: ((String?) -> Void)?
@@ -46,6 +45,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var voiceChangeID: UUID?
     private var playbackTimer: Timer?
     private var pendingOffset = 0.0
+    private var pendingFraction = 0.0
+    private var utteranceBase = 0
+    private var lastProgressTime = 0.0
+    private var positionAvailable = false
+    private var documentComplete = true
     private var previewPlayer: AVAudioPlayer?
     private var previewSpeech: AVSpeechSynthesizer?
     private var previewUtterance: AVSpeechUtterance?
@@ -59,7 +63,9 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         }
     }
     var current: Passage? { passages.indices.contains(index) ? passages[index] : nil }
-    func updatePassages(_ passages: [Passage]) { self.passages = passages; updateNowPlaying() }
+    func updatePassages(_ passages: [Passage], complete: Bool = true) {
+        self.passages = passages; documentComplete = complete; updateNowPlaying()
+    }
 
     override init() {
         super.init()
@@ -114,18 +120,29 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         remoteTargets.forEach { $0.0.removeTarget($0.1) }
     }
 
-    func load(_ passages: [Passage], title: String, at index: Int, offsetMillis: Int64 = 0) {
+    func load(_ passages: [Passage], title: String, at index: Int, offsetMillis: Int64 = 0, passageFraction: Double = 0, complete: Bool = true) {
         pause(restart: true)
         stopReplay()
         self.passages = passages
         self.title = title
         self.index = min(max(0, index), max(0, passages.count - 1))
         pendingOffset = Double(max(0, offsetMillis)) / 1000
+        pendingFraction = passageFraction.isFinite ? min(1, max(0, passageFraction)) : 0
+        positionAvailable = !passages.isEmpty
+        documentComplete = complete
         updateNowPlaying()
     }
 
     func play() {
-        guard !recording, !capturePending, let current else { return }
+        guard !recording, !capturePending, current != nil else { return }
+        if currentFraction >= 1 {
+            guard index + 1 < passages.count || documentComplete else { onError?("The next passage is still being prepared."); return }
+            index = index + 1 < passages.count ? index + 1 : 0
+            pendingOffset = 0; pendingFraction = 0; spokenRange = nil
+            narrationPlayer = nil; utterance = nil
+            positionAvailable = true
+        }
+        guard let current else { return }
         if let sleepUntil, Date() >= sleepUntil { setSleepTimer(minutes: nil); pause(); return }
         stopReplay()
         stopPreview()
@@ -136,10 +153,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             if selectedVoice.hasPrefix("kokoro:") {
                 if let narrationPlayer {
                     guard narrationPlayer.play() else { throw VaultFailure.noAudio }
-                    playing = true; startPlaybackClock(); preloadNextPassage(); updateNowPlaying(); return
+                    playing = true; reportPosition(); startPlaybackClock(); preloadNextPassage(); updateNowPlaying(); return
                 }
                 guard !generating, let renderVoice else { return }
                 let generation = UUID(); narrationGeneration = generation; generating = true; playing = true
+                reportPosition()
                 let voice = String(selectedVoice.dropFirst(7)), pace = self.pace
                 narrationTask = Task(priority: .utility) { [weak self] in
                     defer { if self?.narrationGeneration == generation { self?.narrationTask = nil } }
@@ -149,10 +167,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                         guard let self, self.narrationGeneration == generation, self.playing, !self.capturePending else { return }
                         let player = try AVAudioPlayer(contentsOf: file)
                         player.delegate = self
-                        player.currentTime = min(self.pendingOffset, max(0, player.duration - 0.05)); self.pendingOffset = 0
+                        let restoredTime = self.pendingOffset > 0 ? self.pendingOffset : self.pendingFraction * player.duration
+                        player.currentTime = min(restoredTime, max(0, player.duration - 0.05)); self.pendingOffset = 0
                         guard player.play() else { throw VaultFailure.noAudio }
                         self.narrationPlayer = player; self.duration = player.duration; self.elapsed = player.currentTime
-                        self.generating = false; self.onPassage?(self.index); self.startPlaybackClock(); self.preloadNextPassage(); self.updateNowPlaying()
+                        self.generating = false; self.reportPosition(); self.startPlaybackClock(); self.preloadNextPassage(); self.updateNowPlaying()
                     } catch is CancellationError {
                     } catch {
                         guard let self, self.narrationGeneration == generation else { return }
@@ -164,30 +183,34 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             if speech.isPaused, utterance != nil, speech.continueSpeaking() {
                 playing = true; updateNowPlaying(); return
             }
-            let item = AVSpeechUtterance(string: current.spokenText)
+            utteranceBase = current.spokenResumeOffset(fraction: pendingFraction)
+            let source = current.spokenText as NSString
+            let item = AVSpeechUtterance(string: source.substring(from: utteranceBase))
             item.voice = AVSpeechSynthesisVoice(identifier: selectedVoice) ?? AVSpeechSynthesisVoice(language: "en-US")
             item.rate = pace
             item.postUtteranceDelay = 0.12
             utterance = item
             playing = true
             speech.speak(item)
-            onPassage?(index)
+            reportPosition()
             updateNowPlaying()
         } catch { playing = false; onError?(error.localizedDescription) }
     }
 
     func pause(restart: Bool = false) {
-        let wasPlaying = playing
         pauseReplay()
         preloadTask?.cancel()
         stopPreview()
         narrationTask?.cancel(); narrationTask = nil; narrationGeneration = nil; generating = false
-        if let narrationPlayer { narrationPlayer.pause(); elapsed = narrationPlayer.currentTime; if wasPlaying { onPosition?(index, Int64(elapsed * 1000)) } }
+        if let narrationPlayer { narrationPlayer.pause(); elapsed = narrationPlayer.currentTime }
+        reportPosition()
         playbackTimer?.invalidate(); playbackTimer = nil
         if restart {
-            narrationPlayer?.stop(); narrationPlayer = nil; duration = 0; elapsed = 0; pendingOffset = 0
+            narrationPlayer?.stop(); narrationPlayer = nil; duration = 0; elapsed = 0; pendingOffset = 0; pendingFraction = 0
             utterance = nil
+            utteranceBase = 0
             spokenRange = nil
+            positionAvailable = false
             speech.stopSpeaking(at: .immediate)
         } else if speech.isSpeaking && !speech.isPaused { _ = speech.pauseSpeaking(at: .immediate) }
         playing = false
@@ -216,7 +239,8 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         let resume = playing
         pause(restart: true)
         index = target
-        onPassage?(index)
+        positionAvailable = true
+        reportPosition()
         if resume { play() }
         updateNowPlaying()
     }
@@ -224,19 +248,23 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     func changeVoice(_ id: String) async {
         let operation = UUID(); voiceChangeID = operation
         let resume = playing
+        let fraction = currentFraction
+        let passageId = current?.id
         selectedVoice = id
         UserDefaults.standard.set(id, forKey: "voiceIdentifier")
         await pauseAndJoinGeneration(restart: true)
-        if voiceChangeID == operation, resume { play() }
+        if voiceChangeID == operation, current?.id == passageId { pendingFraction = fraction; positionAvailable = true; if resume { play() } }
     }
 
     func changePace(_ value: Float) async {
         let operation = UUID(); voiceChangeID = operation
         let resume = playing
+        let fraction = currentFraction
+        let passageId = current?.id
         pace = value
         UserDefaults.standard.set(value, forKey: "speechPace")
         await pauseAndJoinGeneration(restart: true)
-        if voiceChangeID == operation, resume { play() }
+        if voiceChangeID == operation, current?.id == passageId { pendingFraction = fraction; positionAvailable = true; if resume { play() } }
     }
 
     func pauseAndJoinGeneration(restart: Bool = false) async {
@@ -320,7 +348,10 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     func reserveCapture() -> CapturePreparation {
         capturePending = true
         let tasks = [narrationTask, preloadTask, previewTask].compactMap { $0 }
+        let fraction = currentFraction
         pause(restart: narrationPlayer == nil)
+        pendingFraction = fraction
+        positionAvailable = true
         stopReplay()
         return CapturePreparation(tasks: tasks, offsetMillis: offsetMillis)
     }
@@ -435,9 +466,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         Task { @MainActor [weak self] in
             if let self, self.previewUtterance === utterance { self.stopPreview(); return }
             guard let self, self.utterance === utterance, self.playing else { return }
+            self.pendingFraction = 1
+            self.reportPosition()
             self.utterance = nil
             self.spokenRange = nil
-            if self.index + 1 < self.passages.count { self.index += 1; self.play() }
+            if self.index + 1 < self.passages.count { self.index += 1; self.pendingFraction = 0; self.pendingOffset = 0; self.play() }
             else { self.playing = false; self.updateNowPlaying() }
         }
     }
@@ -445,7 +478,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
         Task { @MainActor [weak self] in
             guard let self, self.utterance === utterance, self.playing else { return }
-            self.spokenRange = characterRange
+            let range = NSRange(location: self.utteranceBase + characterRange.location, length: characterRange.length)
+            guard let current = self.current, NSMaxRange(range) <= current.spokenText.utf16.count else { return }
+            self.spokenRange = range
+            self.pendingFraction = current.sourceFraction(spokenOffset: range.location)
+            self.emitProgress(throttled: true)
         }
     }
 
@@ -454,9 +491,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             guard let self else { return }
             if self.narrationPlayer === player {
                 self.playbackTimer?.invalidate(); self.playbackTimer = nil
+                if flag, self.playing { self.pendingFraction = 1; self.emitProgress(completed: true) }
+                else { self.pendingFraction = self.currentFraction; self.reportPosition() }
                 self.narrationPlayer = nil; self.duration = 0; self.elapsed = 0
                 guard flag, self.playing else { self.playing = false; self.updateNowPlaying(); return }
-                if self.index + 1 < self.passages.count { self.index += 1; self.play() }
+                if self.index + 1 < self.passages.count { self.index += 1; self.pendingFraction = 0; self.pendingOffset = 0; self.play() }
                 else { self.playing = false; self.updateNowPlaying() }
             } else if self.notePlayer === player { self.stopReplay() }
             else if self.previewPlayer === player { self.stopPreview() }
@@ -464,9 +503,23 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
 
     var offsetMillis: Int64 { narrationPlayer.map { Int64($0.currentTime * 1000) } ?? 0 }
+    var currentFraction: Double {
+        if let player = narrationPlayer, player.duration > 0 { return min(0.999999, max(0, player.currentTime / player.duration)) }
+        return pendingFraction
+    }
+    func reportPosition() { emitProgress() }
+    private func emitProgress(throttled: Bool = false, completed: Bool = false) {
+        guard positionAvailable, let current else { return }
+        let time = ProcessInfo.processInfo.systemUptime
+        guard !throttled || time - lastProgressTime >= 1 else { return }
+        lastProgressTime = time
+        let fraction = completed ? 1 : currentFraction
+        onProgress?(ListeningCursor(documentId: current.documentId, passageId: current.id, offsetMillis: offsetMillis,
+            passageFraction: fraction, sourcePosition: Double(current.sourceStart) + Double(current.sourceEnd - current.sourceStart) * fraction))
+    }
     func seekOffset(_ offsetMillis: Int64) {
         guard !recording, !capturePending, selectedVoice.hasPrefix("kokoro:") else { return }
-        if let player = narrationPlayer { player.currentTime = min(max(0, Double(offsetMillis) / 1000), player.duration); elapsed = player.currentTime; onPosition?(index, offsetMillis); updateNowPlaying() }
+        if let player = narrationPlayer { player.currentTime = min(max(0, Double(offsetMillis) / 1000), player.duration); elapsed = player.currentTime; reportPosition(); updateNowPlaying() }
         else { pendingOffset = Double(max(0, offsetMillis)) / 1000 }
     }
     private func startPlaybackClock() {
@@ -476,7 +529,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             Task { @MainActor in
                 guard let self, let player = self.narrationPlayer, self.playing else { return }
                 self.elapsed = player.currentTime; ticks += 1
-                if ticks % 4 == 0 { self.onPosition?(self.index, Int64(player.currentTime * 1000)); self.updateNowPlaying() }
+                if ticks % 4 == 0 { self.reportPosition(); self.updateNowPlaying() }
                 if let until = self.sleepUntil, Date() >= until { self.pause(); self.setSleepTimer(minutes: nil) }
             }
         }
