@@ -113,7 +113,7 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
     var failedTarget by remember(documentId) { mutableStateOf<SearchMatch?>(null) }
     var selecting by remember(documentId) { mutableStateOf(false) }
     var searchAttempt by remember(documentId) { mutableIntStateOf(0) }
-    val sheet = rememberModalBottomSheetState(confirmValueChange = { !selecting })
+    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = { !selecting })
     LaunchedEffect(documentId, query, searchAttempt) {
         val expectedQuery = query
         val expectedAttempt = searchAttempt
@@ -158,7 +158,7 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
         }
     }
     ModalBottomSheet(onDismissRequest = { if (!selecting) dismiss() }, sheetState = sheet) {
-        Column(Modifier.fillMaxWidth().padding(24.dp)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).fillMaxHeight(0.9f).padding(24.dp)) {
             Text(if (documentId.isBlank()) "Search your library" else "Find a passage", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(query, {
@@ -171,21 +171,21 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
                 searching = it.isNotBlank()
             }, modifier = Modifier.fillMaxWidth(), enabled = !selecting, singleLine = true, label = { Text("Words or a phrase") }, leadingIcon = { Icon(Icons.Default.Search, null) })
             Spacer(Modifier.height(16.dp))
-            if (searching || selecting) LinearProgressIndicator(Modifier.fillMaxWidth())
-            if (selecting) Text("Opening passage…", style = MaterialTheme.typography.bodySmall)
-            searchError?.let { error ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = { searchAttempt++; results = emptyList(); searching = true }, enabled = !selecting) { Text("Retry") }
-                }
-            }
-            navigationError?.let { error ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = { failedTarget?.let { open(it) } }, enabled = !selecting) { Text("Retry") }
-                }
-            }
-            LazyColumn(Modifier.heightIn(max = 500.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (searching || selecting) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                if (selecting) item { Text("Opening passage…", style = MaterialTheme.typography.bodySmall) }
+                searchError?.let { error -> item {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                        TextButton(onClick = { searchAttempt++; results = emptyList(); searching = true }, enabled = !selecting) { Text("Retry") }
+                    }
+                } }
+                navigationError?.let { error -> item {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                        TextButton(onClick = { failedTarget?.let { open(it) } }, enabled = !selecting) { Text("Retry") }
+                    }
+                } }
                 if (query.isBlank()) item { Text("Enter words or a phrase to search prepared passages and your thoughts.", Modifier.padding(vertical = 20.dp)) }
                 else if (!searching && searchError == null && results.isEmpty()) item { Text("No matches yet. Prepared pages and your thoughts are searched locally.", Modifier.padding(vertical = 20.dp)) }
                 items(results, key = { "${it.kind}:${it.id}" }) { hit ->
