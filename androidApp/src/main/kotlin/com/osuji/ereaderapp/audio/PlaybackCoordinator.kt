@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import com.osuji.ereaderapp.models.ModelManager
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.sync.Mutex
@@ -147,11 +149,23 @@ class PlaybackCoordinator(
         listen(document, index, saved?.offsetMillis ?: 0, false, saved?.passageFraction ?: 0.0)
     }
 
-    fun listen(document: ReaderContents, passageIndex: Int = 0, offsetMillis: Long = 0, startPlaying: Boolean = true, passageFraction: Double = 0.0, saveTarget: Boolean = false) {
-        if (capturing) return
-        if (document.passages.isEmpty()) return
+    fun listen(document: ReaderContents, passageIndex: Int = 0, offsetMillis: Long = 0, startPlaying: Boolean = true, passageFraction: Double = 0.0, saveTarget: Boolean = false): CompletableDeferred<Boolean> {
+        val accepted = CompletableDeferred<Boolean>()
+        if (capturing || document.passages.isEmpty()) { accepted.complete(false); return accepted }
         publish()
         val previous = state.value
+        val previousContents = contents
+        val previousPending = pendingCursor
+        val previousNote = playingNote
+        val previousPreview = previewReturn
+        val previousTransportReady = transportEpoch == epoch
+        val navigationRequest = sourceSeekRequest
+        var targetAccepted = false
+        var targetWriteStarted = false
+        val savedTarget = store.snapshot.value.positions.firstOrNull { it.documentId == document.document.id }
+        val priorTarget = if (previous.documentId == document.document.id && previous.noteId == null && !previous.preview) previous
+        else PlaybackSnapshot(documentId = document.document.id, passageId = savedTarget?.passageId ?: document.passages.first().id,
+            positionMillis = savedTarget?.offsetMillis ?: 0, passageFraction = savedTarget?.passageFraction ?: 0.0)
         player?.pause()
         val start = passageIndex.coerceIn(document.passages.indices)
         desiredPlaying = startPlaying
@@ -164,15 +178,30 @@ class PlaybackCoordinator(
         mutableState.value = PlaybackSnapshot(document.document.id, document.document.title, document.passages[start].id, document.passages[start].pageIndex, positionMillis = offsetMillis, preparing = true, speed = mutableState.value.speed, passageFraction = passageFraction.coerceIn(0.0, 1.0), sourceRevision = document.document.sourceRevision, sourceProgress = sourceProgress(document, document.passages[start].id, passageFraction))
         pendingCursor = state.value
         val target = state.value
-        context.startService(Intent(context, ListeningService::class.java))
-        generation = scope.launch {
+        fun restoreUnacceptedTarget() {
+            if (currentEpoch != epoch || !saveTarget || targetAccepted || navigationRequest != sourceSeekRequest || capturing) return
+            contents = previousContents
+            pendingCursor = previousPending
+            playingNote = previousNote
+            previewReturn = previousPreview
+            if (previousTransportReady) transportEpoch = currentEpoch
+            desiredPlaying = false
+            mutableState.value = previous.copy(playing = false, preparing = false)
+        }
+        val job = scope.launch {
             try {
                 check(persistSnapshot(previous)) { "Your listening position could not be saved. Please retry." }
+                currentCoroutineContext().ensureActive()
                 if (currentEpoch != epoch) return@launch
                 if (saveTarget) {
+                    targetWriteStarted = true
                     check(persistSnapshot(target)) { "Your listening position could not be saved. Please retry." }
+                    currentCoroutineContext().ensureActive()
                     if (currentEpoch != epoch) return@launch
                 }
+                if (!accepted.complete(true)) return@launch
+                targetAccepted = true
+                context.startService(Intent(context, ListeningService::class.java))
                 val transport = withTimeoutOrNull(15_000) { playerReady.await() }
                     ?: error("The audio service did not start. Please try listening again.")
                 transport.stop()
@@ -210,11 +239,29 @@ class PlaybackCoordinator(
                     nextIndex++
                 }
             } catch (failure: kotlinx.coroutines.CancellationException) {
+                if (targetWriteStarted && !targetAccepted && accepted.isCancelled) {
+                    persistSnapshot(priorTarget) { currentEpoch == epoch && navigationRequest == sourceSeekRequest && !capturing }
+                }
                 throw failure
             } catch (failure: Exception) {
-                if (currentEpoch == epoch) mutableState.value = mutableState.value.copy(preparing = false, playing = false, error = failure.message ?: "This passage could not be prepared.")
+                if (currentEpoch == epoch) {
+                    restoreUnacceptedTarget()
+                    mutableState.value = mutableState.value.copy(preparing = false, playing = false, error = failure.message ?: "This passage could not be prepared.")
+                }
+                accepted.completeExceptionally(failure)
             }
         }
+        generation = job
+        job.invokeOnCompletion { failure ->
+            if (failure != null) accepted.completeExceptionally(failure) else accepted.complete(false)
+        }
+        accepted.invokeOnCompletion { failure ->
+            if (failure is kotlinx.coroutines.CancellationException && currentEpoch == epoch && navigationRequest == sourceSeekRequest && !targetAccepted) {
+                job.cancel(failure)
+                restoreUnacceptedTarget()
+            }
+        }
+        return accepted
     }
 
     fun updateContents(document: ReaderContents) {
@@ -523,6 +570,33 @@ class PlaybackCoordinator(
         }
     }
 
+    suspend fun openSearchPassage(documentId: String, passageId: String): Boolean {
+        if (capturing || state.value.preview || state.value.noteId != null || playingNote != null) return false
+        val request = ++sourceSeekRequest
+        val expectedEpoch = epoch
+        val expectedRevision = state.value.sourceRevision
+        val document = store.contents(documentId)
+        if (request != sourceSeekRequest || epoch != expectedEpoch || state.value.sourceRevision != expectedRevision ||
+            capturing || state.value.preview || state.value.noteId != null || playingNote != null) return false
+        val index = document.passages.indexOfFirst { it.id == passageId }
+        if (document.document.id != documentId || index < 0) return false
+        val acceptance = listen(document, index, startPlaying = false, saveTarget = true)
+        val navigationEpoch = epoch
+        val navigationJob = generation
+        try {
+            if (!acceptance.await()) return false
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            if (request == sourceSeekRequest && epoch == navigationEpoch) {
+                acceptance.cancel(cancelled)
+                if (acceptance.isCancelled) withContext(NonCancellable) { navigationJob?.join() }
+            }
+            throw cancelled
+        }
+        return request == sourceSeekRequest && epoch == navigationEpoch && !capturing && !state.value.preview && state.value.noteId == null &&
+            state.value.documentId == documentId && state.value.passageId == passageId && state.value.sourceRevision == document.document.sourceRevision &&
+            contents?.document?.sourceRevision == document.document.sourceRevision
+    }
+
     private fun canSeekSource(documentId: String, sourceRevision: String): Boolean = !capturing && !state.value.preview && state.value.noteId == null &&
         state.value.documentId == documentId && contents?.document?.id == documentId && contents?.document?.sourceRevision == sourceRevision &&
         contents?.document?.extractionStatus != "preparing" && contents?.passages?.isNotEmpty() == true
@@ -545,12 +619,14 @@ class PlaybackCoordinator(
         return persistSnapshot(if (state.value.preview) previewReturn?.snapshot ?: state.value else state.value)
     }
 
-    private suspend fun persistSnapshot(snapshot: PlaybackSnapshot): Boolean {
+    private suspend fun persistSnapshot(snapshot: PlaybackSnapshot, ownsWrite: () -> Boolean = { true }): Boolean {
         if (snapshot.noteId != null || snapshot.preview) return true
         val documentId = snapshot.documentId ?: return true
         val passageId = snapshot.passageId ?: return true
         return try {
-            withContext(NonCancellable) { progressWrites.withLock { store.saveProgress(documentId, passageId, snapshot.positionMillis, snapshot.passageFraction) } }
+            withContext(NonCancellable) { progressWrites.withLock {
+                if (ownsWrite()) store.saveProgress(documentId, passageId, snapshot.positionMillis, snapshot.passageFraction)
+            } }
             true
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) {

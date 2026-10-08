@@ -102,41 +102,97 @@ fun OfflineSpeechSheet(dismiss: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchSheet(documentId: String, select: (SearchMatch) -> Unit, dismiss: () -> Unit) {
+fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, dismiss: () -> Unit) {
     val store = koinInject<ReaderStore>()
-    var query by remember { mutableStateOf("") }
-    var results by remember { mutableStateOf<List<SearchMatch>>(emptyList()) }
-    var searching by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(documentId, query) {
-        error = null
-        if (query.isBlank()) { results = emptyList(); searching = false; return@LaunchedEffect }
+    val scope = rememberCoroutineScope()
+    var query by remember(documentId) { mutableStateOf("") }
+    var results by remember(documentId) { mutableStateOf<List<SearchMatch>>(emptyList()) }
+    var searching by remember(documentId) { mutableStateOf(false) }
+    var searchError by remember(documentId) { mutableStateOf<String?>(null) }
+    var navigationError by remember(documentId) { mutableStateOf<String?>(null) }
+    var failedTarget by remember(documentId) { mutableStateOf<SearchMatch?>(null) }
+    var selecting by remember(documentId) { mutableStateOf(false) }
+    var searchAttempt by remember(documentId) { mutableIntStateOf(0) }
+    val sheet = rememberModalBottomSheetState(confirmValueChange = { !selecting })
+    LaunchedEffect(documentId, query, searchAttempt) {
+        val expectedQuery = query
+        val expectedAttempt = searchAttempt
+        results = emptyList()
+        searchError = null
+        if (query.isBlank()) { searching = false; return@LaunchedEffect }
         searching = true
         try {
             delay(200)
-            results = store.search(documentId, query)
+            val matches = store.search(documentId, expectedQuery)
+            if (query == expectedQuery && searchAttempt == expectedAttempt) results = matches
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
-        } catch (failure: Exception) {
-            results = emptyList()
-            error = "Search could not finish. Try again."
-        } finally { searching = false }
+        } catch (_: Exception) {
+            if (query == expectedQuery && searchAttempt == expectedAttempt) searchError = "Search could not finish. Try again."
+        } finally {
+            if (query == expectedQuery && searchAttempt == expectedAttempt) searching = false
+        }
     }
-    ModalBottomSheet(onDismissRequest = dismiss) {
+    fun open(hit: SearchMatch) {
+        if (selecting || documentId.isNotBlank() && hit.documentId != documentId) return
+        val expectedQuery = query
+        val expectedAttempt = searchAttempt
+        selecting = true
+        navigationError = null
+        failedTarget = null
+        scope.launch {
+            try {
+                val accepted = select(hit)
+                if (query == expectedQuery && searchAttempt == expectedAttempt) {
+                    if (accepted) dismiss()
+                    else { failedTarget = hit; navigationError = "This passage could not be opened. Finish any recording or preview, then try again." }
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (query == expectedQuery && searchAttempt == expectedAttempt) {
+                    failedTarget = hit
+                    navigationError = "This passage could not be opened. Try again."
+                }
+            } finally { selecting = false }
+        }
+    }
+    ModalBottomSheet(onDismissRequest = { if (!selecting) dismiss() }, sheetState = sheet) {
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
             Text(if (documentId.isBlank()) "Search your library" else "Find a passage", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Words or a phrase") }, leadingIcon = { Icon(Icons.Default.Search, null) })
+            OutlinedTextField(query, {
+                query = it
+                searchAttempt++
+                results = emptyList()
+                searchError = null
+                navigationError = null
+                failedTarget = null
+                searching = it.isNotBlank()
+            }, modifier = Modifier.fillMaxWidth(), enabled = !selecting, singleLine = true, label = { Text("Words or a phrase") }, leadingIcon = { Icon(Icons.Default.Search, null) })
             Spacer(Modifier.height(16.dp))
-            if (searching) LinearProgressIndicator(Modifier.fillMaxWidth())
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            if (searching || selecting) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (selecting) Text("Opening passage…", style = MaterialTheme.typography.bodySmall)
+            searchError?.let { error ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = { searchAttempt++; results = emptyList(); searching = true }, enabled = !selecting) { Text("Retry") }
+                }
+            }
+            navigationError?.let { error ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(error, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = { failedTarget?.let { open(it) } }, enabled = !selecting) { Text("Retry") }
+                }
+            }
             LazyColumn(Modifier.heightIn(max = 500.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!searching && query.isNotBlank() && results.isEmpty()) item { Text("No matches yet. Prepared pages and your thoughts are searched locally.", Modifier.padding(vertical = 20.dp)) }
+                if (query.isBlank()) item { Text("Enter words or a phrase to search prepared passages and your thoughts.", Modifier.padding(vertical = 20.dp)) }
+                else if (!searching && searchError == null && results.isEmpty()) item { Text("No matches yet. Prepared pages and your thoughts are searched locally.", Modifier.padding(vertical = 20.dp)) }
                 items(results, key = { "${it.kind}:${it.id}" }) { hit ->
-                    Surface(onClick = { select(hit); dismiss() }, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainer) {
+                    Surface(onClick = { open(hit) }, enabled = !selecting, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainer) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(hit.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text("Page ${hit.pageIndex + 1} · ${if (hit.kind == "note") "Your thought" else "Passage"}", style = MaterialTheme.typography.labelSmall)
+                            Text("Page ${hit.pageIndex + 1} · ${if (hit.kind == "note") "Note" else "Passage"}", style = MaterialTheme.typography.labelSmall)
                             Text(hit.text, maxLines = 4, overflow = TextOverflow.Ellipsis)
                         }
                     }

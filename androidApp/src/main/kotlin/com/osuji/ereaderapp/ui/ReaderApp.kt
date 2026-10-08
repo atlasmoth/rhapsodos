@@ -266,13 +266,9 @@ fun ReaderApp() {
         if (showVoices) OfflineSpeechSheet { showVoices = false }
         if (showAbout) AboutSheet { showAbout = false }
         if (showSearch) SearchSheet("", { hit ->
-            openDocument(hit.documentId)
-            scope.launch {
-                runCatching { store.contents(hit.documentId) }.onSuccess { document ->
-                    val index = document.passages.indexOfFirst { it.id == hit.passageId }
-                    if (index >= 0) playback.listen(document, index)
-                }
-            }
+            val accepted = playback.openSearchPassage(hit.documentId, hit.passageId)
+            if (accepted) openDocument(hit.documentId)
+            accepted
         }, { showSearch = false })
 
         if (showSettings) AlertDialog(
@@ -629,7 +625,11 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
             NotesPane(notes, store, { note -> returnToPassage(note.passageId); showThoughts = false }, Modifier.weight(1f))
         }
     }
-    if (showSearch) SearchSheet(id, { hit -> returnToPassage(hit.passageId) }, { showSearch = false })
+    if (showSearch) SearchSheet(id, { hit ->
+        val accepted = hit.documentId == id && playback.openSearchPassage(id, hit.passageId)
+        if (accepted) { following = false; page = playback.state.value.pageIndex }
+        accepted
+    }, { showSearch = false })
     if (showContents) AlertDialog(onDismissRequest = { showContents = false }, title = { Text("Find your place") }, text = {
         LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (contents.sections.isNotEmpty()) item { Text("CHAPTERS", style = MaterialTheme.typography.labelSmall) }

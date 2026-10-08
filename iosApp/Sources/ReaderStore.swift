@@ -415,15 +415,50 @@ final class ReaderStore: ObservableObject {
         if sceneActive { repairCurrentGeometry(); Task { await models?.recheckReadyPacks() } }
     }
 
-    func search(_ query: String, entireLibrary: Bool) async -> [SearchHit] {
-        guard let repository else { return [] }
-        do { return try await repository.search(documentId: entireLibrary ? "" : selectedId ?? "", query: query) }
-        catch { present(error); return [] }
+    var canNavigatePreparedSource: Bool {
+        !busy && !loading && sceneActive && repository != nil && captureDraft == nil
+            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
     }
 
-    func goToPassage(documentId: String, passageId: String) async {
-        if selectedId != documentId { await select(documentId) }
-        if let passage = document?.passages.first(where: { $0.id == passageId }) { audio.pause(); seek(passage) }
+    func search(_ query: String, documentId: String) async throws -> [SearchHit] {
+        guard let repository else { throw ReaderSearchFailure.unavailable }
+        try Task.checkCancellation()
+        let hits = try await repository.search(documentId: documentId, query: query)
+        try Task.checkCancellation()
+        return hits
+    }
+
+    func goToPassage(documentId: String, passageId: String) async throws -> Bool {
+        guard canNavigatePreparedSource, let repository else { return false }
+        let originalId = selectedId
+        busy = true
+        preparation = "Opening the passage"
+        defer { busy = false; preparation = ""; serviceTranscriptions() }
+        let stoppedTransport = await audio.pauseAndJoinGeneration()
+        func currentRequest(_ transport: UUID, documentId: String?) -> Bool {
+            audio.transportRevision == transport && selectedId == documentId && sceneActive
+                && captureDraft == nil && !audio.recording && !audio.capturePending
+                && !audio.previewing && audio.replayingNote == nil
+        }
+        guard currentRequest(stoppedTransport, documentId: originalId) else { return false }
+        try await flushProgress()
+        guard currentRequest(stoppedTransport, documentId: originalId) else { return false }
+        let target = try await repository.document(documentId)
+        guard currentRequest(stoppedTransport, documentId: originalId), target.document.id == documentId,
+              let index = target.passages.firstIndex(where: { $0.id == passageId && $0.documentId == documentId }) else { return false }
+        try await refresh()
+        guard currentRequest(stoppedTransport, documentId: originalId) else { return false }
+        document = target
+        selectedId = documentId
+        UserDefaults.standard.set(documentId, forKey: "selectedDocument")
+        audio.load(target.passages, title: target.document.title, at: index,
+            complete: target.document.extractionStatus != "preparing")
+        let appliedTransport = audio.transportRevision
+        follow = true
+        try await flushProgress()
+        guard currentRequest(appliedTransport, documentId: documentId), audio.current?.id == passageId else { return false }
+        feedback.play(.selection)
+        return true
     }
 
     func rename(_ id: String, title: String) async {

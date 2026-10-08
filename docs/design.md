@@ -34,7 +34,7 @@ Global search, offline voices, settings and import sit immediately beneath the R
 
 The library ends with its files rather than a privacy/archive footer. Privacy information and archive restore belong in Settings on both platforms.
 
-The PDF header shows the document title and document tools.
+The PDF header shows the document title, a dedicated search action, contents and notes. Search opens its own native sheet on both apps; it is not a tab inside another tool sheet. In-file scope stays fixed to that document; only the library entry searches all files. Both sheets use the same query prompt, loading/error/retry behavior and page-labelled passage/note results. Selecting a result moves the source position while remaining paused.
 
 | Surface | Content and primary action |
 | --- | --- |

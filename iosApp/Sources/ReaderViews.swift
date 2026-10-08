@@ -11,7 +11,7 @@ struct ReaderRoot: View {
     @State private var settings = false
     @State private var gallery = false
     @State private var tools = false
-    @State private var librarySearch = false
+    @State private var searchScope: ReaderSearchScope?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var renameTarget: LibraryDocument?
     @State private var renamedTitle = ""
@@ -78,7 +78,9 @@ struct ReaderRoot: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if store.document != nil {
-                        Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages and search")
+                        Button { tools = true } label: { Image(systemName: "list.bullet.rectangle") }.accessibilityLabel("Document contents")
+                        Button { if let id = store.selectedId { searchScope = ReaderSearchScope(documentId: id) } } label: { Image(systemName: "magnifyingglass") }
+                            .accessibilityLabel("Find a passage").disabled(!store.canNavigatePreparedSource)
                         Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
                     }
                 }
@@ -95,7 +97,8 @@ struct ReaderRoot: View {
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
         .sheet(isPresented: $gallery) { if let models = store.models { ModelGallery(models: models) } }
-        .sheet(isPresented: $tools) { ReaderTools(initialTab: librarySearch ? .search : .contents, wholeLibrary: librarySearch) }
+        .sheet(isPresented: $tools) { ReaderTools() }
+        .sheet(item: $searchScope) { scope in ReaderSearchSheet(documentId: scope.documentId) }
         .alert("Rename your document", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
             TextField("Title", text: $renamedTitle)
             Button("Save") { if let target = renameTarget { Task { await store.rename(target.id, title: renamedTitle) } }; renameTarget = nil }
@@ -118,8 +121,8 @@ struct ReaderRoot: View {
 
     private var libraryActions: some View {
         Group {
-            LibraryActionButton(title: "Search", symbol: "magnifyingglass") { librarySearch = true; tools = true }
-                .accessibilityLabel("Search the library")
+            LibraryActionButton(title: "Search", symbol: "magnifyingglass") { searchScope = ReaderSearchScope(documentId: "") }
+                .accessibilityLabel("Search the library").disabled(!store.canNavigatePreparedSource)
             LibraryActionButton(title: "Voices", symbol: "headphones") { gallery = true }
                 .accessibilityLabel("Offline voices and transcription").disabled(store.models == nil)
             LibraryActionButton(title: "Settings", symbol: "slider.horizontal.3") { settings = true }

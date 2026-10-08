@@ -21,9 +21,9 @@ Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spok
 | Journey | Implementation |
 | --- | --- |
 | Import | App-owned PDF, bounded progressive extraction, scan OCR, original-page access and preparation retry |
-| Listen | Original PDF with active-passage highlights, system/installed or downloaded local voices, native playback controls, rate, progress, following and manual browsing |
+| Listen | Original PDF highlights, local voices and native controls; manual browsing pauses audio/following, and Play returns to the frozen listening position |
 | Remember | Tap the active PDF highlight to pause and freeze the source before capture; durable audio, typed notes, transcript editing and deferred local transcription |
-| Navigate | Literal passage/note search, PDF outline destinations with page fallback |
+| Navigate | Dedicated document/library search sheets with fixed scopes, literal local passage/note results, truthful states and paused durable destinations; outline/page fallback |
 | Manage | Rename/delete, owned-file cleanup and restore of existing portable document/audio/note archives |
 | Offline speech | Curated platform catalog, explicit downloads, pause/resume, pinned verification, runtime checks, atomic activation, repair and removal |
 | Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, haptic preferences and wide layouts |
@@ -209,3 +209,7 @@ Removed the editor, native adapters, shared rules/revisions and replacement engi
 ## Browsing pauses narration — 8 October 2026
 
 Removed the follow-narration control. Manual page/pan/zoom/keyboard/accessibility browsing pauses book transport and following; explicit Play returns to the frozen listening position. Native guards preserve previews, note replay and capture, reject stale source seeks and prevent deferred speech preparation from starting audio after browse. Explicit passage destinations stay paused. Android Debug and matching iOS simulator Debug compiled. A private actual muted Media3 integration passed 32/32 checks against APK SHA-256 `9ca0f28179e3fe88b4e5abddc4c64d85bc577000f7b426072456b5f64c7eda41`, including freeze/resume, latent intent, stale seeks, repeated-paused-write suppression and unrelated-operation guards. Evidence: `/private/tmp/rhapsodos-android-browse-native-qa/qualification.json`, SHA-256 `93ed0a6230bc6b733808c880db461f6aa78f9df7a37a8f0f7796a51654dc47fa`. Preview/replay exclusion uses explicit state fixtures; this check did not open a microphone, run inference or exercise Compose gestures. iOS consumer browsing is validated separately from compilation.
+
+## Dedicated search sheets — 8 October 2026
+
+Both apps use a separate native search sheet with fixed document/library scope, query debounce, distinct loading/empty/error states and Retry. A result is accepted only after the paused source destination is durably saved. Android Debug and iOS simulator Debug compiled. A private actual Media3/SQLDelight/SQLite harness passed 43/43 assertions against APK SHA-256 `1fc8bbb0a2870496af10a42a715fd9127ff13631bbb96ccb24fc9e8115debeb3`: same/different-book selection, capture/mode/source guards, stale lookups, cancellation before and during an actual target write, compensating cursor recovery and SQL-trigger rejection. Evidence: `/private/tmp/rhapsodos-android-search-native-qa/qualification.json`, SHA-256 `c24ba868a15c53b0652866a7258c2da4f542dcc684125b8ad658260f49e700ba`. The target-execute scheduling gate and mode fixtures are explicit; no Compose gestures, consumer database, microphone, inference or physical routes were exercised by this harness.
