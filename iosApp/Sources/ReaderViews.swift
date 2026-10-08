@@ -38,13 +38,6 @@ struct ReaderRoot: View {
                         }
                     }.padding(.vertical, 8).listRowBackground(Color.clear)
                 }
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("YOUR LISTENING SPACE", systemImage: "waveform").font(.caption2.weight(.semibold)).foregroundStyle(Palette.accent)
-                        Text("A little more\nroom to think.").font(BrandFont.display(28))
-                        Text("Listen. Follow. Remember.").font(.subheadline).foregroundStyle(.secondary)
-                    }.padding(.vertical, 14).listRowBackground(Color.clear).accessibilityElement(children: .combine)
-                }
                 Section("Library") {
                     ForEach(store.library) { document in
                         NavigationLink(value: document.id) {
