@@ -17,7 +17,7 @@ The first audience is everyday readers and people using listening for accessibil
 | First listen | Import a PDF, see its first useful content, choose an available voice and start without waiting for full-book processing |
 | Continue | Open the app or use system media controls and resume at the last source position with the selected voice |
 | Follow | Track the highlighted spoken passage on the original PDF; inspect nearby content and return to the current passage |
-| Remember | Tap the active PDF highlight to pause and record at the confirmed passage, then save and resume independently of transcription |
+| Remember | Double-tap a prepared PDF passage to pause and record a note there, then save and resume independently of transcription |
 | Revisit | Open a note, hear its original recording, edit its transcript and jump back to its source context |
 | Prepare for offline | Download a compatible voice if desired and prepare selected chapters; see exactly which content is ready |
 | Use a wide window | Keep outline, source and anchored notes in useful panes without restarting audio or losing a draft |
@@ -42,7 +42,7 @@ The dock provides output-volume controls through the native media-volume APIs. T
 
 Resume, scrubbing and chapter selection refer to the source, even if generated audio changes. If a requested section is not prepared, show that state and prepare it; do not pretend every PDF is instantly an offline audiobook.
 
-The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Tapping the visible active highlight pauses narration and opens an audio note at the frozen source position. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual page browsing, pan and zoom pause narration and automatic following immediately. Play resumes the saved listening position and returns the PDF to narration. There is no separate follow-narration control. Explicit chapter, note and search destinations can move the source position while leaving playback paused.
+The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Double-tapping a prepared passage pauses narration and opens an audio note attached to that exact source passage. Single taps do not record. A note outside the current narration uses passage offset zero; it does not seek or replace the book's saved listening cursor. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual page browsing, pan and zoom pause narration and automatic following immediately. Play resumes the saved listening position and returns the PDF to narration. There is no separate follow-narration control. Explicit chapter, note and search destinations can move the source position while leaving playback paused.
 
 Both platforms open document search in a dedicated sheet with a fixed document scope. Library search uses the same sheet with a fixed whole-library scope. Query, preparation, empty results, failure and retry are explicit; selecting a result navigates to its prepared passage and leaves narration paused. Search remains literal and local.
 
@@ -54,8 +54,8 @@ Voice changes are explicit. Keep the current listening place, explain any requir
 
 ### Voice note
 
-1. The listener taps the active highlight in the PDF or invokes its accessible **Pause and record thought** action.
-2. Playback stops at a confirmed position. The app freezes and saves the attachment before opening the microphone.
+1. The listener double-taps a prepared passage in the PDF or invokes its accessible record-note action. The playback dock can record at the current narration.
+2. Playback stops at its confirmed position. The app freezes the chosen passage's source attachment before opening the microphone, retaining the listening cursor independently.
 3. The recorder shows the attached passage, recording status and duration. The listener can stop, cancel or save.
 4. Save finalizes durable audio. **Save and resume** returns to listening without waiting for ASR.
 5. The note shows a truthful state such as saved/transcribing, waiting for resources or transcription failed. Its recording and attachment remain usable.

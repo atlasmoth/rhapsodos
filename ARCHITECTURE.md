@@ -9,7 +9,7 @@ The product is a listening-first PDF app. A useful first release turns ordinary 
 The central guarantees are:
 
 1. Narration, highlighting, seeking and notes refer to the same underlying source.
-2. A voice note attaches to the confirmed pause position before recording starts. Its original audio survives ASR failure.
+2. A voice note attaches to the chosen source passage, frozen before recording starts; narration keeps its own confirmed pause position. Its original audio survives ASR failure.
 3. Save and resume do not wait for transcription. Restart and interruption recovery preserve committed notes and listening progress.
 4. Core use works locally. A strict local-only policy has no hidden cloud fallback.
 5. Optional enhanced voices can be downloaded and selected. Larger models are qualified capabilities, not requirements for every supported device.
@@ -87,7 +87,7 @@ Never guess the coordinate convention of untagged geometry. Preserve the source 
 
 Normalization covers hyphenation, whitespace, repeated headers/footers, abbreviations and pronunciation. Footnotes, captions and tables have visible policies; uncertain content is not silently invented or discarded. Complex equations and tables may require a source-aware alternate presentation or a deliberate skip choice. A general LLM is not necessary for this baseline.
 
-The source graph drives narration, search and accessible source context. Native PDF surfaces display the faithful page and highlight mapped geometry. Tapping the visible active highlight dispatches pause-and-record against its expected document/passage identity; a stale highlight must never attach to a different passage. Native hit testing accounts for the rendered page, crop, rotation, zoom and pan. Blank-space taps and browsing gestures do not record or seek. An uncertain extraction retains the original page and an explicit repair/preparation state.
+The source graph drives narration, search and accessible source context. Native PDF surfaces display the faithful page and highlight mapped geometry. Double-tapping prepared text dispatches pause-and-record against its expected document, revision and passage identity; stale geometry must never attach to another passage. The frozen note source and paused book cursor are separate. Native hit testing accounts for the rendered page, crop, rotation, zoom and pan. Blank-space taps and browsing gestures do not record or seek. An uncertain extraction retains the original page and an explicit repair/preparation state.
 
 Page colours are a native display concern. Neutral paper/ink follow the app appearance through a bounded raster transformation, with strongly coloured pixels preserved and an Original colours preference. Source PDFs, OCR inputs, canonical text, geometry and note anchors remain unchanged. Android transforms its bounded rendered bitmap off the main thread; iOS transforms clipped PDFKit render tiles at native zoom. Native narration overlays remain above the transformed page. Do not add a second document store or generated replacement PDF for this appearance feature.
 
@@ -100,13 +100,13 @@ Page colours are a native display concern. Neutral paper/ink follow the app appe
 | NarrationEdition | Document revision, normalization versions, provider/model/voice snapshot and synthesis settings |
 | NarrationSegment | Spoken text/range, source mappings, audio manifest, duration and alignment precision/version |
 | PlaybackCursor | Source anchor plus narration edition, segment, native audio offset and measured passage fraction; save time and local session identity |
-| Note | Stable ID, frozen source and narration anchors, capture status, recording manifest, timestamps and optional user text |
+| Note | Stable ID, chosen frozen source attachment and supplemental passage audio offset, capture status, recording manifest, timestamps and optional user text |
 | TranscriptRevision | Machine output, language/provider provenance, user-edited text and edit revision; original recording retained |
 | Job | Stable ID, task, input revision/hash, selected model, checkpoints, attempts, output manifest and cancel/generation state |
 | ModelInstall | Catalog/version/platform/runtime identity, verified asset hashes, eligibility result and active installation state |
 | SyncOutbox | Stable operation ID, record revision, retry state and deletion/conflict metadata |
 
-Source and narration anchors are separate. The source anchor survives changes to voice or synthesis. The narration anchor records where the listener was in that specific audio edition.
+A note's source attachment survives changes to voice or synthesis. Its audio offset supplements that passage when it is the current narration; an off-current note uses offset zero. The book's paused playback cursor remains separate and determines save/resume.
 
 Re-extraction builds a new graph; reconcile anchors using retained mappings and source context. Ambiguous matches require review and preserve the original attachment. This is an integrity requirement, not a promise to keep obsolete internal APIs during development.
 
@@ -134,8 +134,8 @@ sequenceDiagram
     participant D as Durable repository
     participant R as Recorder
     participant J as ASR job
-    U->>A: Pause and record thought
-    A->>A: Confirm stopped position and freeze anchors
+    U->>A: Double-tap source passage or record current narration
+    A->>A: Pause book and freeze chosen source attachment
     A->>D: Persist anchored draft
     A->>R: Switch session and begin capture
     U->>R: Save and resume

@@ -28,6 +28,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
+import java.util.UUID
 
 data class PlaybackSnapshot(
     val documentId: String? = null,
@@ -50,6 +51,8 @@ data class PlaybackSnapshot(
 )
 
 data class FrozenPlayback(val documentId: String, val passageId: String, val offsetMillis: Long)
+data class PreparedCaptureTarget(val documentId: String, val sourceRevision: String, val passageId: String, val pageIndex: Int, val pageStart: Int, val pageEnd: Int, val sourceStart: Int, val sourceEnd: Int)
+data class CaptureReservation(val id: String, val target: PreparedCaptureTarget, val attachment: FrozenPlayback, val quote: String, val reading: PlaybackSnapshot, val epoch: Long)
 
 class PlaybackCoordinator(
     private val context: Context,
@@ -71,7 +74,7 @@ class PlaybackCoordinator(
     private var pendingCursor: PlaybackSnapshot? = null
     private val progressWrites = Mutex()
     private var playingNote: VoiceNote? = null
-    private var captureAnchor: FrozenPlayback? = null
+    private var captureReservation: CaptureReservation? = null
     private data class PreviewReturn(val document: ReaderContents, val snapshot: PlaybackSnapshot, val note: VoiceNote?)
     private var previewReturn: PreviewReturn? = null
     private var desiredPlaying = false
@@ -361,55 +364,76 @@ class PlaybackCoordinator(
 
     fun resume() { if (!capturing) { desiredPlaying = true; if (transportEpoch == epoch) player?.play() } }
 
-    fun beginCapture(expectedDocumentId: String? = null, expectedPassageId: String? = null, expectedSourceRevision: String? = null): FrozenPlayback? {
-        if (expectedDocumentId != null || expectedPassageId != null || expectedSourceRevision != null) {
-            if (capturing || playingNote != null || state.value.preview) return null
-            publish()
-            val current = state.value
-            if (current.documentId != expectedDocumentId || current.passageId != expectedPassageId ||
-                contents?.document?.sourceRevision != expectedSourceRevision || player?.currentMediaItem?.mediaId != expectedPassageId ||
-                current.preparing || current.durationMillis <= 0) return null
-        }
-        captureAnchor?.let { return it }
-        if (playingNote != null || state.value.preview) return null
+    fun beginCapture(expected: PreparedCaptureTarget? = null): CaptureReservation? {
+        if (expected != null && capturing) return null
+        captureReservation?.let { return it.takeIf { isCaptureReservationValid(it.id) } }
+        if (playingNote != null || state.value.preview || state.value.noteId != null) return null
+        publish()
+        val document = contents ?: return null
+        val current = state.value
+        if (current.documentId != document.document.id || current.sourceRevision != document.document.sourceRevision) return null
+        val passage = document.passages.singleOrNull { it.id == (expected?.passageId ?: current.passageId) } ?: return null
+        val target = PreparedCaptureTarget(document.document.id, document.document.sourceRevision, passage.id, passage.pageIndex,
+            passage.pageStart, passage.pageEnd, passage.sourceStart, passage.sourceEnd)
+        if (expected != null && expected != target || passage.documentId != target.documentId || passage.sourceText.isBlank() ||
+            passage.sourceStart < 0 || passage.sourceEnd <= passage.sourceStart || passage.pageStart < 0 || passage.pageEnd <= passage.pageStart) return null
+        val page = document.pages.singleOrNull { it.pageIndex == passage.pageIndex } ?: return null
+        if (passage.pageEnd > page.text.length || page.text.substring(passage.pageStart, passage.pageEnd) != passage.sourceText ||
+            passage.sourceEnd - passage.sourceStart != passage.sourceText.length) return null
         val frozen = pause() ?: return null
-        if (expectedDocumentId != null && (frozen.documentId != expectedDocumentId || frozen.passageId != expectedPassageId)) return null
-        captureAnchor = frozen
+        val reading = state.value
+        val attachment = FrozenPlayback(target.documentId, target.passageId, if (target.passageId == frozen.passageId) frozen.offsetMillis else 0)
+        val reservation = CaptureReservation(UUID.randomUUID().toString(), target, attachment, passage.sourceText, reading, epoch)
+        captureReservation = reservation
         sourceSeekRequest++
         capturing = true
         restartAfterCapture = generation?.isActive == true
         generation?.cancel()
         mutableState.value = state.value.copy(capturing = true)
-        return frozen
+        return reservation
     }
 
-    fun endCapture() {
+    fun captureReservation(id: String?): CaptureReservation? = captureReservation?.takeIf { it.id == id && isCaptureReservationValid(id) }
+
+    fun isCaptureReservationValid(id: String?, requireQuiet: Boolean = false): Boolean {
+        val reservation = captureReservation ?: return false
+        val target = reservation.target
+        val document = contents ?: return false
+        val current = state.value
+        return capturing && reservation.id == id && reservation.epoch == epoch && !current.preview && current.noteId == null &&
+            current.documentId == reservation.reading.documentId && current.passageId == reservation.reading.passageId &&
+            current.sourceRevision == reservation.reading.sourceRevision &&
+            document.document.id == target.documentId && document.document.sourceRevision == target.sourceRevision &&
+            document.passages.count { it.id == target.passageId && it.documentId == target.documentId && it.pageIndex == target.pageIndex &&
+                it.pageStart == target.pageStart && it.pageEnd == target.pageEnd && it.sourceStart == target.sourceStart && it.sourceEnd == target.sourceEnd && it.sourceText == reservation.quote } == 1 &&
+            player?.playWhenReady != true && player?.isPlaying != true && (!requireQuiet || generation?.isActive != true)
+    }
+
+    fun endCapture(reservationId: String? = null) {
+        val reservation = captureReservation
+        if (reservationId != null && reservation?.id != reservationId) return
+        if (reservation == null && !capturing) return
         capturing = false
-        captureAnchor = null
-        mutableState.value = state.value.copy(capturing = false)
+        captureReservation = null
+        mutableState.value = (reservation?.reading ?: state.value).copy(capturing = false, playing = false)
         if (restartAfterCapture) {
             restartAfterCapture = false
             val document = contents ?: return
             val current = state.value
             val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
             listen(document, index, current.positionMillis, false, current.passageFraction)
+        } else if (reservation != null && transportEpoch == epoch) {
+            val index = (0 until (player?.mediaItemCount ?: 0)).firstOrNull { player?.getMediaItemAt(it)?.mediaId == reservation.reading.passageId }
+            if (index != null) player?.seekTo(index, reservation.reading.positionMillis)
+            publish()
         }
     }
 
     suspend fun awaitQuietPreparation() { generation?.join() }
 
-    fun beginTextCapture(documentId: String, passageId: String): FrozenPlayback? {
-        captureAnchor?.let { return it }
-        if (capturing) return null
-        pause()
-        return FrozenPlayback(documentId, passageId, if (state.value.documentId == documentId && state.value.passageId == passageId) state.value.positionMillis else 0).also {
-            captureAnchor = it
-            sourceSeekRequest++
-            capturing = true
-            restartAfterCapture = generation?.isActive == true
-            generation?.cancel()
-            mutableState.value = state.value.copy(capturing = true)
-        }
+    suspend fun persistCaptureReading(reservationId: String): Boolean {
+        val reservation = captureReservation(reservationId) ?: return false
+        return persistSnapshot(reservation.reading) { isCaptureReservationValid(reservationId) } && isCaptureReservationValid(reservationId)
     }
 
     fun previewVoice(packId: String) {
@@ -639,6 +663,7 @@ class PlaybackCoordinator(
         snapshot.passageFraction == 1.0 && contents?.document?.extractionStatus != "preparing" && contents?.passages?.lastOrNull()?.id == snapshot.passageId
 
     private fun publish() {
+        if (capturing && captureReservation != null) return
         val transport = player ?: return
         val passage = contents?.passages?.firstOrNull { it.id == transport.currentMediaItem?.mediaId }
         val current = state.value

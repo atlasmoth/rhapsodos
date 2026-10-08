@@ -1,6 +1,6 @@
 # Rhapsodos
 
-This project turns a PDF into an enjoyable listening experience. The original PDF follows and highlights the passage being spoken. Tapping that highlight pauses narration and opens an audio note at the frozen source position; the listener can save and resume while transcription waits for available resources.
+This project turns a PDF into an enjoyable listening experience. The original PDF follows and highlights the passage being spoken. Double-tapping a prepared passage pauses narration and opens an audio note attached there; the listener can save and resume while transcription waits for available resources.
 
 The initial audience is everyday readers and people who benefit from accessible listening. Launch quality is English first, with multilingual document and speech contracts from the beginning.
 

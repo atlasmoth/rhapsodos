@@ -25,7 +25,7 @@ Mapping intervals include `kind` (`linear`, `collapsed`, `replacement`). Linear 
 
 ## Anchored notes
 
-- `createNoteDraft(noteId,documentId,passageId,recordingPath,offsetMillis)` freezes the source attachment and returns its canonical record. Pause native transport before calling it. The native offset supplements the passage's source revision/ranges and quote; it does not replace them.
+- `createNoteDraft(noteId,documentId,passageId,recordingPath,offsetMillis)` freezes the source attachment and returns its canonical record. Pause native transport before calling it. The native offset supplements the passage's source revision/ranges and quote; it does not replace them. A double-tapped passage away from current narration uses offset zero. Its attachment is independent of the frozen book cursor, which save/resume retains.
 - `commitNote(noteId,recordingPath,durationMillis)` accepts durable nonempty audio and returns the saved record. Repeating the same commit is idempotent; a saved recording's locator and duration are immutable.
 - `saveTextNote(noteId,documentId,passageId,text,offsetMillis)` saves a typed thought without audio. Reusing its ID is idempotent only for the same attachment and text. Use `editTranscript(noteId,text)` for deliberate edits.
 - `markNoteStatus(noteId,status)` accepts `interrupted` only for an unsaved zero-duration draft. Saved recordings cannot become interrupted drafts. Transcription states (`pending`, `pendingModel`, `transcribing`, `transcribed`, `failed`) require committed audio.

@@ -94,6 +94,14 @@ final class ReaderStore: ObservableObject {
         return PDFHighlightAnchor(documentId: passage.documentId, sourceRevision: document.document.sourceRevision,
             passageId: passage.id, pageIndex: passage.pageIndex, sourceStart: passage.sourceStart, sourceEnd: passage.sourceEnd)
     }
+    private func preparedPassage(at anchor: PDFHighlightAnchor) -> Passage? {
+        guard let document, selectedId == anchor.documentId, document.document.id == anchor.documentId,
+              document.document.sourceRevision == anchor.sourceRevision else { return nil }
+        return document.passages.first {
+            $0.id == anchor.passageId && $0.documentId == anchor.documentId && $0.pageIndex == anchor.pageIndex
+                && $0.sourceStart == anchor.sourceStart && $0.sourceEnd == anchor.sourceEnd
+        }
+    }
     var canBeginNote: Bool {
         !busy && !loading && sceneActive && captureDraft == nil && !audio.recording && !audio.previewing && audio.replayingNote == nil && !audio.capturePending && currentHighlightAnchor != nil
     }
@@ -528,8 +536,9 @@ final class ReaderStore: ObservableObject {
     }
 
     @discardableResult func beginNote(expected: PDFHighlightAnchor? = nil) -> Bool {
-        guard canBeginNote, let repository, let files, let initial = currentHighlightAnchor,
-              let passage = currentPassage, expected == nil || expected == initial else { return false }
+        guard canBeginNote, let repository, let files, let bookAnchor = currentHighlightAnchor,
+              let passage = preparedPassage(at: expected ?? bookAnchor) else { return false }
+        let target = expected ?? bookAnchor
         busy = true
         models?.cancelRuntimeChecks()
         let worker = transcriptionTask
@@ -537,15 +546,18 @@ final class ReaderStore: ObservableObject {
         let geometryWorker = geometryRepairTask
         geometryWorker?.cancel()
         let preparation = audio.reserveCapture()
+        let stoppedTransport = audio.transportRevision
         noteTask = Task { [weak self] in
             guard let self else { return }
-            await self.startNoteCapture(anchor: initial, passage: passage, preparation: preparation, worker: worker, geometryWorker: geometryWorker, repository: repository, files: files)
+            await self.startNoteCapture(anchor: target, bookAnchor: bookAnchor, stoppedTransport: stoppedTransport,
+                passage: passage, preparation: preparation, worker: worker, geometryWorker: geometryWorker, repository: repository, files: files)
             self.noteTask = nil
         }
         return true
     }
 
-    private func startNoteCapture(anchor: PDFHighlightAnchor, passage: Passage, preparation: AudioCoordinator.CapturePreparation,
+    private func startNoteCapture(anchor: PDFHighlightAnchor, bookAnchor: PDFHighlightAnchor, stoppedTransport: UUID,
+                                  passage: Passage, preparation: AudioCoordinator.CapturePreparation,
                                   worker: Task<Void, Never>?, geometryWorker: Task<Void, Never>?, repository: SharedRepository, files: LocalFiles) async {
         await audio.finishPreparingCapture(preparation)
         await models?.cancelAndJoinRuntimeChecks()
@@ -553,19 +565,31 @@ final class ReaderStore: ObservableObject {
         await geometryWorker?.value
         await speechPacks.unload()
         await voicePacks.unload()
-        guard currentHighlightAnchor == anchor, !audio.previewing, audio.replayingNote == nil, sceneActive else { audio.endCaptureMode(); busy = false; return }
-        let frozenOffset = preparation.offsetMillis
+        func validAttachment() -> Bool {
+            preparedPassage(at: anchor) == passage && currentHighlightAnchor == bookAnchor
+                && audio.transportRevision == stoppedTransport && !audio.previewing
+                && audio.replayingNote == nil && sceneActive
+        }
+        guard validAttachment() else { audio.endCaptureMode(); busy = false; return }
+        let frozenOffset = anchor.passageId == bookAnchor.passageId ? preparation.offsetMillis : 0
         do {
+            try await flushProgress()
+            guard validAttachment() else { audio.endCaptureMode(); busy = false; return }
             let id = UUID().uuidString
             let path = files.recordings.appendingPathComponent(id + ".voice")
             let draft = try await repository.createDraft(id: id, documentId: passage.documentId, passageId: passage.id, recordingPath: "Recordings/" + id + ".voice", offsetMillis: frozenOffset)
             captureDraft = draft
             typedThought = ""
             capturedDuration = 0
-            captureMessage = "Your note is attached to this passage."
+            captureMessage = "Your note is attached to this passage. Listening keeps its paused position."
             feedback.play(.capture)
             if feedback.enabled { try await Task.sleep(for: .milliseconds(200)) }
-            let permitted = try await audio.startCapture(at: path)
+            guard validAttachment() else {
+                audio.endCaptureMode(); busy = false
+                captureMessage = "This attached draft has been kept. Recording did not start; you can write your thought here."
+                return
+            }
+            let permitted = try await audio.startCapture(at: path, ifStillValid: validAttachment)
             if !permitted { captureMessage = "Microphone access is off. Type your thought here, or enable access in Settings." }
             try await refresh()
         } catch {

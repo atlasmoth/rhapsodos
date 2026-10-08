@@ -22,7 +22,7 @@ Use a coherent, quiet visual system: warm neutral reading surfaces, comfortable 
 
 The main screen should communicate **listen, follow, remember**. A large cover or waveform can establish identity, but should not displace the passage and recording action. The source text is the useful visual accompaniment to audio.
 
-The original PDF is the main reader and remains a faithful zoomable canvas. There is no separate "Listen and follow" or reflow pane. Use source geometry for a calm active highlight and note markers; never redraw the document into an invented layout and present it as the original. Tapping the active highlight pauses narration and opens audio-note capture at the frozen source position. Keep blank space and browsing gestures free of recording actions.
+The original PDF is the main reader and remains a faithful zoomable canvas. There is no separate "Listen and follow" or reflow pane. Use source geometry for a calm active highlight and note markers; never redraw the document into an invented layout and present it as the original. Double-tapping prepared source text pauses narration and opens audio-note capture attached to that passage. Single taps never record, and there is no write-note menu action. Keep blank space and browsing gestures free of recording actions.
 
 Motion explains transitions and preparation. It must respect reduced-motion preferences and should not move content with every spoken word. Use a stable highlight rather than constant scrolling animation.
 
@@ -39,7 +39,7 @@ The PDF header shows the document title, a dedicated search action, contents and
 | Surface | Content and primary action |
 | --- | --- |
 | Library | Original covers, progress on each file, resume by opening a file, preparation/offline status and import action |
-| PDF reader | Original page, active narration highlight, tap-to-record and persistent playback dock |
+| PDF reader | Original page, active narration highlight, double-tap passage-to-record and persistent playback dock |
 | Notes | Source-attached recordings, transcript state, edit/replay and jump-to-passage |
 | Recorder | Frozen source excerpt, duration, explicit recording status, cancel and save/resume |
 | Offline voices | Preview, language/accent, recommendation, size, download and delete |
@@ -91,7 +91,7 @@ Audio and model ownership sit above individual screens. A layout transition must
 
 Target clear contrast, useful text scaling, generous controls and semantic labels. The active passage and recording state require more than color. Keep screen-reader focus stable; avoid live announcements for every spoken word or partial transcript.
 
-Provide useful chapter/note navigation, accessible recorder duration/state, keyboard shortcuts that respect text entry, pointer targets and reduced-motion behavior. Expose semantic source text and the active-highlight record action alongside the PDF canvas; rendering alone is not an accessibility solution. [WCAG guidance for non-web software](https://www.w3.org/TR/wcag2ict-22/)
+Provide useful chapter/note navigation, accessible recorder duration/state, keyboard shortcuts that respect text entry, pointer targets and reduced-motion behavior. Expose semantic source text and record actions for visible prepared passages alongside the PDF canvas; rendering alone is not an accessibility solution. [WCAG guidance for non-web software](https://www.w3.org/TR/wcag2ict-22/)
 
 Validate the complete journey with assistive technologies and participants, including interaction between narration and the screen reader. Do not infer accessibility from a polished mockup.
 
@@ -99,4 +99,4 @@ Validate the complete journey with assistive technologies and participants, incl
 
 Prototype the listening and note loop in compact and wide windows, using realistic text, long titles, empty/error/preparation states and large type. Check that someone can identify what is playing, record a thought and find its attachment without explanation.
 
-Then build an original design system using native controls and consistent tokens. Preserve the useful structure of the references while choosing contrast, typography and motion through actual usability evaluation. Brand naming and final visual assets remain open.
+Then build an original design system using native controls and consistent tokens. Preserve the useful structure of the references while choosing contrast, typography and motion through actual usability evaluation. Rhapsodos uses the implemented identity and licensed assets in [brand.md](brand.md); refine motion and contrast through measured usability.

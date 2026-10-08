@@ -83,7 +83,7 @@ Use a small downloadable tier first. Larger models are optional upgrades, never 
 
 Preferred first comparisons: **Moonshine Small versus a smaller WhisperKit model on iOS**, and **Moonshine Small versus a small portable Whisper or qualified LiteRT model on Android**. Measure whether the larger Parakeet tier earns its additional download, memory and battery cost.
 
-ASR word timestamps refer to the recorded note, not the location in the book. The book anchor comes from the narration player. Retain the original recording, permit transcript corrections and distinguish corrected text from machine output. A bounded long-note policy can segment transcription without discarding recording audio or source association.
+ASR word timestamps refer to the recorded note, not the location in the book. The book anchor comes from the frozen PDF passage attachment or current narration position. Retain the original recording, permit transcript corrections and distinguish corrected text from machine output. A bounded long-note policy can segment transcription without discarding recording audio or source association.
 
 ## Optional remote services
 

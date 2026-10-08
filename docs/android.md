@@ -72,7 +72,7 @@ Normalize geometry to the canonical page coordinate system, retaining crop/rotat
 
 Persist source ranges as **UTF-16 code-unit offsets into immutable versioned canonical source strings**. Endpoints cannot split surrogate pairs. Shared mappings preserve the relationship between source, accessible display text and spoken text. Qualify Unicode, combining characters and bidirectional text; a PDF glyph index is not automatically a Kotlin text offset.
 
-Compose hosts the original PDF as the main reader, with accessible source text and a record action attached to the current highlight. There is no separate passage/reflow pane. Current-passage overlays come from canonical geometry and timing. Hit testing uses the same fitted, zoomed and panned geometry as painting; only a tap on the active visible highlight enters pause-and-record. Validate expected document/passage identity against the native transport before freezing, and retain the same anchor through the microphone-permission flow. Bound thumbnails, raster pages and inference memory together; rendering several full-resolution pages alongside a large model can exceed the budget even when each subsystem appears reasonable alone.
+Compose hosts the original PDF as the main reader, with accessible source text and record actions for prepared passages. There is no separate passage/reflow pane. Current-passage overlays come from canonical geometry and timing. Hit testing uses the same fitted, zoomed and panned geometry as painting; only a double-tap on uniquely resolved prepared source text enters pause-and-record. Validate expected document/revision/passage identity against the prepared graph before freezing, and retain the same anchor through the microphone-permission flow. Bound thumbnails, raster pages and inference memory together; rendering several full-resolution pages alongside a large model can exceed the budget even when each subsystem appears reasonable alone.
 
 Use vertical gesture browsing at fitted scale and pinch/pan while zoomed, with equivalent accessibility actions. There is no visible page/zoom/fit toolbar or routine page/voice-status subtitle in the dock. Render the original raster unchanged in the isolated worker, then generate a separate bounded display bitmap off the main thread using the shared neutral-colour mapping in [brand.md](brand.md). Cache identity includes the app paper/ink colours and Original colours preference. The recoloured bitmap has the same dimensions and placement as the original; narration highlights use the paper-aware primary accent above it. OCR always receives the untouched source raster. This API 28 path does not require RuntimeShader.
 
@@ -100,7 +100,7 @@ Handle audio focus, calls, competing apps, headphone removal, Bluetooth changes 
 
 ## Voice-note capture and ASR
 
-The shared note record contains both a source anchor and the current narration anchor. The source anchor is frozen **before** microphone capture and survives a voice or audio change.
+The shared note record contains the chosen source attachment and its supplemental passage audio offset. A passage outside current narration uses offset zero; the book retains its separate paused cursor. The attachment is frozen **before** microphone capture and survives a voice or audio change.
 
 | Transition | Required behavior |
 | --- | --- |
@@ -164,7 +164,7 @@ Choose layout from actual window constraints, font scaling and posture. Account 
 
 Manual PDF browsing pauses book audio and automatic following. Play resumes at the native frozen cursor and returns the PDF to narration; no follow control is exposed. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
 
-Expose current source text and a pause-and-record action on the PDF highlight, with useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
+Expose prepared source text and a record action for each visible prepared passage, with useful TalkBack order, named controls and non-color recording cues. Do not move accessibility focus with every highlight or announce every partial transcript. Verify large text, reduced motion, keyboard/pointer, switch access and narration/screen-reader coexistence.
 
 ## Persistence and privacy
 
@@ -186,7 +186,7 @@ Required evaluation includes:
 
 - Difficult PDFs and gold reading-order/source-position comparisons.
 - Long playback, speed changes, seek, PDF zoom/page browsing and source/voice revisions without incorrect attachments.
-- Active-highlight taps, blank-space taps, pan/pinch, rapid taps and passage-boundary races; only the confirmed current source may enter capture.
+- Prepared-passage double taps, single/blank-space taps, pan/pinch, rapid taps and passage-boundary races; only an unambiguous verified source attachment may enter capture.
 - Save/resume, denied permission, low storage, interrupted capture, process death and stale ASR completion.
 - Screen lock, audio focus, calls, routes, Bluetooth and service recreation.
 - Compact/wide/resizable/foldable layouts with large text and assistive technologies.

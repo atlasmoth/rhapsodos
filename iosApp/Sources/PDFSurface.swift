@@ -278,6 +278,9 @@ struct PDFSurface: UIViewRepresentable {
     let range: NSRange?
     let regions: [SourceRegion]
     let pageContexts: [SourcePage]
+    let preparedPassages: [Passage]
+    let documentId: String
+    let sourceRevision: String
     let geometrySpace: String
     let sourceText: String
     let anchor: PDFHighlightAnchor?
@@ -286,7 +289,7 @@ struct PDFSurface: UIViewRepresentable {
     var originalColours = false
     let follow: Bool
     let onBrowse: () -> Void
-    let onHighlight: (PDFHighlightAnchor) -> Bool
+    let onRecord: (PDFHighlightAnchor) -> Bool
     let onLoadFailure: () -> Void
 
     func makeUIView(context: Context) -> PDFView {
@@ -303,24 +306,26 @@ struct PDFSurface: UIViewRepresentable {
     func updateUIView(_ view: PDFView, context: Context) {
         (view as? ThemedPDFView)?.configureColours(original: originalColours)
         context.coordinator.onBrowse = onBrowse
-        context.coordinator.onHighlight = onHighlight
+        context.coordinator.onRecord = onRecord
         context.coordinator.onLoadFailure = onLoadFailure
-        context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts, geometrySpace: geometrySpace, sourceText: sourceText,
+        context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts,
+            preparedPassages: preparedPassages, documentId: documentId, sourceRevision: sourceRevision, geometrySpace: geometrySpace, sourceText: sourceText,
             anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow)
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onHighlight: onHighlight, onLoadFailure: onLoadFailure) }
+    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onRecord: onRecord, onLoadFailure: onLoadFailure) }
     static func dismantleUIView(_ uiView: PDFView, coordinator: Coordinator) { coordinator.cancel() }
 
     @MainActor
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         weak var view: PDFView?
         let spinner = UIActivityIndicatorView(style: .medium)
-        let highlightTap = UITapGestureRecognizer()
+        let passageDoubleTap = PassageDoubleTapGestureRecognizer()
+        let browsingDoubleTap = UITapGestureRecognizer()
         let accessibilityHighlight = HighlightAccessibilityView()
         let narrationOverlay = PDFNarrationOverlay()
         var onBrowse: () -> Void
-        var onHighlight: (PDFHighlightAnchor) -> Bool
+        var onRecord: (PDFHighlightAnchor) -> Bool
         var onLoadFailure: () -> Void
         private var url: URL?
         private var page = -1
@@ -342,6 +347,12 @@ struct PDFSurface: UIViewRepresentable {
         private var geometryVersion = UUID()
         private var pageContexts: [SourcePage] = []
         private var pageAccessibility: [Int: HighlightAccessibilityView] = [:]
+        private var passageAccessibility: [String: HighlightAccessibilityView] = [:]
+        private var passagesByPage: [Int: [Passage]] = [:]
+        private var sourceRectCache: [String: [CGRect]] = [:]
+        private var preparedPassageCount = 0
+        private var preparedDocumentId = ""
+        private var preparedSourceRevision = ""
         private var requestedFollow = true
         private var applyingNavigation = false
         private weak var observedPage: PDFPage?
@@ -350,9 +361,9 @@ struct PDFSurface: UIViewRepresentable {
         private var observations: [NSObjectProtocol] = []
         private var scrollObservations: [NSKeyValueObservation] = []
 
-        init(onBrowse: @escaping () -> Void, onHighlight: @escaping (PDFHighlightAnchor) -> Bool, onLoadFailure: @escaping () -> Void) {
+        init(onBrowse: @escaping () -> Void, onRecord: @escaping (PDFHighlightAnchor) -> Bool, onLoadFailure: @escaping () -> Void) {
             self.onBrowse = onBrowse
-            self.onHighlight = onHighlight
+            self.onRecord = onRecord
             self.onLoadFailure = onLoadFailure
             spinner.hidesWhenStopped = true
             spinner.accessibilityLabel = "Opening original PDF"
@@ -374,14 +385,23 @@ struct PDFSurface: UIViewRepresentable {
             pinch.delegate = self
             pinch.cancelsTouchesInView = false
             view.addGestureRecognizer(pinch)
-            highlightTap.addTarget(self, action: #selector(tapped(_:)))
-            highlightTap.delegate = self
-            highlightTap.numberOfTapsRequired = 1
-            highlightTap.numberOfTouchesRequired = 1
-            highlightTap.cancelsTouchesInView = false
-            highlightTap.delaysTouchesBegan = false
-            highlightTap.delaysTouchesEnded = false
-            view.addGestureRecognizer(highlightTap)
+            passageDoubleTap.addTarget(self, action: #selector(tapped(_:)))
+            passageDoubleTap.onReset = { [weak self] in self?.resetPassageTouch() }
+            passageDoubleTap.delegate = self
+            passageDoubleTap.numberOfTapsRequired = 2
+            passageDoubleTap.numberOfTouchesRequired = 1
+            passageDoubleTap.cancelsTouchesInView = false
+            passageDoubleTap.delaysTouchesBegan = false
+            passageDoubleTap.delaysTouchesEnded = false
+            view.addGestureRecognizer(passageDoubleTap)
+            browsingDoubleTap.addTarget(self, action: #selector(doubleTapBrowsing(_:)))
+            browsingDoubleTap.delegate = self
+            browsingDoubleTap.numberOfTapsRequired = 2
+            browsingDoubleTap.numberOfTouchesRequired = 1
+            browsingDoubleTap.cancelsTouchesInView = false
+            browsingDoubleTap.delaysTouchesBegan = false
+            browsingDoubleTap.delaysTouchesEnded = false
+            view.addGestureRecognizer(browsingDoubleTap)
             narrationOverlay.frame = view.bounds
             narrationOverlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             narrationOverlay.rectangles = { [weak self] in
@@ -408,11 +428,30 @@ struct PDFSurface: UIViewRepresentable {
             }
         }
 
-        func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage], geometrySpace: String, sourceText: String, anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
+        func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage],
+                     preparedPassages: [Passage], documentId: String, sourceRevision: String,
+                     geometrySpace: String, sourceText: String, anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
             let baseChanged = requestedPage != pageIndex || requestedBaseRange != baseRange || requestedBaseRegions != baseRegions || requestedAnchor != anchor || requestedGeometrySpace != geometrySpace || requestedSourceText != sourceText
             let geometryChanged = baseChanged || requestedRange != range || requestedRegions != regions
             let followChanged = follow && !requestedFollow
-            if baseChanged { geometryVersion = UUID() }
+            if documentId != preparedDocumentId || sourceRevision != preparedSourceRevision || preparedPassages.count != preparedPassageCount {
+                if documentId != preparedDocumentId || sourceRevision != preparedSourceRevision { geometryVersion = UUID() }
+                passagesByPage = Dictionary(grouping: preparedPassages, by: \.pageIndex)
+                sourceRectCache.removeAll()
+                preparedPassageCount = preparedPassages.count
+            }
+            for index in view?.visiblePages.compactMap({ view?.document?.index(for: $0) }) ?? [] {
+                let previous = self.pageContexts.first(where: { $0.pageIndex == index })
+                let latest = pageContexts.first(where: { $0.pageIndex == index })
+                let textChanged = previous.map { previous in latest.map { !previous.text.utf16.elementsEqual($0.text.utf16) } ?? true } ?? (latest != nil)
+                if previous?.regions != latest?.regions || previous?.geometrySpace != latest?.geometrySpace
+                    || previous?.provenance != latest?.provenance || textChanged {
+                    for passage in passagesByPage[index] ?? [] { sourceRectCache.removeValue(forKey: passage.id) }
+                    if touchAnchor?.pageIndex == index { geometryVersion = UUID() }
+                }
+            }
+            preparedDocumentId = documentId
+            preparedSourceRevision = sourceRevision
             requestedBaseRange = baseRange
             requestedBaseRegions = baseRegions
             requestedGeometrySpace = geometrySpace
@@ -456,11 +495,14 @@ struct PDFSurface: UIViewRepresentable {
         func cancel() {
             generation = UUID(); loadTask?.cancel(); loadTask = nil
             observedPage = nil
-            appliedAnchor = nil; appliedPage = nil; touchAnchor = nil; hitRects = []
+            appliedAnchor = nil; appliedPage = nil; hitRects = []
+            resetPassageTouch()
             accessibilityHighlight.isHidden = true
             paintedRects = []
             narrationOverlay.setNeedsDisplay()
             pageAccessibility.values.forEach { $0.removeFromSuperview() }; pageAccessibility.removeAll()
+            passageAccessibility.values.forEach { $0.removeFromSuperview() }; passageAccessibility.removeAll()
+            sourceRectCache.removeAll()
             scrollObservations.removeAll()
         }
 
@@ -515,6 +557,7 @@ struct PDFSurface: UIViewRepresentable {
                 if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
             }
             if requestedFollow, self.page != requestedPage {
+                resetPassageTouch()
                 self.page = requestedPage
                 let wasApplying = applyingNavigation
                 applyingNavigation = true
@@ -525,39 +568,93 @@ struct PDFSurface: UIViewRepresentable {
             refreshAccessibility()
         }
 
-        func highlight(at point: CGPoint) -> PDFHighlightAnchor? {
-            guard recordingEnabled, let view, view.bounds.contains(point), view.currentSelection?.string?.isEmpty != false,
-                  let appliedAnchor, appliedAnchor == requestedAnchor, appliedAnchor.pageIndex == requestedPage,
-                  let page = view.page(for: point, nearest: false), page === appliedPage,
-                  view.document?.page(at: requestedPage) === page else { return nil }
+        private func sourceRange(_ context: SourcePage, on page: PDFPage) -> NSRange? {
+            let raw = page.string ?? ""
+            if raw.utf16.elementsEqual(context.text.utf16) { return NSRange(location: 0, length: raw.utf16.count) }
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.utf16.elementsEqual(context.text.utf16) else { return nil }
+            let original = raw as NSString
+            let prefix = original.rangeOfCharacter(from: .whitespacesAndNewlines.inverted).location
+            guard prefix != NSNotFound, context.text.utf16.count <= original.length - prefix else { return nil }
+            return NSRange(location: prefix, length: context.text.utf16.count)
+        }
+        private func anchor(for passage: Passage) -> PDFHighlightAnchor {
+            PDFHighlightAnchor(documentId: passage.documentId, sourceRevision: preparedSourceRevision,
+                passageId: passage.id, pageIndex: passage.pageIndex, sourceStart: passage.sourceStart, sourceEnd: passage.sourceEnd)
+        }
+        private func regionBounds(_ region: SourceRegion, on page: PDFPage) -> CGRect {
+            let crop = page.bounds(for: .cropBox)
+            return CGRect(x: crop.minX + region.x * crop.width, y: crop.maxY - (region.y + region.height) * crop.height,
+                width: region.width * crop.width, height: region.height * crop.height).intersection(crop)
+        }
+        private func sourceRectangles(_ passage: Passage, on page: PDFPage, context: SourcePage) -> [CGRect] {
+            if let rectangles = sourceRectCache[passage.id] { return rectangles }
+            let rectangles: [CGRect]
+            if context.provenance == "embedded", let source = sourceRange(context, on: page),
+               passage.pageStart >= 0, passage.pageEnd > passage.pageStart, passage.pageEnd <= source.length,
+               let selection = page.selection(for: NSRange(location: source.location + passage.pageStart, length: passage.pageEnd - passage.pageStart)) {
+                rectangles = selection.selectionsByLine().filter { $0.pages.contains(where: { $0 === page }) }
+                    .map { $0.bounds(for: page).intersection(page.bounds(for: .cropBox)) }.filter { !$0.isEmpty && !$0.isNull }
+            } else if context.geometrySpace == "cropTopLeftV1" {
+                rectangles = context.regions.filter { $0.start >= passage.pageStart && $0.end <= passage.pageEnd && $0.end > $0.start }
+                    .map { regionBounds($0, on: page) }.filter { !$0.isEmpty && !$0.isNull }
+            } else {
+                rectangles = []
+            }
+            sourceRectCache[passage.id] = rectangles
+            return rectangles
+        }
+        func recordablePassage(at point: CGPoint) -> PDFHighlightAnchor? {
+            guard recordingEnabled, let view, view.bounds.contains(point), !preparedSourceRevision.isEmpty,
+                  view.currentSelection?.string?.isEmpty != false,
+                  let page = view.page(for: point, nearest: false), let document = view.document else { return nil }
+            let index = document.index(for: page)
+            guard let context = pageContexts.first(where: { $0.pageIndex == index }), let passages = passagesByPage[index] else { return nil }
             let position = view.convert(point, to: page)
-            guard page.bounds(for: .cropBox).contains(position), hitRects.contains(where: { $0.contains(position) }) else { return nil }
-            if page.annotations.contains(where: { ($0.type == "Link" || $0.type == "Widget") && $0.bounds.contains(position) }) { return nil }
-            return appliedAnchor
+            guard page.bounds(for: .cropBox).contains(position),
+                  !page.annotations.contains(where: { ($0.type == "Link" || $0.type == "Widget") && $0.bounds.contains(position) }) else { return nil }
+            if context.provenance == "embedded", let source = sourceRange(context, on: page) {
+                let character = page.characterIndex(at: position)
+                guard character >= source.location, character < NSMaxRange(source), page.characterBounds(at: character).contains(position) else { return nil }
+                let offset = character - source.location
+                let candidates = passages.filter { $0.documentId == preparedDocumentId && $0.pageStart <= offset && offset < $0.pageEnd }
+                return candidates.count == 1 ? anchor(for: candidates[0]) : nil
+            }
+            guard context.geometrySpace == "cropTopLeftV1" else { return nil }
+            let regions = context.regions.filter { regionBounds($0, on: page).contains(position) }
+            guard !regions.isEmpty else { return nil }
+            var matches: [String: Passage] = [:]
+            for region in regions {
+                let overlapping = passages.filter { $0.documentId == preparedDocumentId && $0.pageStart < region.end && $0.pageEnd > region.start }
+                guard overlapping.count == 1, let passage = overlapping.first,
+                      region.start >= passage.pageStart, region.end <= passage.pageEnd else { return nil }
+                matches[passage.id] = passage
+            }
+            return matches.count == 1 ? matches.values.first.map { anchor(for: $0) } : nil
         }
-
-        @discardableResult func activate(at point: CGPoint, expected: PDFHighlightAnchor) -> Bool {
-            guard highlight(at: point) == expected else { return false }
-            return onHighlight(expected)
+        @discardableResult func activatePreparedPassage(at point: CGPoint, expected: PDFHighlightAnchor) -> Bool {
+            guard recordablePassage(at: point) == expected else { return false }
+            return onRecord(expected)
         }
-
-        func beginHighlightTouch(at point: CGPoint) -> Bool {
-            touchAnchor = highlight(at: point)
-            touchVersion = touchAnchor == nil ? nil : geometryVersion
-            return touchAnchor != nil
+        func beginPreparedTouch(at point: CGPoint) -> Bool {
+            guard let anchor = recordablePassage(at: point) else { return false }
+            if let touchAnchor { return touchVersion == geometryVersion && touchAnchor == anchor }
+            touchAnchor = anchor; touchVersion = geometryVersion
+            return true
         }
-        func continuesHighlightTouch(at point: CGPoint) -> Bool {
+        func continuesPreparedTouch(at point: CGPoint) -> Bool {
             guard touchVersion == geometryVersion, let anchor = touchAnchor else { return false }
-            return highlight(at: point) == anchor
+            return recordablePassage(at: point) == anchor
         }
-        @discardableResult func finishHighlightTouch(at point: CGPoint) -> Bool {
-            defer { touchAnchor = nil; touchVersion = nil }
-            guard continuesHighlightTouch(at: point), let anchor = touchAnchor else { return false }
-            return activate(at: point, expected: anchor)
+        @discardableResult func finishPreparedTouch(at point: CGPoint) -> Bool {
+            defer { resetPassageTouch() }
+            guard continuesPreparedTouch(at: point), let anchor = touchAnchor else { return false }
+            return activatePreparedPassage(at: point, expected: anchor)
         }
+        private func resetPassageTouch() { touchAnchor = nil; touchVersion = nil }
         @objc private func tapped(_ gesture: UITapGestureRecognizer) {
             guard gesture.state == .ended else { return }
-            finishHighlightTouch(at: gesture.location(in: view))
+            finishPreparedTouch(at: gesture.location(in: view))
         }
 
         private func accessibleFrame() -> CGRect {
@@ -565,6 +662,21 @@ struct PDFSurface: UIViewRepresentable {
             let visible = hitRects.map { view.convert($0, from: page).intersection(view.bounds) }.filter { !$0.isEmpty && !$0.isNull }
             guard let first = visible.first else { return .zero }
             return UIAccessibility.convertToScreenCoordinates(visible.dropFirst().reduce(first) { $0.union($1) }, in: view)
+        }
+        private func accessiblePassageFrame(_ anchor: PDFHighlightAnchor) -> CGRect {
+            guard let view, anchor.documentId == preparedDocumentId, anchor.sourceRevision == preparedSourceRevision,
+                  let passage = passagesByPage[anchor.pageIndex]?.first(where: { self.anchor(for: $0) == anchor }),
+                  let context = pageContexts.first(where: { $0.pageIndex == anchor.pageIndex }),
+                  let page = view.document?.page(at: anchor.pageIndex) else { return .zero }
+            let visible = sourceRectangles(passage, on: page, context: context)
+                .map { view.convert($0, from: page).intersection(view.bounds) }.filter { !$0.isEmpty && !$0.isNull }
+            guard let first = visible.first else { return .zero }
+            return UIAccessibility.convertToScreenCoordinates(visible.dropFirst().reduce(first) { $0.union($1) }, in: view)
+        }
+        private func activateAccessiblePassage(_ anchor: PDFHighlightAnchor) -> Bool {
+            guard recordingEnabled, !accessiblePassageFrame(anchor).isEmpty,
+                  view?.currentSelection?.string?.isEmpty != false else { return false }
+            return onRecord(anchor)
         }
         private func refreshAccessibility() {
             narrationOverlay.setNeedsDisplay()
@@ -575,7 +687,7 @@ struct PDFSurface: UIViewRepresentable {
             accessibilityHighlight.accessibilityCustomActions = enabled ? [UIAccessibilityCustomAction(name: "Pause and record a thought", target: self, selector: #selector(accessibleRecording(_:)))] : nil
             guard let view, let document = view.document else { return }
             let visiblePages = Set(view.visiblePages.map { document.index(for: $0) })
-            let contexts = pageContexts.filter { visiblePages.contains($0.pageIndex) }
+            let contexts = pageContexts.filter { $0.provenance == "ocr" && visiblePages.contains($0.pageIndex) }
             let visibleContexts = Set(contexts.map(\.pageIndex))
             for index in Array(pageAccessibility.keys) where !visibleContexts.contains(index) { pageAccessibility.removeValue(forKey: index)?.removeFromSuperview() }
             for context in contexts {
@@ -598,18 +710,44 @@ struct PDFSurface: UIViewRepresentable {
                 element.accessibilityValue = context.text
                 element.isHidden = element.accessibilityFrame.isEmpty
             }
+            let visiblePassages = visiblePages.sorted().flatMap { passagesByPage[$0] ?? [] }.filter { $0.documentId == preparedDocumentId }
+            let visiblePassageIds = Set(visiblePassages.map(\.id))
+            for id in Array(sourceRectCache.keys) where !visiblePassageIds.contains(id) { sourceRectCache.removeValue(forKey: id) }
+            for id in Array(passageAccessibility.keys) where !visiblePassageIds.contains(id) {
+                passageAccessibility.removeValue(forKey: id)?.removeFromSuperview()
+            }
+            for passage in visiblePassages {
+                let expected = anchor(for: passage)
+                let element: HighlightAccessibilityView
+                if let existing = passageAccessibility[passage.id] { element = existing }
+                else {
+                    element = HighlightAccessibilityView(frame: view.bounds)
+                    element.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                    view.addSubview(element)
+                    passageAccessibility[passage.id] = element
+                }
+                element.frameProvider = { [weak self] in self?.accessiblePassageFrame(expected) ?? .zero }
+                element.activate = { [weak self] in self?.activateAccessiblePassage(expected) ?? false }
+                element.accessibilityLabel = "Page \(passage.pageIndex + 1), passage"
+                element.accessibilityValue = passage.displayText
+                element.accessibilityTraits = enabled ? [.button] : [.staticText]
+                element.accessibilityHint = enabled ? "Record a thought at this passage." : nil
+                element.accessibilityCustomActions = enabled ? [UIAccessibilityCustomAction(name: "Record a thought", actionHandler: { [weak self] _ in self?.activateAccessiblePassage(expected) ?? false })] : nil
+                element.isHidden = element.accessibilityFrame.isEmpty
+            }
             view.bringSubviewToFront(narrationOverlay)
             view.bringSubviewToFront(accessibilityHighlight)
         }
         func activateAccessibleHighlight() -> Bool {
             guard recordingEnabled, !accessibleFrame().isEmpty, let anchor = appliedAnchor, anchor == requestedAnchor, view?.currentSelection?.string?.isEmpty != false else { return false }
-            return onHighlight(anchor)
+            return onRecord(anchor)
         }
         @objc private func accessibleRecording(_ action: UIAccessibilityCustomAction) -> Bool { activateAccessibleHighlight() }
 
         private func suspendFollowing() {
             guard !applyingNavigation else { return }
-            page = -1; requestedFollow = false; touchAnchor = nil
+            page = -1; requestedFollow = false
+            resetPassageTouch()
             onBrowse()
         }
         private func pageChanged() {
@@ -623,23 +761,41 @@ struct PDFSurface: UIViewRepresentable {
         @objc func browsing(_ gesture: UIGestureRecognizer) {
             if gesture.state == .began { suspendFollowing() }
         }
+        @objc private func doubleTapBrowsing(_ gesture: UITapGestureRecognizer) {
+            if gesture.state == .ended { suspendFollowing() }
+        }
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            guard gestureRecognizer === highlightTap else { return true }
+            if gestureRecognizer === browsingDoubleTap {
+                return !(touch.view is UIControl) && recordablePassage(at: touch.location(in: view)) == nil
+            }
+            guard gestureRecognizer === passageDoubleTap else { return true }
             if touch.view is UIControl { return false }
-            return beginHighlightTouch(at: touch.location(in: view))
+            return beginPreparedTouch(at: touch.location(in: view))
         }
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-            guard gestureRecognizer === highlightTap else { return true }
-            return continuesHighlightTouch(at: gestureRecognizer.location(in: view))
+            guard gestureRecognizer === passageDoubleTap else { return true }
+            return continuesPreparedTouch(at: gestureRecognizer.location(in: view))
         }
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf other: UIGestureRecognizer) -> Bool {
-            guard gestureRecognizer === highlightTap else { return false }
-            if let tap = other as? UITapGestureRecognizer { return tap.numberOfTapsRequired > 1 }
+            guard gestureRecognizer === passageDoubleTap else { return false }
+            if let tap = other as? UITapGestureRecognizer { return tap.numberOfTapsRequired > 2 }
             return other is UILongPressGestureRecognizer || other is UIPanGestureRecognizer || other is UIPinchGestureRecognizer
         }
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool { true }
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
+            guard gestureRecognizer === passageDoubleTap, let tap = other as? UITapGestureRecognizer else { return false }
+            return tap.numberOfTapsRequired == 2
+        }
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+            gestureRecognizer !== passageDoubleTap && other !== passageDoubleTap
+        }
         deinit { observations.forEach(NotificationCenter.default.removeObserver) }
     }
+}
+
+@MainActor
+final class PassageDoubleTapGestureRecognizer: UITapGestureRecognizer {
+    var onReset: (() -> Void)?
+    override func reset() { super.reset(); onReset?() }
 }
 
 @MainActor

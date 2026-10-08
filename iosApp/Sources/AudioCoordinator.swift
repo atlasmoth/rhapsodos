@@ -360,11 +360,13 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     func endCaptureMode() { if !recording { capturePending = false } }
 
-    func startCapture(at url: URL) async throws -> Bool {
+    func startCapture(at url: URL, ifStillValid: () -> Bool) async throws -> Bool {
+        guard capturePending, ifStillValid() else { throw CaptureFailure.attachmentChanged }
         guard !speech.isSpeaking, previewSpeech?.isSpeaking != true else { throw CaptureFailure.narrationStillStopping }
         let permitted = await withCheckedContinuation { continuation in
             AVAudioApplication.requestRecordPermission { continuation.resume(returning: $0) }
         }
+        guard capturePending, ifStillValid() else { throw CaptureFailure.attachmentChanged }
         guard permitted else { return false }
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
@@ -570,6 +572,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 }
 
 enum CaptureFailure: LocalizedError {
-    case narrationStillStopping
-    var errorDescription: String? { "Narration is still stopping. Keep this attached draft for later, or write your thought here." }
+    case narrationStillStopping, attachmentChanged
+    var errorDescription: String? {
+        switch self {
+        case .narrationStillStopping: "Narration is still stopping. Keep this attached draft for later, or write your thought here."
+        case .attachmentChanged: "Recording did not start because the listening session changed. Keep this attached draft or write your thought here."
+        }
+    }
 }

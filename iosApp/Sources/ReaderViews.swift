@@ -196,14 +196,12 @@ private struct ListeningView: View {
                     baseRange: audio.current.flatMap { $0.provenance == "embedded" ? store.passageSourceRange : nil },
                     baseRegions: store.passageRegions,
                     range: audio.current.flatMap { $0.provenance == "embedded" ? store.highlightSourceRange : nil },
-                    regions: store.highlightRegions, pageContexts: snapshot.pages.filter { $0.provenance == "ocr" },
+                    regions: store.highlightRegions, pageContexts: snapshot.pages, preparedPassages: snapshot.passages,
+                    documentId: snapshot.document.id, sourceRevision: snapshot.document.sourceRevision,
                     geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
                     originalColours: originalPDFColours, follow: store.follow, onBrowse: { store.pauseForBrowsing() },
-                    onHighlight: { anchor in
-                        guard store.canBeginNote, store.currentHighlightAnchor == anchor else { return false }
-                        return store.beginNote(expected: anchor)
-                    },
+                    onRecord: { anchor in store.beginNote(expected: anchor) },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
             } else {
                 ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
@@ -366,7 +364,7 @@ private struct VoiceSettings: View {
                 Section("Privacy & readiness") {
                     Label("Narration stays on this device", systemImage: "lock.shield")
                     Text("Saved voice notes use on-device transcription when English recognition is available. Otherwise the recording remains saved for later.").font(.footnote).foregroundStyle(.secondary)
-                    Text("Narration follows passages. A regular pause continues the current voice. Voice notes remain attached to the frozen passage; recording resumes narration from that passage.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Double-tap prepared text to record a thought at that passage. Listening resumes from its paused position. A regular pause continues the current voice.").font(.footnote).foregroundStyle(.secondary)
                     Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(.secondary)
                 }
             }.navigationTitle("Make it your voice").navigationBarTitleDisplayMode(.inline)

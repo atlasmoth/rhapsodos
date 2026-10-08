@@ -78,6 +78,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.audio.PlaybackSnapshot
+import com.osuji.ereaderapp.audio.PreparedCaptureTarget
 import com.osuji.ereaderapp.audio.MediaOutputVolume
 import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.data.LibraryDocument
@@ -143,6 +144,7 @@ fun ReaderApp() {
     var typedNote by rememberSaveable { mutableStateOf(false) }
     var typedText by rememberSaveable { mutableStateOf("") }
     var typedDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var typedReservationId by rememberSaveable { mutableStateOf<String?>(null) }
     var typedPassageId by rememberSaveable { mutableStateOf<String?>(null) }
     var typedOffset by rememberSaveable { mutableLongStateOf(0) }
     var typedQuote by rememberSaveable { mutableStateOf("") }
@@ -150,8 +152,12 @@ fun ReaderApp() {
     var typedSaving by remember { mutableStateOf(false) }
     var typedError by remember { mutableStateOf<String?>(null) }
     var recordRequestPending by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(recordRequestPending, audio.capturing) {
-        if (recordRequestPending && !playback.capturing) recordRequestPending = false
+    LaunchedEffect(recordRequestPending, typedNote, audio.capturing, typedReservationId) {
+        if ((recordRequestPending || typedNote) && !playback.isCaptureReservationValid(typedReservationId)) {
+            recordRequestPending = false
+            typedNote = false
+            typedReservationId = null
+        }
     }
     LaunchedEffect(noteCapture.error) { if (noteCapture.draft == null && noteCapture.error != null) message = noteCapture.error }
 
@@ -185,46 +191,38 @@ fun ReaderApp() {
     val microphone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
         if (recordRequestPending) {
             recordRequestPending = false
-            if (playback.capturing && playback.state.value.documentId == typedDocumentId && playback.state.value.passageId == typedPassageId) {
-                if (allowed) { haptic(view, true); capture.begin() }
+            val reservation = playback.captureReservation(typedReservationId)
+            if (reservation != null) {
+                if (allowed) { haptic(view, true); capture.begin(reservation.id) }
                 else { typedNote = true; typedError = null; message = null }
+            } else {
+                playback.endCapture(typedReservationId)
+                message = "The recording attachment changed. Choose the passage again."
             }
         }
     }
-    fun recordThought(expectedDocumentId: String? = null, expectedPassageId: String? = null, expectedSourceRevision: String? = null): Boolean {
+    fun recordThought(expected: PreparedCaptureTarget? = null): Boolean {
         if (recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
         val current = playback.state.value
-        if (current.preview || current.noteId != null || current.preparing || current.durationMillis <= 0) return false
-        val frozen = playback.beginCapture(expectedDocumentId, expectedPassageId, expectedSourceRevision) ?: return false
+        if (current.preview || current.noteId != null) return false
+        val reservation = playback.beginCapture(expected) ?: return false
+        val frozen = reservation.attachment
         recordRequestPending = true
+        typedReservationId = reservation.id
         typedDocumentId = frozen.documentId
         typedPassageId = frozen.passageId
         typedOffset = frozen.offsetMillis
-        typedPage = playback.state.value.pageIndex
-        typedQuote = ""
-        scope.launch {
-            runCatching { store.contents(frozen.documentId) }.onSuccess { contents ->
-                if (typedDocumentId == frozen.documentId && typedPassageId == frozen.passageId) {
-                    typedQuote = contents.passages.firstOrNull { it.id == frozen.passageId }?.sourceText.orEmpty()
-                }
-            }
-        }
+        typedPage = reservation.target.pageIndex
+        typedQuote = reservation.quote
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             recordRequestPending = false
             haptic(view, true)
-            capture.begin()
+            capture.begin(reservation.id)
         } else {
             try { microphone.launch(Manifest.permission.RECORD_AUDIO) }
             catch (failure: Exception) { recordRequestPending = false; typedNote = true; typedError = null }
         }
         return true
-    }
-
-    fun writeThought(documentId: String, passage: ReaderPassage) {
-        val frozen = playback.beginTextCapture(documentId, passage.id) ?: return
-        typedDocumentId = documentId; typedPassageId = passage.id; typedOffset = frozen.offsetMillis
-        typedQuote = passage.sourceText; typedPage = passage.pageIndex; typedError = null; typedNote = true
-        haptic(view)
     }
 
     ReaderTheme(appearance) {
@@ -255,7 +253,7 @@ fun ReaderApp() {
                         )
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
+                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, { recordThought(it) })
                     }
                 },
             )
@@ -364,11 +362,11 @@ fun ReaderApp() {
         }
 
         if (typedNote) AlertDialog(
-            onDismissRequest = { if (!typedSaving) { typedNote = false; playback.endCapture() } },
-            title = { Text("Write your thought") },
+            onDismissRequest = { if (!typedSaving) { typedNote = false; playback.endCapture(typedReservationId) } },
+            title = { Text("Add a note") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Your thought stays attached to this frozen passage.", style = MaterialTheme.typography.bodySmall)
+                    Text("Microphone access is off. Type a note at this passage.", style = MaterialTheme.typography.bodySmall)
                     Text("Attached to page ${typedPage + 1}", style = MaterialTheme.typography.labelMedium)
                     if (typedQuote.isNotBlank()) Text(typedQuote, fontFamily = ReaderFont, maxLines = 3, overflow = TextOverflow.Ellipsis)
                     OutlinedTextField(typedText, { typedText = it }, enabled = !typedSaving, placeholder = { Text("What stood out?") }, minLines = 4)
@@ -382,16 +380,17 @@ fun ReaderApp() {
                     typedSaving = true
                     if (documentId != null && passageId != null) scope.launch {
                         try {
+                            check(playback.persistCaptureReading(typedReservationId ?: error("The note attachment changed.")))
                             val id = java.util.UUID.randomUUID().toString()
                             store.saveText(id, documentId, passageId, typedText, typedOffset)
-                            typedText = ""; typedNote = false; playback.endCapture(); haptic(view, true)
+                            typedText = ""; typedNote = false; playback.endCapture(typedReservationId); haptic(view, true)
                         } catch (failure: Exception) { typedError = "Your thought could not be saved. Please retry." }
                         finally { typedSaving = false }
                     }
                     else typedSaving = false
                 }, enabled = !typedSaving && typedText.isNotBlank()) { Text(if (typedSaving) "Saving…" else "Save thought") }
             },
-            dismissButton = { TextButton(enabled = !typedSaving, onClick = { typedNote = false; playback.endCapture() }) { Text("Cancel") } },
+            dismissButton = { TextButton(enabled = !typedSaving, onClick = { typedNote = false; playback.endCapture(typedReservationId) }) { Text("Cancel") } },
         )
         BrandEntrance()
     }
@@ -507,7 +506,7 @@ private fun EmptyReader(import: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, originalColours: Boolean, back: () -> Unit, record: (String, String, String) -> Boolean, write: (ReaderPassage) -> Unit) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, originalColours: Boolean, back: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -521,7 +520,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showSearch by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
     var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
-    var showPassageTools by remember { mutableStateOf(false) }
     LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
         try { document = store.contents(id) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -552,7 +550,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         return
     }
     val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && !audio.preview && audio.noteId == null }
-    val currentAvailable = active != null && !audio.capturing
+    val recordAvailable = !audio.capturing && !audio.preview && audio.noteId == null
     fun browse() {
         following = false
         playback.pauseForBrowsing(id)
@@ -578,12 +576,6 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search document") }
                     IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Chapters and pages") }
-                    Box {
-                        IconButton(onClick = { showPassageTools = true; haptic(view) }) { Icon(Icons.Default.MoreVert, "Current passage actions") }
-                        DropdownMenu(expanded = showPassageTools, onDismissRequest = { showPassageTools = false }) {
-                            DropdownMenuItem(text = { Text("Write a thought") }, enabled = currentAvailable, onClick = { showPassageTools = false; active?.let(write) })
-                        }
-                    }
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
                         val index = contents.passages.indexOfFirst { it.id == saved?.passageId }.coerceAtLeast(0)
@@ -602,9 +594,9 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         if (!prepared.running) TextButton(onClick = { preparation.prepare(id) }) { Text("Retry") }
                     }
                 }
-                OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, originalColours, active, currentAvailable && audio.durationMillis > 0 && !audio.preparing,
+                OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, originalColours, active, recordAvailable,
                     { browsePage(it) }, { browse() },
-                    { passageId, revision -> record(id, passageId, revision) }, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
+                    record, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
             }
             if (wide) Surface(Modifier.width(310.dp).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column(Modifier.padding(20.dp)) {
@@ -657,10 +649,40 @@ internal class PdfPagePlacement(viewportWidth: Float, viewportHeight: Float, ima
         return viewport.contains(point) && regions.any { region -> region.width > 0 && region.height > 0 && rectangle(region).contains(point) }
     }
     fun visible(regions: List<SourceRegion>): Boolean = regions.any { it.width > 0 && it.height > 0 && rectangle(it).overlaps(viewport) }
+    fun sameAs(other: PdfPagePlacement): Boolean = viewport == other.viewport && left == other.left && top == other.top && width == other.width && height == other.height
 }
 
-private data class DrawnPdfHighlight(val passageId: String, val revision: String, val placement: PdfPagePlacement, val regions: List<SourceRegion>)
-private class PdfHighlightInteraction { var drawn: DrawnPdfHighlight? = null }
+internal data class DrawnPdfPassages(val documentId: String, val revision: String, val pageIndex: Int, val placement: PdfPagePlacement, val regions: List<SourceRegion>, val passages: List<ReaderPassage>) {
+    fun target(passage: ReaderPassage) = PreparedCaptureTarget(documentId, revision, passage.id, pageIndex, passage.pageStart, passage.pageEnd, passage.sourceStart, passage.sourceEnd)
+    fun hit(x: Float, y: Float): PreparedCaptureTarget? {
+        if (!placement.contains(x, y, regions)) return null
+        val touched = regions.filter { placement.rectangle(it).contains(Offset(x, y)) }
+        val matches = touched.map { region ->
+            val candidates = passages.filter { it.documentId == documentId && it.pageStart < region.end && it.pageEnd > region.start }
+            candidates.singleOrNull()?.takeIf { region.start >= it.pageStart && region.end <= it.pageEnd } ?: return null
+        }.distinctBy { it.id }
+        return matches.singleOrNull()?.let(::target)
+    }
+    fun visible(target: PreparedCaptureTarget): Boolean {
+        val passage = passages.singleOrNull { this.target(it) == target } ?: return false
+        return placement.visible(regions.filter { it.start >= passage.pageStart && it.end <= passage.pageEnd })
+    }
+}
+private class PdfPassageInteraction { var drawn: DrawnPdfPassages? = null }
+
+internal class PdfPassageDoubleTap(private val minimumInterval: Long, private val maximumInterval: Long, private val slop: Float) {
+    private data class Pending(val target: PreparedCaptureTarget, val placement: PdfPagePlacement, val position: Offset, val releasedAt: Long)
+    private var pending: Pending? = null
+    fun release(target: PreparedCaptureTarget, placement: PdfPagePlacement, x: Float, y: Float, pressedAt: Long, releasedAt: Long): Boolean {
+        val previous = pending
+        val position = Offset(x, y)
+        val accepted = previous != null && previous.target == target && previous.placement.sameAs(placement) &&
+            pressedAt - previous.releasedAt in minimumInterval..maximumInterval && (position - previous.position).getDistance() <= slop
+        pending = if (accepted) null else Pending(target, placement, position, releasedAt)
+        return accepted
+    }
+    fun cancel() { pending = null }
+}
 
 internal class PdfHighlightTap(private val startX: Float, private val startY: Float, private val startedAt: Long, private val slop: Float, private val maximumDuration: Long) {
     private var accepted = true
@@ -672,7 +694,7 @@ internal class PdfHighlightTap(private val startX: Float, private val startY: Fl
 }
 
 @Composable
-private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (String, String) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
+private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val pager = rememberPagerState(initialPage = page) { contents.document.pageCount }
     val dragged by pager.interactionSource.collectIsDraggedAsState()
     val latestBrowse by rememberUpdatedState(browse)
@@ -711,7 +733,7 @@ private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, 
 }
 
 @Composable
-private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, visible: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, zoomed: (Boolean) -> Unit, record: (String, String) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
+private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, originalColours: Boolean, visible: Boolean, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, zoomed: (Boolean) -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val document = contents.document
     var bitmap by remember(document.id, page) { mutableStateOf<Bitmap?>(null) }
     var error by remember(document.id, page) { mutableStateOf<String?>(null) }
@@ -721,10 +743,11 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
     var geometryError by remember(document.id, page) { mutableStateOf<String?>(null) }
     var scale by remember(document.id, page) { mutableFloatStateOf(1f) }
     var offset by remember(document.id, page) { mutableStateOf(Offset.Zero) }
-    val interaction = remember(document.id, page) { PdfHighlightInteraction() }
+    val interaction = remember(document.id, page) { PdfPassageInteraction() }
     val latestRecord by rememberUpdatedState(record)
     val latestAvailable by rememberUpdatedState(recordAvailable)
     val density = LocalDensity.current
+    val doubleTapSlop = android.view.ViewConfiguration.get(LocalContext.current).scaledDoubleTapSlop.toFloat()
     val preparation = koinInject<DocumentPreparation>()
     val preparedPage = contents.pages.firstOrNull { it.pageIndex == page }
     val paper = MaterialTheme.colorScheme.background
@@ -758,7 +781,6 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
         catch (failure: Exception) { geometryError = "This page's highlighting is unavailable. Use the microphone button to record at your listening position." }
     }
     val active = activePassage?.takeIf { it.pageIndex == page }
-    val latestActive by rememberUpdatedState(active)
     val displayRegions = if (preparedPage?.geometrySpace == "cropTopLeftV1" && geometry != null) preparedPage.regions.map { PdfPageCoordinates.displayed(it, geometry!!.rotation) } else emptyList()
     val regions = if (active != null) displayRegions.filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
     val accent = if (originalColours) Color(0xFF9F3800) else MaterialTheme.colorScheme.primary
@@ -791,28 +813,36 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
             if (image != null) {
                 val pixels = remember(image) { image.asImageBitmap() }
                 val placement = PdfPagePlacement(widthPixels, heightPixels, image.width.toFloat(), image.height.toFloat(), scale, offset.x, offset.y)
-                Canvas(Modifier.fillMaxSize().transformable(transform, canPan = { scale > 1f }).pointerInput(document.id, page) {
+                Canvas(Modifier.fillMaxSize().transformable(transform, canPan = { scale > 1f }).pointerInput(document.id, page, document.sourceRevision, scale, offset, visible) {
+                    val doubleTap = PdfPassageDoubleTap(viewConfiguration.doubleTapMinTimeMillis, viewConfiguration.doubleTapTimeoutMillis, doubleTapSlop)
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        val candidate = interaction.drawn?.takeIf { latestAvailable && !down.isConsumed && it.placement.contains(down.position.x, down.position.y, it.regions) }
+                        val drawnDown = interaction.drawn
+                        val candidate = drawnDown?.takeIf { latestAvailable && !down.isConsumed }?.hit(down.position.x, down.position.y)
                         val tap = PdfHighlightTap(down.position.x, down.position.y, down.uptimeMillis, viewConfiguration.touchSlop, minOf(viewConfiguration.longPressTimeoutMillis, 500L))
                         tap.update(down.position.x, down.position.y, down.uptimeMillis, currentEvent.changes.count { it.pressed || it.previousPressed }, down.isConsumed)
+                        var released = false
                         while (true) {
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull { it.id == down.id } ?: break
                             val accepted = tap.update(change.position.x, change.position.y, change.uptimeMillis, event.changes.count { it.pressed || it.previousPressed }, change.isConsumed)
                             if (!change.pressed) {
                                 val drawn = interaction.drawn
-                                if (accepted && candidate != null && drawn != null && latestAvailable && candidate.passageId == drawn.passageId && candidate.revision == drawn.revision && latestActive?.id == drawn.passageId && drawn.placement.contains(change.position.x, change.position.y, drawn.regions)) {
-                                    change.consume()
-                                    latestRecord(drawn.passageId, drawn.revision)
-                                }
+                                released = true
+                                if (accepted && candidate != null && drawnDown != null && drawn != null && latestAvailable &&
+                                    drawnDown.placement.sameAs(drawn.placement) && drawn.hit(change.position.x, change.position.y) == candidate) {
+                                    if (doubleTap.release(candidate, drawn.placement, change.position.x, change.position.y, down.uptimeMillis, change.uptimeMillis)) {
+                                        change.consume()
+                                        latestRecord(candidate)
+                                    }
+                                } else doubleTap.cancel()
                                 break
                             }
                             val final = awaitPointerEvent(PointerEventPass.Final)
                             val finalChange = final.changes.firstOrNull { it.id == down.id } ?: break
                             tap.update(finalChange.position.x, finalChange.position.y, finalChange.uptimeMillis, final.changes.count { it.pressed || it.previousPressed }, finalChange.isConsumed)
                         }
+                        if (!released) doubleTap.cancel()
                     }
                 }.onKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) false else when (event.key) {
@@ -842,7 +872,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
                         drawRect(highlight, rect.topLeft, rect.size)
                         drawRect(outline, rect.topLeft, rect.size, style = Stroke(1.dp.toPx()))
                     }
-                    interaction.drawn = active?.takeIf { regions.isNotEmpty() }?.let { DrawnPdfHighlight(it.id, document.sourceRevision, drawnPlacement, regions) }
+                    interaction.drawn = DrawnPdfPassages(document.id, document.sourceRevision, page, drawnPlacement, displayRegions, contents.passages.filter { it.pageIndex == page })
                 }
                 contents.passages.filter { it.pageIndex == page }.forEach { passage ->
                     val passageRegions = displayRegions.filter { it.start < passage.pageEnd && it.end > passage.pageStart }
@@ -851,9 +881,10 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, o
                         val bounds = Rect(rectangles.minOf { it.left }.coerceAtLeast(0f), rectangles.minOf { it.top }.coerceAtLeast(0f), rectangles.maxOf { it.right }.coerceAtMost(widthPixels), rectangles.maxOf { it.bottom }.coerceAtMost(heightPixels))
                         Box(Modifier.align(Alignment.TopStart).offset { IntOffset(bounds.left.toInt(), bounds.top.toInt()) }.size(with(density) { bounds.width.toDp() }, with(density) { bounds.height.toDp() }).semantics {
                             contentDescription = if (passage.id == active?.id) "Current narration passage. ${passage.sourceText}" else passage.sourceText
-                            if (recordAvailable && passage.id == active?.id) customActions = listOf(CustomAccessibilityAction("Pause and record a thought at the current passage") {
+                            if (recordAvailable) customActions = listOf(CustomAccessibilityAction("Pause and record a thought at this passage") {
                                 val drawn = interaction.drawn
-                                drawn != null && latestAvailable && latestActive?.id == drawn.passageId && drawn.placement.visible(drawn.regions) && latestRecord(drawn.passageId, drawn.revision)
+                                val target = PreparedCaptureTarget(document.id, document.sourceRevision, passage.id, page, passage.pageStart, passage.pageEnd, passage.sourceStart, passage.sourceEnd)
+                                drawn != null && latestAvailable && drawn.visible(target) && latestRecord(target)
                             })
                         })
                     }

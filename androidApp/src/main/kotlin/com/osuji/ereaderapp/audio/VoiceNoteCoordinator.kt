@@ -28,37 +28,45 @@ class VoiceNoteCoordinator(
     val savedEvents = saved.asSharedFlow()
     private var starting = false
     private var interruptedDraft: String? = null
+    private var reservationId: String? = null
+    private var startableDraft: String? = null
 
     init { recorder.onInterrupted = { interrupted(recorder.state.value.error) } }
 
-    fun begin() {
+    fun begin(captureId: String) {
         if (starting || state.value.draft != null) return
-        val frozen = playback.beginCapture() ?: return
+        val reservation = playback.captureReservation(captureId) ?: return
+        val frozen = reservation.attachment
         starting = true
+        reservationId = captureId
         scope.launch {
             try {
+                check(playback.persistCaptureReading(captureId)) { "Your listening position could not be saved. Please retry." }
                 val noteId = UUID.randomUUID().toString()
                 val draft = store.createDraft(noteId, frozen.documentId, frozen.passageId, recorder.draftPath(noteId), frozen.offsetMillis)
                 mutableState.value = NoteCaptureSnapshot(draft)
+                startableDraft = noteId
                 playback.awaitQuietPreparation()
-                if (state.value.draft?.id != noteId || state.value.saving) return@launch
+                if (state.value.draft?.id != noteId || state.value.saving || startableDraft != noteId) return@launch
+                check(playback.isCaptureReservationValid(captureId, requireQuiet = true)) { "The recording attachment changed. Your draft is retained." }
                 context.startForegroundService(Intent(context, CaptureService::class.java).putExtra("noteId", noteId))
             } catch (failure: Exception) {
-                playback.endCapture()
-                mutableState.value = NoteCaptureSnapshot(error = failure.message ?: "Recording could not start.")
+                playback.endCapture(captureId)
+                mutableState.value = state.value.copy(error = failure.message ?: "Recording could not start.")
             } finally { starting = false }
         }
     }
 
     fun startCapture(noteId: String) {
-        if (state.value.draft?.id != noteId || state.value.saving) {
+        if (state.value.draft?.id != noteId || state.value.saving || startableDraft != noteId) {
             context.stopService(Intent(context, CaptureService::class.java))
             return
         }
         try {
+            check(playback.isCaptureReservationValid(reservationId, requireQuiet = true)) { "The recording attachment changed. Your draft is retained." }
             recorder.start(noteId)
         } catch (failure: Exception) {
-            playback.endCapture()
+            playback.endCapture(reservationId)
             mutableState.value = state.value.copy(error = failure.message ?: "The microphone is unavailable.")
             context.stopService(Intent(context, CaptureService::class.java))
         }
@@ -67,6 +75,7 @@ class VoiceNoteCoordinator(
     fun save(resume: Boolean) {
         val draft = state.value.draft ?: return
         if (state.value.saving) return
+        startableDraft = null
         mutableState.value = state.value.copy(saving = true)
         scope.launch {
             try {
@@ -89,6 +98,7 @@ class VoiceNoteCoordinator(
     fun cancel() {
         val draft = state.value.draft ?: return
         if (state.value.saving) return
+        startableDraft = null
         mutableState.value = state.value.copy(saving = true)
         scope.launch {
             try {
