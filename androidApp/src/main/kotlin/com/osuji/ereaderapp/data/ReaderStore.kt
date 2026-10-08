@@ -42,8 +42,9 @@ import kotlinx.serialization.json.Json
 @Serializable data class ModelPack(
     val id: String, val name: String, val capability: String, val platform: String, val runtime: String, val version: String,
     val languageTags: List<String>, val minimumOS: Int, val minimumMemoryMB: Int, val license: String, val licenseUrl: String,
-    val description: String, val files: List<PackFile>, val totalBytes: Long,
+    val description: String, val files: List<PackFile>, val totalBytes: Long, val adapter: String = id,
 )
+@Serializable data class ModelCatalogStatus(val revision: Long = 0, val acceptedAt: Long = 0, val source: String = "bundled")
 @Serializable data class ModelInstall(val packId: String, val generation: String, val status: String, val bytesDownloaded: Long, val totalBytes: Long, val installedPath: String = "", val error: String = "", val updatedAt: Long)
 @Serializable data class VerifiedPackFile(val path: String, val sha256: String, val bytes: Long)
 
@@ -82,6 +83,11 @@ class ReaderStore(private val core: ReaderCore) {
     suspend fun exportManifest(documentId: String): String = locked { core.exportDocumentJson(documentId) }
     suspend fun restoreManifest(manifest: String) = locked { core.restoreDocumentJson(manifest); updateSnapshot() }
     suspend fun modelCatalog(): List<ModelPack> = locked { json.decodeFromString(core.modelCatalogJson("android")) }
+    suspend fun modelCatalogStatus(): ModelCatalogStatus = locked { json.decodeFromString(core.modelCatalogStatusJson()) }
+    suspend fun acceptModelCatalog(payload: String, allowed: () -> Boolean): Boolean = locked {
+        check(allowed()) { "Refresh stopped because another task started. Try again when idle." }
+        core.acceptModelCatalogJson(payload)
+    }
     suspend fun modelInstalls(): List<ModelInstall> = locked { json.decodeFromString(core.modelInstallsJson()) }
     suspend fun invalidateModel(packId: String, generation: String, error: String) = locked { core.invalidateModel(packId, generation, error) }
     suspend fun sections(documentId: String, sections: List<ReaderSection>): ReaderContents = locked { json.decodeFromString(core.setDocumentSections(documentId, json.encodeToString(sections))) }

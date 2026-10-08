@@ -20,6 +20,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,11 +67,28 @@ class ReaderApplication : Application() {
             })
         }.koin
         koin.get<ModelManager>().beforeModelRemoval = { id ->
-            if (id == "android-moonshine-english") koin.get<TranscriptionCoordinator>().pauseForModelRemoval()
+            if (koin.get<ModelManager>().state.value.selectedTranscription == id) koin.get<TranscriptionCoordinator>().pauseForModelRemoval()
             else if (koin.get<ModelManager>().state.value.selectedVoice == id) koin.get<PlaybackCoordinator>().stopAndWait()
+        }
+        koin.get<ModelManager>().beforeTranscriptionChange = { koin.get<TranscriptionCoordinator>().pauseForModelRemoval() }
+        koin.get<ModelManager>().transcriptionSelectionAllowed = { !koin.get<PlaybackCoordinator>().capturing }
+        koin.get<ModelManager>().catalogueWorkloadIdle = {
+            val audio = koin.get<PlaybackCoordinator>().state.value
+            foreground.value && !audio.playing && !audio.capturing && !audio.preparing && !koin.get<TranscriptionCoordinator>().hasActiveInference
         }
         koin.get<ModelManager>().beforeVerification = {
             combine(foreground, koin.get<PlaybackCoordinator>().state) { visible, audio -> visible && !audio.playing && !audio.capturing && !audio.preparing }.first { it }
+        }
+        koin.get<ModelManager>().runIdleVerification = { verification ->
+            coroutineScope {
+                val task = async(start = CoroutineStart.LAZY) { verification() }
+                val interruption = launch(start = CoroutineStart.UNDISPATCHED) {
+                    combine(foreground, koin.get<PlaybackCoordinator>().state) { visible, audio -> !visible || audio.playing || audio.capturing || audio.preparing }.first { it }
+                    task.cancel(CancellationException("The device check was interrupted."))
+                }
+                task.start()
+                try { task.await() } finally { interruption.cancel() }
+            }
         }
         koin.get<PdfAdapter>().beforeOcr = {
             koin.get<PlaybackCoordinator>().state.first { !it.playing && !it.capturing && !it.preparing }

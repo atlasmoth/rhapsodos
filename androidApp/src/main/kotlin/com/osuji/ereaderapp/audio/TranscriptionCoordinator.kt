@@ -25,19 +25,21 @@ class TranscriptionCoordinator(private val context: Context, private val store: 
     private val generations = mutableMapOf<String, Long>()
     private val queue = Mutex()
     private var memoryPaused = false
+    @Volatile var hasActiveInference: Boolean = false
+        private set
 
     fun initialize() {
-        scope.launch { models.readyEvents.collect { if (it == "android-moonshine-english") processPending() } }
+        scope.launch { models.readyEvents.collect { if (it == models.state.value.selectedTranscription) processPending() } }
         scope.launch { store.refresh(); processPending() }
     }
 
     fun processPending() {
-        if (memoryPaused) return
+        if (memoryPaused || models.state.value.changingTranscription) return
         store.snapshot.value.notes.filter { it.durationMillis > 0 && it.status in setOf("pending", "pendingModel", "transcribing") }.forEach { enqueue(it.id) }
     }
 
     fun enqueue(noteId: String) {
-        if (memoryPaused) return
+        if (memoryPaused || models.state.value.changingTranscription) return
         if (jobs[noteId]?.isActive == true) return
         val generation = (generations[noteId] ?: 0) + 1
         generations[noteId] = generation
@@ -46,17 +48,25 @@ class TranscriptionCoordinator(private val context: Context, private val store: 
                 val note = store.snapshot.value.notes.firstOrNull { it.id == noteId } ?: return@launch
                 if (note.durationMillis <= 0) return@launch
                 val directory = models.asrDirectory()
-                if (directory == null) { store.markStatus(noteId, "pendingModel"); return@launch }
+                val packId = models.state.value.selectedTranscription
+                val adapter = models.asrAdapter()
+                if (directory == null || adapter == null) { store.markStatus(noteId, "pendingModel"); return@launch }
                 val root = context.filesDir.canonicalFile
                 val audio = File(note.recordingPath).canonicalFile
                 require(audio.path.startsWith(root.path + File.separator) && audio.isFile && audio.length() > 44) { "The saved recording is unavailable." }
                 queue.withLock {
                     while (currentCoroutineContext().isActive) {
+                        models.state.first { it.checking.isEmpty() && it.installs.none { install -> install.status == "verifying" } }
                         playback.state.first { !it.playing && !it.capturing && !it.preparing }
+                        if (models.state.value.selectedTranscription != packId || models.asrDirectory() != directory) { store.markStatus(noteId, "pendingModel"); break }
                         store.markStatus(noteId, "transcribing")
                         try {
                             val transcript = coroutineScope {
-                                val inference = async { models.runtime.transcribe(directory, audio) }
+                                val inference = async {
+                                    hasActiveInference = true
+                                    try { models.runtime.transcribe(directory, audio, adapter) }
+                                    finally { hasActiveInference = false }
+                                }
                                 val interruption = launch {
                                     playback.state.first { it.playing || it.capturing || it.preparing }
                                     inference.cancel()
@@ -64,7 +74,7 @@ class TranscriptionCoordinator(private val context: Context, private val store: 
                                 try { inference.await() } finally { interruption.cancel() }
                             }
                             require(transcript.isNotBlank()) { "No speech was recognized." }
-                            if (generations[noteId] == generation && store.snapshot.value.notes.any { it.id == noteId }) store.updateTranscript(noteId, transcript, "transcribed")
+                            if (generations[noteId] == generation && models.state.value.selectedTranscription == packId && store.snapshot.value.notes.any { it.id == noteId }) store.updateTranscript(noteId, transcript, "transcribed")
                             break
                         } catch (interrupted: CancellationException) {
                             if (!currentCoroutineContext().isActive) throw interrupted

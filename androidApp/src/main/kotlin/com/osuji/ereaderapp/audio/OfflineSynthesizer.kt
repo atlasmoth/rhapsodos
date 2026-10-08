@@ -67,7 +67,7 @@ class OfflineSynthesizer(private val context: Context, private val models: Model
         selected?.let { directory ->
             val voiceId = models.state.value.voiceId
             voiceLabel = "${voiceId.replaceFirstChar { it.uppercase() }} · offline"
-            val key = MessageDigest.getInstance("SHA-256").digest("kitten-v2:${directory.name}:$voiceId:$text".toByteArray()).joinToString("") { "%02x".format(it) }
+            val key = MessageDigest.getInstance("SHA-256").digest("kitten-v3:${directory.parentFile!!.name}:${directory.name}:$voiceId:$text".toByteArray()).joinToString("") { "%02x".format(it) }
             val cache = File(context.cacheDir, "narration").apply { mkdirs() }
             val destination = File(cache, "$key.wav")
             if (usableCache(destination)) return@withLock destination

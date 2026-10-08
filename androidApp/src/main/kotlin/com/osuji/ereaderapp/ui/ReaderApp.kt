@@ -401,6 +401,20 @@ fun ReaderApp() {
                         OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }, enabled = archiveTransportReady) { Text("Download voices and transcription") }
                         modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     }
+                    SettingsSection("Voice-note transcription") {
+                        Text(if (modelState.selectedTranscription == "off") "Off · recordings remain saved" else modelState.catalog.firstOrNull { it.id == modelState.selectedTranscription }?.name ?: "Selected pack is unavailable")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FilterChip(modelState.selectedTranscription == "off", onClick = {
+                                scope.launch { runCatching { models.selectTranscription("off"); haptic(view) }.onFailure { models.reportError(it.message ?: "Transcription could not be selected.") } }
+                            }, label = { Text("Off") }, enabled = archiveTransportReady && !modelState.changingTranscription && !audio.capturing)
+                            modelState.catalog.filter { it.capability == "asr" && models.installed(it.id) != null }.forEach { pack ->
+                                FilterChip(modelState.selectedTranscription == pack.id, onClick = {
+                                    scope.launch { runCatching { models.selectTranscription(pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "Transcription could not be selected.") } }
+                                }, label = { Text(pack.name) }, enabled = archiveTransportReady && !modelState.changingTranscription && !audio.capturing)
+                            }
+                        }
+                        if (modelState.selectedTranscription != "off" && models.asrDirectory() == null) Text("Choose a checked download to transcribe saved voice notes.", style = MaterialTheme.typography.bodySmall)
+                    }
                     SettingsSection("Playback speed") {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
@@ -466,7 +480,7 @@ fun ReaderApp() {
                     }
                 }
                 (noteCapture.error ?: recording.error)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                Text("Your audio is saved before you resume. With an offline transcription pack installed, your words are recognized here on your device.", style = MaterialTheme.typography.bodySmall)
+                Text("Your audio is saved before you resume. With offline transcription selected, your words are recognized here on your device.", style = MaterialTheme.typography.bodySmall)
                 Button(onClick = { haptic(view); capture.save(true) }, enabled = !noteCapture.saving && recording.elapsedMs > 0, modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) {
                     if (noteCapture.saving) CircularProgressIndicator(Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                     else Icon(Icons.Default.Check, null)
@@ -1077,7 +1091,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
                                 "interrupted" -> "Recording was interrupted. Reopen the app to recover any captured audio."
                                 "transcribing" -> "Recognizing your saved recording on this device…"
                                 "pending" -> "Recording saved · waiting for a quiet moment to transcribe"
-                                "pendingModel" -> "Recording saved · download offline transcription to recognize your words"
+                                "pendingModel" -> "Recording saved · choose offline transcription in Settings"
                                 "failed" -> "Transcription did not finish. Your recording is safe; retry when you are ready."
                                 else -> "Recording saved"
                             }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

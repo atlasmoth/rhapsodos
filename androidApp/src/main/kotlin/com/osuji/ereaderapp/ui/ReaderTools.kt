@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -19,6 +20,9 @@ import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.data.ReaderStore
 import com.osuji.ereaderapp.data.SearchMatch
 import com.osuji.ereaderapp.models.ModelManager
+import com.osuji.ereaderapp.data.ModelPack
+import com.osuji.ereaderapp.models.ModelState
+import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,65 +42,133 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
     val models = koinInject<ModelManager>()
     val playback = koinInject<PlaybackCoordinator>()
     val state by models.state.collectAsStateWithLifecycle()
+    val audio by playback.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val view = LocalView.current
+    fun chooseTranscription(packId: String) {
+        selectionScope.launch {
+            runCatching { models.selectTranscription(packId); haptic(view) }
+                .onFailure { models.reportError(it.message ?: "Transcription could not be selected.") }
+        }
+    }
     ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
-        SheetHeader("Offline voices & transcription", done = dismiss)
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            item { Text("Downloads contain public model files. Your documents, recordings and words stay on your device.") }
-            item {
-                Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
-                    Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Installed Android voice", style = MaterialTheme.typography.titleMedium)
-                        Text("Offline availability is checked when listening starts.", style = MaterialTheme.typography.bodySmall)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilledTonalButton(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing) { Text(if (state.selectedVoice == "system") "Selected" else "Use system voice") }
-                            TextButton(onClick = { runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) } }) { Text("Android voice settings") }
+            SheetHeader("Offline voices & transcription", done = dismiss)
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                item { Text("Downloads contain public model files. Your documents, recordings and words stay on your device.") }
+                item {
+                    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(if (state.catalogStatus.source == "bundled") "Bundled catalogue" else "Catalogue revision ${state.catalogStatus.revision}", style = MaterialTheme.typography.titleMedium)
+                            if (models.catalogRefreshConfigured) {
+                                OutlinedButton(onClick = { models.refreshCatalog(); haptic(view) }, enabled = !state.refreshing && !state.initializing) {
+                                    Text(if (state.refreshing) "Refreshing catalogue…" else "Refresh catalogue")
+                                }
+                            } else Text("Live catalogue updates are not configured yet.", style = MaterialTheme.typography.bodySmall)
+                            state.catalogMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            if (state.refreshing || state.initializing) LinearProgressIndicator(Modifier.fillMaxWidth())
                         }
                     }
                 }
-            }
-            state.error?.let { error -> item { Text(error, color = MaterialTheme.colorScheme.error) } }
-            items(state.catalog, key = { it.id }) { pack ->
-                val install = state.installs.firstOrNull { it.packId == pack.id }
-                val status = install?.status ?: "notInstalled"
-                val checking = pack.id in state.checking
-                val removing = pack.id in state.removing
-                val reason = models.compatibility(pack)
-                Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.secondaryContainer) {
-                    Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(pack.name, style = MaterialTheme.typography.titleLarge)
-                        Text(pack.description)
-                        Text("${pack.totalBytes / (1024 * 1024)} MB · English · ${if (pack.capability == "tts") "Narration" else "Voice-note transcription"}", style = MaterialTheme.typography.bodySmall)
-                        if (status in setOf("downloading", "verifying")) {
-                            LinearProgressIndicator(progress = { (install!!.bytesDownloaded.toFloat() / pack.totalBytes).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
-                            Text(if (status == "verifying") "Checking files and trying the model on this device…" else "${install!!.bytesDownloaded / (1024 * 1024)} of ${pack.totalBytes / (1024 * 1024)} MB downloaded", style = MaterialTheme.typography.bodySmall)
-                        }
-                        if (!removing && status == "ready" && pack.capability == "tts") FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
-                                FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !checking && !playback.capturing)
+                state.error?.let { error -> item { Text(error, color = MaterialTheme.colorScheme.error) } }
+                item { Text("Narration", style = MaterialTheme.typography.titleLarge) }
+                item {
+                    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Installed Android voice", style = MaterialTheme.typography.titleMedium)
+                            Text("Offline availability is checked when listening starts.", style = MaterialTheme.typography.bodySmall)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilledTonalButton(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !audio.capturing) { Text(if (state.selectedVoice == "system") "Active" else "Use system voice") }
+                                TextButton(onClick = { runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) } }) { Text("Android voice settings") }
                             }
-                        }
-                        if (status == "failed" && install!!.error.isNotBlank()) Text(install.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        if (status != "ready" && reason != null) Text(reason, color = MaterialTheme.colorScheme.error)
-                        if (checking) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Checking installed files on this device…", style = MaterialTheme.typography.bodySmall) }
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            when (if (removing) "removing" else status) {
-                                "removing" -> Text("Removing this download…", style = MaterialTheme.typography.labelLarge)
-                                "ready" -> {
-                                    if (pack.capability == "tts") Button(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing && !checking) { Text(if (state.selectedVoice == pack.id) "Selected" else "Use this voice") }
-                                    else Text("Ready for saved voice notes", style = MaterialTheme.typography.labelLarge)
-                                }
-                                "downloading", "verifying" -> OutlinedButton(onClick = { models.pause(pack.id); haptic(view) }) { Text("Pause download") }
-                                else -> Button(onClick = { models.download(pack.id); haptic(view) }, enabled = reason == null) { Text(if (status == "paused") "Resume download" else if (status == "failed") "Retry download" else "Download") }
-                            }
-                            if (install != null && !removing && status !in setOf("downloading", "verifying")) TextButton(onClick = { models.remove(pack.id) }, enabled = !playback.capturing && !checking) { Text("Remove downloaded files") }
                         }
                     }
+                }
+                items(state.catalog.filter { it.capability == "tts" }, key = { it.id }) { pack ->
+                    SpeechPackCard(pack, state, models, playback, selectionScope, ::chooseTranscription)
+                }
+                item { Text("Voice-note transcription", style = MaterialTheme.typography.titleLarge) }
+                item {
+                    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Recordings stay saved with transcription off. Choose a checked pack to recognize your words locally.", style = MaterialTheme.typography.bodySmall)
+                            FilterChip(selected = state.selectedTranscription == "off", onClick = { chooseTranscription("off") }, label = { Text("Off") }, enabled = !state.changingTranscription && !audio.capturing)
+                        }
+                    }
+                }
+                items(state.catalog.filter { it.capability == "asr" }, key = { it.id }) { pack ->
+                    SpeechPackCard(pack, state, models, playback, selectionScope, ::chooseTranscription)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelManager, playback: PlaybackCoordinator, selectionScope: CoroutineScope, chooseTranscription: (String) -> Unit) {
+    val view = LocalView.current
+    val audio by playback.state.collectAsStateWithLifecycle()
+    val locale = LocalLocale.current.platformLocale
+    val install = state.installs.firstOrNull { it.packId == pack.id }
+    val status = install?.status ?: "notInstalled"
+    val checking = pack.id in state.checking || status == "verifying"
+    val removing = pack.id in state.removing
+    val available = models.installed(pack.id) != null
+    val active = available && if (pack.capability == "tts") state.selectedVoice == pack.id else state.selectedTranscription == pack.id
+    val reason = state.unavailable[pack.id] ?: models.compatibility(pack)
+    val label = when {
+        removing -> "Removing"
+        checking -> "Checking"
+        active -> "Active"
+        status == "ready" && available -> "Ready"
+        status == "ready" -> "Unavailable"
+        status == "downloading" -> "Downloading"
+        status == "paused" -> "Paused"
+        status == "failed" -> "Failed"
+        else -> "Download"
+    }
+    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.secondaryContainer) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(pack.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text(label, style = MaterialTheme.typography.labelLarge)
+            }
+            Text(pack.description)
+            val languages = pack.languageTags.joinToString { Locale.forLanguageTag(it).getDisplayLanguage(locale) }
+            Text("${pack.totalBytes / (1024 * 1024)} MB · $languages", style = MaterialTheme.typography.bodySmall)
+            val memory = if (pack.minimumMemoryMB % 1024 == 0) "${pack.minimumMemoryMB / 1024} GB" else "${pack.minimumMemoryMB} MB"
+            val requiredStorage = (pack.totalBytes + 32L * 1024 * 1024 + 1024 * 1024 - 1) / (1024 * 1024)
+            Text("Android ${if (pack.minimumOS == 28) "9+" else "API ${pack.minimumOS}+"} · $memory RAM · $requiredStorage MB free storage", style = MaterialTheme.typography.bodySmall)
+            if (checking) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text("Checking files and running a quiet check on this device…", style = MaterialTheme.typography.bodySmall)
+            } else if (status == "downloading") {
+                LinearProgressIndicator(progress = { (install!!.bytesDownloaded.toFloat() / pack.totalBytes).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                Text("${install!!.bytesDownloaded / (1024 * 1024)} of ${pack.totalBytes / (1024 * 1024)} MB downloaded", style = MaterialTheme.typography.bodySmall)
+            } else if (available) {
+                val seconds = state.checks[pack.id]?.let { String.format(locale, "%.1f", it / 1000.0) }
+                Text(if (seconds == null) "Checked on this device. Longer-session performance varies." else "Device check passed in $seconds s. Longer-session performance varies.", style = MaterialTheme.typography.bodySmall)
+            }
+            if (available && !removing && pack.capability == "tts") FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
+                    FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !audio.capturing)
+                }
+            }
+            if (status == "failed" && install!!.error.isNotBlank()) Text(install.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            if (!available && reason != null) Text(reason, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                when {
+                    removing -> Text("Removing this download…", style = MaterialTheme.typography.labelLarge)
+                    checking -> if (status == "verifying") OutlinedButton(onClick = { models.pause(pack.id); haptic(view) }) { Text("Pause check") }
+                    available && pack.capability == "tts" -> Button(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !audio.capturing) { Text(if (active) "Active" else "Use this voice") }
+                    available -> Button(onClick = { chooseTranscription(pack.id) }, enabled = !state.changingTranscription && !audio.capturing) { Text(if (active) "Active" else "Use for voice notes") }
+                    status == "downloading" -> OutlinedButton(onClick = { models.pause(pack.id); haptic(view) }) { Text("Pause download") }
+                    status == "ready" -> Text("This download cannot run on this device.", style = MaterialTheme.typography.bodySmall)
+                    else -> Button(onClick = { models.download(pack.id); haptic(view) }, enabled = reason == null && !state.initializing && !state.refreshing) { Text(if (status == "paused") "Resume download" else if (status == "failed") "Retry download" else "Download") }
+                }
+                if (install != null && !removing && !checking && status != "downloading") TextButton(onClick = { models.remove(pack.id); haptic(view) }, enabled = !audio.capturing && !state.changingTranscription) { Text("Remove downloaded files") }
+                if (available && !removing && !checking) TextButton(onClick = { models.checkOnDevice(pack.id); haptic(view) }, enabled = !audio.capturing && !state.refreshing) { Text("Check on this device") }
+            }
         }
     }
 }

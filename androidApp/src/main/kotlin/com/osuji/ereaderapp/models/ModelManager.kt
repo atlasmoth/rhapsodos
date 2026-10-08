@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.StatFs
 import com.osuji.ereaderapp.data.ModelInstall
 import com.osuji.ereaderapp.data.ModelPack
+import com.osuji.ereaderapp.data.ModelCatalogStatus
+import com.ereader.shared.ModelCatalogSource
 import com.osuji.ereaderapp.data.ReaderStore
 import com.osuji.ereaderapp.data.VerifiedPackFile
 import com.osuji.ereaderapp.data.syncDirectory
@@ -41,18 +43,31 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.update
 import kotlin.coroutines.coroutineContext
 
-data class ModelState(val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(), val selectedVoice: String = "system", val voiceId: String = "bella", val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null)
+data class ModelState(
+    val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(),
+    val selectedVoice: String = "system", val voiceId: String = "bella", val selectedTranscription: String = "android-moonshine-english",
+    val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null,
+    val catalogStatus: ModelCatalogStatus = ModelCatalogStatus(), val refreshing: Boolean = false,
+    val catalogMessage: String? = null, val changingTranscription: Boolean = false, val initializing: Boolean = true,
+    val checks: Map<String, Long> = emptyMap(),
+    val unavailable: Map<String, String> = emptyMap(),
+)
 
 fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in setOf("arm64-v8a", "armeabi-v7a", "x86_64") }
 
 class ModelManager(private val context: Context, private val store: ReaderStore, val runtime: OfflineSpeechRuntime, private val scope: CoroutineScope) {
     private val preferences = context.getSharedPreferences("speech", Context.MODE_PRIVATE)
-    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "system") ?: "system", voiceId = preferences.getString("voiceId", "bella") ?: "bella"))
+    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "system") ?: "system", voiceId = preferences.getString("voiceId", "bella") ?: "bella", selectedTranscription = preferences.getString("transcriptionPack", "android-moonshine-english") ?: "android-moonshine-english"))
     val state = mutableState.asStateFlow()
     private val ready = MutableSharedFlow<String>(extraBufferCapacity = 2)
     val readyEvents = ready.asSharedFlow()
     var beforeModelRemoval: (suspend (String) -> Unit)? = null
     var beforeVerification: (suspend () -> Unit)? = null
+    var runIdleVerification: (suspend (suspend () -> Unit) -> Unit)? = null
+    var beforeTranscriptionChange: (suspend () -> Unit)? = null
+    var transcriptionSelectionAllowed: () -> Boolean = { false }
+    var catalogueWorkloadIdle: () -> Boolean = { false }
+    val catalogRefreshConfigured: Boolean get() = ModelCatalogSource.httpsUrl.isNotBlank() && ModelCatalogSource.publicKeyX963.isNotBlank()
     private val jobs = ConcurrentHashMap<String, Job>()
     private val validated = ConcurrentHashMap.newKeySet<String>()
     internal var downloadService: ModelDownloadService? = null
@@ -66,27 +81,38 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         try {
             val catalog = store.modelCatalog()
             val installs = store.modelInstalls()
-            mutableState.update { it.copy(catalog = catalog, installs = installs, checking = installs.filter { record -> record.status == "ready" }.map { record -> record.packId }.toSet()) }
+            val catalogStatus = store.modelCatalogStatus()
+            mutableState.update { it.copy(catalog = catalog, installs = installs, catalogStatus = catalogStatus, checking = installs.filter { record -> record.status == "ready" }.map { record -> record.packId }.toSet()) }
             installs.filter { it.status == "ready" }.forEach { install ->
                 val pack = catalog.firstOrNull { it.id == install.packId }
                 val verified = if (pack != null) withContext(Dispatchers.IO) {
-                    runCatching {
+                    try {
                         val directory = owned(install.installedPath)
                         require(pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 })
-                        beforeVerification?.invoke()
-                        validateRuntime(pack.id, directory)
-                    }.isSuccess
+                        val reason = runtimeCompatibility(pack)
+                        if (reason == null) {
+                            beforeVerification?.invoke()
+                            validateRuntime(pack, directory)
+                            true
+                        } else {
+                            mutableState.update { it.copy(unavailable = it.unavailable + (pack.id to reason)) }
+                            false
+                        }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { false }
                 } else false
                 if (verified) validated += install.packId
-                else store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
+                else if (install.packId !in state.value.unavailable) store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
                 mutableState.update { it.copy(checking = it.checking - install.packId) }
             }
             installs.filter { it.status in setOf("downloading", "verifying") }.forEach { install ->
                 val pack = catalog.firstOrNull { it.id == install.packId }
-                val recovered = if (pack != null && install.status == "verifying") withContext(Dispatchers.IO) {
+                val recovered = if (pack != null && install.status == "verifying" && runtimeCompatibility(pack) == null) withContext(Dispatchers.IO) {
                     val directory = owned("Models/${pack.id}/${pack.version}")
                     if (directory.isDirectory && pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 }) {
-                        runCatching { beforeVerification?.invoke(); validateRuntime(pack.id, directory); store.activateModel(pack.id, install.generation, "Models/${pack.id}/${pack.version}", pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) }); validated += pack.id; true }.getOrDefault(false)
+                        try { beforeVerification?.invoke(); validateRuntime(pack, directory); store.activateModel(pack.id, install.generation, "Models/${pack.id}/${pack.version}", pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) }); validated += pack.id; true }
+                        catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { false }
                     } else false
                 } else false
                 if (!recovered) store.updateModelInstall(install.packId, install.generation, "paused", install.bytesDownloaded)
@@ -94,15 +120,23 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             mutableState.value = state.value.copy(catalog = catalog, installs = store.modelInstalls(), error = null)
             if (state.value.selectedVoice != "system" && installed(state.value.selectedVoice) == null) mutableState.value = state.value.copy(error = "Your selected voice is unavailable. Choose a voice or download it again.")
             state.value.installs.filter { it.status == "ready" }.forEach { ready.emit(it.packId) }
-        } catch (failure: Exception) { mutableState.value = state.value.copy(error = "Offline downloads could not be loaded. Reopen to retry.") }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) { mutableState.value = state.value.copy(error = "Offline downloads could not be loaded. Reopen to retry.") }
+        finally { mutableState.update { it.copy(initializing = false) } }
     }
 
     fun compatibility(pack: ModelPack): String? {
-        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still use the installed Android voice, read and save typed thoughts."
+        runtimeCompatibility(pack)?.let { return it }
+        if (StatFs(context.filesDir.absolutePath).availableBytes < pack.totalBytes + 32L * 1024 * 1024) return "Free more storage before downloading"
+        return null
+    }
+
+    private fun runtimeCompatibility(pack: ModelPack): String? {
+        if (pack.adapter !in setOf("android-kitten-english", "android-moonshine-english")) return "This model needs an app update before it can run."
+        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still use the installed Android voice, read and save voice notes."
         if (Build.VERSION.SDK_INT < pack.minimumOS) return "Requires Android API ${pack.minimumOS} or newer"
         val memory = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
         if (memory.totalMem / (1024 * 1024) < pack.minimumMemoryMB) return "Requires ${pack.minimumMemoryMB} MB of device memory"
-        if (StatFs(context.filesDir.absolutePath).availableBytes < pack.totalBytes + 32L * 1024 * 1024) return "Free more storage before downloading"
         return null
     }
 
@@ -111,11 +145,76 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     fun selectedDirectory(): File? = if (state.value.selectedVoice == "system") null else installed(state.value.selectedVoice) ?: error("The selected offline voice is unavailable. Choose a voice or download it again.")
-    fun asrDirectory(): File? = installed("android-moonshine-english")
+    fun asrDirectory(): File? = if (asrAdapter() == null) null else installed(state.value.selectedTranscription)
+    fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-moonshine-english" }?.adapter
+
+    suspend fun selectTranscription(packId: String) {
+        withContext(Dispatchers.Main.immediate) {
+            check(transcriptionSelectionAllowed()) { "Finish your recording before changing transcription." }
+            check(!state.value.changingTranscription) { "Wait for transcription selection to finish." }
+            check(packId == "off" || state.value.catalog.any { it.id == packId && it.capability == "asr" && it.adapter == "android-moonshine-english" } && installed(packId) != null) { "Download and check this transcription pack first." }
+            if (state.value.selectedTranscription == packId) return@withContext
+            mutableState.update { it.copy(changingTranscription = true) }
+            try {
+                beforeTranscriptionChange?.invoke()
+                check(transcriptionSelectionAllowed()) { "Finish your recording before changing transcription." }
+                check(packId == "off" || installed(packId) != null) { "This transcription pack is no longer available." }
+                preferences.edit().putString("transcriptionPack", packId).apply()
+                mutableState.update { it.copy(selectedTranscription = packId) }
+            } finally {
+                mutableState.update { it.copy(changingTranscription = false) }
+                val selected = state.value.selectedTranscription
+                if (selected != "off" && installed(selected) != null) ready.emit(selected)
+            }
+        }
+    }
+
+    fun refreshCatalog() = scope.launch(Dispatchers.Main.immediate) {
+        if (state.value.refreshing) return@launch
+        if (!catalogRefreshConfigured) { mutableState.update { it.copy(catalogMessage = "This app includes a bundled catalogue. Live catalogue updates are not configured yet.") }; return@launch }
+        if (!canRefreshCatalog()) { mutableState.update { it.copy(catalogMessage = "Pause listening and wait for downloads and checks to finish before refreshing.") }; return@launch }
+        mutableState.update { it.copy(refreshing = true, catalogMessage = null) }
+        try {
+            val payload = downloadModelCatalog(client, ModelCatalogSource.httpsUrl, ModelCatalogSource.publicKeyX963)
+            check(canRefreshCatalog()) { "Refresh stopped because listening, a download or a check started. Try again when idle." }
+            val accepted = store.acceptModelCatalog(payload, ::canRefreshCatalog)
+            val catalog = store.modelCatalog()
+            val status = store.modelCatalogStatus()
+            mutableState.update { it.copy(catalog = catalog, catalogStatus = status, catalogMessage = if (accepted) "Model catalogue updated." else "Your model catalogue is up to date.") }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) { mutableState.update { it.copy(catalogMessage = failure.message ?: "The catalogue could not be refreshed. Your downloads are unchanged.") } }
+        finally { mutableState.update { it.copy(refreshing = false) } }
+    }
+
+    private fun canRefreshCatalog(): Boolean = jobs.isEmpty() && state.value.checking.isEmpty() && state.value.removing.isEmpty() && !state.value.initializing && !state.value.changingTranscription && state.value.installs.none { it.status in setOf("downloading", "verifying") } && catalogueWorkloadIdle()
+
+    fun checkOnDevice(packId: String) = scope.launch(Dispatchers.Main.immediate) {
+        if (state.value.refreshing || !canRefreshCatalog()) { reportError("Pause listening and wait for downloads and checks to finish before checking this device."); return@launch }
+        val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return@launch
+        val install = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" } ?: return@launch
+        val directory = installed(packId) ?: return@launch
+        mutableState.update { it.copy(checking = it.checking + packId, error = null) }
+        try {
+            withContext(Dispatchers.IO) {
+                require(pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 }) { "Installed files failed their integrity check. Download this pack again." }
+                if (!catalogueWorkloadIdle()) throw CancellationException("The check stopped because another task started.")
+                validateRuntime(pack, directory, retryWhenInterrupted = false)
+            }
+        } catch (cancelled: CancellationException) {
+            reportError("The check stopped because another task started. Your download is unchanged.")
+            coroutineContext.ensureActive()
+        } catch (failure: Exception) {
+            validated -= packId
+            store.invalidateModel(packId, install.generation, "This pack failed its check. Download it again.")
+            refresh()
+            reportError(failure.message ?: "This pack failed its check. Download it again.")
+        } finally { mutableState.update { it.copy(checking = it.checking - packId) } }
+    }
 
     fun selectVoice(packId: String, voiceId: String = state.value.voiceId) {
         require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
         require(packId == "system" || installed(packId) != null) { "Download and verify this voice first." }
+        require(packId == "system" || state.value.catalog.any { it.id == packId && it.capability == "tts" })
         require(voiceId in listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki"))
         preferences.edit().putString("voicePack", packId).putString("voiceId", voiceId).apply()
         mutableState.update { it.copy(selectedVoice = packId, voiceId = voiceId) }
@@ -123,7 +222,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     fun download(packId: String) {
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { scope.launch(Dispatchers.Main.immediate) { download(packId) }; return }
-        if (packId in state.value.removing) return
+        if (state.value.initializing || state.value.refreshing || packId in state.value.removing) return
         jobs[packId]?.let { previous ->
             if (!previous.isActive) scope.launch { previous.join(); download(packId) }
             return
@@ -151,7 +250,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 }
                 update(pack.id, generation, "verifying", pack.totalBytes)
                 beforeVerification?.invoke()
-                validateRuntime(pack.id, staging)
+                validateRuntime(pack, staging)
                 coroutineContext.ensureActive()
                 syncDirectory(staging, context.filesDir)
                 val finalPath = "Models/${pack.id}/${pack.version}"
@@ -202,7 +301,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             pause(packId)
             jobs[packId]?.join()
             beforeModelRemoval?.invoke(packId)
-            runtime.close(packId)
+            runtime.close(state.value.catalog.first { it.id == packId }.adapter)
             validated -= packId
             withContext(Dispatchers.IO) {
                 listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
@@ -245,8 +344,22 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return hash.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private suspend fun validateRuntime(packId: String, directory: File) {
-        try { runtime.smoke(packId, directory) }
+    private suspend fun validateRuntime(pack: ModelPack, directory: File, retryWhenInterrupted: Boolean = true) {
+        try {
+            while (true) {
+                val start = android.os.SystemClock.elapsedRealtime()
+                val check: suspend () -> Unit = { runtime.smoke(pack.adapter, directory) }
+                try {
+                    runIdleVerification?.invoke(check) ?: check()
+                    mutableState.update { it.copy(checks = it.checks + (pack.id to (android.os.SystemClock.elapsedRealtime() - start))) }
+                    return
+                } catch (cancelled: CancellationException) {
+                    coroutineContext.ensureActive()
+                    if (!retryWhenInterrupted) throw cancelled
+                    beforeVerification?.invoke()
+                }
+            }
+        }
         catch (failure: LinkageError) { throw IllegalStateException("This device cannot load this offline pack. Use the installed Android voice or remove the download.", failure) }
     }
 

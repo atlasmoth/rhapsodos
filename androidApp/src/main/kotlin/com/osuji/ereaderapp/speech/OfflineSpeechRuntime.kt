@@ -32,7 +32,8 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
             }
         }
 
-    suspend fun transcribe(modelDirectory: File, wav: File): String = withContext(worker) {
+    suspend fun transcribe(modelDirectory: File, wav: File, adapter: String = "android-moonshine-english"): String = withContext(worker) {
+        require(adapter == "android-moonshine-english") { "Unsupported transcription adapter" }
         val job = currentCoroutineContext()
         try {
             WavPcmReader(wav).use { reader ->
@@ -74,7 +75,7 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
         }
     }
 
-    suspend fun smoke(packId: String, modelDirectory: File): Unit = withContext(worker) {
+    suspend fun smoke(adapter: String, modelDirectory: File): Unit = withContext(worker) {
         val job = currentCoroutineContext()
         mutex.withLock {
             job.ensureActive()
@@ -83,7 +84,7 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
             kitten = null
             moonshine?.second?.close()
             moonshine = null
-            when (packId) {
+            when (adapter) {
                 "android-kitten-english" -> KittenEngine(modelDirectory).use { engine ->
                     val samples = engine.synthesize("Hello. This voice works offline.", "bella") { job.ensureActive() }
                     check(samples.size >= 2_400 && samples.all { it.isFinite() }) { "Voice validation failed" }
@@ -102,9 +103,9 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
         }
     }
 
-    suspend fun close(packId: String): Unit = withContext(worker) {
+    suspend fun close(adapter: String): Unit = withContext(worker) {
         mutex.withLock {
-            when (packId) {
+            when (adapter) {
                 "android-kitten-english" -> { kitten?.second?.close(); kitten = null }
                 "android-moonshine-english" -> { moonshine?.second?.close(); moonshine = null }
             }
