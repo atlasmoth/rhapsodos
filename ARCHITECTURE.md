@@ -194,6 +194,8 @@ Database transactions own domain state; file manifests/journals bridge transacti
 
 Use an LRU or quota policy for regenerable narration and rendered pages. Original PDFs, raw recordings and user edits have explicit retention/export rules and must not disappear as collateral cache eviction. Model deletion and changing voices do not affect notes.
 
+Document export takes a read-only canonical snapshot after native progress is flushed, validates finalized source and saved-note anchors, and stages immutable asset copies before building a bounded manifest-first ZIP. Exported WAVs are portable; iOS decrypts only into protected transient staging. Native file pickers own the chosen destination. Both platforms restore the same format, retain source-based progress and discard the exporting device’s native audio-clock offset. Cancellation and failure clean temporary export assets without deleting source documents or recordings.
+
 Native background execution is constrained. Active background audio does not grant unlimited OCR/ASR/model generation time. Persist work and resume when the OS allows it; do not promise transcription always finishes while the app is closed.
 
 ## 9. Privacy, networking and optional services

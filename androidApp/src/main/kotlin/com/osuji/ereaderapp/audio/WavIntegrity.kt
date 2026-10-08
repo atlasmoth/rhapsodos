@@ -4,7 +4,7 @@ import java.io.File
 import java.io.RandomAccessFile
 
 fun validateRecording(file: File): Long = RandomAccessFile(file, "r").use { input ->
-    require(input.length() in 44..134_217_728L) { "A recording is empty or too large." }
+    require(input.length() in 44..600L * 1024 * 1024) { "A recording is empty or exceeds the 600 MB archive limit." }
     fun unsignedInt(): Long = java.lang.Integer.toUnsignedLong(java.lang.Integer.reverseBytes(input.readInt()))
     fun unsignedShort(): Int = java.lang.Short.toUnsignedInt(java.lang.Short.reverseBytes(input.readShort()))
     fun tag() = ByteArray(4).also { input.readFully(it) }.toString(Charsets.US_ASCII)
@@ -28,12 +28,13 @@ fun validateRecording(file: File): Long = RandomAccessFile(file, "r").use { inpu
                 val byteRate = unsignedInt()
                 block = unsignedShort()
                 val bits = unsignedShort()
-                require(format == 1 && channels in 1..2 && rate in 8_000..96_000 && bits == 16 && block == channels * 2 && byteRate == rate * block) { "Archives require mono or stereo PCM16 WAV recordings." }
+                require(format == 1 && channels in 1..2 && rate in 8_000..192_000 && bits == 16 && block == channels * 2 && byteRate == rate * block) { "Archives require mono or stereo PCM16 WAV recordings." }
             }
             "data" -> { require(bytes < 0) { "A recording contains duplicate audio data." }; bytes = size }
         }
         input.seek(start + size + size % 2)
     }
     require(input.filePointer == input.length() && formatSeen && bytes > 0 && bytes % block == 0L) { "A recording is not finalized." }
+    require(bytes / block <= rate * 30 * 60) { "A recording exceeds the 30-minute limit." }
     bytes / block * 1000 / rate
 }

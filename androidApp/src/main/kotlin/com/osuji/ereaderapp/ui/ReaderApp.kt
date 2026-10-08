@@ -102,6 +102,8 @@ import com.osuji.ereaderapp.pdf.SourceRegion
 import com.osuji.ereaderapp.pdf.PdfPageGeometry
 import com.osuji.ereaderapp.pdf.PdfPageCoordinates
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -157,6 +159,15 @@ fun ReaderApp() {
     var typedSaving by remember { mutableStateOf(false) }
     var typedError by remember { mutableStateOf<String?>(null) }
     var recordRequestPending by rememberSaveable { mutableStateOf(false) }
+    var exportDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var exporting by remember { mutableStateOf(false) }
+    val selectedDocument = library.documents.firstOrNull { it.id == (backStack.lastOrNull() as? DocumentKey)?.id }
+        ?: library.documents.firstOrNull { it.id == audio.documentId }
+    val selectedHasDraft = library.notes.any { it.documentId == selectedDocument?.id && (it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L) }
+    val archiveTransportReady = !exporting && exportDocumentId == null
+    val archiveSheetDismissal = rememberUpdatedState(archiveTransportReady)
+    val archiveBusy = importing || exporting || exportDocumentId != null || actionSaving || recordRequestPending || typedNote ||
+        playback.capturing || noteCapture.draft != null || noteCapture.saving || audio.preview || audio.noteId != null
     LaunchedEffect(recordRequestPending, typedNote, audio.capturing, typedReservationId) {
         if ((recordRequestPending || typedNote) && !playback.isCaptureReservationValid(typedReservationId)) {
             recordRequestPending = false
@@ -189,8 +200,38 @@ fun ReaderApp() {
     }
     val restorePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
+            importing = true
             try { val id = archives.restore(uri); openDocument(id); haptic(view, true) }
             catch (failure: Exception) { message = failure.message ?: "The archive could not be restored." }
+            finally { importing = false }
+        }
+    }
+    val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.rhapsodos.document+zip")) { uri ->
+        val documentId = exportDocumentId
+        exportDocumentId = null
+        showSettings = true
+        if (uri == null) message = "Archive export cancelled. Your document and thoughts are unchanged."
+        else {
+            exporting = true
+            scope.launch {
+                var archiveStarted = false
+                try {
+                    check(documentId != null) { "Choose a document before exporting its archive." }
+                    check(!importing && !recordRequestPending && !typedNote && !playback.capturing && capture.state.value.draft == null && !capture.state.value.saving && !playback.state.value.preview && playback.state.value.noteId == null) { "Finish your current action before exporting an archive." }
+                    playback.pause()
+                    check(playback.persist()) { "Your listening position could not be saved. Please retry." }
+                    archiveStarted = true
+                    archives.export(documentId, uri)
+                    message = "Document archive saved. It includes the original PDF, recorded thoughts, transcripts and listening position."
+                    haptic(view, true)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    if (!archiveStarted) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { archives.discardExport(uri) }
+                    throw cancelled
+                } catch (failure: Exception) {
+                    val removed = archiveStarted || withContext(Dispatchers.IO) { archives.discardExport(uri) }
+                    message = (failure.message ?: "The archive could not be exported.") + if (removed) "" else " Remove the incomplete archive from your chosen location before retrying."
+                } finally { exporting = false }
+            }
         }
     }
     val microphone = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
@@ -207,7 +248,7 @@ fun ReaderApp() {
         }
     }
     fun recordThought(expected: PreparedCaptureTarget? = null): Boolean {
-        if (recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
+        if (importing || exporting || exportDocumentId != null || recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
         val current = playback.state.value
         if (current.preview || current.noteId != null) return false
         val reservation = playback.beginCapture(expected) ?: return false
@@ -234,7 +275,7 @@ fun ReaderApp() {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing, { recordThought() })
+                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing && !exporting && exportDocumentId == null, { recordThought() })
             },
         ) { padding ->
             NavDisplay(
@@ -248,7 +289,7 @@ fun ReaderApp() {
                             documents = library.documents,
                             pdf = pdf,
                             audio = audio,
-                            importing = importing,
+                            importing = importing || exporting || exportDocumentId != null,
                             import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
                             search = { showSearch = true; haptic(view) },
                             settings = { showSettings = true; haptic(view) },
@@ -272,34 +313,36 @@ fun ReaderApp() {
             accepted
         }, { showSearch = false })
 
-        if (showSettings) ModalBottomSheet(onDismissRequest = { showSettings = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        if (showSettings) ModalBottomSheet(onDismissRequest = { if (archiveTransportReady) showSettings = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = { it != SheetValue.Hidden || archiveSheetDismissal.value }),
+            properties = ModalBottomSheetProperties(shouldDismissOnBackPress = archiveTransportReady, shouldDismissOnClickOutside = archiveTransportReady)) {
             Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
-                SheetHeader("Settings") { showSettings = false }
+                SheetHeader("Settings", doneEnabled = archiveTransportReady) { if (archiveTransportReady) showSettings = false }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     SettingsSection("Voices") {
                         Text(if (modelState.selectedVoice == "system") "System voice" else modelState.voiceId.replaceFirstChar { it.uppercase() })
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             FilterChip(modelState.selectedVoice == "system", onClick = {
                                 scope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
-                            }, label = { Text("System voice") }, enabled = !playback.capturing)
+                            }, label = { Text("System voice") }, enabled = archiveTransportReady && !playback.capturing)
                             modelState.catalog.filter { it.capability == "tts" && models.installed(it.id) != null }.forEach { pack ->
                                 listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
                                     FilterChip(modelState.selectedVoice == pack.id && modelState.voiceId == voice, onClick = {
                                         scope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
-                                    }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !playback.capturing)
+                                    }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = archiveTransportReady && !playback.capturing)
                                 }
                             }
                         }
-                        TextButton(onClick = { if (audio.preview) playback.returnFromPreview() else playback.previewVoice(modelState.selectedVoice); haptic(view) }, enabled = !playback.capturing) {
+                        TextButton(onClick = { if (audio.preview) playback.returnFromPreview() else playback.previewVoice(modelState.selectedVoice); haptic(view) }, enabled = archiveTransportReady && !playback.capturing) {
                             Text(if (audio.preview) "Stop sample" else "Listen to a sample")
                         }
-                        OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }) { Text("Download voices and transcription") }
+                        OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }, enabled = archiveTransportReady) { Text("Download voices and transcription") }
                         modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     }
                     SettingsSection("Playback speed") {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
-                                FilterChip(audio.speed == speed, onClick = { playback.setSpeed(speed); haptic(view) }, label = { Text("${speed}×") }, enabled = !playback.capturing && !audio.preview && audio.noteId == null)
+                                FilterChip(audio.speed == speed, onClick = { playback.setSpeed(speed); haptic(view) }, label = { Text("${speed}×") }, enabled = archiveTransportReady && !playback.capturing && !audio.preview && audio.noteId == null)
                             }
                         }
                     }
@@ -309,7 +352,34 @@ fun ReaderApp() {
                         }
                     }
                     SettingsSection("Documents") {
-                        OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }, enabled = !importing && !playback.capturing) { Text("Restore a document archive") }
+                        selectedDocument?.let { Text(it.title, style = MaterialTheme.typography.bodyMedium) }
+                        OutlinedButton(onClick = {
+                            val document = selectedDocument ?: return@OutlinedButton
+                            exportDocumentId = document.id
+                            exporting = true
+                            scope.launch {
+                                try {
+                                    playback.pause()
+                                    check(playback.persist()) { "Your listening position could not be saved. Please retry." }
+                                    val name = document.title.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), "_").trim().take(80).ifBlank { "Document" }
+                                    showSettings = false
+                                    exportPicker.launch("$name.rhapsodos")
+                                    haptic(view)
+                                } catch (failure: Exception) {
+                                    exportDocumentId = null
+                                    message = failure.message ?: "The archive export could not start."
+                                } finally { exporting = false }
+                            }
+                        }, enabled = !archiveBusy && selectedDocument != null && selectedDocument.extractionStatus != "preparing" && !selectedHasDraft) {
+                            if (exporting) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)) }
+                            Text("Export document archive")
+                        }
+                        Text("Save the selected PDF, voice notes, transcripts and listening position.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (selectedDocument == null) Text("Open a document to export its archive.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else if (selectedDocument.extractionStatus == "preparing") Text("Finish preparing this document before exporting its archive.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else if (selectedHasDraft) Text("Save or discard the unfinished thought before exporting this document.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (exporting) Text("Preparing and saving your archive…", style = MaterialTheme.typography.bodySmall)
+                        OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }, enabled = !archiveBusy) { Text("Restore a document archive") }
                     }
                 }
             }

@@ -182,6 +182,7 @@ actor SharedRepository {
     func deleteNote(_ id: String) throws -> FileRemoval { try decode(core.deleteNoteJson(noteId: id)) }
     func pendingRemovals() throws -> [String] { let result: FileRemoval = try decode(core.pendingFileRemovalsJson()); return result.paths }
     func acknowledgeRemoval(_ path: String) throws { try core.acknowledgeFileRemoval(path: path) }
+    func export(_ documentId: String) throws -> String { try core.exportDocumentJson(documentId: documentId) }
     func restore(_ json: String) throws -> DocumentSnapshot { try decode(core.restoreDocumentJson(archiveJson: json)) }
     func setSections(documentId: String, sections: [DocumentSection]) throws -> DocumentSnapshot {
         let json = String(decoding: try JSONEncoder().encode(sections), as: UTF8.self)

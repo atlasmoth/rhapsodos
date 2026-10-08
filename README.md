@@ -10,7 +10,7 @@ Implementation was authorized on **4 October 2026**. Native listening, source pr
 
 Both apps use **`com.osuji.ereaderapp`**, version **`0.01`**, build/version code **`1`**. The display name is **Rhapsodos**.
 
-Android debug/release APKs and its app bundle build successfully; iOS simulator Debug and unsigned device Release builds also pass. Native checks exercise local speech, source preparation, anchored notes, downloads, archive restore and failure recovery. See [Development](docs/development.md) for exact evidence, build locations and remaining qualification.
+Android debug/release APKs and its app bundle build successfully; iOS simulator Debug and unsigned device Release builds also pass. Native checks exercise local speech, source preparation, anchored notes, downloads, archive export/restore and failure recovery. See [Development](docs/development.md) for exact evidence, build locations and remaining qualification.
 
 The documentation records the implementation, product decisions and remaining qualification. Check current primary documentation before changing dependency versions, model artifacts, licenses or prices.
 

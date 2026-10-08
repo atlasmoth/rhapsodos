@@ -20,6 +20,7 @@ The first audience is everyday readers and people using listening for accessibil
 | Remember | Double-tap a prepared PDF passage to pause and record a note there, then save and resume independently of transcription |
 | Revisit | Open a note, hear its original recording, edit its transcript and jump back to its source context |
 | Prepare for offline | Download a compatible voice if desired and prepare selected chapters; see exactly which content is ready |
+| Save a document archive | Export the selected PDF, saved voice notes, transcripts and listening position from Settings → Documents; restore it on either platform |
 | Use a wide window | Keep outline, source and anchored notes in useful panes without restarting audio or losing a draft |
 
 The library has no separate continue-listening hero. Each file shows its own source-based listening progress. Opening it restores its saved passage and position without resetting an already active session. Progress remains unknown while document preparation is incomplete; it does not imply a known full-book audio duration.
@@ -53,6 +54,10 @@ Page browsing and zoom use gestures and accessible actions; do not add a visible
 PDF pages retain their original colours, typography, text and artwork in every app theme. Light/dark appearance applies to the surrounding canvas and controls. Narration highlights remain a separate overlay; source PDFs, extraction inputs, source ranges and note anchors remain unchanged. There is no PDF recolouring preference.
 
 Voice changes are explicit. Keep the current listening place, explain any required preparation and retain the chosen voice rather than silently switching after a generation failure.
+
+### Document archives
+
+Settings → Documents provides Export document archive above Restore a document archive. Export freezes the selected document and saves its listening position before preparing a portable `.rhapsodos` file. The file contains the original PDF, finalized source graph, saved recordings, transcripts, source attachments and listening progress. Models and generated narration are excluded. Preparation and recording drafts must finish before export. The native file picker lets the user choose a destination; cancellation or failure leaves the original document and notes intact and never resumes narration. Archives contain readable document and recording data, so the chosen file provider determines where this deliberate export is stored.
 
 ### Voice note
 

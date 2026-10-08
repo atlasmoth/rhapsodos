@@ -40,7 +40,7 @@ Native managers verify all artifacts, check runtime execution, install atomicall
 
 Android now uses bundled Tesseract and a pinned English OCR model. ML Kit was removed after its documented diagnostic telemetry conflicted with the network boundary. See [third-party.md](third-party.md) for provenance and redistribution notices.
 
-iOS recordings use authenticated encrypted chunks and a non-synchronizing, device-bound Keychain key. Android recordings use app-private OS-protected storage. Automatic backup/transfer is disabled. Archive creation has been removed. Existing `.rhapsodos` archives contain the original PDF, notes and portable audio in a plaintext ZIP archive. Settings retains restore with safe-path, size, digest, strict-audio and canonical-anchor validation; iOS seals restored audio with the local vault key. There is no cloud key-recovery promise.
+iOS recordings use authenticated encrypted chunks and a non-synchronizing, device-bound Keychain key. Android recordings use app-private OS-protected storage. Automatic backup/transfer is disabled. Settings → Documents can export the selected document using the native file picker. `.rhapsodos` archives contain the original PDF, notes and portable audio in a plaintext ZIP archive. Export stages immutable asset copies and preserves source data. Restore retains safe-path, size, digest, strict-audio and canonical-anchor validation; iOS seals restored audio with the local vault key. There is no cloud key-recovery promise.
 
 ## Building
 

@@ -286,6 +286,22 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     fun acknowledgeFileRemoval(path: String) = lock.withLock { queries.acknowledgeFileRemoval(path) }
 
     @Throws(Exception::class)
+    fun exportDocumentJson(documentId: String): String = lock.withLock {
+        val snapshot = documentSnapshot(documentId)
+        require(snapshot.document.extractionStatus in setOf("ready", "partial", "originalOnly")) { "Finish preparing the document before exporting" }
+        val pages = snapshot.pages.map { if (it.geometrySpace == "cropTopLeftV1") it else it.copy(regions = emptyList(), geometrySpace = "unspecified") }
+        val notes = queries.allNotes().executeAsList().filter { it.document_id == documentId }.map { it.toDomain() }
+        require(notes.none { it.status == "draft" || it.status == "interrupted" && it.durationMillis == 0L }) { "Finish or discard the recording draft before exporting" }
+        val position = queries.positionForDocument(documentId).executeAsOneOrNull()?.let {
+            PlaybackPosition(it.document_id, it.passage_id, it.offset_millis, it.passage_fraction)
+        }
+        val archive = DocumentArchive(document = snapshot.document, pages = pages, notes = notes, position = position, sections = snapshot.sections)
+        val passages = validateArchive(archive)
+        require(passages.size == snapshot.document.passageCount && passages == snapshot.passages) { "Prepared passages do not match the document source" }
+        json.encodeToString(archive).also { require(it.length <= 50_000_000) { "Archive manifest exceeds limit" } }
+    }
+
+    @Throws(Exception::class)
     fun restoreDocumentJson(archiveJson: String): String = lock.withLock {
         require(archiveJson.length <= 50_000_000) { "Archive manifest exceeds limit" }
         val archive = json.decodeFromString<DocumentArchive>(archiveJson)
@@ -293,10 +309,29 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val document = archive.document
         require(document.id.isNotBlank() && document.title.isNotBlank() && document.filePath.isNotBlank() && document.sourceRevision == "1")
         require(queries.documentById(document.id).executeAsOneOrNull() == null) { "This document already exists" }
+        validateArchive(archive)
+        database.transaction {
+            queries.insertDocument(document.id, document.title, document.filePath, "1", document.pageCount.toLong(), "preparing", epochMillis())
+            appendPages(document.id, archive.pages, true)
+            archive.notes.forEach { note ->
+                queries.insertNote(note.id, document.id, note.passageId, note.sourceRevision, note.pageIndex.toLong(), note.sourceStart.toLong(), note.sourceEnd.toLong(), note.quote, note.recordingPath,
+                    note.durationMillis, note.offsetMillis, if (note.status == "transcribing") "pending" else note.status, note.machineTranscript, note.editedTranscript, note.transcriptRevision, note.createdAt)
+            }
+            archive.position?.let { queries.savePosition(it.documentId, it.passageId, 0, epochMillis(), it.passageFraction) }
+            archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
+        }
+        json.encodeToString(documentSnapshot(document.id))
+    }
+
+    private fun validateArchive(archive: DocumentArchive): List<Passage> {
+        require(archive.format == "rhapsodos-document" && archive.formatVersion == 1) { "Unsupported archive format" }
+        val document = archive.document
+        require(document.id.isNotBlank() && document.title.isNotBlank() && document.filePath.isNotBlank() && document.sourceRevision == "1")
         require(archive.pages.size == document.pageCount && archive.pages.isNotEmpty()) { "Archive pages are incomplete" }
         validatePages(archive.pages, 0)
         require(archive.pages.sumOf { it.text.length.toLong() } <= 20_000_000L)
-        val passages = PassageBuilder.build(document.id, archive.pages).associateBy { it.id }
+        val preparedPassages = PassageBuilder.build(document.id, archive.pages)
+        val passages = preparedPassages.associateBy { it.id }
         require(archive.notes.size <= 100_000)
         archive.notes.forEach { note ->
             val passage = passages[note.passageId] ?: error("Note source is missing")
@@ -311,17 +346,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
             require(it.documentId == document.id && it.passageId in passages && it.offsetMillis >= 0)
             require(it.passageFraction.isFinite() && it.passageFraction in 0.0..1.0) { "Invalid archived passage progress" }
         }
-        database.transaction {
-            queries.insertDocument(document.id, document.title, document.filePath, "1", document.pageCount.toLong(), "preparing", epochMillis())
-            appendPages(document.id, archive.pages, true)
-            archive.notes.forEach { note ->
-                queries.insertNote(note.id, document.id, note.passageId, note.sourceRevision, note.pageIndex.toLong(), note.sourceStart.toLong(), note.sourceEnd.toLong(), note.quote, note.recordingPath,
-                    note.durationMillis, note.offsetMillis, if (note.status == "transcribing") "pending" else note.status, note.machineTranscript, note.editedTranscript, note.transcriptRevision, note.createdAt)
-            }
-            archive.position?.let { queries.savePosition(it.documentId, it.passageId, 0, epochMillis(), it.passageFraction) }
-            archive.sections.forEachIndexed { index, section -> queries.insertSection(section.id, document.id, section.title, section.passageId, section.pageIndex.toLong(), index.toLong()) }
-        }
-        json.encodeToString(documentSnapshot(document.id))
+        return preparedPassages
     }
 
     @Throws(Exception::class)

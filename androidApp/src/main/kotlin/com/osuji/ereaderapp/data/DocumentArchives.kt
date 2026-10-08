@@ -2,11 +2,14 @@ package com.osuji.ereaderapp.data
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import com.osuji.ereaderapp.audio.validateRecording
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -17,12 +20,98 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.coroutines.coroutineContext
 
 @Serializable private data class ArchiveFile(val path: String, val sha256: String, val bytes: Long)
 
 class DocumentArchives(private val context: Context, private val store: ReaderStore) {
+    suspend fun export(documentId: String, destination: Uri) = withContext(Dispatchers.IO) {
+        val staging = File(context.cacheDir, "archive-exports/${UUID.randomUUID()}")
+        try {
+            check(staging.mkdirs()) { "There is not enough storage to prepare the archive." }
+            val manifest = store.json.parseToJsonElement(store.exportManifest(documentId)).jsonObject
+            val document = manifest.getValue("document").jsonObject
+            val assets = mutableListOf<ArchiveFile>()
+            var total = 0L
+            suspend fun stage(path: String, original: String): File {
+                val source = owned(original)
+                require(source.isFile) { "A referenced PDF or recording is missing. Your data has not been changed." }
+                val copy = File(staging, path)
+                check(copy.parentFile!!.mkdirs() || copy.parentFile!!.isDirectory)
+                val hash = MessageDigest.getInstance("SHA-256")
+                var bytes = 0L
+                source.inputStream().use { input ->
+                    copy.outputStream().use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        while (true) {
+                            coroutineContext.ensureActive()
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            bytes += count
+                            require(total <= 600L * 1024 * 1024) { "This archive exceeds the 600 MB export limit." }
+                            hash.update(buffer, 0, count)
+                            output.write(buffer, 0, count)
+                        }
+                        output.fd.sync()
+                    }
+                }
+                assets += ArchiveFile(path, hash.digest().joinToString("") { "%02x".format(it) }, bytes)
+                return copy
+            }
+            require(stage("document.pdf", document.getValue("filePath").jsonPrimitive.content).length() > 0) { "The original PDF is empty." }
+            val originalNotes = manifest.getValue("notes").jsonArray
+            require(originalNotes.size <= 100_000) { "This document contains too many thoughts to export safely." }
+            val notes = originalNotes.mapIndexed { index, element ->
+                val note = element.jsonObject
+                val original = note.getValue("recordingPath").jsonPrimitive.content
+                if (original.isBlank()) note else {
+                    val path = "audio/$index.wav"
+                    val duration = validateRecording(stage(path, original))
+                    require(kotlin.math.abs(duration - note.getValue("durationMillis").jsonPrimitive.content.toLong()) <= 2) { "A recording does not match its saved duration." }
+                    replace(note, "recordingPath", JsonPrimitive(path))
+                }
+            }
+            val portable = replace(replace(manifest, "document", replace(document, "filePath", JsonPrimitive("document.pdf"))), "notes", JsonArray(notes))
+            val envelope = JsonObject(mapOf("manifest" to portable, "files" to store.json.parseToJsonElement(store.json.encodeToString(assets))))
+            val manifestBytes = envelope.toString().toByteArray(Charsets.UTF_8)
+            require(manifestBytes.size <= 50_000_000) { "This document's prepared text and thoughts exceed the 50 MB archive manifest limit. Your data has not been changed." }
+            val archive = File(staging, "document.rhapsodos")
+            archive.outputStream().use { output ->
+                ZipOutputStream(output.buffered()).use { zip ->
+                    zip.putNextEntry(ZipEntry("manifest.json"))
+                    zip.write(manifestBytes)
+                    zip.closeEntry()
+                    assets.forEach { asset ->
+                        coroutineContext.ensureActive()
+                        zip.putNextEntry(ZipEntry(asset.path))
+                        File(staging, asset.path).inputStream().use { input -> copyCancellable(input, zip) }
+                        zip.closeEntry()
+                    }
+                }
+            }
+            context.contentResolver.openOutputStream(destination, "wt")?.use { output ->
+                archive.inputStream().use { input -> copyCancellable(input, output) }
+            } ?: error("The file provider could not save the archive.")
+        } catch (cancelled: CancellationException) {
+            discardExport(destination)
+            throw cancelled
+        } catch (failure: Exception) {
+            val removed = discardExport(destination)
+            throw IllegalStateException((failure.message ?: "The archive could not be exported.") + if (removed) "" else " Remove the incomplete archive from your chosen location before retrying.", failure)
+        } finally {
+            staging.deleteRecursively()
+        }
+    }
+
+    fun discardExport(destination: Uri): Boolean = runCatching {
+        if (DocumentsContract.isDocumentUri(context, destination)) DocumentsContract.deleteDocument(context.contentResolver, destination)
+        else context.contentResolver.delete(destination, null, null) > 0
+    }.getOrDefault(false)
+
     suspend fun restore(source: Uri): String = withContext(Dispatchers.IO) {
         val token = UUID.randomUUID().toString()
         val staging = File(context.filesDir, "restored/.$token").apply { check(mkdirs() || isDirectory) }
@@ -92,6 +181,19 @@ class DocumentArchives(private val context: Context, private val store: ReaderSt
         } finally { if (!committed) { staging.deleteRecursively(); destination.deleteRecursively() } }
     }
 
+    private fun owned(path: String): File {
+        val root = context.filesDir.canonicalFile
+        return File(path).canonicalFile.also { require(it.path.startsWith(root.path + File.separator)) { "Only app-owned files can be exported." } }
+    }
+    private suspend fun copyCancellable(input: java.io.InputStream, output: java.io.OutputStream) {
+        val buffer = ByteArray(64 * 1024)
+        while (true) {
+            coroutineContext.ensureActive()
+            val count = input.read(buffer)
+            if (count < 0) return
+            output.write(buffer, 0, count)
+        }
+    }
     private fun replace(source: JsonObject, key: String, value: JsonElement) = JsonObject(source.toMutableMap().apply { put(key, value) })
     private fun readBounded(input: java.io.InputStream, maximum: Int): ByteArray {
         val output = java.io.ByteArrayOutputStream()

@@ -16,6 +16,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var preparationProgress = 0.0
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
+    @Published private(set) var preparedArchive: PreparedDocumentArchive?
     @Published var errorMessage: String?
     @Published var captureDraft: VoiceNote?
     @Published var captureMessage = ""
@@ -831,6 +832,46 @@ final class ReaderStore: ObservableObject {
             }
             activeTranscription = nil; try? FileManager.default.removeItem(at: output); try? await refresh()
         }
+    }
+
+    var canExportArchive: Bool {
+        canNavigatePreparedSource && !preparingDocument && preparedArchive == nil
+            && document?.document.id == selectedId && selectedId != nil
+            && document?.document.extractionStatus != "preparing"
+            && !currentNotes.contains(where: \.isDraft)
+    }
+
+    func exportSelected() async {
+        guard canExportArchive, let id = selectedId, let revision = document?.document.sourceRevision,
+              let repository, let files else { return }
+        busy = true; preparation = "Preparing document archive"
+        defer { busy = false; preparation = ""; serviceTranscriptions() }
+        var output: URL?
+        do {
+            await audio.pauseAndJoinGeneration()
+            let transcription = transcriptionTask
+            transcription?.cancel(); await transcription?.value
+            try Task.checkCancellation()
+            guard selectedId == id, document?.document.sourceRevision == revision, sceneActive else { throw CancellationError() }
+            try await flushProgress()
+            let manifest = try await repository.export(id)
+            try Task.checkCancellation()
+            let work = Task.detached(priority: .utility) { try DocumentArchives.export(manifest, files: files) }
+            output = try await withTaskCancellationHandler(operation: { try await work.value }, onCancel: { work.cancel() })
+            try Task.checkCancellation()
+            guard selectedId == id, document?.document.sourceRevision == revision, sceneActive, let output else { throw CancellationError() }
+            preparedArchive = PreparedDocumentArchive(url: output)
+        } catch {
+            if let output { try? FileManager.default.removeItem(at: output) }
+            if !(error is CancellationError) { present(error) }
+        }
+    }
+
+    func finishArchiveExport(_ id: UUID? = nil, saved: Bool = false) {
+        guard let archive = preparedArchive, id == nil || id == archive.id else { return }
+        preparedArchive = nil
+        try? FileManager.default.removeItem(at: archive.url)
+        if saved { feedback.play(.saved) }
     }
 
     func restoreArchive(_ url: URL) async {

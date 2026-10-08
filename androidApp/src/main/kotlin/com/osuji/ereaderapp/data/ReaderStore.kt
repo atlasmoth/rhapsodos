@@ -79,6 +79,7 @@ class ReaderStore(private val core: ReaderCore) {
     suspend fun deleteNote(noteId: String): List<String> = locked { json.decodeFromString<RemovedFiles>(core.deleteNoteJson(noteId)).paths.also { updateSnapshot() } }
     suspend fun pendingRemovals(): List<String> = locked { json.decodeFromString<RemovedFiles>(core.pendingFileRemovalsJson()).paths }
     suspend fun acknowledgeRemoval(path: String) = locked { core.acknowledgeFileRemoval(path) }
+    suspend fun exportManifest(documentId: String): String = locked { core.exportDocumentJson(documentId) }
     suspend fun restoreManifest(manifest: String) = locked { core.restoreDocumentJson(manifest); updateSnapshot() }
     suspend fun modelCatalog(): List<ModelPack> = locked { json.decodeFromString(core.modelCatalogJson("android")) }
     suspend fun modelInstalls(): List<ModelInstall> = locked { json.decodeFromString(core.modelInstallsJson()) }

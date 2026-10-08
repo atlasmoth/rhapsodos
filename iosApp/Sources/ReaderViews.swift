@@ -402,6 +402,7 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @EnvironmentObject private var store: ReaderStore
     @State private var restorePicker = false
+    @State private var exportTask: Task<Void, Never>?
     @State private var gallery = false
     @State private var detent: PresentationDetent = .large
     @AppStorage("appearance") private var appearance = "system"
@@ -412,7 +413,7 @@ private struct VoiceSettings: View {
     }
     var body: some View {
         VStack(spacing: 0) {
-            ReaderSheetHeader(title: "Settings") { dismiss() }
+            ReaderSheetHeader(title: "Settings") { dismiss() }.disabled(store.busy)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     ReaderSheetCard(title: "Voices") {
@@ -447,6 +448,23 @@ private struct VoiceSettings: View {
                         Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
                     }
                     ReaderSheetCard(title: "Documents") {
+                        if let document = store.document {
+                            Text(document.document.title).font(.subheadline).foregroundStyle(Palette.muted).lineLimit(2)
+                        }
+                        Button("Export document archive", systemImage: "square.and.arrow.up") {
+                            exportTask = Task { await store.exportSelected() }
+                        }.frame(minHeight: 44).disabled(!store.canExportArchive)
+                        Text("Save the selected PDF, voice notes, transcripts and listening position.").font(.caption).foregroundStyle(Palette.muted)
+                        if store.document == nil {
+                            Text("Open a document to export its archive.").font(.caption).foregroundStyle(Palette.muted)
+                        } else if store.document?.document.extractionStatus == "preparing" {
+                            Text("Finish preparing this document before exporting its archive.").font(.caption).foregroundStyle(Palette.muted)
+                        } else if store.currentNotes.contains(where: \.isDraft) {
+                            Text("Save or discard the unfinished thought before exporting this document.").font(.caption).foregroundStyle(Palette.muted)
+                        }
+                        if store.busy && store.preparation == "Preparing document archive" {
+                            ProgressView("Preparing and saving your archive…").font(.caption)
+                        }
                         Button("Restore a document archive", systemImage: "square.and.arrow.down") { restorePicker = true }
                             .frame(minHeight: 44).disabled(transportUnavailable)
                     }
@@ -457,6 +475,11 @@ private struct VoiceSettings: View {
             .sheet(isPresented: $gallery) {
                 if let models = store.models { ModelGallery(models: models) }
             }
+            .sheet(item: Binding(get: { store.preparedArchive }, set: { if $0 == nil { store.finishArchiveExport() } })) { archive in
+                ArchiveExportPicker(url: archive.url) { saved in store.finishArchiveExport(archive.id, saved: saved) }
+                    .ignoresSafeArea()
+            }
+            .interactiveDismissDisabled(store.busy || store.preparedArchive != nil)
             .fileImporter(isPresented: $restorePicker, allowedContentTypes: [.rhapsodos, .zip, .archive]) { result in
                 dismiss()
                 switch result {
@@ -464,7 +487,7 @@ private struct VoiceSettings: View {
                 case .failure(let error): store.errorMessage = error.localizedDescription
                 }
             }
-            .onDisappear { audio.stopPreview() }
+            .onDisappear { audio.stopPreview(); exportTask?.cancel() }
     }
 }
 

@@ -137,6 +137,8 @@ At 2× playback, live generation needs sustained RTF below 0.5 with headroom. If
 
 ## Curated packs and background work
 
+Settings → Documents exports the selected document through the native Storage Access Framework save picker. Export stages immutable PDF/WAV copies, validates their checksums and durations, then writes a manifest-first portable ZIP. Cancellation and failure remove transient assets and attempt to remove an incomplete destination; a provider that denies deletion requires explicit user cleanup. Portable recordings use mono/stereo PCM16 WAV at 8–192 kHz, with a 30-minute maximum per note and a 600 MiB total asset limit. The same archive restores on either platform.
+
 Settings provides voice selection and access to the **Offline voices** and **Voice-note transcription** gallery surfaces. Show samples, language, storage, suitability, privacy and actual readiness. Recommend a compact choice; advanced users can select heavier qualified packs.
 
 Borrow discovery/download/run ideas from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery), while retaining this app's Koin stack, speech-specific contracts and privacy rules. Gallery's device warnings or demonstration benchmarks are not our compatibility guarantee.
@@ -204,4 +206,4 @@ Required evaluation includes:
 
 Follow [AGENTS.md](../AGENTS.md): keep comments essential, do not commit or leave unit-test source in the repository, run meaningful appropriate checks and track coherent changes in validated atomic commits. Temporary unit checks belong outside the repository. Remove obsolete pre-release features and internal compatibility shims freely while preserving real user data, unrelated work and current durability guarantees.
 
-Decisions now implemented include API 28, pinned Gradle dependencies, SQLDelight ownership, recoverable PCM WAV capture, app-private OS-protected storage, portable archive restore, bundled English OCR and the initial LiteRT speech packs. Remaining qualification concerns are source fidelity across the broader corpus, resource/route behavior on physical devices and the release quality gates above.
+Decisions now implemented include API 28, pinned Gradle dependencies, SQLDelight ownership, recoverable PCM WAV capture, app-private OS-protected storage, portable archive export/restore, bundled English OCR and the initial LiteRT speech packs. Remaining qualification concerns are source fidelity across the broader corpus, resource/route behavior on physical devices and the release quality gates above.
