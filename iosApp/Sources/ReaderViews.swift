@@ -12,6 +12,8 @@ struct ReaderRoot: View {
     @State private var settings = false
     @State private var gallery = false
     @State private var tools = false
+    @State private var librarySearch = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var sleepTimer = false
     @State private var renameTarget: LibraryDocument?
     @State private var renamedTitle = ""
@@ -21,7 +23,21 @@ struct ReaderRoot: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columns, preferredCompactColumn: $compactColumn) {
-            List(selection: Binding(get: { store.selectedId }, set: { id in if let id { Task { await store.select(id) } } })) {
+            List(selection: Binding(get: { store.selectedId }, set: { id in
+                if let id { compactColumn = .detail; Task { await store.select(id) } }
+            })) {
+                Section {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 6) {
+                            RhapsodosMark().frame(width: 38, height: 38)
+                            Text("Rhapsodos").font(BrandFont.display(26)).foregroundStyle(Palette.ink)
+                        }.accessibilityElement(children: .combine)
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 8) { libraryActions }.fixedSize(horizontal: true, vertical: false)
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) { libraryActions }
+                        }
+                    }.padding(.vertical, 8).listRowBackground(Color.clear)
+                }
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Label("YOUR LISTENING SPACE", systemImage: "waveform").font(.caption2.weight(.semibold)).foregroundStyle(Palette.accent)
@@ -57,9 +73,8 @@ struct ReaderRoot: View {
                     Button("Restore a portable archive", systemImage: "square.and.arrow.down") { restorePicker = true }.disabled(store.busy)
                 }
             }
-            .navigationTitle("Rhapsodos")
+            .navigationTitle("Library")
             .navigationSplitViewColumnWidth(min: 240, ideal: 290, max: 350)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { importer = true } label: { Image(systemName: "plus") }.accessibilityLabel("Import PDF").disabled(store.busy || store.captureDraft != nil) } }
         } detail: {
             Group {
                 if store.loading { ProgressView(store.preparation) }
@@ -70,9 +85,14 @@ struct ReaderRoot: View {
                 } else { EmptyLibrary(importer: $importer).navigationTitle("Rhapsodos").navigationBarTitleDisplayMode(.inline) }
             }
             .toolbar {
+                if horizontalSizeClass == .compact {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button { compactColumn = .sidebar; columns = .all } label: { Image(systemName: "books.vertical") }.accessibilityLabel("Open library")
+                    }
+                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if store.document != nil {
-                        Button { tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages, bookmarks and search")
+                        Button { librarySearch = false; tools = true } label: { Image(systemName: "text.magnifyingglass") }.accessibilityLabel("Pages, bookmarks and search")
                         Menu {
                             if let passage = store.currentPassage {
                                 Button(store.currentBookmarks.contains(where: { $0.passageId == passage.id }) ? "Remove bookmark" : "Bookmark this passage", systemImage: "bookmark") { Task { await store.toggleBookmark(passage) } }
@@ -83,8 +103,6 @@ struct ReaderRoot: View {
                         } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")
                         Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
                     }
-                    Button { gallery = true } label: { Image(systemName: "square.stack.3d.up") }.accessibilityLabel("On-device model packs").disabled(store.models == nil)
-                    Button { settings = true } label: { Image(systemName: "slider.horizontal.3") }.accessibilityLabel("Voice and pace")
                 }
             }
             .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
@@ -107,7 +125,7 @@ struct ReaderRoot: View {
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
         .sheet(isPresented: $gallery) { if let models = store.models { ModelGallery(models: models) } }
-        .sheet(isPresented: $tools) { ReaderTools() }
+        .sheet(isPresented: $tools) { ReaderTools(initialTab: librarySearch ? .search : .contents, wholeLibrary: librarySearch) }
         .sheet(isPresented: $sleepTimer) { SleepTimerView() }
         .alert("Rename your document", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
             TextField("Title", text: $renamedTitle)
@@ -127,6 +145,34 @@ struct ReaderRoot: View {
                     .padding(14).background(.regularMaterial, in: Capsule()).padding(.top, 10)
             }
         }
+    }
+
+    private var libraryActions: some View {
+        Group {
+            LibraryActionButton(title: "Search", symbol: "magnifyingglass") { librarySearch = true; tools = true }
+                .accessibilityLabel("Search the library")
+            LibraryActionButton(title: "Voices", symbol: "headphones") { gallery = true }
+                .accessibilityLabel("Offline voices and transcription").disabled(store.models == nil)
+            LibraryActionButton(title: "Settings", symbol: "slider.horizontal.3") { settings = true }
+                .accessibilityLabel("Voice, pace and appearance")
+            LibraryActionButton(title: "Import", symbol: "plus") { importer = true }
+                .accessibilityLabel("Import PDF").disabled(store.busy || store.captureDraft != nil)
+        }
+    }
+}
+
+private struct LibraryActionButton: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 7) {
+                Image(systemName: symbol).font(.title3)
+                Text(title).font(.caption).fixedSize(horizontal: false, vertical: true)
+            }.frame(minWidth: 44, minHeight: 54).padding(6)
+                .foregroundStyle(Palette.accent).background(Palette.soft, in: RoundedRectangle(cornerRadius: 12))
+        }.buttonStyle(.plain)
     }
 }
 

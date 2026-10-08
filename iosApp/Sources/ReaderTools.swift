@@ -1,34 +1,40 @@
 import SwiftUI
 
 struct ReaderTools: View {
+    enum Tab: Hashable { case contents, saved, search, voice }
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
     @Environment(\.dismiss) private var dismiss
-    @State private var tab = 0
+    @State private var tab: Tab
     @State private var query = ""
-    @State private var librarySearch = false
+    @State private var librarySearch: Bool
     @State private var results: [SearchHit] = []
     @State private var term = ""
     @State private var replacement = ""
 
+    init(initialTab: Tab = .contents, wholeLibrary: Bool = false) {
+        _tab = State(initialValue: initialTab)
+        _librarySearch = State(initialValue: wholeLibrary)
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Browse", selection: $tab) { Text("Contents").tag(0); Text("Saved").tag(1); Text("Search").tag(2); Text("Voice").tag(3) }
+                Picker("Browse", selection: $tab) { Text("Contents").tag(Tab.contents); Text("Saved").tag(Tab.saved); Text("Search").tag(Tab.search); Text("Voice").tag(Tab.voice) }
                     .pickerStyle(.segmented).padding()
-                if tab == 0 {
+                if tab == .contents {
                     List(store.document?.sections ?? []) { section in
                         Button { Task { await store.goToPassage(documentId: store.selectedId ?? "", passageId: section.passageId); dismiss() } } label: {
                             HStack { Label(section.title, systemImage: "doc.text"); Spacer(); Text("\(section.pageIndex + 1)").foregroundStyle(.secondary) }
                         }
                     }.overlay { if store.document?.sections.isEmpty != false { ContentUnavailableView("No prepared pages yet", systemImage: "doc.text") } }
-                } else if tab == 1 {
+                } else if tab == .saved {
                     List(store.currentBookmarks) { bookmark in
                         Button { Task { await store.goToPassage(documentId: bookmark.documentId, passageId: bookmark.passageId); dismiss() } } label: {
                             Label(bookmark.label, systemImage: "bookmark.fill").lineLimit(3)
                         }
                     }.overlay { if store.currentBookmarks.isEmpty { ContentUnavailableView("Keep your favorite passages", systemImage: "bookmark", description: Text("Use the bookmark button while following a passage.")) } }
-                } else if tab == 2 {
+                } else if tab == .search {
                     VStack(spacing: 0) {
                         Toggle("Search the whole library", isOn: $librarySearch).font(.subheadline).padding(.horizontal)
                         List(results, id: \.stableId) { hit in
@@ -64,7 +70,7 @@ struct ReaderTools: View {
                     }
                 }
             }
-            .navigationTitle("Find your place").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(librarySearch && tab == .search ? "Search your library" : "Find your place").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }

@@ -240,36 +240,6 @@ fun ReaderApp() {
     ReaderTheme(appearance) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val compactHeader = maxWidth < 500.dp
-                Column {
-                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Image(painterResource(R.drawable.ic_rhapsodos), null, modifier = Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)))
-                    Spacer(Modifier.width(10.dp))
-                    Text("Rhapsodos", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (!compactHeader) {
-                        IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Search library") }
-                        IconButton(onClick = { showVoices = true; haptic(view) }) { Icon(Icons.Default.Headphones, "Offline voices") }
-                    }
-                    IconButton(onClick = { showSettings = true; haptic(view) }) { Icon(Icons.Default.Tune, "Reading settings") }
-                    if (compactHeader) FilledTonalIconButton(onClick = { importPicker.launch(arrayOf("application/pdf")); haptic(view) }, enabled = !importing) {
-                        if (importing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        else Icon(Icons.Default.Add, "Import a PDF")
-                    } else FilledTonalButton(onClick = { importPicker.launch(arrayOf("application/pdf")); haptic(view) }, enabled = !importing) {
-                        if (importing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        else Icon(Icons.Default.Add, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (importing) "Importing" else "Import")
-                    }
-                }
-                if (compactHeader) Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, null); Spacer(Modifier.width(6.dp)); Text("Search") }
-                    TextButton(onClick = { showVoices = true; haptic(view) }) { Icon(Icons.Default.Headphones, null); Spacer(Modifier.width(6.dp)); Text("Offline voices") }
-                }
-                }
-                }
-            },
             bottomBar = {
                 if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing, { recordThought() }, { showSleep = true })
             },
@@ -281,7 +251,18 @@ fun ReaderApp() {
                 sceneStrategies = listOf(sceneStrategy),
                 entryProvider = entryProvider {
                     entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyListeningRoom { importPicker.launch(arrayOf("application/pdf")) } })) {
-                        LibraryPane(library.documents, pdf, audio, importing, { importPicker.launch(arrayOf("application/pdf")) }, ::openDocument, { action, document -> libraryAction = action to document; renameText = document.title })
+                        LibraryPane(
+                            documents = library.documents,
+                            pdf = pdf,
+                            audio = audio,
+                            importing = importing,
+                            import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
+                            search = { showSearch = true; haptic(view) },
+                            voices = { showVoices = true; haptic(view) },
+                            settings = { showSettings = true; haptic(view) },
+                            open = ::openDocument,
+                            action = { action, document -> libraryAction = action to document; renameText = document.title },
+                        )
                     }
                     entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
                         DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, originalPdfColours, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, ::recordThought, { passage -> writeThought(key.id, passage) })
@@ -432,8 +413,51 @@ fun ReaderApp() {
 }
 
 @Composable
-private fun LibraryPane(documents: List<LibraryDocument>, pdf: PdfAdapter, audio: PlaybackSnapshot, importing: Boolean, import: () -> Unit, open: (String) -> Unit, action: (String, LibraryDocument) -> Unit) {
+private fun LibraryPane(
+    documents: List<LibraryDocument>,
+    pdf: PdfAdapter,
+    audio: PlaybackSnapshot,
+    importing: Boolean,
+    import: () -> Unit,
+    search: () -> Unit,
+    voices: () -> Unit,
+    settings: () -> Unit,
+    open: (String) -> Unit,
+    action: (String, LibraryDocument) -> Unit,
+) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Image(painterResource(R.drawable.ic_rhapsodos), null, modifier = Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)))
+                    Spacer(Modifier.width(10.dp))
+                    Text("Rhapsodos", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).semantics { heading() })
+                }
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = search, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icon(Icons.Default.Search, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Search")
+                    }
+                    FilledTonalButton(onClick = voices, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icon(Icons.Default.Headphones, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Offline voices")
+                    }
+                    FilledTonalButton(onClick = settings, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icon(Icons.Default.Tune, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Settings")
+                    }
+                    Button(onClick = import, enabled = !importing, modifier = Modifier.heightIn(min = 48.dp)) {
+                        if (importing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        else Icon(Icons.Default.Add, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (importing) "Importing" else "Import")
+                    }
+                }
+            }
+        }
         item {
             Label("YOUR LISTENING LIBRARY")
             Spacer(Modifier.height(8.dp))
