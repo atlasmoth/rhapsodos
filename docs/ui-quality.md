@@ -24,7 +24,7 @@ Treat haptics as designed interaction feedback with reusable semantic events. Us
 | Download ready | Optional completion feedback while the user is actively interacting |
 | Model preparation, speech progress | Visual state only; no continuous haptic loop or vibration on every spoken word |
 
-Support an explicit haptics preference, hardware capability checks and system settings. Do not bypass disabled system feedback. Degrade to clear visual/semantic feedback when hardware lacks haptics. Rate-limit rapid actions and avoid overlapping patterns.
+Touch feedback is enabled app behavior without an app-level toggle. Check hardware capability and respect system settings; do not bypass disabled OS feedback. Degrade to clear visual/semantic feedback when hardware lacks haptics. Rate-limit rapid actions and avoid overlapping patterns.
 
 iOS uses Core Haptics for qualified custom patterns and native feedback generators/SwiftUI sensory feedback for standard events. Prepare resources ahead of interaction, handle engine interruption/reset, and avoid creating an engine per tap. Keep recording transitions silent at the appropriate point. [Core Haptics](https://developer.apple.com/documentation/corehaptics)
 
@@ -38,7 +38,7 @@ iOS uses Metal-backed SwiftUI shader effects available from iOS 17, with a focus
 
 Avoid full-screen expensive blur chains, unbounded layers, synchronous shader compilation on interaction, repeated allocations per frame and continuously ticking offscreen effects. Animate only while the relevant surface is visible and the effect communicates something useful. Never let a decorative shader compete with audio generation or note capture.
 
-Reduced motion uses a static or simplified treatment. Low Power Mode, elevated thermal state, backgrounding and constrained devices reduce resolution, frequency or disable optional effects. The fallback must remain intentionally designed.
+Decorative motion is enabled app behavior without an app-level toggle. OS Reduce Motion uses a static or simplified treatment. Low Power Mode, elevated thermal state, backgrounding and constrained devices reduce resolution, frequency or disable optional effects. The fallback must remain intentionally designed.
 
 ## Responsiveness budgets
 

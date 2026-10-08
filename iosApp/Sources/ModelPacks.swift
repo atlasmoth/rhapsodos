@@ -475,40 +475,124 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct ModelGallery: View {
     @ObservedObject var models: ModelPacks
     @EnvironmentObject private var store: ReaderStore
+    @EnvironmentObject private var audio: AudioCoordinator
     @Environment(\.dismiss) private var dismiss
+    @State private var detent: PresentationDetent = .large
+
+    private var transportUnavailable: Bool {
+        store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
+    }
+    private var changingVoiceUnavailable: Bool {
+        transportUnavailable || audio.previewing || audio.replayingNote != nil
+    }
+    private var systemVoice: String? {
+        if !audio.selectedVoice.hasPrefix("kokoro:"), audio.voices.contains(where: { $0.identifier == audio.selectedVoice }) { return audio.selectedVoice }
+        return audio.voices.first(where: { $0.language == "en-US" })?.identifier ?? audio.voices.first?.identifier
+    }
+
     var body: some View {
-        NavigationStack {
-            List {
-                Section { Label("Processing stays on this device", systemImage: "lock.shield"); Text("Downloads contain model files only. PDFs and recordings are never uploaded.").font(.footnote).foregroundStyle(.secondary) }
-                ForEach(models.catalog) { pack in
-                    let install = models.installs.first { $0.packId == pack.id }
-                    Section {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(pack.name).font(.headline)
-                            Text(pack.description).font(.subheadline).foregroundStyle(.secondary)
-                            if pack.capability == "tts" { Text("Narration preview · Performance and long playback depend on your device. Built-in voices remain available.").font(.caption).foregroundStyle(.secondary) }
-                            Text("\(pack.capability == "asr" ? "Transcription" : "Narration") · \(ByteCountFormatter.string(fromByteCount: pack.totalBytes, countStyle: .file)) · iOS \(pack.minimumOS)+").font(.caption)
-                            Link("\(pack.license) license", destination: URL(string: pack.licenseUrl)!).font(.caption)
-                            if let install {
-                                if ["downloading", "verifying"].contains(install.status) { ProgressView(value: Double(install.bytesDownloaded), total: Double(max(1, install.totalBytes))); Text(install.status == "verifying" ? "Verifying and checking the runtime…" : "Downloading…").font(.caption) }
-                                if !install.error.isEmpty { Text(install.error).font(.caption).foregroundStyle(.secondary) }
-                            }
-                            if !pack.eligible { Text("Requires iOS \(pack.minimumOS)+ and \(pack.minimumMemoryMB) MB of device memory.").font(.caption) }
-                        }
-                        if install?.status == "downloading" || install?.status == "verifying" { Button("Pause download") { models.pause(pack) } }
-                        else if install?.status == "ready" && models.ready(capability: pack.capability, id: pack.id) != nil {
-                            Label("Installed for offline use", systemImage: "checkmark.circle.fill")
-                            Button("Remove pack", role: .destructive) { Task { await store.removePack(pack) } }.disabled(store.busy || store.audio.playing)
-                        } else {
-                            if install?.status == "ready" { Text("Checking the installed pack…").font(.caption) }
-                            else { Button(install == nil ? "Download pack" : "Resume / repair") { Task { await models.download(pack) } }.disabled(!pack.eligible || models.loading) }
-                            if install != nil { Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }.disabled(models.loading) }
+        VStack(spacing: 0) {
+            ReaderSheetHeader(title: "Offline voices & transcription") { dismiss() }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    Text("Downloads contain public model files. Your documents, recordings and words stay on your device.")
+                    ReaderSheetCard(title: "Installed iOS voice") {
+                        Text("System voices remain available. Additional voices can be managed in iOS Accessibility settings.").font(.subheadline).foregroundStyle(Palette.muted)
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 12) { systemVoiceActions }
+                            VStack(alignment: .leading, spacing: 12) { systemVoiceActions }
                         }
                     }
+                    if models.loading { ProgressView("Checking available downloads…") }
+                    ForEach(models.catalog) { pack in
+                        packCard(pack)
+                    }
+                }.padding(.horizontal, 24).padding(.vertical, 16).frame(maxWidth: 640).frame(maxWidth: .infinity)
+            }
+        }.background(Palette.paper).foregroundStyle(Palette.ink)
+            .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
+            .alert("Model pack", isPresented: Binding(get: { models.message != nil }, set: { if !$0 { models.message = nil } })) {
+                Button("OK") { models.message = nil }
+            } message: { Text(models.message ?? "") }
+    }
+
+    @ViewBuilder private var systemVoiceActions: some View {
+        Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Use system voice" : "Selected") {
+            if let systemVoice { Task { await audio.changeVoice(systemVoice) } }
+        }.buttonStyle(.borderedProminent).frame(minHeight: 44).disabled(changingVoiceUnavailable || systemVoice == nil)
+        Button(audio.previewing ? "Stop sample" : "Listen to a sample") {
+            if audio.previewing { audio.stopPreview() }
+            else if let systemVoice { audio.audition(voiceIdentifier: systemVoice) }
+        }.frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil || systemVoice == nil)
+    }
+
+    private func packCard(_ pack: ModelPack) -> some View {
+        let install = models.installs.first { $0.packId == pack.id }
+        let status = install?.status ?? "notInstalled"
+        let ready = status == "ready" && models.ready(capability: pack.capability, id: pack.id) != nil
+        return ReaderSheetCard(title: pack.name) {
+            Text(pack.description)
+            Text("\(pack.totalBytes / (1024 * 1024)) MB · English · \(pack.capability == "tts" ? "Narration" : "Voice-note transcription")")
+                .font(.caption).foregroundStyle(Palette.muted)
+            if pack.capability == "tts" {
+                Text("Narration preview · Performance and long playback depend on your device. Built-in voices remain available.")
+                    .font(.caption).foregroundStyle(Palette.muted)
+            }
+            if let install, ["downloading", "verifying"].contains(status) {
+                ProgressView(value: Double(install.bytesDownloaded), total: Double(max(1, install.totalBytes)))
+                Text(status == "verifying" ? "Checking files and trying the model on this device…" : "\(install.bytesDownloaded / (1024 * 1024)) of \(pack.totalBytes / (1024 * 1024)) MB downloaded")
+                    .font(.caption)
+            }
+            if let install, !install.error.isEmpty { Text(install.error).font(.caption).foregroundStyle(.red) }
+            if !pack.eligible {
+                Text("Requires iOS \(pack.minimumOS)+ and \(pack.minimumMemoryMB) MB of device memory.").font(.caption).foregroundStyle(.red)
+            }
+            if ready {
+                if pack.capability == "tts" {
+                    Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
+                        if !audio.selectedVoice.hasPrefix("kokoro:") { Text("System voice").tag(audio.selectedVoice) }
+                        Text("Heart").tag("kokoro:af_heart")
+                        Text("Bella").tag("kokoro:af_bella")
+                        Text("Michael").tag("kokoro:am_michael")
+                    }.pickerStyle(.menu).disabled(changingVoiceUnavailable)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 12) { voiceActions }
+                        VStack(alignment: .leading, spacing: 12) { voiceActions }
+                    }
+                } else {
+                    Text("Ready for saved voice notes").font(.headline)
                 }
-            }.navigationTitle("On-device packs").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-                .alert("Model pack", isPresented: Binding(get: { models.message != nil }, set: { if !$0 { models.message = nil } })) { Button("OK") { models.message = nil } } message: { Text(models.message ?? "") }
+            } else if status == "ready" {
+                ProgressView("Checking installed files on this device…")
+            } else if ["downloading", "verifying"].contains(status) {
+                Button("Pause download") { models.pause(pack) }.frame(minHeight: 44).buttonStyle(.bordered)
+            } else {
+                Button(status == "paused" ? "Resume download" : status == "failed" ? "Retry download" : "Download") {
+                    Task { await models.download(pack) }
+                }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(!pack.eligible || models.loading)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) { packFooter(pack, install: install) }
+                VStack(alignment: .leading, spacing: 12) { packFooter(pack, install: install) }
+            }
         }
+    }
+
+    @ViewBuilder private var voiceActions: some View {
+        Button(audio.selectedVoice.hasPrefix("kokoro:") ? "Selected" : "Use this voice") {
+            Task { await audio.changeVoice(audio.selectedVoice.hasPrefix("kokoro:") ? audio.selectedVoice : "kokoro:af_heart") }
+        }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable)
+        Button(audio.previewing ? "Stop sample" : "Listen to a sample") {
+            if audio.previewing { audio.stopPreview() }
+            else { audio.audition(voiceIdentifier: audio.selectedVoice.hasPrefix("kokoro:") ? audio.selectedVoice : "kokoro:af_heart") }
+        }.frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
+    }
+
+    @ViewBuilder private func packFooter(_ pack: ModelPack, install: ModelInstall?) -> some View {
+        if let install, !["downloading", "verifying"].contains(install.status) {
+            Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
+                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.previewing || audio.replayingNote != nil || models.loading)
+        }
+        if let url = URL(string: pack.licenseUrl) { Link("License", destination: url).frame(minHeight: 44) }
     }
 }

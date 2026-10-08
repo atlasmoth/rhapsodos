@@ -30,8 +30,7 @@ fun BrandEntrance() {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val power = context.getSystemService(PowerManager::class.java)
     val accessibility = context.getSystemService(AccessibilityManager::class.java)
-    val reduced = context.getSharedPreferences("presentation", android.content.Context.MODE_PRIVATE).getBoolean("reducedMotion", false) ||
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f || power.isPowerSaveMode || accessibility.isTouchExplorationEnabled ||
+    val reduced = Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f || power.isPowerSaveMode || accessibility.isTouchExplorationEnabled ||
         (Build.VERSION.SDK_INT >= 29 && power.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE)
     val phase = remember { Animatable(0f) }
     LaunchedEffect(Unit) {

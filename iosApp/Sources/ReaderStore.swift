@@ -20,7 +20,8 @@ final class ReaderStore: ObservableObject {
     @Published var captureDraft: VoiceNote?
     @Published var captureMessage = ""
     @Published var typedThought = ""
-    @Published var follow = true
+    @Published private(set) var pageDestination: PDFPageDestination?
+    @Published var follow = true { didSet { if follow { pageDestination = nil } } }
     @Published var inspector = false
     var repository: SharedRepository?
     var files: LocalFiles?
@@ -74,6 +75,7 @@ final class ReaderStore: ObservableObject {
                 guard let self, self.audio.playing, self.selectedId == self.audio.current?.documentId,
                       !self.audio.previewing, self.audio.replayingNote == nil, !self.audio.recording,
                       !self.audio.capturePending, self.captureDraft == nil else { return }
+                self.pageDestination = nil
                 self.follow = true
             }
         }.store(in: &subscriptions)
@@ -271,6 +273,7 @@ final class ReaderStore: ObservableObject {
 
     func select(_ id: String) async {
         guard !busy, captureDraft == nil, let repository, document?.document.id != id else { return }
+        pageDestination = nil
         busy = true
         preparation = "Opening your document"
         await audio.pauseAndJoinGeneration()
@@ -516,8 +519,27 @@ final class ReaderStore: ObservableObject {
         } catch { present(error) }
     }
 
-    func togglePlayback() { feedback.play(.playback); audio.toggle() }
+    func togglePlayback() {
+        if !audio.playing { pageDestination = nil }
+        feedback.play(.playback)
+        audio.toggle()
+    }
+    var canBrowseDocumentPages: Bool {
+        !busy && !loading && sceneActive && document != nil && captureDraft == nil
+            && !audio.recording && !audio.capturePending && !audio.previewing && audio.replayingNote == nil
+    }
+    @discardableResult func browseToPage(_ index: Int, documentId: String, sourceRevision: String) -> Bool {
+        guard canBrowseDocumentPages, let document, selectedId == documentId,
+              document.document.id == documentId, document.document.sourceRevision == sourceRevision,
+              index >= 0, index < document.document.pageCount,
+              audio.current == nil || audio.current?.documentId == documentId else { return false }
+        pauseForBrowsing()
+        follow = false
+        pageDestination = PDFPageDestination(documentId: documentId, sourceRevision: sourceRevision, pageIndex: index)
+        return true
+    }
     func pauseForBrowsing() {
+        pageDestination = nil
         guard let selectedId, document?.document.id == selectedId, audio.current?.documentId == selectedId,
               !loading, (!busy || sourceSeekRequest != nil), captureDraft == nil,
               !audio.recording, !audio.capturePending, !audio.previewing, audio.replayingNote == nil else { return }
@@ -583,7 +605,7 @@ final class ReaderStore: ObservableObject {
             capturedDuration = 0
             captureMessage = "Your note is attached to this passage. Listening keeps its paused position."
             feedback.play(.capture)
-            if feedback.enabled { try await Task.sleep(for: .milliseconds(200)) }
+            try await Task.sleep(for: .milliseconds(200))
             guard validAttachment() else {
                 audio.endCaptureMode(); busy = false
                 captureMessage = "This attached draft has been kept. Recording did not start; you can write your thought here."

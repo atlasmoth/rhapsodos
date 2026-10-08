@@ -137,7 +137,7 @@ At 2× playback, live generation needs sustained RTF below 0.5 with headroom. If
 
 ## Curated packs and background work
 
-Model gallery surfaces are **Offline voices** and **Voice-note transcription**. Show samples, language, storage, suitability, privacy and actual readiness. Recommend a compact choice; advanced users can select heavier qualified packs.
+Settings provides voice selection and access to the **Offline voices** and **Voice-note transcription** gallery surfaces. Show samples, language, storage, suitability, privacy and actual readiness. Recommend a compact choice; advanced users can select heavier qualified packs.
 
 Borrow discovery/download/run ideas from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery), while retaining this app's Koin stack, speech-specific contracts and privacy rules. Gallery's device warnings or demonstration benchmarks are not our compatibility guarantee.
 
@@ -163,6 +163,10 @@ Material3 Adaptive and Navigation3 adaptive scenes map library/outline-to-source
 | Very wide | Adjustable bounded panes and readable text measure; optional context without stretched controls |
 
 Choose layout from actual window constraints, font scaling and posture. Account for hinges and avoid placing important controls across an occlusion. Preserve source selection, scroll/zoom, auto-follow state, note draft, transcript edits and actual audio position as panes change.
+
+Library actions match iOS beneath branding: exactly three icon-only buttons in one row, Search → Import → Settings, using magnifying-glass, plus and horizontal-adjustment symbols. Keep matching accessible names without visible text. Settings owns voice selection, speech downloads and transcription configuration.
+
+Native sheets use the shared title-leading, Done-trailing header and content/action order in [design.md](design.md). Match content insets, section spacing, rounded tonal cards and preparation/error/retry feedback on iOS, keeping query and progress controls stable as states change. Retain Compose sheet, keyboard, accessibility and safe-area behavior; dismissal does not imply durable save. Feedback and decorative motion have no app-level switches; native execution respects OS settings, hardware and resource conditions.
 
 Manual PDF browsing pauses book audio and automatic following. Play resumes at the native frozen cursor and returns the PDF to narration; no follow control is exposed. Notes and source scroll independently. A panel transition does not reconstruct media or inference ownership. See [design.md](design.md) for the shared layout policy.
 

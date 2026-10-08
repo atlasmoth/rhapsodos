@@ -10,7 +10,6 @@ struct ReaderRoot: View {
     @EnvironmentObject private var feedback: Feedback
     @State private var importer = false
     @State private var settings = false
-    @State private var gallery = false
     @State private var tools = false
     @State private var searchScope: ReaderSearchScope?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -31,10 +30,7 @@ struct ReaderRoot: View {
                             RhapsodosMark().frame(width: 38, height: 38)
                             Text("Rhapsodos").font(BrandFont.display(26)).foregroundStyle(Palette.ink)
                         }.accessibilityElement(children: .combine)
-                        ViewThatFits(in: .horizontal) {
-                            HStack(spacing: 8) { libraryActions }.fixedSize(horizontal: true, vertical: false)
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) { libraryActions }
-                        }
+                        HStack(spacing: 12) { libraryActions }
                     }.padding(.vertical, 8).listRowBackground(Color.clear)
                 }
                 Section("Library") {
@@ -100,7 +96,6 @@ struct ReaderRoot: View {
             }
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
-        .sheet(isPresented: $gallery) { if let models = store.models { ModelGallery(models: models) } }
         .sheet(isPresented: $tools) { ReaderTools() }
         .sheet(item: $searchScope) { scope in ReaderSearchSheet(documentId: scope.documentId) }
         .alert("Rename your document", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
@@ -132,28 +127,22 @@ struct ReaderRoot: View {
 
     private var libraryActions: some View {
         Group {
-            LibraryActionButton(title: "Search", symbol: "magnifyingglass") { searchScope = ReaderSearchScope(documentId: "") }
+            LibraryActionButton(symbol: "magnifyingglass") { searchScope = ReaderSearchScope(documentId: "") }
                 .accessibilityLabel("Search the library").disabled(!store.canNavigatePreparedSource)
-            LibraryActionButton(title: "Voices", symbol: "headphones") { gallery = true }
-                .accessibilityLabel("Offline voices and transcription").disabled(store.models == nil)
-            LibraryActionButton(title: "Settings", symbol: "slider.horizontal.3") { settings = true }
-                .accessibilityLabel("Voice, pace and appearance")
-            LibraryActionButton(title: "Import", symbol: "plus") { importer = true }
+            LibraryActionButton(symbol: "plus") { importer = true }
                 .accessibilityLabel("Import PDF").disabled(store.busy || store.captureDraft != nil)
+            LibraryActionButton(symbol: "slider.horizontal.3") { settings = true }
+                .accessibilityLabel("Settings")
         }
     }
 }
 
 private struct LibraryActionButton: View {
-    let title: String
     let symbol: String
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 7) {
-                Image(systemName: symbol).font(.title3)
-                Text(title).font(.caption).fixedSize(horizontal: false, vertical: true)
-            }.frame(minWidth: 44, minHeight: 54).padding(6)
+            Image(systemName: symbol).font(.title3).frame(width: 56, height: 56)
                 .foregroundStyle(Palette.accent).background(Palette.soft, in: RoundedRectangle(cornerRadius: 12))
         }.buttonStyle(.plain)
     }
@@ -210,7 +199,7 @@ private struct ListeningView: View {
                     documentId: snapshot.document.id, sourceRevision: snapshot.document.sourceRevision,
                     geometrySpace: store.currentPage?.geometrySpace ?? "unspecified", sourceText: store.currentPage?.text ?? "", anchor: store.currentHighlightAnchor,
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
-                    follow: store.follow, onBrowse: { store.pauseForBrowsing() },
+                    follow: store.follow, browseDestination: store.pageDestination, onBrowse: { store.pauseForBrowsing() },
                     onRecord: { anchor in store.beginNote(expected: anchor) },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
             } else {
@@ -384,51 +373,99 @@ private struct SystemOutputVolume: UIViewRepresentable {
     func updateUIView(_ view: MPVolumeView, context: Context) { view.tintColor = UIColor(Palette.accent) }
 }
 
+struct ReaderSheetHeader: View {
+    let title: String
+    let onDone: () -> Void
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(title).font(BrandFont.display(25, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 0)
+            Button("Done", action: onDone).frame(minWidth: 44, minHeight: 44)
+        }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8).foregroundStyle(Palette.ink)
+    }
+}
+
+struct ReaderSheetCard<Content: View>: View {
+    let title: String
+    let content: Content
+    init(title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title).font(.headline).accessibilityAddTraits(.isHeader)
+            content
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
+            .background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
 private struct VoiceSettings: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @EnvironmentObject private var store: ReaderStore
-    @EnvironmentObject private var feedback: Feedback
     @State private var restorePicker = false
+    @State private var gallery = false
+    @State private var about = false
+    @State private var detent: PresentationDetent = .large
     @AppStorage("appearance") private var appearance = "system"
     @Environment(\.dismiss) private var dismiss
+    private let speeds: [Float] = [0.75, 1, 1.25, 1.5, 1.75, 2]
+    private var transportUnavailable: Bool {
+        store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
+    }
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Installed voices") {
-                    Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
-                        if audio.selectedVoice.hasPrefix("kokoro:"), store.models?.ready(capability: "tts") == nil { Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true) }
-                        if store.models?.ready(capability: "tts") != nil { Text("Preview · Heart").tag("kokoro:af_heart"); Text("Preview · Bella").tag("kokoro:af_bella"); Text("Preview · Michael").tag("kokoro:am_michael") }
-                        ForEach(audio.voices, id: \.identifier) { voice in Text("\(voice.name) · \(voice.language)").tag(voice.identifier) }
+        VStack(spacing: 0) {
+            ReaderSheetHeader(title: "Settings") { dismiss() }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    ReaderSheetCard(title: "Voices") {
+                        Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
+                            Text("System voice").tag("")
+                            if audio.selectedVoice.hasPrefix("kokoro:"), store.models?.ready(capability: "tts") == nil { Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true) }
+                            if store.models?.ready(capability: "tts") != nil { Text("Preview · Heart").tag("kokoro:af_heart"); Text("Preview · Bella").tag("kokoro:af_bella"); Text("Preview · Michael").tag("kokoro:am_michael") }
+                            ForEach(audio.voices, id: \.identifier) { voice in Text("\(voice.name) · \(voice.language)").tag(voice.identifier) }
+                        }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
+                        Button(audio.previewing ? "Stop sample" : "Listen to a sample", systemImage: audio.previewing ? "stop.fill" : "play.fill") {
+                            if audio.previewing { audio.stopPreview() } else { audio.audition() }
+                        }.frame(minHeight: 44).buttonStyle(.bordered)
+                            .disabled(transportUnavailable || (audio.selectedVoice.hasPrefix("kokoro:") && store.models?.ready(capability: "tts") == nil))
+                        Button("Download voices and transcription", systemImage: "arrow.down.circle") { audio.stopPreview(); gallery = true }
+                            .frame(minHeight: 44).disabled(store.models == nil || transportUnavailable)
+                        Text("Additional system voices can be managed in iOS Accessibility settings.").font(.caption).foregroundStyle(Palette.muted)
                     }
-                    Button(audio.previewing ? "Stop sample" : "Listen to a sample") { if audio.previewing { audio.stopPreview() } else { audio.audition() } }
-                        .disabled(store.busy || store.captureDraft != nil || audio.recording || (audio.selectedVoice.hasPrefix("kokoro:") && store.models?.ready(capability: "tts") == nil))
-                    Text("These are voices already available on this device. Additional system voices can be managed in iOS Accessibility settings.").font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Listening pace") {
-                    Picker("Pace", selection: Binding(get: { audio.pace }, set: { value in Task { await audio.changePace(value) } })) {
-                        Text("Calm").tag(Float(0.43)); Text("Natural").tag(Float(0.5)); Text("Brisk").tag(Float(0.56))
-                    }.pickerStyle(.segmented)
-                }
-                Section("Appearance") {
-                    Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
-                }
-                Section("Feel") {
-                    Toggle("Touch feedback", isOn: $feedback.enabled)
-                    Text("Motion and visual effects respect Reduce Motion, Low Power Mode and thermal conditions.").font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Documents") {
-                    Button("Restore a document archive", systemImage: "square.and.arrow.down") { restorePicker = true }
-                        .disabled(store.busy || store.captureDraft != nil || audio.recording)
-                }
-                Section("Privacy & readiness") {
-                    Label("Narration stays on this device", systemImage: "lock.shield")
-                    Text("Saved voice notes use on-device transcription when English recognition is available. Otherwise the recording remains saved for later.").font(.footnote).foregroundStyle(.secondary)
-                    Text("Double-tap prepared text to record a thought at that passage. Listening resumes from its paused position. A regular pause continues the current voice.").font(.footnote).foregroundStyle(.secondary)
-                    Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(.secondary)
-                }
-            }.navigationTitle("Make it your voice").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-        }.presentationDetents([.medium, .large])
+                    ReaderSheetCard(title: "Playback speed") {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], spacing: 8) {
+                            ForEach(speeds, id: \.self) { multiplier in
+                                Button { Task { await audio.changePace(multiplier * AVSpeechUtteranceDefaultSpeechRate) } } label: {
+                                    Text("\(multiplier.formatted(.number.precision(.fractionLength(0...2))))×").font(BrandFont.mono(14, relativeTo: .subheadline))
+                                        .frame(maxWidth: .infinity, minHeight: 44)
+                                        .foregroundStyle(audio.playbackSpeed == multiplier ? Palette.onAccent : Palette.accent)
+                                        .background(audio.playbackSpeed == multiplier ? Palette.accent : Palette.container, in: Capsule())
+                                }.buttonStyle(.plain).accessibilityLabel("\(multiplier.formatted(.number.precision(.fractionLength(0...2)))) times normal speed")
+                                    .accessibilityAddTraits(audio.playbackSpeed == multiplier ? .isSelected : [])
+                            }
+                        }.disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
+                    }
+                    ReaderSheetCard(title: "Appearance") {
+                        Picker("Theme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
+                    }
+                    ReaderSheetCard(title: "Documents") {
+                        Button("Restore a document archive", systemImage: "square.and.arrow.down") { restorePicker = true }
+                            .frame(minHeight: 44).disabled(transportUnavailable)
+                    }
+                    ReaderSheetCard(title: "Privacy & about") {
+                        Label("Narration stays on this device", systemImage: "lock.shield")
+                        Text("Saved voice notes use on-device transcription. If recognition is unavailable, your recording stays saved for later.").font(.footnote).foregroundStyle(Palette.muted)
+                        Text("Double-tap prepared text to record a thought. Listening resumes from its paused position.").font(.footnote).foregroundStyle(Palette.muted)
+                        Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(Palette.muted)
+                        Button("About, privacy & offline notices") { audio.stopPreview(); about = true }.frame(minHeight: 44)
+                    }
+                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
+            }
+        }.foregroundStyle(Palette.ink).background(Palette.paper)
+            .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
+            .sheet(isPresented: $gallery) {
+                if let models = store.models { ModelGallery(models: models) }
+            }
+            .sheet(isPresented: $about) { AboutSheet() }
             .fileImporter(isPresented: $restorePicker, allowedContentTypes: [.rhapsodos, .zip, .archive]) { result in
                 dismiss()
                 switch result {
@@ -440,18 +477,80 @@ private struct VoiceSettings: View {
     }
 }
 
+private struct AboutSheet: View {
+    private struct Notice: Identifiable, Sendable {
+        let id: String
+        let text: String
+    }
+    @Environment(\.dismiss) private var dismiss
+    @State private var notices: [Notice] = []
+    @State private var noticesLoaded = false
+    @State private var detent: PresentationDetent = .large
+    var body: some View {
+        VStack(spacing: 0) {
+            ReaderSheetHeader(title: "Privacy & about") { dismiss() }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Rhapsodos 0.01 · Build 1").font(.caption).foregroundStyle(Palette.muted)
+                    ReaderSheetCard(title: "Private by default") {
+                        Text("PDFs, source text, voice recordings, transcripts and listening positions remain in private app storage. No account, content upload, analytics or cloud speech fallback is used.")
+                    }
+                    ReaderSheetCard(title: "Public downloads") {
+                        Text("Network access downloads the offline models you choose from their pinned public sources. Download hosts can see a network request and your IP address. Your PDF text, note audio, transcripts and filenames are never part of that request.")
+                    }
+                    ReaderSheetCard(title: "Your controls") {
+                        Text("Deleting a document removes its local imported file, recordings and reading data. Generated narration is a disposable cache; removing a speech download leaves your thoughts intact.")
+                    }
+                    ReaderSheetCard(title: "Offline speech and font notices") {
+                        if notices.isEmpty { Text(noticesLoaded ? "No bundled notices are available." : "Loading notices…").foregroundStyle(Palette.muted) }
+                        ForEach(notices) { notice in
+                            DisclosureGroup(notice.id.replacingOccurrences(of: "_", with: " ")) {
+                                Text(notice.text).font(.footnote).textSelection(.enabled).padding(.top, 8)
+                            }
+                        }
+                    }
+                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
+            }
+        }.background(Palette.paper).foregroundStyle(Palette.ink)
+            .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
+            .task {
+                let loaded = await Task.detached(priority: .utility) {
+                    let urls = (Bundle.main.urls(forResourcesWithExtension: "txt", subdirectory: "Licenses") ?? [])
+                        + (Bundle.main.urls(forResourcesWithExtension: "txt", subdirectory: nil) ?? [])
+                    var seen = Set<String>()
+                    return urls.sorted { $0.lastPathComponent < $1.lastPathComponent }.compactMap { url -> Notice? in
+                        guard seen.insert(url.lastPathComponent).inserted,
+                              let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 1_000_000,
+                              let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+                        return Notice(id: url.deletingPathExtension().lastPathComponent, text: text)
+                    }
+                }.value
+                guard !Task.isCancelled else { return }
+                notices = loaded
+                noticesLoaded = true
+            }
+    }
+}
+
 private struct CaptureSheet: View {
     let draft: VoiceNote
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
     @State private var discard = false
+    @State private var detent: PresentationDetent = .large
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                Text("Keep the thought").font(BrandFont.display(25, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 0)
+                if store.captureDraft?.isDraft == true { Button("Discard") { discard = true }.frame(minWidth: 44, minHeight: 44).disabled(store.busy) }
+                else { Button("Done") { Task { await store.keepDraft() } }.frame(minWidth: 44, minHeight: 44).disabled(store.busy) }
+            }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8)
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Label("ATTACHED TO PAGE \(draft.pageIndex + 1)", systemImage: "pin.fill").font(.caption.weight(.semibold)).foregroundStyle(Palette.accent)
-                    Text(draft.quote).font(BrandFont.body(21, relativeTo: .title3)).lineSpacing(6).lineLimit(6)
-                        .padding(20).frame(maxWidth: .infinity, alignment: .leading).background(Palette.accent.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+                    ReaderSheetCard(title: "Attached to page \(draft.pageIndex + 1)") {
+                        Text(draft.quote).font(BrandFont.body(21, relativeTo: .title3)).lineSpacing(6).lineLimit(6)
+                    }
                     VStack(spacing: 12) {
                         HStack(spacing: 7) {
                             ForEach(0..<9) { index in
@@ -461,8 +560,8 @@ private struct CaptureSheet: View {
                         }.frame(height: 64).accessibilityHidden(true)
                         Text(audio.recording ? "Recording your thought" : "Your thought, safely attached").font(.headline)
                         if audio.recording { Text(Duration.seconds(audio.recordingSeconds).formatted(.time(pattern: .minuteSecond))).font(.title2.monospacedDigit()) }
-                    }.frame(maxWidth: .infinity)
-                    Text(store.captureMessage).font(.subheadline).foregroundStyle(.secondary)
+                        Text(store.captureMessage).font(.subheadline).foregroundStyle(Palette.muted)
+                    }.frame(maxWidth: .infinity).padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
                     if !audio.recording {
                         TextField("Or write your thought…", text: $store.typedThought, axis: .vertical).lineLimit(4...10)
                             .padding(16).background(Palette.soft, in: RoundedRectangle(cornerRadius: 16)).accessibilityLabel("Typed note")
@@ -471,19 +570,16 @@ private struct CaptureSheet: View {
                         HStack { if store.busy { ProgressView().tint(Palette.onAccent) }; Text("Save & resume").font(.headline).foregroundStyle(Palette.onAccent); Image(systemName: "arrow.right").foregroundStyle(Palette.onAccent) }
                             .frame(maxWidth: .infinity).padding(.vertical, 10)
                     }.buttonStyle(.borderedProminent).buttonBorderShape(.capsule).disabled(store.busy)
-                    Button("Save and stay paused") { Task { await store.saveNote(resume: false) } }.frame(maxWidth: .infinity).disabled(store.busy)
-                    Button(store.captureDraft?.isDraft == false ? "Close saved thought" : "Keep draft for later") { Task { await store.keepDraft() } }.font(.footnote).frame(maxWidth: .infinity).disabled(store.busy)
+                    Button("Save and stay paused") { Task { await store.saveNote(resume: false) } }.frame(maxWidth: .infinity, minHeight: 44).disabled(store.busy)
+                    Button(store.captureDraft?.isDraft == false ? "Close saved thought" : "Keep draft for later") { Task { await store.keepDraft() } }.font(.footnote).frame(maxWidth: .infinity, minHeight: 44).disabled(store.busy)
                     Text("This note stays at the frozen passage. Transcription can finish after you resume.").font(.caption).foregroundStyle(.secondary)
                 }.padding(24).frame(maxWidth: 640).frame(maxWidth: .infinity)
-            }.navigationTitle("Keep the thought").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) {
-                    if store.captureDraft?.isDraft == true { Button("Discard") { discard = true }.disabled(store.busy) }
-                    else { Button("Done") { Task { await store.keepDraft() } }.disabled(store.busy) }
-                } }
-                .confirmationDialog("Discard this unsaved thought?", isPresented: $discard, titleVisibility: .visible) {
-                    Button("Discard draft", role: .destructive) { Task { await store.discardDraft() } }
-                }
-        }
+            }
+        }.background(Palette.paper).foregroundStyle(Palette.ink)
+            .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
+            .confirmationDialog("Discard this unsaved thought?", isPresented: $discard, titleVisibility: .visible) {
+                Button("Discard draft", role: .destructive) { Task { await store.discardDraft() } }
+            }
     }
 }
 
@@ -498,12 +594,12 @@ private struct NotesPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Anchored notes").font(.headline).accessibilityAddTraits(.isHeader)
+                Text("Anchored notes").font(BrandFont.display(25, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
                 Spacer()
                 Menu {
                     Button("Import saved audio", systemImage: "waveform.badge.plus") { importedAnchor = store.currentPassage; audio.pause(); audioImporter = importedAnchor != nil }
-                } label: { Image(systemName: "plus") }.accessibilityLabel("Attach a saved recording").disabled(store.busy || store.currentPassage == nil)
-                Button("Done") { store.inspector = false }
+                } label: { Image(systemName: "plus").frame(minWidth: 44, minHeight: 44) }.accessibilityLabel("Attach a saved recording").disabled(store.busy || store.currentPassage == nil)
+                Button("Done") { store.inspector = false }.frame(minWidth: 44, minHeight: 44)
             }.padding(20)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
@@ -546,14 +642,14 @@ private struct NotesPanel: View {
                 }
                 .sheet(item: $editing) { note in
                     NavigationStack {
-                        TextEditor(text: $text).padding(20).navigationTitle("Edit thought")
+                        TextEditor(text: $text).scrollContentBackground(.hidden).padding(20).background(Palette.paper).navigationTitle("Edit thought")
                             .toolbar {
-                                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { editing = nil } }
-                                ToolbarItem(placement: .confirmationAction) { Button("Save") { Task { await store.edit(note, text: text); editing = nil } } }
+                                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { editing = nil }.frame(minWidth: 44, minHeight: 44) }
+                                ToolbarItem(placement: .confirmationAction) { Button("Save") { Task { await store.edit(note, text: text); editing = nil } }.frame(minWidth: 44, minHeight: 44) }
                             }
                     }
                 }
-        }
+        }.background(Palette.paper).foregroundStyle(Palette.ink)
     }
 
     private func status(_ note: VoiceNote) -> some View {

@@ -17,7 +17,7 @@ The central guarantees are:
 
 Product scope and journeys are in [docs/product.md](docs/product.md); appearance and adaptive behavior are in [docs/design.md](docs/design.md).
 
-Both apps use `com.osuji.ereaderapp`, version `0.01` and initial build/version code `1`. The UI quality requirement includes rich intentional haptics, Metal-backed effects on iOS, AGSL/native effects on Android, responsive input and measured frame/memory/energy budgets. Native feedback/effect ownership stays outside KMP; shared semantic intents can drive it. See [docs/ui-quality.md](docs/ui-quality.md).
+Both apps use `com.osuji.ereaderapp`, version `0.01` and initial build/version code `1`. The UI quality requirement includes rich intentional haptics, Metal-backed effects on iOS, AGSL/native effects on Android, responsive input and measured frame/memory/energy budgets. Native feedback/effect ownership stays outside KMP; shared semantic intents can drive it. Feedback and decorative motion are enabled app behavior rather than app preferences; native owners still honor OS accessibility settings, hardware capability and resource pressure. Library actions and sheet content follow the shared arrangement in [docs/design.md](docs/design.md). See [docs/ui-quality.md](docs/ui-quality.md).
 
 ## 2. KMP backbone with native interfaces
 
@@ -157,7 +157,7 @@ Translation is a separate later operation on the transcript; it retains original
 
 ## 7. Local model and resource strategy
 
-Ship a usable native/system speech path and qualify a compact enhanced local voice where feasible. Offer curated **Offline voices** and **Voice-note transcription** packs, with samples, language, storage, suitability and readiness. Model execution is task-specific; do not force TTS and ASR into a large general model.
+Ship a usable native/system speech path and qualify a compact enhanced local voice where feasible. Settings owns voice selection and access to curated **Offline voices** and **Voice-note transcription** packs, with samples, language, storage, suitability and readiness. Model execution is task-specific; do not force TTS and ASR into a large general model.
 
 The gallery borrows the discover/download/run pattern from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery). Its implementation and benchmarks are references, not our production architecture or a guarantee that arbitrary imported models run on both platforms.
 

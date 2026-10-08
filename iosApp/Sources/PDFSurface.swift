@@ -270,6 +270,13 @@ struct PDFHighlightAnchor: Equatable {
     let sourceEnd: Int
 }
 
+struct PDFPageDestination: Equatable {
+    let id = UUID()
+    let documentId: String
+    let sourceRevision: String
+    let pageIndex: Int
+}
+
 struct PDFSurface: UIViewRepresentable {
     let url: URL
     let pageIndex: Int
@@ -287,6 +294,7 @@ struct PDFSurface: UIViewRepresentable {
     let excerpt: String
     let recordingEnabled: Bool
     let follow: Bool
+    var browseDestination: PDFPageDestination? = nil
     let onBrowse: () -> Void
     let onRecord: (PDFHighlightAnchor) -> Bool
     let onLoadFailure: () -> Void
@@ -308,7 +316,7 @@ struct PDFSurface: UIViewRepresentable {
         context.coordinator.onLoadFailure = onLoadFailure
         context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts,
             preparedPassages: preparedPassages, documentId: documentId, sourceRevision: sourceRevision, geometrySpace: geometrySpace, sourceText: sourceText,
-            anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow)
+            anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow, browseDestination: browseDestination)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onRecord: onRecord, onLoadFailure: onLoadFailure) }
@@ -352,6 +360,8 @@ struct PDFSurface: UIViewRepresentable {
         private var preparedDocumentId = ""
         private var preparedSourceRevision = ""
         private var requestedFollow = true
+        private var requestedBrowseDestination: PDFPageDestination?
+        private var appliedBrowseDestination: UUID?
         private var applyingNavigation = false
         private weak var observedPage: PDFPage?
         private var generation = UUID()
@@ -427,10 +437,12 @@ struct PDFSurface: UIViewRepresentable {
 
         func request(url: URL, pageIndex: Int, baseRange: NSRange?, baseRegions: [SourceRegion], range: NSRange?, regions: [SourceRegion], pageContexts: [SourcePage],
                      preparedPassages: [Passage], documentId: String, sourceRevision: String,
-                     geometrySpace: String, sourceText: String, anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool) {
+                     geometrySpace: String, sourceText: String, anchor: PDFHighlightAnchor?, excerpt: String, recordingEnabled: Bool, follow: Bool, browseDestination: PDFPageDestination? = nil) {
             let baseChanged = requestedPage != pageIndex || requestedBaseRange != baseRange || requestedBaseRegions != baseRegions || requestedAnchor != anchor || requestedGeometrySpace != geometrySpace || requestedSourceText != sourceText
             let geometryChanged = baseChanged || requestedRange != range || requestedRegions != regions
             let followChanged = follow && !requestedFollow
+            let browseChanged = browseDestination?.id != requestedBrowseDestination?.id
+            requestedBrowseDestination = browseDestination
             if documentId != preparedDocumentId || sourceRevision != preparedSourceRevision || preparedPassages.count != preparedPassageCount {
                 if documentId != preparedDocumentId || sourceRevision != preparedSourceRevision { geometryVersion = UUID() }
                 passagesByPage = Dictionary(grouping: preparedPassages, by: \.pageIndex)
@@ -462,7 +474,7 @@ struct PDFSurface: UIViewRepresentable {
             accessibilityHighlight.accessibilityValue = excerpt
             if follow && !requestedFollow { page = -1 }
             requestedFollow = follow
-            guard self.url != url else { if geometryChanged || followChanged { applyRequestedPosition() } else { refreshAccessibility() }; return }
+            guard self.url != url else { if geometryChanged || followChanged || browseChanged { applyRequestedPosition() } else { refreshAccessibility() }; return }
             cancel()
             self.url = url
             page = -1
@@ -492,6 +504,7 @@ struct PDFSurface: UIViewRepresentable {
         func cancel() {
             generation = UUID(); loadTask?.cancel(); loadTask = nil
             observedPage = nil
+            appliedBrowseDestination = nil
             appliedAnchor = nil; appliedPage = nil; hitRects = []
             resetPassageTouch()
             accessibilityHighlight.isHidden = true
@@ -562,7 +575,24 @@ struct PDFSurface: UIViewRepresentable {
                 observedPage = view.currentPage
                 applyingNavigation = wasApplying
             }
+            applyBrowseDestination()
             refreshAccessibility()
+        }
+
+        private func applyBrowseDestination() {
+            guard !requestedFollow, let destination = requestedBrowseDestination,
+                  destination.id != appliedBrowseDestination, destination.documentId == preparedDocumentId,
+                  destination.sourceRevision == preparedSourceRevision, let view, let document = view.document,
+                  destination.pageIndex >= 0, destination.pageIndex < document.pageCount,
+                  let target = document.page(at: destination.pageIndex) else { return }
+            resetPassageTouch()
+            let wasApplying = applyingNavigation
+            applyingNavigation = true
+            view.go(to: target)
+            observedPage = view.currentPage
+            applyingNavigation = wasApplying
+            appliedBrowseDestination = destination.id
+            page = -1
         }
 
         private func sourceRange(_ context: SourcePage, on page: PDFPage) -> NSRange? {

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,34 +22,38 @@ import com.osuji.ereaderapp.data.ReaderStore
 import com.osuji.ereaderapp.data.SearchMatch
 import com.osuji.ereaderapp.models.ModelManager
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
+@Composable
+internal fun SheetHeader(title: String, doneEnabled: Boolean = true, done: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+        TextButton(onClick = done, enabled = doneEnabled, modifier = Modifier.heightIn(min = 48.dp)) { Text("Done") }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OfflineSpeechSheet(dismiss: () -> Unit) {
+fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
     val models = koinInject<ModelManager>()
     val playback = koinInject<PlaybackCoordinator>()
     val state by models.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val view = LocalView.current
-    val scope = rememberCoroutineScope()
-    ModalBottomSheet(onDismissRequest = dismiss) {
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            item {
-                Text("OFFLINE VOICES & TRANSCRIPTION", style = MaterialTheme.typography.labelSmall)
-                Spacer(Modifier.height(8.dp))
-                Text("Make it sound like you", style = MaterialTheme.typography.headlineMedium)
-                Spacer(Modifier.height(12.dp))
-                Text("Downloads contain public model files. Your documents, recordings and words stay on your device.")
-            }
+    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
+        SheetHeader("Offline voices & transcription", done = dismiss)
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            item { Text("Downloads contain public model files. Your documents, recordings and words stay on your device.") }
             item {
                 Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Installed Android voice", style = MaterialTheme.typography.titleMedium)
                         Text("Offline availability is checked when listening starts.", style = MaterialTheme.typography.bodySmall)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilledTonalButton(onClick = { scope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing) { Text(if (state.selectedVoice == "system") "Selected" else "Use system voice") }
+                            FilledTonalButton(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing) { Text(if (state.selectedVoice == "system") "Selected" else "Use system voice") }
                             TextButton(onClick = { playback.previewVoice("system") }, enabled = !playback.capturing) { Text("Listen to a sample") }
                             TextButton(onClick = { runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) } }) { Text("Android voice settings") }
                         }
@@ -73,7 +78,7 @@ fun OfflineSpeechSheet(dismiss: () -> Unit) {
                         }
                         if (!removing && status == "ready" && pack.capability == "tts") FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
-                                FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { scope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !checking && !playback.capturing)
+                                FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !checking && !playback.capturing)
                             }
                         }
                         if (status == "failed" && install!!.error.isNotBlank()) Text(install.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -83,7 +88,7 @@ fun OfflineSpeechSheet(dismiss: () -> Unit) {
                             when (if (removing) "removing" else status) {
                                 "removing" -> Text("Removing this download…", style = MaterialTheme.typography.labelLarge)
                                 "ready" -> {
-                                    if (pack.capability == "tts") Button(onClick = { scope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing && !checking) { Text(if (state.selectedVoice == pack.id) "Selected" else "Use this voice") }
+                                    if (pack.capability == "tts") Button(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !playback.capturing && !checking) { Text(if (state.selectedVoice == pack.id) "Selected" else "Use this voice") }
                                     else Text("Ready for saved voice notes", style = MaterialTheme.typography.labelLarge)
                                     if (pack.capability == "tts") TextButton(onClick = { playback.previewVoice(pack.id) }, enabled = !playback.capturing && !checking) { Text("Listen to a sample") }
                                 }
@@ -96,6 +101,7 @@ fun OfflineSpeechSheet(dismiss: () -> Unit) {
                     }
                 }
             }
+        }
         }
     }
 }
@@ -159,8 +165,7 @@ fun SearchSheet(documentId: String, select: suspend (SearchMatch) -> Boolean, di
     }
     ModalBottomSheet(onDismissRequest = { if (!selecting) dismiss() }, sheetState = sheet) {
         Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).fillMaxHeight(0.9f).padding(24.dp)) {
-            Text(if (documentId.isBlank()) "Search your library" else "Find a passage", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(16.dp))
+            SheetHeader(if (documentId.isBlank()) "Search your library" else "Find a passage", doneEnabled = !selecting, done = dismiss)
             OutlinedTextField(query, {
                 query = it
                 searchAttempt++
@@ -208,14 +213,17 @@ fun AboutSheet(dismiss: () -> Unit) {
     val context = LocalContext.current
     val licenses = remember { context.assets.list("licenses").orEmpty().sorted() }
     var license by remember { mutableStateOf<Pair<String, String>?>(null) }
-    ModalBottomSheet(onDismissRequest = dismiss) {
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { Text("Rhapsodos", style = MaterialTheme.typography.displaySmall); Text("Version 0.01 · build 1", style = MaterialTheme.typography.labelSmall) }
+    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
+        SheetHeader("Privacy & about", done = dismiss)
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            item { Text("Rhapsodos 0.01 · Build 1", style = MaterialTheme.typography.labelSmall) }
             item { Text("Your reading, on your device", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("PDFs, source text, voice recordings, transcripts and listening positions remain in private app storage. No account, content upload, analytics or cloud speech fallback is used.") }
             item { Text("Public downloads", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("Network access downloads the offline models you choose from their pinned public sources. Download hosts can see a network request and your IP address. Your PDF text, note audio, transcripts and filenames are never part of that request.") }
             item { Text("Your controls", style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(8.dp)); Text("Deleting a document removes its local imported file, recordings and reading data. Generated narration is a disposable cache; removing a speech download leaves your thoughts intact.") }
             item { Text("Offline speech and font notices", style = MaterialTheme.typography.titleLarge) }
             items(licenses) { name -> TextButton(onClick = { license = name.removeSuffix(".txt").replace('_', ' ') to context.assets.open("licenses/$name").bufferedReader().use { it.readText() } }) { Text(name.removeSuffix(".txt").replace('_', ' ')) } }
+        }
         }
     }
     license?.let { selected -> AlertDialog(onDismissRequest = { license = null }, title = { Text(selected.first) }, text = { androidx.compose.foundation.text.selection.SelectionContainer { Text(selected.second, modifier = Modifier.heightIn(max = 440.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), style = MaterialTheme.typography.bodySmall) } }, confirmButton = { TextButton(onClick = { license = null }) { Text("Close") } }) }

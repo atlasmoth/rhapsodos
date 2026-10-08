@@ -26,7 +26,7 @@ The library has no separate continue-listening hero. Each file shows its own sou
 
 The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Voice previews and replayed notes retain the saved book progress, and seeking to the end leaves playback paused.
 
-Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next/record controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption.
+Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next/record controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption. Exactly three icon-only library actions sit below branding in one row: Search → Import → Settings. Each retains an accessible name without a visible title. Voice selection, downloads and transcription configuration are reached through Settings.
 
 ### First listen
 
@@ -46,7 +46,7 @@ Resume, scrubbing and chapter selection refer to the source, even if generated a
 
 The original PDF is the main reader surface, with no separate "Listen and follow" or reflow pane. Highlight only at the precision the speech path can support. Double-tapping a prepared passage pauses narration and opens an audio note attached to that exact source passage. Single taps do not record. A note outside the current narration uses passage offset zero; it does not seek or replace the book's saved listening cursor. Blank-page taps, scrolling and pinch gestures do not trigger capture. Accessible source text and an equivalent record action accompany the PDF without adding another visible reading pane. Manual page browsing, pan and zoom pause narration and automatic following immediately. Play resumes the saved listening position and returns the PDF to narration. There is no separate follow-narration control. Explicit chapter, note and search destinations can move the source position while leaving playback paused.
 
-Both platforms open document search in a dedicated sheet with a fixed document scope. Library search uses the same sheet with a fixed whole-library scope. Query, preparation, empty results, failure and retry are explicit; selecting a result navigates to its prepared passage and leaves narration paused. Search remains literal and local.
+Both platforms open document search in a dedicated sheet with a fixed document scope. Library search uses the same sheet with a fixed whole-library scope. Query, preparation, empty results, failure and retry are explicit; selecting a result navigates to its prepared passage and leaves narration paused. Search remains literal and local. Native sheets share leading titles, trailing Done actions, content/action order and common spacing/cards/feedback. Stable query and progress regions remain visible as content changes, with native presentation on each platform. Closing a sheet does not imply saving a draft.
 
 Page browsing and zoom use gestures and accessible actions; do not add a visible PDF control bar. Keep passage counts and routine voice-status labels out of the playback dock. Show actual preparation and failure states when they require attention. Import prompts use a short, single-sentence subtitle.
 
@@ -108,7 +108,7 @@ On a smaller device, favor the compact voice, bounded caches and delayed ASR ove
 
 ## Accessibility and comfort
 
-Rich haptics, polished native motion and tasteful GPU effects should make listening controls enjoyable and immediate. These are required product qualities with resource-aware and accessible fallbacks; they must preserve legibility and reliable narration/capture. See [ui-quality.md](ui-quality.md) for the measurable standard.
+Rich haptics, polished native motion and tasteful GPU effects should make listening controls enjoyable and immediate. Feedback and decorative motion are enabled app behavior without separate app switches. OS accessibility settings, hardware capability and resource pressure still control appropriate fallbacks. These required product qualities must preserve legibility and reliable narration/capture. See [ui-quality.md](ui-quality.md) for the measurable standard.
 
 Accessible listening is a core quality bar. Support screen readers, large text, high contrast, reduced motion, keyboard/pointer operation and non-color recording cues. The original PDF may need an accessible semantic companion; merely wrapping a canvas in native UI is insufficient.
 

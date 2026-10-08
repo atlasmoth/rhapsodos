@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         syncSystemBars()
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener)
         if (Build.VERSION.SDK_INT >= 31) splashScreen.setOnExitAnimationListener { splash ->
-            val reduced = preferences.getBoolean("reducedMotion", false) || Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+            val reduced = Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
             if (!reduced) {
                 splash.iconView?.apply { scaleX = 0.88f; scaleY = 0.75f; animate().scaleX(1f).scaleY(1f).setDuration(260).start() }
             }

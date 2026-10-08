@@ -144,6 +144,10 @@ Maintain a small look-ahead buffer and bounded audio cache. Cache keys include s
 
 The phone has a focused listening view, a source view and accessible note capture. The iPad uses space for context while keeping listening controls central to the task.
 
+Library navigation below branding uses exactly three icon-only buttons in one row: Search → Import → Settings, with magnifying-glass, plus and horizontal-adjustment symbols. Both apps share the order, destinations and accessible names without visible text. Settings owns voice selection, speech downloads and transcription configuration.
+
+Native sheets match the Android content arrangement: leading title, trailing Done, shared content/action order, insets, section spacing, rounded tonal cards and preparation/error/retry feedback. Keep query and progress controls stable as states change. Retain native SwiftUI presentation, keyboard, accessibility and safe-area behavior; dismissal does not imply durable save. Feedback and decorative motion have no app-level switches; native execution respects OS Reduce Motion, system haptic settings, hardware and resource conditions. See [design.md](design.md) for the common sheet contract.
+
 Use `NavigationSplitView` for library/outline navigation and the reader detail. Use the iOS 17 `.inspector` API for passage notes and related detail. Notes are supplementary context, not a downstream navigation destination. The inspector adapts to a trailing panel or compact sheet; column collapse should preserve the active document and session. [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview), [SwiftUI inspectors](https://developer.apple.com/videos/play/wwdc2023/10161/)
 
 | Available space | Intended layout |
@@ -185,7 +189,7 @@ The implemented enhanced voice uses the pinned FP32 end-to-end Kokoro export on 
 
 ### Curated gallery
 
-Present voices and transcription packs in a curated gallery. Show an audible voice sample, language, quality description, download size, installed size, privacy behavior and a truthful suitability result for the current device. Offer “Recommended for this device”, with optional advanced choices.
+Settings provides voice selection and access to a curated gallery of voices and transcription packs. Show an audible voice sample, language, quality description, download size, installed size, privacy behavior and a truthful suitability result for the current device. Offer “Recommended for this device”, with optional advanced choices.
 
 Each signed catalog entry needs model/voice identity and version, exact runtime and minimum OS, tokenizer/frontend version, required shared base assets, language coverage, sample rate, license, download/installed/temporary storage estimates, tested peak memory, thermal behavior and sustained performance measurements. Define cancellation, integrity verification, atomic activation and rollback. Downloads can use native background URLSession transfers; download success is distinct from a usable compiled model. [Background downloads](https://developer.apple.com/documentation/foundation/downloading-files-from-websites), [CoreML download and compilation](https://developer.apple.com/documentation/coreml/downloading-and-compiling-a-model-on-the-user-s-device)
 

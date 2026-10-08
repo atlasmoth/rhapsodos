@@ -317,8 +317,9 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         }
     }
 
-    func audition() {
+    func audition(voiceIdentifier: String? = nil) {
         guard !recording, !capturePending else { return }
+        let identifier = voiceIdentifier ?? selectedVoice
         pause()
         let generation = UUID()
         previewGeneration = generation
@@ -328,9 +329,9 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio)
             try session.setActive(true)
-            if selectedVoice.hasPrefix("kokoro:") {
+            if identifier.hasPrefix("kokoro:") {
                 guard let renderVoice else { throw PackFailure.notReady }
-                let voice = String(selectedVoice.dropFirst(7)), speed = pace
+                let voice = String(identifier.dropFirst(7)), speed = pace
                 let sample = Passage(id: "voice-sample", documentId: "", pageIndex: 0, pageStart: 0, pageEnd: text.utf16.count, sourceStart: 0, sourceEnd: text.utf16.count, sourceText: text, spokenText: text, displayText: text, languageTag: "en", mappingVersion: "sample-v1", spokenMapping: [], provenance: "embedded")
                 previewTaskID = generation
                 previewTask = Task { [weak self] in
@@ -353,7 +354,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                 let synthesizer = previewSpeech ?? AVSpeechSynthesizer()
                 previewSpeech = synthesizer; synthesizer.delegate = self; synthesizer.usesApplicationAudioSession = true
                 let item = AVSpeechUtterance(string: text)
-                item.voice = AVSpeechSynthesisVoice(identifier: selectedVoice) ?? AVSpeechSynthesisVoice(language: "en-US")
+                item.voice = AVSpeechSynthesisVoice(identifier: identifier) ?? AVSpeechSynthesisVoice(language: "en-US")
                 item.rate = pace
                 previewUtterance = item
                 synthesizer.speak(item)

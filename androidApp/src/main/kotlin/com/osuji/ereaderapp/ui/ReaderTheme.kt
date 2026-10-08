@@ -57,7 +57,6 @@ fun ReaderTheme(appearance: String = "system", content: @Composable () -> Unit) 
 }
 
 fun haptic(view: View, confirm: Boolean = false) {
-    if (!view.context.getSharedPreferences("presentation", android.content.Context.MODE_PRIVATE).getBoolean("touchFeedback", true)) return
     val feedback = if (confirm && Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.CLOCK_TICK
     view.performHapticFeedback(feedback)
 }

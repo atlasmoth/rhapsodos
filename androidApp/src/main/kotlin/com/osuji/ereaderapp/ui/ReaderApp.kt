@@ -35,6 +35,9 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -82,6 +86,7 @@ import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.audio.PlaybackSnapshot
 import com.osuji.ereaderapp.audio.PreparedCaptureTarget
 import com.osuji.ereaderapp.audio.MediaOutputVolume
+import com.osuji.ereaderapp.models.ModelManager
 import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.data.LibraryDocument
 import com.osuji.ereaderapp.data.ReaderContents
@@ -114,6 +119,8 @@ fun ReaderApp() {
     val preparation = koinInject<DocumentPreparation>()
     val files = koinInject<OwnedFiles>()
     val archives = koinInject<DocumentArchives>()
+    val models = koinInject<ModelManager>()
+    val modelState by models.state.collectAsStateWithLifecycle()
     val library by store.snapshot.collectAsStateWithLifecycle()
     val audio by playback.state.collectAsStateWithLifecycle()
     val noteCapture by capture.state.collectAsStateWithLifecycle()
@@ -140,8 +147,6 @@ fun ReaderApp() {
     var actionSaving by remember { mutableStateOf(false) }
     val preferences = remember { context.getSharedPreferences("presentation", android.content.Context.MODE_PRIVATE) }
     var appearance by rememberSaveable { mutableStateOf(preferences.getString("appearance", "system") ?: "system") }
-    var reducedMotion by rememberSaveable { mutableStateOf(preferences.getBoolean("reducedMotion", false)) }
-    var touchFeedback by rememberSaveable { mutableStateOf(preferences.getBoolean("touchFeedback", true)) }
     var typedNote by rememberSaveable { mutableStateOf(false) }
     var typedText by rememberSaveable { mutableStateOf("") }
     var typedDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -247,7 +252,6 @@ fun ReaderApp() {
                             importing = importing,
                             import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
                             search = { showSearch = true; haptic(view) },
-                            voices = { showVoices = true; haptic(view) },
                             settings = { showSettings = true; haptic(view) },
                             open = ::openDocument,
                             action = { action, document -> libraryAction = action to document; renameText = document.title },
@@ -262,43 +266,66 @@ fun ReaderApp() {
 
         if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("A quick note") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Got it") } })
 
-        if (showVoices) OfflineSpeechSheet { showVoices = false }
-        if (showAbout) AboutSheet { showAbout = false }
+        if (showVoices) OfflineSpeechSheet(scope) { showVoices = false; showSettings = true }
+        if (showAbout) AboutSheet { showAbout = false; showSettings = true }
         if (showSearch) SearchSheet("", { hit ->
             val accepted = playback.openSearchPassage(hit.documentId, hit.passageId)
             if (accepted) openDocument(hit.documentId)
             accepted
         }, { showSearch = false })
 
-        if (showSettings) AlertDialog(
-            onDismissRequest = { showSettings = false },
-            title = { Text("Make yourself comfortable") },
-            text = {
-                Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Text("Pinch to zoom and drag to pan. Swipe vertically between fitted pages. Accessible page text follows your system size.")
-                    Text("Appearance", style = MaterialTheme.typography.labelLarge)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf("system", "light", "dark").forEach { mode -> FilterChip(appearance == mode, { appearance = mode; preferences.edit().putString("appearance", mode).apply(); haptic(view) }, { Text(mode.replaceFirstChar { it.uppercase() }) }) }
+        if (showSettings) ModalBottomSheet(onDismissRequest = { showSettings = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
+                SheetHeader("Settings") { showSettings = false }
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                    SettingsSection("Voices") {
+                        Text(if (modelState.selectedVoice == "system") "System voice" else modelState.voiceId.replaceFirstChar { it.uppercase() })
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FilterChip(modelState.selectedVoice == "system", onClick = {
+                                scope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
+                            }, label = { Text("System voice") }, enabled = !playback.capturing)
+                            modelState.catalog.filter { it.capability == "tts" && models.installed(it.id) != null }.forEach { pack ->
+                                listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
+                                    FilterChip(modelState.selectedVoice == pack.id && modelState.voiceId == voice, onClick = {
+                                        scope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
+                                    }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !playback.capturing)
+                                }
+                            }
+                        }
+                        TextButton(onClick = { if (audio.preview) playback.returnFromPreview() else playback.previewVoice(modelState.selectedVoice); haptic(view) }, enabled = !playback.capturing) {
+                            Text(if (audio.preview) "Stop sample" else "Listen to a sample")
+                        }
+                        OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }) { Text("Download voices and transcription") }
+                        modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Reduce decorative motion", Modifier.weight(1f))
-                        Switch(reducedMotion, { reducedMotion = it; preferences.edit().putBoolean("reducedMotion", it).apply(); haptic(view) })
+                    SettingsSection("Playback speed") {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
+                                FilterChip(audio.speed == speed, onClick = { playback.setSpeed(speed); haptic(view) }, label = { Text("${speed}×") }, enabled = !playback.capturing && !audio.preview && audio.noteId == null)
+                            }
+                        }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Touch feedback", Modifier.weight(1f))
-                        Switch(touchFeedback, { touchFeedback = it; preferences.edit().putBoolean("touchFeedback", it).apply(); haptic(view) })
+                    SettingsSection("Appearance") {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("system", "light", "dark").forEach { mode -> FilterChip(appearance == mode, { appearance = mode; preferences.edit().putString("appearance", mode).apply(); haptic(view) }, { Text(mode.replaceFirstChar { it.uppercase() }) }) }
+                        }
                     }
-                    OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }) { Text("Restore a document archive") }
-                    TextButton(onClick = { showSettings = false; showAbout = true }) { Text("About, privacy & offline notices") }
-                    Text("Rhapsodos 0.01 · local content processing", style = MaterialTheme.typography.bodySmall)
+                    SettingsSection("Documents") {
+                        OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }, enabled = !importing && !playback.capturing) { Text("Restore a document archive") }
+                    }
+                    SettingsSection("Privacy & about") {
+                        Text("Narration stays on this device")
+                        Text("Saved voice notes use on-device transcription when an offline pack is ready. Otherwise the recording remains saved for later.", style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = { showSettings = false; showAbout = true }) { Text("About, privacy & offline notices") }
+                        Text("Rhapsodos 0.01 · Build 1", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
-            },
-            confirmButton = { TextButton(onClick = { showSettings = false }) { Text("Done") } },
-        )
+            }
+        }
 
         if (noteCapture.draft != null) ModalBottomSheet(onDismissRequest = {}) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Label(if (recording.recording) "RECORDING YOUR THOUGHT" else "YOUR ANCHORED THOUGHT")
+                Text("Keep the thought", style = MaterialTheme.typography.headlineSmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.width(12.dp))
@@ -398,7 +425,6 @@ private fun LibraryPane(
     importing: Boolean,
     import: () -> Unit,
     search: () -> Unit,
-    voices: () -> Unit,
     settings: () -> Unit,
     open: (String) -> Unit,
     action: (String, LibraryDocument) -> Unit,
@@ -411,28 +437,10 @@ private fun LibraryPane(
                     Spacer(Modifier.width(10.dp))
                     Text("Rhapsodos", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).semantics { heading() })
                 }
-                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = search, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icon(Icons.Default.Search, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Search")
-                    }
-                    FilledTonalButton(onClick = voices, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icon(Icons.Default.Headphones, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Offline voices")
-                    }
-                    FilledTonalButton(onClick = settings, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icon(Icons.Default.Tune, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Settings")
-                    }
-                    Button(onClick = import, enabled = !importing, modifier = Modifier.heightIn(min = 48.dp)) {
-                        if (importing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        else Icon(Icons.Default.Add, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (importing) "Importing" else "Import")
-                    }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LibraryActionButton(Icons.Outlined.Search, "Search the library", search, enabled = !importing && !audio.capturing && !audio.preview && audio.noteId == null)
+                    LibraryActionButton(Icons.Outlined.Add, "Import PDF", import, enabled = !importing && !audio.capturing, busy = importing)
+                    LibraryActionButton(Icons.Outlined.Tune, "Settings", settings)
                 }
             }
         }
@@ -494,6 +502,28 @@ private fun EmptyReader(import: () -> Unit) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) { Icon(Icons.Default.Headphones, null, Modifier.padding(30.dp).size(52.dp), tint = MaterialTheme.colorScheme.primary) }
             Text("Open a document from your shelf.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = import) { Text("Import a PDF") }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LibraryActionButton(icon: ImageVector, description: String, action: () -> Unit, enabled: Boolean = true, busy: Boolean = false) {
+    Surface(onClick = action, modifier = Modifier.size(56.dp).semantics { contentDescription = description }, enabled = enabled,
+        shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.primary) {
+        Box(contentAlignment = Alignment.Center) {
+            if (busy) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+            else Icon(icon, null, Modifier.size(22.dp))
+        }
+    }
+}
+
+@Composable
+private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            content()
         }
     }
 }
@@ -600,18 +630,26 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         if (accepted) { following = false; page = playback.state.value.pageIndex }
         accepted
     }, { showSearch = false })
-    if (showContents) AlertDialog(onDismissRequest = { showContents = false }, title = { Text("Find your place") }, text = {
-        LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (contents.sections.isNotEmpty()) item { Text("CHAPTERS", style = MaterialTheme.typography.labelSmall) }
-            items(contents.sections, key = { it.id }) { section ->
-                TextButton(onClick = { returnToPassage(section.passageId); showContents = false }) { Text(section.title) }
-            }
-            item { Text("PAGES", style = MaterialTheme.typography.labelSmall) }
-            items(contents.document.pageCount) { index ->
-                TextButton(onClick = { browsePage(index); showContents = false }) { Text("Page ${index + 1}") }
+    if (showContents) ModalBottomSheet(onDismissRequest = { showContents = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
+            SheetHeader("Find your place") { showContents = false }
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (contents.sections.isNotEmpty()) item { Text("CHAPTERS", style = MaterialTheme.typography.labelSmall) }
+                items(contents.sections, key = { it.id }) { section ->
+                    Surface(onClick = { returnToPassage(section.passageId); showContents = false }, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(section.title, Modifier.weight(1f))
+                            Text("${section.pageIndex + 1}", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                item { Text("PAGES", style = MaterialTheme.typography.labelSmall) }
+                items(contents.document.pageCount) { index ->
+                    TextButton(onClick = { browsePage(index); showContents = false }, modifier = Modifier.fillMaxWidth()) { Text("Page ${index + 1}") }
+                }
             }
         }
-    }, confirmButton = { TextButton(onClick = { showContents = false }) { Text("Close") } })
+    }
 }
 
 internal class PdfPagePlacement(viewportWidth: Float, viewportHeight: Float, imageWidth: Float, imageHeight: Float, scale: Float, panX: Float, panY: Float) {
@@ -891,11 +929,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
     val audio by playback.state.collectAsStateWithLifecycle()
     val content: @Composable (Modifier) -> Unit = { modifier ->
         Column(modifier) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Anchored notes", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-                TextButton(onClick = { close(); haptic(view) }) { Text("Done") }
-            }
-            Spacer(Modifier.height(12.dp))
+            SheetHeader("Anchored notes") { close(); haptic(view) }
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (notes.isEmpty()) item {
                     Column(Modifier.padding(vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -937,7 +971,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
     } else if (visible) ModalBottomSheet(onDismissRequest = close) {
         content(Modifier.fillMaxWidth().heightIn(max = 620.dp).navigationBarsPadding().padding(horizontal = 22.dp))
     }
-    if (showDownloads) OfflineSpeechSheet { showDownloads = false }
+    if (showDownloads) OfflineSpeechSheet(scope) { showDownloads = false }
     deleting?.let { note -> AlertDialog(onDismissRequest = { if (!deletingBusy) deleting = null }, title = { Text("Delete this thought?") }, text = { Column { Text("The recording and its transcript will be removed from this device."); deletingError?.let { Text(it, color = MaterialTheme.colorScheme.error) } } }, confirmButton = {
         TextButton(enabled = !deletingBusy, onClick = {
             deletingBusy = true
@@ -990,7 +1024,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                     Text(audio.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available) { Text("${audio.speed}×") }
+                TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && !audio.preview && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
                 MediaVolumeControl()
                 if (!compact) TransportControls(audio, playback, available, record)
             }

@@ -6,12 +6,6 @@ import UIKit
 final class Feedback: ObservableObject {
     enum Event { case selection, playback, capture, saved, failure }
     @Published private(set) var restrained = false
-    @Published var enabled = UserDefaults.standard.object(forKey: "touchFeedback") as? Bool ?? true {
-        didSet {
-            UserDefaults.standard.set(enabled, forKey: "touchFeedback")
-            if !enabled { engine?.stop(completionHandler: nil) }
-        }
-    }
     private var engine: CHHapticEngine?
     private var observers: [NSObjectProtocol] = []
 
@@ -34,7 +28,6 @@ final class Feedback: ObservableObject {
     }
 
     func play(_ event: Event) {
-        guard enabled else { return }
         if event == .selection {
             UISelectionFeedbackGenerator().selectionChanged()
             return

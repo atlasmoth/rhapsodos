@@ -30,13 +30,23 @@ Motion explains transitions and preparation. It must respect reduced-motion pref
 
 Book thumbnails show the original first PDF page, including in the playback dock. Native adapters render small covers asynchronously with bounded caches. Covers retain their original colours in both themes; unavailable or damaged files receive a neutral document placeholder. Cover generation never changes the source PDF or reader geometry.
 
-Global search, offline voices, settings and import sit immediately beneath the Rhapsodos logo and name in the library pane. The file list follows these actions directly, without an introductory slogan section. The actions wrap when width or text size requires it. Compact readers return to the library for these actions without restarting narration; document-specific navigation, search and notes remain with the PDF.
+Exactly three icon-only library actions sit immediately beneath the Rhapsodos logo and name in one horizontal row on both apps: **Search → Import → Settings**. Use rounded tonal buttons with generous touch targets and accessible names; do not add visible titles or a separate Voices button. Voice selection, downloads and transcription configuration are reached through Settings. The file list follows these actions directly, without an introductory slogan section. Compact readers return to the library for these actions without restarting narration; document-specific navigation, search and notes remain with the PDF.
+
+| Action | Native icon meaning | Accessible label and destination |
+| --- | --- | --- |
+| Search | Magnifying glass | Search the library; dedicated whole-library search sheet |
+| Import | Plus | Import PDF; system document picker |
+| Settings | Horizontal adjustment sliders | Settings; voice selection, speech downloads, transcription and appearance |
 
 The library ends with its files rather than a privacy/archive footer. Privacy information and archive restore belong in Settings on both platforms.
 
 The PDF header shows the document title followed by **Contents → Search → Notes** on both apps, using equivalent native icons and accessible names. Notes toggles the anchored-notes panel on wide readers or a sheet on narrower readers; opening or closing it does not pause or seek narration. Do not add a separate notes row below the header. Search opens its own native sheet on both apps; it is not a tab inside another tool sheet. In-file scope stays fixed to that document; only the library entry searches all files. Both sheets use the same query prompt, loading/error/retry behavior and page-labelled passage/note results. Keep the query header stable as loading, errors and results change; scroll the bounded content area. Selecting a result moves the source position while remaining paused.
 
 The playback dock shares one arrangement on both platforms. The first row contains the original cover and document title, then the current speed button, output-volume button and **Previous → Play/Pause → Next → Record** controls. At compact widths, transport moves together into a centered second row; identity, speed and volume remain above it. The whole-file progress slider follows the controls, with a concise percentage immediately to its right. Unknown progress retains useful preparation feedback rather than inventing a percentage. Keep the speed action visible and operable without opening Settings, with its current value and a meaningful accessibility label. Keep the volume control native to the active output route. Error and preparation feedback remain visible; do not add routine voice-status or passage-count labels.
+
+Native sheets follow one content system based on the Android arrangement: a leading title and trailing Done action, then stable controls and bounded scrolling content. Secondary header actions precede Done; durable save or destructive actions remain clearly labelled and follow the same order on both platforms. Align content insets, section gaps, interface typography, rounded tonal cards and preparation/error/retry feedback through common app tokens. Keep query controls and download/preparation progress stable while results and states change. SwiftUI and Compose retain their native sheet mechanics, keyboard behavior, accessibility and safe areas. Closing a sheet must not silently commit or discard a recording or transcript edit.
+
+Touch feedback and decorative motion are enabled app behavior without app-level switches. OS Reduce Motion and system haptic settings, hardware capability, power and thermal constraints still govern native fallback behavior.
 
 | Surface | Content and primary action |
 | --- | --- |
