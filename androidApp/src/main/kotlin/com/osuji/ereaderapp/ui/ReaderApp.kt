@@ -132,7 +132,6 @@ fun ReaderApp() {
     var showVoices by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
-    var showSleep by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     var libraryAction by remember { mutableStateOf<Pair<String, LibraryDocument>?>(null) }
     var renameText by remember { mutableStateOf("") }
@@ -245,7 +244,7 @@ fun ReaderApp() {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing, { recordThought() }, { showSleep = true })
+                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing, { recordThought() })
             },
         ) { padding ->
             NavDisplay(
@@ -279,7 +278,6 @@ fun ReaderApp() {
 
         if (showVoices) OfflineSpeechSheet { showVoices = false }
         if (showAbout) AboutSheet { showAbout = false }
-        if (showSleep) SleepTimerDialog { showSleep = false }
         if (showSearch) SearchSheet("", { hit ->
             openDocument(hit.documentId)
             scope.launch {
@@ -964,7 +962,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit, sleep: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit) {
     val view = LocalView.current
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
@@ -981,7 +979,6 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available) { Text("${audio.speed}×") }
                 MediaVolumeControl()
-                IconButton(onClick = sleep, enabled = available) { Icon(Icons.Default.Bedtime, if (audio.sleepRemainingMillis > 0) "Sleep timer running" else "Set sleep timer") }
                 if (!compact) TransportControls(audio, playback, available, record)
             }
             if (compact) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -990,7 +987,6 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
             }
             }
             SourceProgressMeter(audio, playback, available)
-            if (audio.sleepRemainingMillis > 0) Text("Sleep in ${clock(audio.sleepRemainingMillis)}", style = MaterialTheme.typography.labelSmall)
             if (audio.preview) TextButton(onClick = { playback.returnFromPreview() }) { Text("End voice preview") }
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
         }

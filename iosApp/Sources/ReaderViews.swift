@@ -15,7 +15,6 @@ struct ReaderRoot: View {
     @State private var tools = false
     @State private var librarySearch = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var sleepTimer = false
     @State private var renameTarget: LibraryDocument?
     @State private var renamedTitle = ""
     @State private var deleteTarget: LibraryDocument?
@@ -99,7 +98,6 @@ struct ReaderRoot: View {
                                 Button(store.currentBookmarks.contains(where: { $0.passageId == passage.id }) ? "Remove bookmark" : "Bookmark this passage", systemImage: "bookmark") { Task { await store.toggleBookmark(passage) } }
                             }
                             if !store.follow { Button("Follow narration", systemImage: "scope") { store.follow = true } }
-                            Button("Sleep timer", systemImage: "moon.zzz") { sleepTimer = true }
                             Button("Export document and notes", systemImage: "square.and.arrow.up") { exportConfirm = true }
                         } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Listening tools")
                         Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
@@ -127,7 +125,6 @@ struct ReaderRoot: View {
         .sheet(isPresented: $settings) { VoiceSettings() }
         .sheet(isPresented: $gallery) { if let models = store.models { ModelGallery(models: models) } }
         .sheet(isPresented: $tools) { ReaderTools(initialTab: librarySearch ? .search : .contents, wholeLibrary: librarySearch) }
-        .sheet(isPresented: $sleepTimer) { SleepTimerView() }
         .alert("Rename your document", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
             TextField("Title", text: $renamedTitle)
             Button("Save") { if let target = renameTarget { Task { await store.rename(target.id, title: renamedTitle) } }; renameTarget = nil }
@@ -308,7 +305,6 @@ private struct PlaybackDock: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
-                if let end = audio.sleepUntil { Label(end.formatted(date: .omitted, time: .shortened), systemImage: "moon.zzz").font(.caption2) }
             }
         }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: true, vertical: false)
     }

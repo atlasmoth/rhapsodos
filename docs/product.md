@@ -36,7 +36,7 @@ The first-run model choice should be simple: recommend one compatible voice, pro
 
 ### Listening
 
-The player emphasizes the current passage and clear controls: play/pause, skip or seek, speed, chapter/passage navigation, voice, sleep timer and record thought. Common actions remain reachable on phones; wide layouts keep a persistent playback dock.
+The player emphasizes the current passage and clear controls: play/pause, skip or seek, speed, chapter/passage navigation, voice, output volume and record thought. Common actions remain reachable on phones; wide layouts keep a persistent playback dock.
 
 The dock provides output-volume controls through the native media-volume APIs. They follow the active output route and hardware volume buttons, without restarting narration or changing microphone gain. Opening the control never changes volume. Routes with fixed output volume explain where the listener can adjust it.
 

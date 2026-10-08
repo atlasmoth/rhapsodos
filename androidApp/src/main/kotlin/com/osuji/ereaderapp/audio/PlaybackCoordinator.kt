@@ -40,7 +40,6 @@ data class PlaybackSnapshot(
     val voice: String = "Installed offline voice",
     val error: String? = null,
     val noteId: String? = null,
-    val sleepRemainingMillis: Long = 0,
     val capturing: Boolean = false,
     val preview: Boolean = false,
     val passageFraction: Double = 0.0,
@@ -71,8 +70,6 @@ class PlaybackCoordinator(
     private val progressWrites = Mutex()
     private var playingNote: VoiceNote? = null
     private var captureAnchor: FrozenPlayback? = null
-    private var sleepJob: Job? = null
-    private var sleepDeadline = 0L
     private data class PreviewReturn(val document: ReaderContents, val snapshot: PlaybackSnapshot, val note: VoiceNote?)
     private var previewReturn: PreviewReturn? = null
     private var desiredPlaying = false
@@ -236,25 +233,8 @@ class PlaybackCoordinator(
         playingNote = null
         previewReturn = null
         pendingCursor = null
-        cancelSleepTimer()
         mutableState.value = PlaybackSnapshot(speed = state.value.speed)
     }
-
-    fun setSleepTimer(minutes: Int) {
-        cancelSleepTimer()
-        if (minutes <= 0) return
-        sleepDeadline = android.os.SystemClock.elapsedRealtime() + minutes * 60_000L
-        sleepJob = scope.launch {
-            while (true) {
-                val remaining = (sleepDeadline - android.os.SystemClock.elapsedRealtime()).coerceAtLeast(0)
-                mutableState.value = state.value.copy(sleepRemainingMillis = remaining)
-                if (remaining == 0L) { desiredPlaying = false; player?.pause(); persist(); break }
-                delay(1000)
-            }
-        }
-    }
-
-    fun cancelSleepTimer() { sleepJob?.cancel(); sleepJob = null; sleepDeadline = 0; mutableState.value = state.value.copy(sleepRemainingMillis = 0) }
 
     private fun item(document: ReaderContents, passage: ReaderPassage, file: File): MediaItem = MediaItem.Builder()
         .setMediaId(passage.id)

@@ -3,7 +3,6 @@ import SwiftUI
 struct ReaderTools: View {
     enum Tab: Hashable { case contents, saved, search, voice }
     @EnvironmentObject private var store: ReaderStore
-    @EnvironmentObject private var audio: AudioCoordinator
     @Environment(\.dismiss) private var dismiss
     @State private var tab: Tab
     @State private var query = ""
@@ -73,27 +72,5 @@ struct ReaderTools: View {
             .navigationTitle(librarySearch && tab == .search ? "Search your library" : "Find your place").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
-    }
-}
-
-struct SleepTimerView: View {
-    @EnvironmentObject private var audio: AudioCoordinator
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationStack {
-            List {
-                if let end = audio.sleepUntil {
-                    Section { Label("Pause at \(end.formatted(date: .omitted, time: .shortened))", systemImage: "moon.zzz.fill") }
-                    Button("Cancel sleep timer") { audio.setSleepTimer(minutes: nil); dismiss() }
-                }
-                Section("Keep listening for") {
-                    ForEach([5, 15, 30, 45, 60], id: \.self) { minutes in
-                        Button("\(minutes) minutes") { audio.setSleepTimer(minutes: minutes); dismiss() }
-                    }
-                }
-                Text("The timer pauses narration and keeps your place.").font(.footnote).foregroundStyle(.secondary)
-            }.navigationTitle("Sleep timer").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-        }.presentationDetents([.medium, .large])
     }
 }

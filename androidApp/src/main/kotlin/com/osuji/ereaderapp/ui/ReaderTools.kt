@@ -148,19 +148,6 @@ fun SearchSheet(documentId: String, select: (SearchMatch) -> Unit, dismiss: () -
 }
 
 @Composable
-fun SleepTimerDialog(dismiss: () -> Unit) {
-    val playback = koinInject<PlaybackCoordinator>()
-    val audio by playback.state.collectAsStateWithLifecycle()
-    AlertDialog(onDismissRequest = dismiss, title = { Text("Drift off at your pace") }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Narration pauses when the timer finishes. Your passage stays saved.")
-            listOf(5, 15, 30, 45, 60).forEach { minutes -> FilledTonalButton(onClick = { playback.setSleepTimer(minutes); dismiss() }, modifier = Modifier.fillMaxWidth()) { Text("$minutes minutes") } }
-            if (audio.sleepRemainingMillis > 0) Text("About ${audio.sleepRemainingMillis / 60_000 + 1} minutes left", style = MaterialTheme.typography.bodySmall)
-        }
-    }, confirmButton = { TextButton(onClick = { playback.cancelSleepTimer(); dismiss() }) { Text("Turn timer off") } }, dismissButton = { TextButton(onClick = dismiss) { Text("Close") } })
-}
-
-@Composable
 fun PronunciationDialog(document: ReaderContents, changed: (ReaderContents) -> Unit, dismiss: () -> Unit) {
     val store = koinInject<ReaderStore>()
     val playback = koinInject<PlaybackCoordinator>()

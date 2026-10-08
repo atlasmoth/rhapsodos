@@ -11,7 +11,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     @Published private(set) var recordingSeconds = 0.0
     @Published private(set) var replayingNote: String?
     @Published private(set) var replayPaused = false
-    @Published private(set) var sleepUntil: Date?
     @Published private(set) var spokenRange: NSRange?
     @Published private(set) var generating = false
     @Published private(set) var elapsed = 0.0
@@ -37,7 +36,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
     private(set) var capturePending = false
     private var captureID: UUID?
-    private var sleepTimer: Timer?
     private var narrationPlayer: AVAudioPlayer?
     private var narrationTask: Task<Void, Never>?
     private var narrationGeneration: UUID?
@@ -145,7 +143,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             positionAvailable = true
         }
         guard let current else { return }
-        if let sleepUntil, Date() >= sleepUntil { setSleepTimer(minutes: nil); pause(); return }
         stopReplay()
         stopPreview()
         do {
@@ -218,16 +215,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         } else if speech.isSpeaking && !speech.isPaused { _ = speech.pauseSpeaking(at: .immediate) }
         playing = false
         updateNowPlaying()
-    }
-
-    func setSleepTimer(minutes: Int?) {
-        sleepTimer?.invalidate(); sleepTimer = nil
-        sleepUntil = minutes.map { Date().addingTimeInterval(Double($0) * 60) }
-        guard let end = sleepUntil else { return }
-        sleepTimer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
-            Task { @MainActor in self?.pause(); self?.setSleepTimer(minutes: nil) }
-        }
-        RunLoop.main.add(sleepTimer!, forMode: .common)
     }
 
     func toggle() { if playing { pause() } else { play() } }
@@ -536,7 +523,6 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                 guard let self, let player = self.narrationPlayer, self.playing else { return }
                 self.elapsed = player.currentTime; ticks += 1
                 if ticks % 4 == 0 { self.reportPosition(); self.updateNowPlaying() }
-                if let until = self.sleepUntil, Date() >= until { self.pause(); self.setSleepTimer(minutes: nil) }
             }
         }
     }
