@@ -157,6 +157,8 @@ Use `NavigationSplitView` for library/outline navigation and the reader detail. 
 | Wide window | Outline/library, source and notes inspector visible together where useful |
 | Very wide window | Bound reader line length and panel widths; use spare space for useful context rather than stretching text |
 
+Library visibility uses the existing NavigationSplitView column binding and preferred compact column. Hide library in the sidebar and Show library in the hidden detail provide one explicit control per presentation. A dedicated 24 pt left-edge UIKit gesture surface reveals the library when hidden and intercepts its own touches before PDF gestures. Visibility changes preserve document selection and the native session, without browsing, seeking or capturing. Motion respects the system Reduce Motion setting.
+
 Use actual available window size and accessibility text size, not device identity or orientation. Collapse the notes inspector before sacrificing a usable reading column. Give panels sensible preferred widths, allow native visibility controls, and restore selection. SwiftUI may adjust preferred column widths to satisfy other constraints. Validate iPad resizable windows and multitasking. [Apple split-view guidance](https://developer.apple.com/design/human-interface-guidelines/split-views)
 
 The playback dock is attached to a session-level container. Resizing, rotation or opening a note must not recreate playback, reload the model, move the frozen anchor or discard the draft. A large book cover must not displace the current passage and recording action in wide listening mode.

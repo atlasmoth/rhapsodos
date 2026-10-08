@@ -23,6 +23,8 @@ The first audience is everyday readers and people using listening for accessibil
 | Save a document archive | Export the selected PDF, saved voice notes, transcripts and listening position from Settings → Documents; restore it on either platform |
 | Use a wide window | Keep outline, source and anchored notes in useful panes without restarting audio or losing a draft |
 
+The left library pane can be hidden with its sidebar button. Show library or a swipe from the left edge reveals it again. Sidebar presentation preserves the selected document, PDF position, notes and listening session; it does not act as PDF browsing or note capture.
+
 The library has no separate continue-listening hero. Each file shows its own source-based listening progress. Opening it restores its saved passage and position without resetting an already active session. Progress remains unknown while document preparation is incomplete; it does not imply a known full-book audio duration.
 
 The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Voice previews and replayed notes retain the saved book progress, and seeking to the end leaves playback paused.

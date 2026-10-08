@@ -13,6 +13,7 @@ struct ReaderRoot: View {
     @State private var tools = false
     @State private var searchScope: ReaderSearchScope?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var renameTarget: LibraryDocument?
     @State private var renamedTitle = ""
     @State private var deleteTarget: LibraryDocument?
@@ -58,6 +59,15 @@ struct ReaderRoot: View {
             }
             .navigationTitle("Library")
             .navigationSplitViewColumnWidth(min: 240, ideal: 290, max: 350)
+            .toolbar(removing: .sidebarToggle)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { setLibraryVisible(false) } label: { Image(systemName: "sidebar.left") }
+                        .accessibilityLabel("Hide library")
+                        .accessibilityHint("Focuses the document while keeping your listening position")
+                        .disabled(store.document == nil)
+                }
+            }
         } detail: {
             Group {
                 if store.loading { ProgressView(store.preparation) }
@@ -68,9 +78,11 @@ struct ReaderRoot: View {
                 } else { EmptyLibrary(importer: $importer).navigationTitle("Rhapsodos").navigationBarTitleDisplayMode(.inline) }
             }
             .toolbar {
-                if horizontalSizeClass == .compact {
+                if !libraryVisible {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button { compactColumn = .sidebar; columns = .all } label: { Image(systemName: "books.vertical") }.accessibilityLabel("Open library")
+                        Button { setLibraryVisible(true) } label: { Image(systemName: "sidebar.left") }
+                            .accessibilityLabel("Show library")
+                            .accessibilityHint("Reveals the library without changing narration")
                     }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -82,11 +94,17 @@ struct ReaderRoot: View {
                     }
                 }
             }
+            .navigationBarBackButtonHidden()
             .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
         }
         .navigationSplitViewStyle(.balanced)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let document = playbackDocument { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
+        }
+        .overlay(alignment: .leading) {
+            if !libraryVisible && !settings && !tools && searchScope == nil && store.captureDraft == nil && store.preparedArchive == nil {
+                LibraryEdgeReveal { setLibraryVisible(true) }.frame(width: 24).accessibilityHidden(true)
+            }
         }
         .onChange(of: store.selectedId) { _, id in if id != nil { compactColumn = .detail } }
         .fileImporter(isPresented: $importer, allowedContentTypes: [.pdf]) { result in
@@ -118,6 +136,18 @@ struct ReaderRoot: View {
         }
     }
 
+    private var libraryVisible: Bool {
+        horizontalSizeClass == .compact ? compactColumn == .sidebar : columns != .detailOnly
+    }
+
+    private func setLibraryVisible(_ visible: Bool) {
+        feedback.play(.selection)
+        withAnimation(reduceMotion ? nil : .snappy(duration: 0.24)) {
+            columns = visible ? .all : .detailOnly
+            compactColumn = visible && horizontalSizeClass == .compact ? .sidebar : .detail
+        }
+    }
+
     private var playbackDocument: LibraryDocument? {
         if let id = audio.current?.documentId {
             return store.library.first { $0.id == id } ?? (store.document?.document.id == id ? store.document?.document : nil)
@@ -133,6 +163,29 @@ struct ReaderRoot: View {
                 .accessibilityLabel("Import PDF").disabled(store.busy || store.captureDraft != nil)
             LibraryActionButton(symbol: "slider.horizontal.3") { settings = true }
                 .accessibilityLabel("Settings")
+        }
+    }
+}
+
+private struct LibraryEdgeReveal: UIViewRepresentable {
+    let reveal: () -> Void
+    func makeCoordinator() -> Coordinator { Coordinator(reveal: reveal) }
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        let gesture = UIScreenEdgePanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.swiped(_:)))
+        gesture.edges = .left
+        gesture.maximumNumberOfTouches = 1
+        view.addGestureRecognizer(gesture)
+        return view
+    }
+    func updateUIView(_ view: UIView, context: Context) { context.coordinator.reveal = reveal }
+    final class Coordinator: NSObject {
+        var reveal: () -> Void
+        init(reveal: @escaping () -> Void) { self.reveal = reveal }
+        @objc func swiped(_ gesture: UIScreenEdgePanGestureRecognizer) {
+            let translation = gesture.translation(in: gesture.view)
+            if gesture.state == .ended, translation.x >= 48, translation.x > abs(translation.y) { reveal() }
         }
     }
 }

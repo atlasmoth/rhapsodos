@@ -71,7 +71,7 @@ Adapt to available **window space**, font scale and posture, not a tablet label 
 | Wide | Outline/library, PDF, anchored notes, persistent playback dock | Hide supplementary context first when text size or width demands it |
 | Very wide | Adjustable bounded panes, optional richer source context | Bound text measure and avoid stretching controls or adding empty columns |
 
-Wide listening shows the PDF in the center and can expose notes for the current document on the right. A library or outline belongs on the left. Do not force four simultaneous panes merely because a large display permits it. Offer a focused listening mode and explicit panel visibility.
+Wide listening shows the PDF in the center and can expose notes for the current document on the right. A library or outline belongs on the left. Do not force four simultaneous panes merely because a large display permits it. The library header provides a separate Hide library button. When hidden, the reader provides Show library and a narrow left-edge swipe reveals it. These controls do not change the three library actions or seek, pause, resume or reconstruct narration. They preserve the selected PDF, browsing position and notes state. Compact readers reveal the library without discarding the selected document.
 
 The source and notes scroll independently. Manual source browsing pauses narration and auto-follow. Play resumes the frozen listening position and returns to its page. There is no follow toggle or separate return action. Seeking moves narration only through an explicit source destination or listening command. Opening a note should expose its source context without inadvertently starting playback.
 

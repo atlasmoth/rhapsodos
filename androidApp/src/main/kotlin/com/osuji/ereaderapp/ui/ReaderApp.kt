@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
@@ -30,7 +31,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.Comment
@@ -38,8 +38,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.ViewSidebar
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.*
@@ -59,6 +63,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import com.osuji.ereaderapp.R
@@ -73,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -137,7 +143,21 @@ fun ReaderApp() {
         }
     }
     val backStack = rememberNavBackStack(LibraryKey)
-    val sceneStrategy = rememberListDetailSceneStrategy<NavKey>()
+    val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = remember(windowAdaptiveInfo) { calculatePaneScaffoldDirective(windowAdaptiveInfo) }
+    val layoutDirection = LocalLayoutDirection.current
+    val wideLibrary = directive.maxHorizontalPartitions > 1
+    val paneExpansion = rememberPaneExpansionState()
+    val sceneStrategy = rememberListDetailSceneStrategy<NavKey>(shouldHandleSinglePaneLayout = true, directive = directive, paneExpansionState = paneExpansion)
+    var libraryHidden by rememberSaveable { mutableStateOf(false) }
+    val libraryDrawer = rememberDrawerState(DrawerValue.Closed)
+    val selectedDocumentId = (backStack.lastOrNull() as? DocumentKey)?.id
+    LaunchedEffect(wideLibrary, libraryHidden, layoutDirection) {
+        if (libraryHidden && wideLibrary) paneExpansion.setFirstPaneProportion(if (layoutDirection == LayoutDirection.Ltr) 0f else 1f) else paneExpansion.clear()
+    }
+    LaunchedEffect(wideLibrary, selectedDocumentId) {
+        if (wideLibrary || selectedDocumentId == null) libraryDrawer.close()
+    }
     var importing by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var showVoices by rememberSaveable { mutableStateOf(false) }
@@ -180,6 +200,19 @@ fun ReaderApp() {
     fun openDocument(id: String) {
         while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
         backStack.add(DocumentKey(id))
+        if (!wideLibrary) scope.launch { libraryDrawer.close() }
+        haptic(view)
+    }
+
+    fun showLibrary() {
+        if (wideLibrary) libraryHidden = false
+        else if (selectedDocumentId != null) scope.launch { libraryDrawer.open() }
+        haptic(view)
+    }
+
+    fun hideLibrary() {
+        if (wideLibrary) libraryHidden = true
+        else scope.launch { libraryDrawer.close() }
         haptic(view)
     }
 
@@ -278,13 +311,11 @@ fun ReaderApp() {
                 if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing && !exporting && exportDocumentId == null, { recordThought() })
             },
         ) { padding ->
-            NavDisplay(
-                backStack = backStack,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
-                sceneStrategies = listOf(sceneStrategy),
-                entryProvider = entryProvider {
-                    entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyReader { importPicker.launch(arrayOf("application/pdf")) } })) {
+            ModalNavigationDrawer(
+                drawerState = libraryDrawer,
+                gesturesEnabled = false,
+                drawerContent = {
+                    if (!wideLibrary && selectedDocumentId != null) ModalDrawerSheet {
                         LibraryPane(
                             documents = library.documents,
                             pdf = pdf,
@@ -295,13 +326,47 @@ fun ReaderApp() {
                             settings = { showSettings = true; haptic(view) },
                             open = ::openDocument,
                             action = { action, document -> libraryAction = action to document; renameText = document.title },
+                            hide = ::hideLibrary,
                         )
                     }
-                    entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
-                        DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio, { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }, { recordThought(it) })
-                    }
                 },
-            )
+                modifier = Modifier.fillMaxSize().padding(padding),
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    NavDisplay(
+                        backStack = backStack,
+                        modifier = Modifier.fillMaxSize(),
+                        onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
+                        sceneStrategies = listOf(sceneStrategy),
+                        entryProvider = entryProvider {
+                            entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyReader(showLibrary = if (libraryHidden) ::showLibrary else null) { importPicker.launch(arrayOf("application/pdf")) } })) {
+                                LibraryPane(
+                                    documents = library.documents,
+                                    pdf = pdf,
+                                    audio = audio,
+                                    importing = importing || exporting || exportDocumentId != null,
+                                    import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
+                                    search = { showSearch = true; haptic(view) },
+                                    settings = { showSettings = true; haptic(view) },
+                                    open = ::openDocument,
+                                    action = { action, document -> libraryAction = action to document; renameText = document.title },
+                                    hide = if (wideLibrary) ::hideLibrary else null,
+                                )
+                            }
+                            entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
+                                DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio,
+                                    sidebarVisible = wideLibrary && !libraryHidden,
+                                    toggleSidebar = { if (wideLibrary && !libraryHidden) hideLibrary() else showLibrary() },
+                                    record = { recordThought(it) })
+                            }
+                        },
+                    )
+                    BackHandler(enabled = (wideLibrary && libraryHidden || !wideLibrary && selectedDocumentId != null) && libraryDrawer.isClosed) { showLibrary() }
+                    if ((wideLibrary && libraryHidden || !wideLibrary && selectedDocumentId != null) && libraryDrawer.isClosed) {
+                        LibraryRevealEdge(enabled = !recordRequestPending && !typedNote && !playback.capturing && !importing && !exporting && exportDocumentId == null, reveal = ::showLibrary)
+                    }
+                }
+            }
         }
 
         if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("A quick note") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Got it") } })
@@ -490,6 +555,7 @@ private fun LibraryPane(
     settings: () -> Unit,
     open: (String) -> Unit,
     action: (String, LibraryDocument) -> Unit,
+    hide: (() -> Unit)? = null,
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
@@ -498,6 +564,7 @@ private fun LibraryPane(
                     Image(painterResource(R.drawable.ic_rhapsodos), null, modifier = Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)))
                     Spacer(Modifier.width(10.dp))
                     Text("Rhapsodos", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).semantics { heading() })
+                    if (hide != null) IconButton(onClick = hide) { Icon(Icons.Outlined.ViewSidebar, "Hide library") }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     LibraryActionButton(Icons.Outlined.Search, "Search the library", search, enabled = !importing && !audio.capturing && !audio.preview && audio.noteId == null)
@@ -558,8 +625,9 @@ private fun LibraryPane(
 }
 
 @Composable
-private fun EmptyReader(import: () -> Unit) {
+private fun EmptyReader(showLibrary: (() -> Unit)? = null, import: () -> Unit) {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        if (showLibrary != null) IconButton(onClick = showLibrary, modifier = Modifier.align(Alignment.TopStart)) { Icon(Icons.Outlined.ViewSidebar, "Show library") }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp), modifier = Modifier.widthIn(max = 420.dp)) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) { Icon(Icons.Default.Headphones, null, Modifier.padding(30.dp).size(52.dp), tint = MaterialTheme.colorScheme.primary) }
             Text("Open a document from your shelf.", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -592,7 +660,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, back: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, sidebarVisible: Boolean, toggleSidebar: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -632,7 +700,10 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         }
     }
     if (contents == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { if (error == null) CircularProgressIndicator() else Text(error!!) }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            IconButton(onClick = toggleSidebar, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) { Icon(Icons.Outlined.ViewSidebar, if (sidebarVisible) "Hide library" else "Show library") }
+            if (error == null) CircularProgressIndicator() else Text(error!!)
+        }
         return
     }
     val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && !audio.preview && audio.noteId == null }
@@ -658,7 +729,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 22.dp)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { haptic(view); back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to library") }
+                    IconButton(onClick = toggleSidebar) { Icon(Icons.Outlined.ViewSidebar, if (sidebarVisible) "Hide library" else "Show library") }
                     Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
