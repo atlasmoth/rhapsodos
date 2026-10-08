@@ -203,7 +203,6 @@ private struct EmptyLibrary: View {
                 .padding(30).background(Palette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 34))
             VStack(spacing: 12) {
                 Text("Give your reading\na voice.").font(BrandFont.display(34, relativeTo: .largeTitle)).multilineTextAlignment(.center)
-                Text("Bring a PDF.").foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
             Button { importer = true } label: { Label("Import your first PDF", systemImage: "plus").foregroundStyle(Palette.onAccent).padding(.horizontal, 12).padding(.vertical, 6) }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)

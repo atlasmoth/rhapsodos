@@ -463,8 +463,6 @@ private fun LibraryPane(
             Label("YOUR LISTENING LIBRARY")
             Spacer(Modifier.height(8.dp))
             Text("A little more room\nfor a good book.", style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() })
-            Spacer(Modifier.height(10.dp))
-            Text("Bring your PDFs.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
