@@ -51,7 +51,7 @@ Documentation-only work requires file/link/consistency review; it does not requi
 
 Delete their unused code, settings, assets, dependencies and documentation. Do not retain deprecated wrappers, compatibility aliases, migration ladders, legacy feature flags or parallel old implementations without a current product requirement. Development schemas and disposable fixtures can be reset rather than supported indefinitely.
 
-This policy does not authorize deleting unrelated user work, real recordings or user edits. Preserve durability within the current product, explicit export/restore promises, source-anchor reconciliation and atomic model replacement. Supporting iOS 17 is an agreed platform requirement, not obsolete feature compatibility. Revisit the policy when real releases create a user-data migration obligation.
+This policy does not authorize deleting unrelated user work, real recordings or user edits. Preserve durability within the current product, existing-archive restoration, source-anchor reconciliation and atomic model replacement. Supporting iOS 17 is an agreed platform requirement, not obsolete feature compatibility. Revisit the policy when real releases create a user-data migration obligation.
 
 ## Atomic commits
 

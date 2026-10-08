@@ -172,7 +172,7 @@ Use one canonical SQLite schema and repository layer through KMP with an Android
 
 Transactions, file manifests and journals coordinate durable recordings and derived audio. On launch recover/checkpoint jobs, verify committed assets and safely reconcile orphan files. Lexical search is first; validate FTS support in the selected driver/build before making it a dependency.
 
-Use native key storage and an explicit protected/encrypted data design. Include recording drafts, metadata, transcripts, database journals and indexes, rather than encrypting only final audio. Qualify lock-screen key availability, restore/export and backup exclusions. Keep reproducible models/caches distinct from user-owned originals and recordings.
+Use native key storage and an explicit protected/encrypted data design. Include recording drafts, metadata, transcripts, database journals and indexes, rather than encrypting only final audio. Qualify lock-screen key availability, existing-archive restoration and backup exclusions. Keep reproducible models/caches distinct from user-owned originals and recordings.
 
 The shared privacy policy is enforced by every adapter, including retries, diagnostics and sync. Local-only content must not leave the device. Public model download networking is a separate operation; do not upload filenames/text as telemetry. Optional cloud narration, note ASR, document processing and sync have independent choices.
 
