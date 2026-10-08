@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "recorded_on": "2026-10-08",
-  "source_revision": "b2b8d3da496a4e2502183e7d194379cf4eabdb37",
+  "source_revision": "4100757fb10845ad77b50cbcc13fe62d5734d2f6",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -82,24 +82,24 @@
     "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
   },
   "ios": {
-    "source_revision": "b2b8d3da496a4e2502183e7d194379cf4eabdb37",
+    "source_revision": "4100757fb10845ad77b50cbcc13fe62d5734d2f6",
     "min_ios": "17.0",
     "artifacts": [
       {
         "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
-        "bundle_bytes": 38466405,
+        "bundle_bytes": 38431333,
         "bundle_files": 63,
-        "bundle_tree_sha256": "3bd5f05bf00d16d8f2dabb7a2ec57f0ff9e7f469ec2a87376f2d8929deadf14e",
+        "bundle_tree_sha256": "0330c26656cd034a5316bb99cd03c8ac96988ce62a71ce3921746033d311cdcb",
         "binaries": [
           {
             "path": "EReader",
             "bytes": 40496,
-            "sha256": "2ba885e1b608613f258d4ca6e795eeb5461e65e101d91e334ba1240320d7de2e"
+            "sha256": "86f54bc63abdd97b2ca0e36709b2e676c86e839ebac1a76eeaee6d97e5b23552"
           },
           {
             "path": "EReader.debug.dylib",
-            "bytes": 26899136,
-            "sha256": "f24bcfe3427042e55d375957b8ef55b9ea85843febfa30a216057ab7637edf7f"
+            "bytes": 26864064,
+            "sha256": "bc9b12a6bd9305220badb9d985341bceecec81913859f42f861bdb6100ff4202"
           }
         ],
         "metadata": {
@@ -113,14 +113,14 @@
       },
       {
         "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
-        "bundle_bytes": 28517088,
+        "bundle_bytes": 28500176,
         "bundle_files": 44,
-        "bundle_tree_sha256": "35b578f3eb71f847600bc9271f72c7a4b8a7949a0866ed01b5d1e746906a3266",
+        "bundle_tree_sha256": "20068028f63ce5b857b0b31b30699ef94295935735efe45de44325664d386059",
         "binaries": [
           {
             "path": "EReader",
-            "bytes": 17014144,
-            "sha256": "6112a44228b5b6f8951ff04fcaef6aa5cbc097e590302f270b1a39069c7d8231"
+            "bytes": 16997232,
+            "sha256": "588b7050178a0ac85f3072d43f5834c68c101c040bdfc9bceed1b683035fc0f3"
           }
         ],
         "metadata": {
@@ -1042,14 +1042,76 @@
         "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
       },
       "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "source_revision": "b2b8d3da496a4e2502183e7d194379cf4eabdb37",
+      "platform": "iOS",
+      "ios": {
+        "source_revision": "b2b8d3da496a4e2502183e7d194379cf4eabdb37",
+        "min_ios": "17.0",
+        "artifacts": [
+          {
+            "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
+            "bundle_bytes": 38466405,
+            "bundle_files": 63,
+            "bundle_tree_sha256": "3bd5f05bf00d16d8f2dabb7a2ec57f0ff9e7f469ec2a87376f2d8929deadf14e",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 40496,
+                "sha256": "2ba885e1b608613f258d4ca6e795eeb5461e65e101d91e334ba1240320d7de2e"
+              },
+              {
+                "path": "EReader.debug.dylib",
+                "bytes": 26899136,
+                "sha256": "f24bcfe3427042e55d375957b8ef55b9ea85843febfa30a216057ab7637edf7f"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "ad-hoc simulator"
+          },
+          {
+            "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
+            "bundle_bytes": 28517088,
+            "bundle_files": 44,
+            "bundle_tree_sha256": "35b578f3eb71f847600bc9271f72c7a4b8a7949a0866ed01b5d1e746906a3266",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 17014144,
+                "sha256": "6112a44228b5b6f8951ff04fcaef6aa5cbc097e590302f270b1a39069c7d8231"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "unsigned; owner provisioning required"
+          }
+        ],
+        "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+        "metadata_inspection": "passed",
+        "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
+      },
+      "attribution": "Prior iOS artifacts retained with their original build and consumer-check associations. Android outputs remain unchanged for this iOS-only removal."
     }
   ],
   "artifact_inspection": {
-    "method": "Produced files and app manifests inspected; no build/install/runtime execution.",
-    "source_revision_attribution": "Matching source revision supplied by integration owner; byte hashes do not independently prove compiler/source provenance.",
+    "method": "New iOS Debug/Release bundle files, metadata and signing inspected with the existing artifact inspector. Android outputs retain their preceding source/build association.",
+    "source_revision_attribution": "Integration-owner build association; byte hashes do not independently establish compiler/source provenance.",
     "repo_unit_source_policy": "passed",
     "pinned_assets": "passed",
-    "runtime_qualification": "not performed by artifact updater"
+    "runtime_qualification": "No native audio/archive/model harness rerun for this UI change."
   },
   "shared_sqlite_rejection_guards_attribution": {
     "recorded_on": "2026-10-08",
@@ -1651,5 +1713,45 @@
       "Android": "Update installation and fresh launch passed on preserved emulator-5554/API37. No app data reset.",
       "iOS": "Update installation and fresh launch passed on preserved iPhone18Pro/iOS27 and iPadPro13M5/iPadOS26.3.1 simulators. No container reset."
     }
+  },
+  "library_footer_removal": {
+    "recorded_on": "2026-10-08",
+    "source_revision": "4100757fb10845ad77b50cbcc13fe62d5734d2f6",
+    "change": "Removed the entire iOS On this device library footer and moved its archive picker into Settings, matching Android.",
+    "sourceSHA256": {
+      "iosApp/Sources/ReaderViews.swift": "dbd9669df61d4c412b768df08ddb65ef43319ef729f65c88c5d70c2ef2382d01"
+    },
+    "builds": {
+      "result": "passed",
+      "scope": "Simulator Debug and unsigned ARM64 Release against matching unchanged SharedCore; unchanged identity and iOS17 baseline",
+      "logs": [
+        {
+          "path": "/private/tmp/rhapsodos-library-footer-ios-debug.log",
+          "sha256": "0212a453a2e4723f5c40c936f3e769fbfe44edb906279e757f8769f4ba251cac"
+        },
+        {
+          "path": "/private/tmp/rhapsodos-library-footer-ios-release.log",
+          "sha256": "4a9750da31bb4729f4fe9ae2ab9215404becc29315e1a45957425620b54a9785"
+        }
+      ]
+    },
+    "source_review": {
+      "result": "clear",
+      "scope": "No orphaned root picker; Settings owns file importer and dismisses on completion; busy/capture/recording disablement, accepted archive types, error handling and unchanged restore/export guards reviewed."
+    },
+    "consumer_install_launch": {
+      "result": "passed",
+      "data_reset": false,
+      "phone": "iPhone18Pro / iOS27",
+      "tablet": "iPadPro13M5 / iPadOS26.3.1",
+      "debugBundleTreeSHA256": "0330c26656cd034a5316bb99cd03c8ac96988ce62a71ce3921746033d311cdcb"
+    },
+    "consumer_ui_inspection": {
+      "result": "blocked",
+      "surface": "CUA / DeviceHub iPad window",
+      "failure": "Computer Use server error -10005: noWindowsAvailable",
+      "scope": "No new visual, Settings-button, picker-cancel or archive-restore interaction qualification."
+    },
+    "other_checks": "Repository policy, assets and actual produced iOS metadata passed. Native audio/archive/model checks retain their earlier source/artifact associations; Android was neither changed nor rebuilt."
   }
 }
