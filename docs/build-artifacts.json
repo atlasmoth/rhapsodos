@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "recorded_on": "2026-10-08",
-  "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
+  "source_revision": "90e48c1ced90bec9c69500273da9bde613656270",
   "identity": {
     "name": "Rhapsodos",
     "application_id": "com.osuji.ereaderapp",
@@ -9,14 +9,14 @@
     "build": 1
   },
   "android": {
-    "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
+    "source_revision": "90e48c1ced90bec9c69500273da9bde613656270",
     "min_sdk": 28,
     "target_sdk": 37,
     "artifacts": [
       {
         "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
         "bytes": 155048380,
-        "sha256": "c048b2be8237e5cf8d3e06e7d134f907afda47107dada16a2b4f2c63a88c40b3",
+        "sha256": "16536530634c1a5feda603479d3119dddad13a8a063f98a49f4fdda80f91a023",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -35,7 +35,7 @@
       {
         "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
         "bytes": 130578032,
-        "sha256": "0b630ecf27dddfd4110737a7179e94764ee4740b898a3ee6e8173bb13efcc939",
+        "sha256": "1611a61aa3410f6830485def69d987a964c3e895d13ab1c95523c7ac38e56c2c",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "display_name": "Rhapsodos",
@@ -53,8 +53,8 @@
       },
       {
         "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
-        "bytes": 52957016,
-        "sha256": "a7e6a75d7dc33a0499397341a359c73b6f3c9597c938b76e7a1acc033f9a4494",
+        "bytes": 52963162,
+        "sha256": "b6849e52da4c282373d7f8340efc1e2b3961393bde142e2d1f380d7342ef61c3",
         "metadata": {
           "application_id": "com.osuji.ereaderapp",
           "version": "0.01",
@@ -82,24 +82,24 @@
     "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
   },
   "ios": {
-    "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+    "source_revision": "90e48c1ced90bec9c69500273da9bde613656270",
     "min_ios": "17.0",
     "artifacts": [
       {
-        "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
-        "bundle_bytes": 38079685,
+        "path": "iosApp/build/Debug-iphonesimulator/EReader.app",
+        "bundle_bytes": 38743845,
         "bundle_files": 63,
-        "bundle_tree_sha256": "cc2bf9436d2571141f21bc8c9431e23ef609d74aabf18c42d23127c1b36800b7",
+        "bundle_tree_sha256": "907c64e44ec6aeb08e5233b2c6c8de968b4786c372720fcfdd205efbc3138f24",
         "binaries": [
           {
             "path": "EReader",
             "bytes": 40496,
-            "sha256": "dcac6e506cbd44899162984dc60fa2f0d4c476599c1749101ebad71bae7cff52"
+            "sha256": "9d35daba82f9619fe81bcff1eff4325104e579aa915e4458eedc521ac730efb3"
           },
           {
             "path": "EReader.debug.dylib",
-            "bytes": 26512416,
-            "sha256": "47bbdabca6a20b996edb92fe942ae2d4c31d2977999323598e913e51a90a29c4"
+            "bytes": 27176656,
+            "sha256": "122c7dd8c8d9a03b589e58523e245367f6e099fd7943cae20611bbe4421dd5fa"
           }
         ],
         "metadata": {
@@ -112,15 +112,15 @@
         "signing": "ad-hoc simulator"
       },
       {
-        "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
-        "bundle_bytes": 28127696,
+        "path": "iosApp/build/Release-iphoneos/EReader.app",
+        "bundle_bytes": 28531008,
         "bundle_files": 44,
-        "bundle_tree_sha256": "7d8f87eef980a2b19d58fea7523e9e16b706e6bc132c2779a66fd0897bff101b",
+        "bundle_tree_sha256": "22b82b69ed52c472a24db2bb0e455d42fc95e589f985b5e9eaacb065584cc03f",
         "binaries": [
           {
             "path": "EReader",
-            "bytes": 16624752,
-            "sha256": "46bcd6d18529fe29567b10f16786112bac0d0e664bc57ee122ba44c3160694f5"
+            "bytes": 17028064,
+            "sha256": "ba63f72b9bb94e1c77c8d762056ee5a3ba93e66c35f851c06daa028f3697a626"
           }
         ],
         "metadata": {
@@ -135,7 +135,7 @@
     ],
     "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
     "metadata_inspection": "passed",
-    "build_launch_and_runtime_attribution": "Retained byte-identical apps from the recorded iOS source revision. No iOS source changes, builds, installs or consumer UI qualification in this Android-only header task."
+    "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
   },
   "evidence": [
     {
@@ -1389,6 +1389,146 @@
         "build_launch_and_runtime_attribution": "Current build/launch/runtime outcomes must be recorded separately; prior outcomes are retained in artifact_history."
       },
       "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
+    },
+    {
+      "recorded_on": "2026-10-08",
+      "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
+      "identity": {
+        "name": "Rhapsodos",
+        "application_id": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": 1
+      },
+      "android": {
+        "source_revision": "eeaae24d44662dbeb61ce8bc5e5cc7a6245f8772",
+        "min_sdk": 28,
+        "target_sdk": 37,
+        "artifacts": [
+          {
+            "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+            "bytes": 155048380,
+            "sha256": "c048b2be8237e5cf8d3e06e7d134f907afda47107dada16a2b4f2c63a88c40b3",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "debug development key"
+          },
+          {
+            "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+            "bytes": 130578032,
+            "sha256": "0b630ecf27dddfd4110737a7179e94764ee4740b898a3ee6e8173bb13efcc939",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "display_name": "Rhapsodos",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "internet_permission": true,
+              "arm64_native_16k_alignment": {
+                "libraries": 7,
+                "status": "passed"
+              }
+            },
+            "signing": "owner distribution signing required"
+          },
+          {
+            "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
+            "bytes": 52957016,
+            "sha256": "a7e6a75d7dc33a0499397341a359c73b6f3c9597c938b76e7a1acc033f9a4494",
+            "metadata": {
+              "application_id": "com.osuji.ereaderapp",
+              "version": "0.01",
+              "build": "1",
+              "min_sdk": "28",
+              "target_sdk": "37",
+              "display_name": "Rhapsodos",
+              "internet_permission": true,
+              "inspection": "Actual base manifest decoded with installed AAPT2 protobuf classes; no APK-to-AAB metadata inference."
+            },
+            "signing": "owner distribution signing required"
+          }
+        ],
+        "metadata_and_arm64_native_16k_alignment": {
+          "result": "passed",
+          "debug": {
+            "libraries": 7,
+            "status": "passed"
+          },
+          "release": {
+            "libraries": 7,
+            "status": "passed"
+          }
+        },
+        "build_and_lint_attribution": "Current build/lint outcomes must be recorded separately with matching logs/artifacts; prior outcomes are retained in artifact_history."
+      },
+      "ios": {
+        "source_revision": "533e664f24eecb5df3a41a73acc4142fbf5e1e94",
+        "min_ios": "17.0",
+        "artifacts": [
+          {
+            "path": "iosApp/build/Debug-iphonesimulator/Rhapsodos.app",
+            "bundle_bytes": 38079685,
+            "bundle_files": 63,
+            "bundle_tree_sha256": "cc2bf9436d2571141f21bc8c9431e23ef609d74aabf18c42d23127c1b36800b7",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 40496,
+                "sha256": "dcac6e506cbd44899162984dc60fa2f0d4c476599c1749101ebad71bae7cff52"
+              },
+              {
+                "path": "EReader.debug.dylib",
+                "bytes": 26512416,
+                "sha256": "47bbdabca6a20b996edb92fe942ae2d4c31d2977999323598e913e51a90a29c4"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "ad-hoc simulator"
+          },
+          {
+            "path": "iosApp/build/Release-iphoneos/Rhapsodos.app",
+            "bundle_bytes": 28127696,
+            "bundle_files": 44,
+            "bundle_tree_sha256": "7d8f87eef980a2b19d58fea7523e9e16b706e6bc132c2779a66fd0897bff101b",
+            "binaries": [
+              {
+                "path": "EReader",
+                "bytes": 16624752,
+                "sha256": "46bcd6d18529fe29567b10f16786112bac0d0e664bc57ee122ba44c3160694f5"
+              }
+            ],
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "17.0"
+            },
+            "signing": "unsigned; owner provisioning required"
+          }
+        ],
+        "bundle_tree_hash_definition": "Sorted relative UTF-8 file paths: uint32 big-endian path byte length, path bytes, uint64 big-endian content byte length, file bytes. SHA-256 excludes timestamps and filesystem attributes.",
+        "metadata_inspection": "passed",
+        "build_launch_and_runtime_attribution": "Retained byte-identical apps from the recorded iOS source revision. No iOS source changes, builds, installs or consumer UI qualification in this Android-only header task."
+      },
+      "attribution": "Historical build/artifact record retained unchanged; its build, lint, launch and runtime claims are not assigned to the refreshed binaries."
     }
   ],
   "artifact_inspection": {
@@ -2612,5 +2752,122 @@
       "No live-audio notes-toggle, compact/large-type, assistive-technology or physical-device qualification in this task.",
       "No speech models downloaded or inference rerun; historical native/model checks retain original associations."
     ]
+  },
+  "unified_reader_controls_verification": {
+    "recorded_on": "2026-10-08",
+    "source_revision": "90e48c1ced90bec9c69500273da9bde613656270",
+    "changes": [
+      "Original native PDF rendering without recolouring preferences",
+      "Whole-file percentage beside the Android slider",
+      "Full-window adaptive iOS dock with normalized guarded speed control",
+      "Three icon-only library actions: Search, Import, Settings",
+      "Voice selection and speech downloads through Settings",
+      "Shared sheet structure and Contents chapter/page actions",
+      "Enabled app feedback and decoration, retaining system accessibility and power safeguards"
+    ],
+    "builds": {
+      "android": {
+        "result": "Debug APK, unsigned Release APK, Release AAB and lint passed; strict offline build",
+        "lint_errors": 0,
+        "lint_warnings": 9,
+        "log": {
+          "path": "/private/tmp/rhapsodos-unified-sheets-final-android-build.log",
+          "sha256": "fe45e5cfd6651da4782fc1db36cd75f38963a72dec69f03f28836d6598ba6591"
+        }
+      },
+      "ios_debug": {
+        "result": "arm64 simulator Debug passed",
+        "log": {
+          "path": "/private/tmp/rhapsodos-unified-sheets-final-ios-debug-build.log",
+          "sha256": "0d78fd8fdb07875e93f8460afa0c1657a7ac06aa8981f49defad972bcd80adf4"
+        }
+      },
+      "ios_release": {
+        "result": "unsigned arm64 device Release passed",
+        "log": {
+          "path": "/private/tmp/rhapsodos-unified-sheets-final-ios-release-build.log",
+          "sha256": "ba328492d62e077471cc03bc387d82e178595d19b442ec999e00d1b7028f62c4"
+        }
+      },
+      "policy": {
+        "path": "/private/tmp/rhapsodos-unified-sheets-final-policy.json",
+        "sha256": "231da80e036ca5427329a331fb53b63920bb14c3a24d9f93ffaf0a582c2a5319"
+      }
+    },
+    "native_speed_checks": {
+      "result": "passed",
+      "assertions": 31,
+      "runtime": "dedicated iOS 18.4 simulator",
+      "report": {
+        "path": "/private/tmp/rhapsodos-player-speed-ios/native-report.json",
+        "sha256": "a830e8c18de0f905c460c87200eaccc3f0e09adc3b5bef981d44bda21fb9cf10"
+      },
+      "source_association": {
+        "path": "/private/tmp/rhapsodos-player-speed-ios/source-association.json",
+        "sha256": "184060529a079be32dc967229779bcc16ac9edc8d33c607a8ee819736e0cc62f"
+      },
+      "binary": {
+        "path": "/private/tmp/rhapsodos-player-speed-ios-derived/Build/Products/Debug-iphonesimulator/PlayerSpeedChecks.app/PlayerSpeedChecks",
+        "sha256": "3b472e67f1d426f618d1afa70f839dfc9a4627b8b0aecbdf9f9e231661ea7772"
+      },
+      "scope": "Native coordinator/current contracts copied. Same-file extension injects state/deferred noncancellable tasks for race cases. Native AVAudioPlayer uses public synthetic PCM. No permission or microphone API is invoked. No user gestures, CoreML inference, physical speed, output volume or UI qualification."
+    },
+    "native_page_destination_checks": {
+      "result": "passed",
+      "assertions": 28,
+      "runtime": "dedicated iOS 18.4 simulator",
+      "report": {
+        "path": "/private/tmp/rhapsodos-page-destination-qa/native-report.json",
+        "sha256": "f6665993d7a7fb5c4b65aa7f87047c712f68e384a46963905e969889abe55cdf"
+      },
+      "source_association": {
+        "path": "/private/tmp/rhapsodos-page-destination-qa/source-provenance.json",
+        "sha256": "ed83f7fd55307493f63bf9a0e15f01e24d1651b70af01427ff2ea3f365966f30"
+      },
+      "binary": {
+        "path": "/private/tmp/rhapsodos-page-destination-derived/Build/Products/Debug-iphonesimulator/PageDestinationChecks.app/PageDestinationChecks",
+        "sha256": "c51311840fb9e864f05606ac824a0389d20f11c4e1ee02248089fbb7cda1ddbc"
+      },
+      "scope": "Unexecuted native page destination harness. Root owns compilation/run/results."
+    },
+    "consumer_ui": {
+      "android_final": {
+        "apk_sha256": "16536530634c1a5feda603479d3119dddad13a8a063f98a49f4fdda80f91a023",
+        "device": "unfolded API 37 Pixel 10 Pro Fold emulator",
+        "method": "CUA Android Studio device viewer after preserved-data install and fresh launch",
+        "observed": [
+          "Nine documents retained and exactly three icon-only library actions",
+          "Settings has Voices, speed, Appearance and archive restoration; removed switches absent",
+          "Settings opens Offline voices & transcription; Done returns to Settings",
+          "Original white/black PDF in dark app with active source highlight",
+          "Dock spans window with speed and volume; slider ends in right-side 54%",
+          "Contents has Chapters and Pages; Page 1 renders while transport stays paused at 54%",
+          "Dedicated Find a passage sheet opens and dismisses"
+        ],
+        "data_scope": "Public sample only. No microphone, recording, transcript edit, voice selection or new download performed."
+      },
+      "android_earlier_draft": {
+        "apk_sha256": "72695ddea930ad066563b25b82ecab3b0eff09a2b8106ba4e5d614fa13527e06",
+        "scope": "Earlier three-icon/settings/gallery/dark-original-PDF observations only. Accidental 1.25 speed chip selection was restored to 1.0; no listening, note capture or download."
+      },
+      "ios_final": {
+        "installed_and_launched": [
+          "iOS 27 phone 41445FAB-08FA-4B88-87F5-037ECA34794E",
+          "iOS 26.3.1 iPad 09FC9A25-F718-4886-8C05-C51A6022DEEB"
+        ],
+        "bundle_tree_sha256": "907c64e44ec6aeb08e5233b2c6c8de968b4786c372720fcfdd205efbc3138f24",
+        "visual_verification": "CUA obtained a final iPad screenshot after initial timeout: exactly three icon-only library actions, original white/black source PDF and active highlight in dark appearance, full-window player identity/speed/volume/transport and trailing percent. Subsequent Settings click failed with noWindowsAvailable; sheets and phone visual interaction remain unqualified."
+      }
+    },
+    "limits": [
+      "Component checks use synthetic PCM, deferred-generation and capture/preview/replay state fixtures; no microphone, permission flow or actual CoreML inference",
+      "System speech speed is normalized native-rate mapping, not a measured linear duration ratio",
+      "No physical haptic, motion, volume, route or sustained performance qualification",
+      "iOS sheet interactions and compact phone/large-type/accessibility journeys, iOS 17 runtime and physical fleet remain gates",
+      "Speech manager and pinned assets unchanged; prior model-download/runtime evidence retains original source associations",
+      "No repository unit-test source committed"
+    ],
+    "artifact_path_correction": "Audit found unchanged hashes in stale Rhapsodos.app folders. Reinspected actual Xcode EReader.app outputs, reinstalled/relaunched both consumer simulators and confirmed live processes. Only corrected outputs receive final evidence.",
+    "harness_repairs": "External page harness module paths and duplicate app entry were corrected before successful build. External speed harness initially shared narration/note WAV ownership; distinct note fixture corrected its timeout. No production change was required for these harness setup errors."
   }
 }
