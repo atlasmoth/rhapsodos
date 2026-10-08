@@ -87,6 +87,10 @@ class PlaybackCoordinator(
                 if (player.playbackState == Player.STATE_ENDED && transportEpoch == epoch && !state.value.preview && state.value.noteId == null &&
                     state.value.passageId == player.currentMediaItem?.mediaId && state.value.passageFraction == 1.0) {
                     val completed = state.value
+                    if (completedReading(completed)) {
+                        desiredPlaying = false
+                        if (player.playWhenReady) player.pause()
+                    }
                     scope.launch { persistSnapshot(completed) }
                 }
                 if (state.value.preview && player.currentMediaItem?.mediaId == "voice-preview" && player.playbackState == Player.STATE_ENDED) returnFromPreview()
@@ -512,7 +516,7 @@ class PlaybackCoordinator(
                 val document = contents ?: return@launch
                 val index = document.passages.indexOfFirst { it.id == target.passageId }
                 if (index < 0) return@launch
-                val shouldPlay = fraction < 1.0 && (desiredPlaying || player?.playWhenReady == true || state.value.playing)
+                val shouldPlay = fraction < 1.0 && !completedReading(state.value) && (desiredPlaying || player?.playWhenReady == true || state.value.playing)
                 listen(document, index, 0, shouldPlay, target.passageFraction, saveTarget = true)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) {
