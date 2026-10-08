@@ -26,6 +26,8 @@ The library has no separate continue-listening hero. Each file shows its own sou
 
 The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Voice previews and replayed notes retain the saved book progress, and seeking to the end leaves playback paused.
 
+Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next/record controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption.
+
 ### First listen
 
 Use the system file picker. Prefer a dependable local copy for the initial implementation, with clear storage management. Show the document title, preparation state, available voice and a prominent listen action. Start with embedded-text PDFs and scanned PDFs that the native OCR pipeline can handle reliably.

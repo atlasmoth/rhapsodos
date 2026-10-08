@@ -17,7 +17,12 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     @Published private(set) var duration = 0.0
     @Published var selectedVoice = UserDefaults.standard.string(forKey: "voiceIdentifier") ?? ""
     @Published private(set) var previewing = false
-    @Published var pace = UserDefaults.standard.float(forKey: "speechPace") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "speechPace")
+    @Published private(set) var pace: Float = {
+        let stored = UserDefaults.standard.float(forKey: "speechPace")
+        guard stored.isFinite, stored > 0 else { return AVSpeechUtteranceDefaultSpeechRate }
+        return min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate,
+            min(2, max(0.75, stored / AVSpeechUtteranceDefaultSpeechRate)) * AVSpeechUtteranceDefaultSpeechRate))
+    }()
     var onProgress: ((ListeningCursor) -> Void)?
     var renderVoice: ((Passage, String, Float) async throws -> URL)?
     var onError: ((String) -> Void)?
@@ -42,6 +47,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var preloadTask: Task<Void, Never>?
     private var preloadID: UUID?
     private var voiceChangeID: UUID?
+    private var paceChange: PaceChange?
     private var playbackTimer: Timer?
     private var pendingOffset = 0.0
     private var pendingFraction = 0.0
@@ -56,12 +62,23 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     private var previewTaskID: UUID?
     private var previewGeneration: UUID?
 
+    private struct PaceChange {
+        let id: UUID
+        let documentId: String?
+        let passageId: String?
+        let fraction: Double
+        let resume: Bool
+        let transport: UUID
+        let tasks: [Task<Void, Never>]
+    }
+
     var voices: [AVSpeechSynthesisVoice] {
         AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }.sorted {
             $0.quality.rawValue == $1.quality.rawValue ? $0.name < $1.name : $0.quality.rawValue > $1.quality.rawValue
         }
     }
     var current: Passage? { passages.indices.contains(index) ? passages[index] : nil }
+    var playbackSpeed: Float { pace / AVSpeechUtteranceDefaultSpeechRate }
     func updatePassages(_ passages: [Passage], complete: Bool = true) {
         self.passages = passages; documentComplete = complete; updateNowPlaying()
     }
@@ -247,23 +264,44 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
     }
 
     func changePace(_ value: Float) async {
+        guard value.isFinite, !recording, !capturePending, !previewing, replayingNote == nil else { return }
         let operation = UUID(); voiceChangeID = operation
-        let resume = playing
-        let fraction = currentFraction
+        let prior = paceChange.flatMap { intent in
+            intent.documentId == current?.documentId && intent.passageId == current?.id && intent.transport == transportRevision ? intent : nil
+        }
+        let resume = prior?.resume ?? playing
+        let fraction = prior?.fraction ?? currentFraction
+        let documentId = current?.documentId
         let passageId = current?.id
-        pace = value
-        UserDefaults.standard.set(value, forKey: "speechPace")
-        await pauseAndJoinGeneration(restart: true)
-        if voiceChangeID == operation, current?.id == passageId { pendingFraction = fraction; positionAvailable = true; if resume { play() } }
+        pace = min(AVSpeechUtteranceMaximumSpeechRate, max(AVSpeechUtteranceMinimumSpeechRate,
+            min(2, max(0.75, value / AVSpeechUtteranceDefaultSpeechRate)) * AVSpeechUtteranceDefaultSpeechRate))
+        UserDefaults.standard.set(pace, forKey: "speechPace")
+        let tasks = (prior?.tasks ?? []) + [narrationTask, preloadTask, previewTask].compactMap { $0 }
+        pause(restart: true)
+        let stoppedTransport = transportRevision
+        pendingFraction = fraction
+        positionAvailable = current != nil
+        paceChange = PaceChange(id: operation, documentId: documentId, passageId: passageId, fraction: fraction,
+            resume: resume, transport: stoppedTransport, tasks: tasks)
+        defer { if paceChange?.id == operation { paceChange = nil } }
+        for task in tasks { await task.value }
+        guard voiceChangeID == operation, transportRevision == stoppedTransport,
+              current?.documentId == documentId, current?.id == passageId,
+              !recording, !capturePending, !previewing, replayingNote == nil else { return }
+        pendingFraction = fraction
+        positionAvailable = current != nil
+        if resume { play() }
     }
 
     @discardableResult func pauseAndJoinGeneration(restart: Bool = false) async -> UUID {
         let currentTask = narrationTask, nextTask = preloadTask, sampleTask = previewTask
+        let paceTasks = paceChange?.tasks ?? []
         pause(restart: restart)
         let revision = transportRevision
         await currentTask?.value
         await nextTask?.value
         await sampleTask?.value
+        for task in paceTasks { await task.value }
         return revision
     }
 
@@ -339,7 +377,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
 
     func reserveCapture() -> CapturePreparation {
         capturePending = true
-        let tasks = [narrationTask, preloadTask, previewTask].compactMap { $0 }
+        let tasks = [narrationTask, preloadTask, previewTask].compactMap { $0 } + (paceChange?.tasks ?? [])
         let fraction = currentFraction
         pause(restart: narrationPlayer == nil)
         pendingFraction = fraction

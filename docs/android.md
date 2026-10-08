@@ -80,7 +80,7 @@ Native extraction and OCR convert display rectangles into the shared `cropTopLef
 
 ## Persistent playback
 
-The whole-file source-progress slider shows its percentage immediately to the right, without a separate “% of document” caption.
+Match the iOS dock arrangement: original cover and document title, visible speed button, native volume button and Previous → Play/Pause → Next → Record controls in the first row. Below 600 dp, center transport together in a second row. Place the whole-file source-progress slider beneath the controls with its percentage immediately to the right, without a separate “% of document” caption. Changing speed dispatches to the existing playback coordinator and preserves the source position; neither the UI nor a layout transition owns another audio clock. See [design.md](design.md) for the common presentation contract.
 
 The dock's volume control uses `AudioManager.STREAM_MUSIC` and its actual minimum, maximum and current index. Refresh from the system while the control is visible and after lifecycle changes; only explicit listener adjustments write the volume. Respect fixed-volume devices and keep the controls accessible without altering playback or microphone gain. This requires the normal `MODIFY_AUDIO_SETTINGS` permission. [AudioManager](https://developer.android.com/reference/android/media/AudioManager)
 

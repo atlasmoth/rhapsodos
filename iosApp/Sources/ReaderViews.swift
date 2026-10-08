@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import CoreGraphics
 import MediaPlayer
+import AVFoundation
 
 struct ReaderRoot: View {
     @EnvironmentObject private var store: ReaderStore
@@ -88,6 +89,9 @@ struct ReaderRoot: View {
             .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
         }
         .navigationSplitViewStyle(.balanced)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let document = playbackDocument { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
+        }
         .onChange(of: store.selectedId) { _, id in if id != nil { compactColumn = .detail } }
         .fileImporter(isPresented: $importer, allowedContentTypes: [.pdf]) { result in
             switch result {
@@ -117,6 +121,13 @@ struct ReaderRoot: View {
                     .padding(14).background(.regularMaterial, in: Capsule()).padding(.top, 10)
             }
         }
+    }
+
+    private var playbackDocument: LibraryDocument? {
+        if let id = audio.current?.documentId {
+            return store.library.first { $0.id == id } ?? (store.document?.document.id == id ? store.document?.document : nil)
+        }
+        return store.document?.document
     }
 
     private var libraryActions: some View {
@@ -206,7 +217,6 @@ private struct ListeningView: View {
                 ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { PlaybackDock(document: snapshot.document, count: snapshot.passages.count).id(snapshot.document.id) }
         .background(Palette.paper)
     }
 }
@@ -221,17 +231,13 @@ private struct PlaybackDock: View {
     var body: some View {
         VStack(spacing: 14) {
             if store.preparingDocument { ProgressView(store.preparation, value: store.preparationProgress).font(.caption2) }
-            HStack(spacing: 12) {
-                documentProgress
-                Button { volumePresented = true } label: {
-                    Image(systemName: "speaker.wave.2").font(.title3).frame(width: 44, height: 44)
-                }.foregroundStyle(Palette.accent).accessibilityLabel("Output volume")
-                    .popover(isPresented: $volumePresented) { OutputVolumePanel().presentationCompactAdaptation(.sheet).presentationDetents([.medium]) }
+            PlaybackHeaderLayout {
+                bookIdentity
+                speedControl
+                volumeControl
+                controls.disabled(transportUnavailable)
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 18) { playbackStatus; controls }
-                VStack(spacing: 10) { playbackStatus; controls }
-            }.disabled(count == 0 || store.busy || store.captureDraft != nil)
+            documentProgress
         }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
             .onChange(of: store.canSeekDocument) { _, enabled in if !enabled { seekPreview = nil } }
     }
@@ -268,28 +274,85 @@ private struct PlaybackDock: View {
         Task { await store.seekDocument(to: value, documentId: id, sourceRevision: revision) }
     }
 
-    private var playbackStatus: some View {
+    private var transportUnavailable: Bool {
+        count == 0 || store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
+    }
+
+    private var speedControl: some View {
+        Button {
+            let next = audio.playbackSpeed >= 2 ? Float(0.75) : min(2, (audio.playbackSpeed * 4).rounded(.down) / 4 + 0.25)
+            store.feedback.play(.selection)
+            Task { await audio.changePace(next * AVSpeechUtteranceDefaultSpeechRate) }
+        } label: {
+            Text("\(audio.playbackSpeed.formatted(.number.precision(.fractionLength(0...2))))×")
+                .font(BrandFont.mono()).frame(minWidth: 44, minHeight: 44)
+        }.foregroundStyle(Palette.accent)
+            .accessibilityLabel("Playback speed")
+            .accessibilityValue("\(audio.playbackSpeed.formatted(.number.precision(.fractionLength(0...2)))) times normal")
+            .accessibilityHint("Cycles from three quarters to twice normal speed")
+            .disabled(transportUnavailable || audio.previewing || audio.replayingNote != nil)
+    }
+
+    private var volumeControl: some View {
+        Button { volumePresented = true } label: {
+            Image(systemName: "speaker.wave.2").font(.title3).frame(width: 48, height: 48)
+        }.foregroundStyle(Palette.accent).accessibilityLabel("Output volume")
+            .popover(isPresented: $volumePresented) { OutputVolumePanel().presentationCompactAdaptation(.sheet).presentationDetents([.medium]) }
+    }
+
+    private var bookIdentity: some View {
         HStack(spacing: 12) {
-            if let document = store.document?.document {
-                BookThumbnail(document: document, url: store.originalURL)
-                    .frame(width: 36, height: 48)
-            }
+            BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath)).frame(width: 36, height: 46)
             VStack(alignment: .leading, spacing: 4) {
+                Text(document.title).font(BrandFont.body(15, relativeTo: .subheadline).weight(.semibold)).lineLimit(2)
                 if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
             }
-        }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: true, vertical: false)
+        }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
     }
 
     private var controls: some View {
             HStack(spacing: 14) {
-                Button { store.skip(-1) } label: { Image(systemName: "backward.end.fill").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Previous passage")
+                Button { store.skip(-1) } label: { Image(systemName: "backward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Previous passage").disabled(audio.previewing || audio.replayingNote != nil)
                 Button { store.togglePlayback() } label: {
-                    Image(systemName: audio.playing ? "pause.fill" : "play.fill").font(.title2).frame(width: 56, height: 56)
+                    Image(systemName: audio.playing ? "pause.fill" : "play.fill").font(.title2).frame(width: 52, height: 52)
                         .foregroundStyle(Palette.onAccent).background(Palette.accent, in: Circle())
                 }.accessibilityLabel(audio.playing ? "Pause narration" : "Play narration")
-                Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Next passage")
-                Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
+                Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Next passage").disabled(audio.previewing || audio.replayingNote != nil)
+                Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
             }.foregroundStyle(Palette.accent)
+    }
+}
+
+private struct PlaybackHeaderLayout: Layout {
+    private func metrics(width: CGFloat, subviews: Subviews) -> (sizes: [CGSize], wide: Bool, height: CGFloat) {
+        let speed = subviews[1].sizeThatFits(.unspecified)
+        let volume = subviews[2].sizeThatFits(.unspecified)
+        let transport = subviews[3].sizeThatFits(.unspecified)
+        let wide = width >= 600 && width - speed.width - volume.width - transport.width - 36 >= 96
+        let identityWidth = max(0, width - speed.width - volume.width - (wide ? transport.width + 36 : 24))
+        let identity = subviews[0].sizeThatFits(ProposedViewSize(width: identityWidth, height: nil))
+        let firstRow = max(identity.height, speed.height, volume.height)
+        return ([identity, speed, volume, transport], wide, wide ? max(firstRow, transport.height) : firstRow + 10 + transport.height)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 600
+        return CGSize(width: width, height: metrics(width: width, subviews: subviews).height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let layout = metrics(width: bounds.width, subviews: subviews)
+        let firstRow = layout.wide ? layout.height : layout.height - layout.sizes[3].height - 10
+        var x = bounds.minX
+        for index in 0..<(layout.wide ? 4 : 3) {
+            let size = layout.sizes[index]
+            subviews[index].place(at: CGPoint(x: x, y: bounds.minY + (firstRow - size.height) / 2), proposal: ProposedViewSize(size))
+            x += size.width + 12
+        }
+        if !layout.wide {
+            let size = layout.sizes[3]
+            subviews[3].place(at: CGPoint(x: bounds.midX - size.width / 2, y: bounds.maxY - size.height), proposal: ProposedViewSize(size))
+        }
     }
 }
 

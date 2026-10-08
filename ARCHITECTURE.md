@@ -114,6 +114,8 @@ Re-extraction builds a new graph; reconcile anchors using retained mappings and 
 
 One native transport is the authoritative clock. Shared orchestration plans segments and preparation; it does not run a second timer that competes with the actual player. Playback ownership exists above individual screens.
 
+Native player presentations share the arrangement in [docs/design.md](docs/design.md): document identity, visible speed, output volume and transport above a whole-file source-progress slider, with a percentage immediately to its right. UI speed commands use the existing native audio owner; the control does not create another playback clock or seek the document. Width changes can move transport to a centered second row without reconstructing playback.
+
 - Android: Media3 player and media session, with background ownership in a suitable session service.
 - iOS: native audio transport and serialized audio interaction coordinator, integrated with system media controls.
 
