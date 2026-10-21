@@ -477,7 +477,7 @@ private struct VoiceSettings: View {
                             }
                             if let models = store.models {
                                 ForEach(models.catalog.filter { $0.capability == "tts" && models.ready(capability: "tts", id: $0.id) != nil }) { pack in
-                                    ForEach(DownloadedVoice.voices, id: \.0) { voice in
+                                    ForEach(DownloadedVoice.voices(for: pack), id: \.0) { voice in
                                         Text("\(pack.name) · \(voice.1)").tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
                                     }
                                 }

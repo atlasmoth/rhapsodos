@@ -2,6 +2,8 @@ import AVFoundation
 import MediaPlayer
 import SwiftUI
 
+struct RenderedNarration { let url: URL; let playbackRate: Float }
+
 @MainActor
 final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDelegate {
     @Published private(set) var playing = false
@@ -23,7 +25,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
             min(2, max(0.75, stored / AVSpeechUtteranceDefaultSpeechRate)) * AVSpeechUtteranceDefaultSpeechRate))
     }()
     var onProgress: ((ListeningCursor) -> Void)?
-    var renderVoice: ((Passage, String, Float) async throws -> URL)?
+    var renderVoice: ((Passage, String, Float) async throws -> RenderedNarration)?
     var onError: ((String) -> Void)?
     var onCaptureInterrupted: ((String?) -> Void)?
     var passages: [Passage] = []
@@ -174,10 +176,12 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
                 narrationTask = Task(priority: .utility) { [weak self] in
                     defer { if self?.narrationGeneration == generation { self?.narrationTask = nil } }
                     do {
-                        let file = try await renderVoice(current, voice, pace)
+                        let rendered = try await renderVoice(current, voice, pace)
                         try Task.checkCancellation()
                         guard let self, self.narrationGeneration == generation, self.playing, !self.capturePending else { return }
-                        let player = try AVAudioPlayer(contentsOf: file)
+                        let player = try AVAudioPlayer(contentsOf: rendered.url)
+                        player.enableRate = true
+                        player.rate = rendered.playbackRate
                         player.delegate = self
                         let restoredTime = self.pendingOffset > 0 ? self.pendingOffset : self.pendingFraction * player.duration
                         player.currentTime = min(restoredTime, max(0, player.duration - 0.05)); self.pendingOffset = 0
@@ -538,7 +542,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDel
         guard let current else { MPNowPlayingInfoCenter.default().nowPlayingInfo = nil; return }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [MPMediaItemPropertyTitle: title,
             MPMediaItemPropertyArtist: "Page \(current.pageIndex + 1) · Passage \(index + 1)",
-            MPNowPlayingInfoPropertyPlaybackRate: playing ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: playing ? Double(narrationPlayer?.rate ?? 1) : 0.0,
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue]
         MPRemoteCommandCenter.shared().changePlaybackPositionCommand.isEnabled = narrationPlayer != nil
         if narrationPlayer != nil {

@@ -8,7 +8,7 @@ The [protocol](phonon-31m-protocol.md), [authored corpus](phonon-31m-corpus.json
 
 Lower real-time factor (RTF) means less generation time per second of audio. Android results use the same API 37 ARM64 emulator and two CPU threads. Apple results use the same M4 Pro Mac, macOS 27.0.1 and 48 GB RAM, with isolated sequential processes. Cross-platform measurements must not be combined into a phone ranking.
 
-| Environment and voice | Warm RTF | Peak process memory | Coverage |
+| Environment and voice | Generation RTF | Peak process memory | Coverage |
 | --- | ---: | ---: | --- |
 | Android Kitten LiteRT, Bella | 0.1279 | 858.5 MiB PSS | 10/10 passages |
 | Android Phonon Q8, default voice | **0.0703** | **337.1 MiB PSS** | 10/10 passages |
@@ -40,4 +40,4 @@ The runtime is [Phonon v0.4.0](https://github.com/gradium-ai/xn-ptts/releases/ta
 
 Stock CPU and CoreML generation loops can exhaust their frame budgets without reporting missing end-of-speech. Rebuild the runtime with an explicit failure for this case; never cache truncated audio as success. Cancellation also returns partial audio successfully upstream. The app must join generation and reject cancelled output before publishing a cache entry. Cancellation/reuse probes succeeded, and the native iOS 27 simulator generated all ten passages, but those probes do not replace the complete integrated listening/note journey.
 
-Android must retain existing 32-bit support while restricting this pack to supported 64-bit processes. The evaluated generic ARM64 build uses API 28 and 16 KiB alignment, without mandatory dot-product/FP16 CPU instructions. Apple execution remains iOS 18+, while the app baseline remains iOS 17. Rebuild native objects for the baseline, isolate newer APIs, and verify startup separately; an iOS 17 runtime was unavailable for this evaluation. Verified bounded archive preparation, installed-pack preservation and explicit voice selection are mandatory.
+Android must retain existing 32-bit support while restricting this pack to supported 64-bit processes. The evaluated generic ARM64 build uses API 28 and 16 KiB alignment, without mandatory dot-product/FP16 CPU instructions. The user subsequently approved raising the app minimum to iOS 18; native objects and app deployment settings now share that floor. The evaluation did not qualify physical iPhones. Verified bounded archive preparation, installed-pack preservation and explicit voice selection are mandatory.

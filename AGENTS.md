@@ -17,7 +17,7 @@ Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/produc
 ## Architectural boundaries
 
 - Use KMP for shared domain contracts, document transformations, anchors, repositories, jobs and privacy policy. Keep SwiftUI and Compose as the native UI layers.
-- Android uses the agreed Compose/Material3 Expressive/Navigation3/Material3 Adaptive/Ktor/Koin/LiteRT stack. iOS uses Swift, SwiftUI and CoreML with an iOS 17 baseline.
+- Android uses the agreed Compose/Material3 Expressive/Navigation3/Material3 Adaptive/Ktor/Koin/LiteRT stack. iOS uses Swift, SwiftUI and CoreML with an iOS 18 baseline.
 - Native platform code owns audio transport, media sessions, capture, rendering, model execution and OS lifecycle. Native playback time is authoritative.
 - Preserve source, display and spoken text separately with explicit versioned mappings. An audio timestamp or page number alone is not a durable note anchor.
 - Persist tagged `cropTopLeftV1` geometry in the unrotated PDF crop box. Apply rotation in native rendering and hit testing. Repair untagged geometry only after fresh preparation proves the canonical text: exact whole-page equality, or embedded whole-page outer-whitespace trimming with an explicit UTF-16 prefix offset. OCR requires exact equality. Never use substring/fuzzy matching or move user anchors to accommodate a drawing error.
@@ -51,7 +51,7 @@ Documentation-only work requires file/link/consistency review; it does not requi
 
 Delete their unused code, settings, assets, dependencies and documentation. Do not retain deprecated wrappers, compatibility aliases, migration ladders, legacy feature flags or parallel old implementations without a current product requirement. Development schemas and disposable fixtures can be reset rather than supported indefinitely.
 
-This policy does not authorize deleting unrelated user work, real recordings or user edits. Preserve durability within the current product, existing-archive restoration, source-anchor reconciliation and atomic model replacement. Supporting iOS 17 is an agreed platform requirement, not obsolete feature compatibility. Revisit the policy when real releases create a user-data migration obligation.
+This policy does not authorize deleting unrelated user work, real recordings or user edits. Preserve durability within the current product, existing-archive restoration, source-anchor reconciliation and atomic model replacement. Supporting iOS 18 is an agreed platform requirement, not obsolete feature compatibility. Revisit the policy when real releases create a user-data migration obligation.
 
 ## Atomic commits
 

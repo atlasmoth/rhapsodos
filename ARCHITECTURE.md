@@ -232,7 +232,7 @@ Sync uses stable IDs, an outbox, conflict policy and deletion tombstones. Machin
 | --- | --- |
 | Listening-first, anchored voice notes, English first | Agreed |
 | KMP shared core; native Compose and SwiftUI | Agreed |
-| Android requested stack; iOS 17+, Swift/CoreML | Agreed |
+| Android requested stack; iOS 18+, Swift/CoreML | Agreed |
 | Local-first, strict local-only, curated packs, optional cloud | Agreed |
 | Wide-window layouts and accessible controls | Agreed |
 | One shared SQLite schema | Implemented with SQLDelight; native adapters use the same canonical store |

@@ -44,7 +44,7 @@ ASR evaluation uses consented notes with varied accents, background noise, Bluet
 | Budget Android devices at the chosen supported API floor | Limited memory/storage and weaker sustained CPU performance |
 | Midrange Android devices across relevant SoCs | Likely large share of daily use; accelerator/operator differences |
 | Flagship Android and tablets/foldables | Enhanced packs, wide windows, posture and media routes |
-| Older physically available iOS 17-supported iPhones | Baseline OS coverage and constrained memory/thermal behavior |
+| Older physically available iOS 18-supported iPhones | Baseline OS coverage and constrained memory/thermal behavior |
 | Newer iPhones | Enhanced packs and availability-gated newer APIs |
 | iPads and resizable windows | Split/inspector behavior, keyboard, large type and multitasking |
 

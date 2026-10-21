@@ -26,7 +26,7 @@ The documentation records the implementation, product decisions and remaining qu
 | [Brand](docs/brand.md) | Unified identity, licensed fonts, light/dark palette and native launch animation |
 | [Integration contract](docs/implementation-contract.md) | Actual shared commands, canonical JSON contracts and native download/asset responsibilities |
 | [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and LiteRT architecture |
-| [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 17 floor |
+| [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 18 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
 | [Model manager](docs/model-manager.md) | Explicit selections, catalogue signing/refresh, supported adapter profiles and release setup |
 | [Roadmap](docs/roadmap.md) | Delivery stages, measurable acceptance criteria and collaboration boundaries |
@@ -41,7 +41,7 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 - Voice-note ASR transcribes a saved recording attached to a frozen source position. Saving and resuming do not wait for transcription.
 - Local-only content processing and curated downloadable speech packs are fundamental. Cloud processing remains a researched future capability behind separate consent.
 - Kotlin Multiplatform shares domain, data and policy. Android and iOS retain native interfaces, audio, document rendering and inference adapters.
-- Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin, Material3 Adaptive and LiteRT. iOS uses Swift, SwiftUI and CoreML, supporting iOS 17 and newer.
+- Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin, Material3 Adaptive and LiteRT. iOS uses Swift, SwiftUI and CoreML, supporting iOS 18 and newer.
 - Wide windows, tablets and foldables receive deliberate layouts that preserve the listening session.
 - Rich haptics, native motion and GPU effects accompany a snappy interface with measurable performance budgets and accessible resource-aware fallbacks.
 - Keep code comments necessary and sparse. Do not commit unit-test files. During this pre-release build, remove obsolete features without compatibility shims.
@@ -49,6 +49,6 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 
 ## Choices still to qualify
 
-Physical speech quality, older-device behavior, complex document layouts, accessibility and sustained performance receive separate qualification. The implementation uses SQLDelight, a Kotlin/Native framework facade and an Android API 28 floor; exact build pins live in the version catalog. iOS remains at 17, with its enhanced CoreML voice offered as a preview on eligible iOS 18+ devices. No optional cloud backend is required or implemented.
+Physical speech quality, older-device behavior, complex document layouts, accessibility and sustained performance receive separate qualification. The implementation uses SQLDelight, a Kotlin/Native framework facade and an Android API 28 floor; exact build pins live in the version catalog. iOS now requires 18 or newer; downloaded voices retain device checks and physical qualification gates. No optional cloud backend is required or implemented.
 
 The release gate is the complete loop on physical devices: import, prepare, listen, follow, pause, record, save, resume and recover, with comfortable sustained speech and accessibility validation.

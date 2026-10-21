@@ -157,7 +157,7 @@ def main():
     parser.add_argument("--display-name", default="Rhapsodos")
     parser.add_argument("--android-min", type=int, default=28)
     parser.add_argument("--android-target", type=int, default=37)
-    parser.add_argument("--ios-min", default="17.0")
+    parser.add_argument("--ios-min", default="18.0")
     args = parser.parse_args()
     report = {"unit_source_policy": "not_run", "android_artifact": "not_requested", "ios_artifact": "not_requested", "device_qualification": "not_run"}
     try:

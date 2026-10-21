@@ -5,11 +5,12 @@ import Foundation
 import KokoroCoreML
 
 enum NarrationFailure: LocalizedError {
-    case unsupportedText, timedOut
+    case unsupportedText, timedOut, voiceFailed
     var errorDescription: String? {
         switch self {
         case .unsupportedText: "This English preview voice cannot pronounce part of this passage safely. Choose a built-in voice."
         case .timedOut: "This passage took too long to prepare. Choose a built-in voice, or try again when the device is cool."
+        case .voiceFailed: "This voice could not finish the passage. Try again, or choose another voice."
         }
     }
 }
@@ -67,7 +68,7 @@ actor CoreMLVoice {
         let name = SHA256.hash(data: identity).map { String(format: "%02x", $0) }.joined() + ".wav"
         let target = cache.appendingPathComponent(name)
         if FileManager.default.fileExists(atPath: target.path) {
-            if validCachedWave(target), let audio = try? AVAudioFile(forReading: target), audio.length > 0, audio.fileFormat.sampleRate == 24_000 { return target }
+            if Self.validCachedWave(target), let audio = try? AVAudioFile(forReading: target), audio.length > 0, audio.fileFormat.sampleRate == 24_000 { return target }
             try FileManager.default.removeItem(at: target)
         }
         try load(folder)
@@ -145,7 +146,7 @@ actor CoreMLVoice {
     }
 
     private struct ChunkOverflow: Error {}
-    private func validCachedWave(_ url: URL) -> Bool {
+    static func validCachedWave(_ url: URL) -> Bool {
         do {
             let handle = try FileHandle(forReadingFrom: url); defer { try? handle.close() }
             let size = try handle.seekToEnd()

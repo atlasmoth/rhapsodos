@@ -11,7 +11,7 @@ struct ModelPack: Codable, Identifiable {
     let description: String; let files: [ModelAsset]; let totalBytes: Int64
     var requiredStorageBytes: Int64 { totalBytes * 4 + 100_000_000 }
     var supported: Bool {
-        capability == "tts" && adapter == "kokoro-english-coreml" || capability == "asr" && adapter == "whisper-tiny-en-coreml"
+        capability == "tts" && ["kokoro-english-coreml", "phonon-english-coreml"].contains(adapter) || capability == "asr" && adapter == "whisper-tiny-en-coreml"
     }
     var eligible: Bool { supported && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= minimumOS && ProcessInfo.processInfo.physicalMemory / 1_048_576 >= minimumMemoryMB }
 }
@@ -648,14 +648,14 @@ struct ModelGallery: View {
                     .frame(minHeight: 44).disabled(!models.canCheck(pack))
                 if pack.capability == "tts" {
                     Picker("Voice", selection: Binding(get: {
-                        DownloadedVoice(audio.selectedVoice)?.packId == pack.id ? audio.selectedVoice : DownloadedVoice(packId: pack.id, voiceId: "af_heart").identifier
+                        DownloadedVoice(audio.selectedVoice)?.packId == pack.id ? audio.selectedVoice : DownloadedVoice(packId: pack.id, voiceId: DownloadedVoice.voices(for: pack).first?.0 ?? "").identifier
                     }, set: { value in Task { await audio.changeVoice(value) } })) {
-                        ForEach(DownloadedVoice.voices, id: \.0) { voice in
+                        ForEach(DownloadedVoice.voices(for: pack), id: \.0) { voice in
                             Text(voice.1).tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
                         }
                     }.pickerStyle(.menu).frame(minHeight: 44).disabled(changingVoiceUnavailable)
                     Button(selected ? "Active" : "Use this voice") {
-                        Task { await audio.changeVoice(DownloadedVoice(packId: pack.id, voiceId: "af_heart").identifier) }
+                        Task { await audio.changeVoice(DownloadedVoice(packId: pack.id, voiceId: DownloadedVoice.voices(for: pack).first?.0 ?? "").identifier) }
                     }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable || selected)
                 } else {
                     Button(selected ? "Active" : "Use for voice notes") { Task { await store.selectTranscription(pack.id) } }
