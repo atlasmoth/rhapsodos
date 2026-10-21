@@ -388,7 +388,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     private fun catalogPacks(): List<ModelPack> = queries.currentModelCatalog().executeAsOneOrNull()?.let {
         val supportedAdapters = ModelCatalog.packs.map { pack -> pack.id }.toSet()
         val cached = json.decodeFromString<List<ModelPack>>(it.packs_json).filter { pack -> pack.adapter in supportedAdapters }
-        (ModelCatalog.packs + cached).associateBy { pack -> pack.id }.values.toList()
+        (ModelCatalog.packs + cached).associateBy { pack -> pack.id }.values.map(PhononCatalog::resolve)
     } ?: ModelCatalog.packs
 
     @Throws(Exception::class)
@@ -399,7 +399,9 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         val pack = requirePack(packId)
         require(generation.isNotBlank())
         val previous = queries.modelInstallById(packId).executeAsOneOrNull()
-        require(previous?.status != "ready") { "This pack is already installed" }
+        require(previous?.status != "ready" || PhononCatalog.supportsInstalledUpgrade(pack, previous.installed_path)) {
+            "This pack is already installed"
+        }
         val install = ModelInstall(packId, generation, "downloading", previous?.bytes_downloaded ?: 0L, pack.totalBytes,
             previous?.installed_path ?: "", "", epochMillis())
         saveInstall(install)

@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.StatFs
 import com.osuji.ereaderapp.data.ModelInstall
 import com.osuji.ereaderapp.data.ModelPack
+import com.osuji.ereaderapp.data.PackFile
 import com.osuji.ereaderapp.data.ModelCatalogStatus
 import com.ereader.shared.ModelCatalogSource
 import com.osuji.ereaderapp.data.ReaderStore
@@ -83,6 +84,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     val catalogRefreshConfigured: Boolean get() = ModelCatalogSource.httpsUrl.isNotBlank() && ModelCatalogSource.publicKeyX963.isNotBlank()
     private val jobs = ConcurrentHashMap<String, Job>()
     private val validated = ConcurrentHashMap.newKeySet<String>()
+    private val retainedVoices = ConcurrentHashMap<String, File>()
     private val activationJobs = mutableMapOf<String, Job>()
     private val downloadGenerations = mutableMapOf<String, String>()
     private val transcriptionSelection = Mutex()
@@ -103,18 +105,21 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             if (catalog.none { it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" }) clearVoiceSelection()
             val installs = store.modelInstalls()
             val catalogStatus = store.modelCatalogStatus()
-            mutableState.update { it.copy(catalog = catalog, installs = installs, catalogStatus = catalogStatus, checking = installs.filter { record -> record.status == "ready" }.map { record -> record.packId }.toSet()) }
-            installs.filter { it.status == "ready" }.forEach { install ->
+            mutableState.update { it.copy(catalog = catalog, installs = installs, catalogStatus = catalogStatus, checking = installs.filter { record -> record.status == "ready" || record.installedPath.isNotBlank() }.map { record -> record.packId }.toSet()) }
+            installs.filter { it.status == "ready" || it.installedPath.isNotBlank() }.forEach { install ->
                 val pack = catalog.firstOrNull { it.id == install.packId }
                 val verified = if (pack != null) withContext(Dispatchers.IO) {
                     try {
                         val directory = owned(install.installedPath)
-                        require(pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 })
+                        val complete = install.status == "ready" && install.installedPath == "Models/${pack.id}/${pack.version}" && pack.files.all { matches(directory, it) }
+                        val retained = pack.adapter == "android-phonon-english" && pack.files.filterNot { it.path.startsWith("voices/") }.all { matches(directory, it) }
+                        require(complete || retained)
                         val reason = runtimeCompatibility(pack)
                         if (reason == null) {
                             beforeVerification?.invoke()
                             validateRuntime(pack, directory)
-                            true
+                            if (!complete) retainedVoices[pack.id] = directory
+                            complete
                         } else {
                             mutableState.update { it.copy(unavailable = it.unavailable + (pack.id to reason)) }
                             false
@@ -122,8 +127,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { false }
                 } else false
-                if (verified) validated += install.packId
-                else if (install.packId !in state.value.unavailable) store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
+                if (verified) { validated += install.packId; pruneVoiceVersions(pack!!) }
+                else if (retainedVoices.containsKey(install.packId) && install.status == "ready" && install.installedPath == "Models/${pack!!.id}/${pack.version}") store.invalidateModel(install.packId, install.generation, "Some voice files need to be downloaded again.")
+                else if (!retainedVoices.containsKey(install.packId) && install.packId !in state.value.unavailable) store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
                 mutableState.update { it.copy(checking = it.checking - install.packId) }
             }
             installs.filter { it.status in setOf("downloading", "verifying") }.forEach { install ->
@@ -149,16 +155,17 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         }
     }
 
-    fun setup(packId: String) = scope.launch(Dispatchers.Main.immediate) {
+    fun setup(packId: String, voiceId: String = "default") = scope.launch(Dispatchers.Main.immediate) {
         if (state.value.initializing || state.value.refreshing || packId in state.value.removing) return@launch
         val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return@launch
         val generation = downloadGenerations[packId] ?: state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" }?.generation
         try {
+            require(pack.capability != "tts" || voiceId in catalogVoiceIds(pack)) { "This voice is not available in this pack." }
             cancelActivation(pack.capability)
-            val intent = SpeechActivationIntent(UUID.randomUUID().toString(), packId, generation = generation)
+            val intent = SpeechActivationIntent(UUID.randomUUID().toString(), packId, voiceId, generation = generation)
             saveActivation(pack.capability, intent)
             mutableState.update { it.copy(error = null) }
-            if (installed(packId) != null) resumePendingActivation()
+            if (complete(packId)) resumePendingActivation()
             else {
                 if (state.value.installs.any { it.packId == packId && it.status in setOf("failed", "paused") }) jobs[packId]?.join()
                 if (activationIsCurrent(pack.capability, intent.token)) download(packId)
@@ -195,7 +202,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         for ((capability, intent) in state.value.pendingActivation) {
             if (activationJobs[capability]?.isActive == true || intent.paused) continue
             val install = state.value.installs.firstOrNull { it.packId == intent.packId && it.status == "ready" && it.generation == intent.generation }
-            if (install == null || installed(intent.packId) == null) continue
+            if (install == null || !complete(intent.packId)) continue
             val blocked = if (capability == "tts") voiceActivationBlock() else if (!transcriptionSelectionAllowed()) "Finish recording to continue" else null
             if (blocked != null) {
                 mutableState.update { it.copy(activationMessage = it.activationMessage + (capability to blocked)) }
@@ -207,7 +214,10 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     if (capability == "tts") checkNotNull(activateVoice).invoke(intent.packId, intent.voiceId, intent.token)
                     else selectTranscription(intent.packId, intent.token)
                     val selected = if (capability == "tts") state.value.selectedVoice == intent.packId && state.value.voiceId == intent.voiceId else state.value.selectedTranscription == intent.packId
-                    if (selected && activationIsCurrent(capability, intent.token)) saveActivation(capability, null)
+                    if (selected && activationIsCurrent(capability, intent.token)) {
+                        saveActivation(capability, null)
+                        if (capability == "tts") state.value.catalog.firstOrNull { it.id == intent.packId }?.let { pruneVoiceVersions(it) }
+                    }
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (failure: Exception) {
                     if (activationIsCurrent(capability, intent.token)) mutableState.update { it.copy(activationMessage = it.activationMessage + (capability to (failure.message ?: "Setup could not finish. Try again."))) }
@@ -232,6 +242,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 jobs[packId]?.join()
                 beforeModelRemoval?.invoke(packId)
                 validated -= packId
+                retainedVoices.remove(packId)
                 withContext(Dispatchers.IO) {
                     listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
                         check(!directory.exists() || directory.deleteRecursively())
@@ -259,23 +270,32 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return null
     }
 
-    fun installed(packId: String): File? = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" && packId in validated && packId !in state.value.removing && it.installedPath.isNotBlank() }?.let {
-        owned(it.installedPath).takeIf { directory -> directory.isDirectory }
+    fun complete(packId: String): Boolean = state.value.installs.any { it.packId == packId && it.status == "ready" && packId in validated && packId !in state.value.removing }
+
+    fun installed(packId: String): File? {
+        if (packId in state.value.removing) return null
+        val directory = if (complete(packId)) state.value.installs.firstOrNull { it.packId == packId && it.installedPath.isNotBlank() }?.let { owned(it.installedPath) }
+        else retainedVoices[packId]
+        return directory?.takeIf { it.isDirectory }
     }
+
+    fun downloadBytes(pack: ModelPack): Long = if (retainedVoices.containsKey(pack.id)) pack.files.filter { it.path.startsWith("voices/") }.sumOf { it.bytes } else pack.totalBytes
 
     fun selectedVoicePack(): ModelPack {
         check(state.value.selectedVoice.isNotBlank()) { "Download and select Phonon in Settings to start listening." }
         return state.value.catalog.firstOrNull {
-            it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" && installed(it.id) != null
+            it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" && installed(it.id) != null && state.value.voiceId in voiceIds(it.id)
         } ?: error("The selected voice is unavailable. Download and check it in Settings before listening.")
     }
 
-    fun voiceIds(packId: String): List<String> = when (state.value.catalog.firstOrNull { it.id == packId }?.adapter) {
-        "android-phonon-english" -> listOf("default")
-        else -> emptyList()
+    private fun catalogVoiceIds(pack: ModelPack): List<String> = pack.voices.map { it.id }.ifEmpty { listOf("default") }
+
+    fun voiceIds(packId: String): List<String> {
+        val pack = state.value.catalog.firstOrNull { it.id == packId && it.adapter == "android-phonon-english" } ?: return emptyList()
+        return when { complete(packId) -> catalogVoiceIds(pack); retainedVoices.containsKey(packId) -> listOf("default"); else -> emptyList() }
     }
 
-    fun voiceName(packId: String, voiceId: String): String = if (voiceId == "default" && state.value.catalog.any { it.id == packId && it.adapter == "android-phonon-english" }) "Phonon" else voiceId.replaceFirstChar { it.uppercase() }
+    fun voiceName(packId: String, voiceId: String): String = state.value.catalog.firstOrNull { it.id == packId }?.voices?.firstOrNull { it.id == voiceId }?.name ?: if (voiceId == "default") "Phonon" else voiceId
     fun asrDirectory(): File? = if (asrAdapter() == null) null else installed(state.value.selectedTranscription)
     fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-whisper-base-en" }?.adapter
 
@@ -375,6 +395,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         }
         val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return
         compatibility(pack)?.let { mutableState.value = state.value.copy(error = it); return }
+        val reuse = installed(pack.id) ?: state.value.installs.firstOrNull { it.packId == pack.id && it.installedPath.isNotBlank() }?.let { owned(it.installedPath) }
         val generation = UUID.randomUUID().toString()
         state.value.pendingActivation[pack.capability]?.takeIf { it.packId == packId }?.let { saveActivation(pack.capability, it.copy(generation = generation, paused = false)) }
         try { context.startForegroundService(Intent(context, ModelDownloadService::class.java)) }
@@ -387,12 +408,18 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 check(staging.mkdirs() || staging.isDirectory)
                 var previousBytes = 0L
                 for (entry in pack.files) {
-                    require(entry.path.matches(Regex("[A-Za-z0-9_.-]+"))) { "This model contains an unsupported file path." }
-                    val target = File(staging, entry.path)
-                    if (target.length() != entry.bytes || digest(target) != entry.sha256) {
+                    val target = assetFile(staging, entry.path)
+                    check(target.parentFile!!.mkdirs() || target.parentFile!!.isDirectory)
+                    if (!matches(staging, entry) && reuse != null && matches(reuse, entry)) {
+                        assetFile(reuse, entry.path).inputStream().use { input ->
+                            java.io.FileOutputStream(target).use { output -> input.copyTo(output); output.fd.sync() }
+                        }
+                    }
+                    if (!matches(staging, entry)) {
                         stream(entry.url, target, entry.bytes) { count -> update(pack.id, generation, "downloading", previousBytes + count) }
                     }
                     require(target.length() == entry.bytes && digest(target) == entry.sha256) { "Downloaded file failed its integrity check. Retry to download it again." }
+                    syncDirectory(target.parentFile!!, context.filesDir)
                     previousBytes += entry.bytes
                     update(pack.id, generation, "downloading", previousBytes)
                 }
@@ -417,6 +444,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     throw failure
                 }
                 refresh()
+                retainedVoices.remove(pack.id)
                 ready.emit(pack.id)
                 withContext(Dispatchers.Main.immediate) { resumePendingActivation() }
             } catch (cancelled: CancellationException) {
@@ -460,6 +488,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             beforeModelRemoval?.invoke(packId)
             runtime.close(state.value.catalog.first { it.id == packId }.adapter)
             validated -= packId
+            retainedVoices.remove(packId)
             withContext(Dispatchers.IO) {
                 listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
                     check(!directory.exists() || directory.deleteRecursively()) { "Downloaded files could not be removed. Free storage and retry removal." }
@@ -473,6 +502,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         } catch (failure: Exception) {
             withContext(kotlinx.coroutines.NonCancellable) {
                 validated -= packId
+                retainedVoices.remove(packId)
                 val install = store.modelInstalls().firstOrNull { it.packId == packId }
                 if (install?.status == "ready") store.invalidateModel(packId, install.generation, "Removal did not finish. Retry removing the downloaded files.")
                 refresh()
@@ -495,6 +525,33 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         require(file.path.startsWith(root.path + File.separator)) { "The model path is outside local storage." }
         return file
     }
+    private suspend fun pruneVoiceVersions(pack: ModelPack) {
+        if (pack.adapter != "android-phonon-english") return
+        try {
+            withContext(Dispatchers.IO) {
+                val current = owned("Models/${pack.id}/${pack.version}")
+                val root = current.parentFile!!
+                for (entry in root.listFiles().orEmpty()) {
+                    require(entry.canonicalFile.parentFile == root.canonicalFile) { "The previous voice folder is unsafe." }
+                    if (entry != current) check(entry.deleteRecursively()) { "Previous voice files could not be removed." }
+                }
+                syncDirectory(root, context.filesDir)
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { reportError("Previous voice files could not be removed. Restart Rhapsodos to retry cleanup.") }
+    }
+
+    private fun assetFile(directory: File, path: String): File {
+        val parts = path.split('/')
+        require(parts.isNotEmpty() && parts.all { it.isNotBlank() && it != "." && it != ".." && it.matches(Regex("[A-Za-z0-9_. -]+")) }) { "This model contains an unsupported file path." }
+        val root = directory.canonicalFile
+        val result = File(root, path)
+        require(result.canonicalPath == result.absolutePath && result.canonicalPath.startsWith(root.path + File.separator)) { "This model contains an unsafe file path." }
+        return result
+    }
+
+    private fun matches(directory: File, entry: PackFile): Boolean = assetFile(directory, entry.path).let { it.length() == entry.bytes && digest(it) == entry.sha256 }
+
     private fun digest(file: File): String {
         if (!file.isFile) return ""
         val hash = MessageDigest.getInstance("SHA-256")

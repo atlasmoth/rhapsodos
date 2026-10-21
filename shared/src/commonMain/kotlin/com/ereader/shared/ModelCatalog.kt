@@ -193,7 +193,7 @@ internal object ModelCatalog {
     "capability": "tts",
     "platform": "android",
     "runtime": "phonon-cpu-q8",
-    "version": "0.4.0-eos1-52433c46975b",
+    "version": "0.4.0-eos1-52433c46975b-voices-da6c9ec",
     "languageTags": [
       "en"
     ],
@@ -226,9 +226,461 @@ internal object ModelCatalog {
         "bytes": 277967,
         "sha256": "691a00068fa7b989f2f3e5ae5daa2d1a5bb319f2d5360deafcfb19a8bb6e7936",
         "url": "https://huggingface.co/gradium/phonon-31m-en/resolve/52433c46975bfa13144c56204c9f4ee1c5b148aa/tokenizer.json"
+      },
+      {
+        "path": "voices/Alfie.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/X6NceqF285Gr04gb.safetensors",
+        "sha256": "4de75497fff3030168e8aa6dca23ffeb332b1bc8c25d0bf3507ceadac953ae9c",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Bryony.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/gfP44RlHwr2kEwk7.safetensors",
+        "sha256": "bcc207a73b7885e45b49ab633d3377a10158292e3a7cef9cd6764ad107f1cb9b",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Delia.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/nGzMHMPAWGaJFHOo.safetensors",
+        "sha256": "a0c3dcb91b2247eca56536be9ae8e8becc1c807b1136c5fe101552d6a155b24a",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Easton.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/LMDIYE0Oa377Qh6Z.safetensors",
+        "sha256": "45c582673cb20edb04ddcca2b5a8865ddfb0a82599efadb269021e87d20fbdd4",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Edwin.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/zUCxzrOrugTSis03.safetensors",
+        "sha256": "ff1d0735b8b45710462b1d1f846da040f970c6eb62c7c2f36dbfb8e5bde74f1e",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Elodie-Rose.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/y9bQqIDnyxwqK01t.safetensors",
+        "sha256": "21eade9d83b2e66b9364e1b6cd999a3a6704c000a71f27f34e05ace5cdfd58bb",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Everly.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/vjFyp2BcCyTlUmYb.safetensors",
+        "sha256": "958ea94da14f46dd48c7f64adac11ed2ad2aa45f7ccd165dfebab5272664402e",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Freya.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/GgfEkEJtxZR7gnpy.safetensors",
+        "sha256": "eb3cd47418349e618408c16bea7153988b3ad04b41a6033039dd474a9a4dcd23",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Hadley.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/bXwrkHhURL1VFJdG.safetensors",
+        "sha256": "a879938aa9a2df0a8220bdadef88137929f71e887bd91e7db205bd5fa11661d2",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Harper.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/4SZHfMpw-p46Ywgs.safetensors",
+        "sha256": "6b3da6e2d796a20c51af892c482bd6509fb88267a221aff83c870843dee2a123",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Hugh.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/YyKcxPG7iIgS3jsK.safetensors",
+        "sha256": "3169d74b47a54d1eb15e4c243f56393abe9fe90c7e1c308ecf96ee67618b152a",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Imogen.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/gDT1nz7Ie36ZhL-C.safetensors",
+        "sha256": "1980ab3c35fa98a25b5f3b5e643fd852e14ca8a12a4a26b06aaf1abf2a8c68b1",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Juniper.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/NIWIOv5vTi5eRMj8.safetensors",
+        "sha256": "444378eb06b7c492b86e8fc7d13e4db1a3c0cf3e68891a960bf6f0a41a13ef35",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Lottie.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/m9MxpY6IUGXtWp76.safetensors",
+        "sha256": "a906ebf17e43fded12b3d6bd077abb2df33bc86eff51c1beeb82e5d416527db3",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Maeve.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/6PWnV0Nq4wu7RVBT.safetensors",
+        "sha256": "56494ee67d533ad227ff0dfd0b1c13ff5aa91f1ad6e596e66c2986ba3005e844",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Micah.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/40QrMVgAxFiUnP9f.safetensors",
+        "sha256": "0de1098d1051686a138d068e83ff09deb5053328bc74ec9541a1fdb90bfc24da",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Miles.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/d9XCyhjo4JhkHF1d.safetensors",
+        "sha256": "eab20e4f159b48cfbc01b1885804e24f681f80e7a64f909182763a4e3361bee8",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Pippa.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/uem82D50GRv2Dwma.safetensors",
+        "sha256": "d41a8f01d6e33450f1ce062d332914da10beee99e585dab531750706f187c48a",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Preston.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/qIxlZ7Ei8KvWlyQH.safetensors",
+        "sha256": "6e04b84d3ae8751b22bca0a4f63936f9cb648f4f2182b2d0788071ea1c0b68a1",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Russell.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/_6Aslh2DxfmnRLmP.safetensors",
+        "sha256": "beae9e4030efce0a935fcb0f807dc0784d598bcaa87ad4aacb047436b1eaa411",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Spencer.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/JOW0vchyswkQUMDS.safetensors",
+        "sha256": "cc9ac1107b0ffce282374a19beb7bfa95847724e6b7afbac991b4ae4277d5e6d",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Teddy.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/Zn7g6NxLqXlJb7Qi.safetensors",
+        "sha256": "baea0ea9506f3237a5ebfc61afb7c72dbd189c5603b199ef42fbb00dbda379e0",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Toby.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/dME3IWyZBvmh1n1q.safetensors",
+        "sha256": "09ab315c7f4b72b4d71e66cb756184cedfb1f14d222d096e115bf95bfe7b29dc",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Trevor.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/0zLApsZfVLLNaEGl.safetensors",
+        "sha256": "dc1341c8937af5534e6bbcc5c0fc5e7c10312229b59061228074f93683fe2261",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Zoey.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/NbpkqMVS3CJeq2j8.safetensors",
+        "sha256": "97c7f8c253413574406ab80dd23f49c3ebb2517163b00a9bf86b9c4cf43e7e23",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Azgorath.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/dGyGDKo2osj7h3s7.safetensors",
+        "sha256": "83900e020c14946426614c6553c5a138ba6277e1aaa69832223bd0f0f8b73893",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Captain Silas Blackwater.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/xPDpsV3F592srkjA.safetensors",
+        "sha256": "a09f615b0084980ebc4076d71550bf73ccd8d4df076bbbee4a9beb523a1379d9",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Fairy Godmother.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/QXNr0SvkukLB4wPq.safetensors",
+        "sha256": "f390c09f5e279c0f2171995a534b92f5ca5c83443906879da68fc27445f89d89",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Fennick the Young Elf.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/cXoIXJ2llS8S0WOW.safetensors",
+        "sha256": "a05944e4c69d61d10d66f689175ba0b081930df2d77b22f04d00ac40d3d69ecb",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Grub the Ogre.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/cYtsRSxV5q9IMehn.safetensors",
+        "sha256": "b30fa847686ec1eb6be8c5bea4b6a5c5076ea66c3ff053cf98210a155d8aad1e",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Master Aldric.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/gSgG5Tor0GPEnqzC.safetensors",
+        "sha256": "a83430cc022b85c83753f859f9e44f406651646dab994fced8ef7a9a88005971",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Morwenna of the Deep.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/nOykTmcH9ydsGGIc.safetensors",
+        "sha256": "2ff2db91e70648623df8d42c0dcd7c336b2f14cb4362d602a20f292a4d862154",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Old Mortlake.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/lX3LavMNdlIbgEHH.safetensors",
+        "sha256": "d3f9429205e5906dcd3c78edaf7c9d5148c7e389e34c82c86f72f154adb5d923",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Sir Bramwell.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/y2eiKxtQo2B67deU.safetensors",
+        "sha256": "b3cea6789aeb58822af16ba08c4e5105d7febb840dcb67b47f426c19d1a8f209",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/The Snow Queen.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/NIWoEurJHMJjyUTe.safetensors",
+        "sha256": "bc8a8fcb95bb4f32d2d4376aa69d81b186b3ba2f8e9b6cb6a403b2b194590e85",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/The Thing Under the Stairs.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/GXaSqMEmOg12OIYb.safetensors",
+        "sha256": "bfa37bac98aefbb9de80f792c47d01a0f9e3b94e73776169040c249c8b722759",
+        "bytes": 256136
+      },
+      {
+        "path": "voices/Vyrmathrax the Ancient.safetensors",
+        "url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices/xO8xQo3BrB8FuI6J.safetensors",
+        "sha256": "63ab4b15427844a804480a1603774262e8903dee33cb279e2749860dbfaedd10",
+        "bytes": 256136
       }
     ],
-    "totalBytes": 65049306
+    "totalBytes": 74526338,
+    "voices": [
+      {
+        "id": "default",
+        "name": "Default",
+        "languageTag": "en",
+        "category": "narrator"
+      },
+      {
+        "id": "Alfie",
+        "name": "Alfie",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Bryony",
+        "name": "Bryony",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Delia",
+        "name": "Delia",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Easton",
+        "name": "Easton",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Edwin",
+        "name": "Edwin",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Elodie-Rose",
+        "name": "Elodie-Rose",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Everly",
+        "name": "Everly",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Freya",
+        "name": "Freya",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Hadley",
+        "name": "Hadley",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Harper",
+        "name": "Harper",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Hugh",
+        "name": "Hugh",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Imogen",
+        "name": "Imogen",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Juniper",
+        "name": "Juniper",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Lottie",
+        "name": "Lottie",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Maeve",
+        "name": "Maeve",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Micah",
+        "name": "Micah",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Miles",
+        "name": "Miles",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Pippa",
+        "name": "Pippa",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Preston",
+        "name": "Preston",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Russell",
+        "name": "Russell",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Spencer",
+        "name": "Spencer",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Teddy",
+        "name": "Teddy",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Toby",
+        "name": "Toby",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Trevor",
+        "name": "Trevor",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Zoey",
+        "name": "Zoey",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Azgorath",
+        "name": "Azgorath",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Captain Silas Blackwater",
+        "name": "Captain Silas Blackwater",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Fairy Godmother",
+        "name": "Fairy Godmother",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Fennick the Young Elf",
+        "name": "Fennick the Young Elf",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Grub the Ogre",
+        "name": "Grub the Ogre",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Master Aldric",
+        "name": "Master Aldric",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Morwenna of the Deep",
+        "name": "Morwenna of the Deep",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Old Mortlake",
+        "name": "Old Mortlake",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Sir Bramwell",
+        "name": "Sir Bramwell",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "The Snow Queen",
+        "name": "The Snow Queen",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "The Thing Under the Stairs",
+        "name": "The Thing Under the Stairs",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Vyrmathrax the Ancient",
+        "name": "Vyrmathrax the Ancient",
+        "languageTag": "en",
+        "category": "character"
+      }
+    ]
   },
   {
     "id": "phonon-english-coreml",
@@ -253,7 +705,237 @@ internal object ModelCatalog {
         "bytes": 137096081
       }
     ],
-    "totalBytes": 137096081
+    "totalBytes": 137096081,
+    "voices": [
+      {
+        "id": "default",
+        "name": "Default",
+        "languageTag": "en",
+        "category": "narrator"
+      },
+      {
+        "id": "Alfie",
+        "name": "Alfie",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Bryony",
+        "name": "Bryony",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Delia",
+        "name": "Delia",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Easton",
+        "name": "Easton",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Edwin",
+        "name": "Edwin",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Elodie-Rose",
+        "name": "Elodie-Rose",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Everly",
+        "name": "Everly",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Freya",
+        "name": "Freya",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Hadley",
+        "name": "Hadley",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Harper",
+        "name": "Harper",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Hugh",
+        "name": "Hugh",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Imogen",
+        "name": "Imogen",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Juniper",
+        "name": "Juniper",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Lottie",
+        "name": "Lottie",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Maeve",
+        "name": "Maeve",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Micah",
+        "name": "Micah",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Miles",
+        "name": "Miles",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Pippa",
+        "name": "Pippa",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Preston",
+        "name": "Preston",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Russell",
+        "name": "Russell",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Spencer",
+        "name": "Spencer",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Teddy",
+        "name": "Teddy",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Toby",
+        "name": "Toby",
+        "languageTag": "en-GB",
+        "category": "narrator"
+      },
+      {
+        "id": "Trevor",
+        "name": "Trevor",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Zoey",
+        "name": "Zoey",
+        "languageTag": "en-US",
+        "category": "narrator"
+      },
+      {
+        "id": "Azgorath",
+        "name": "Azgorath",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Captain Silas Blackwater",
+        "name": "Captain Silas Blackwater",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Fairy Godmother",
+        "name": "Fairy Godmother",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Fennick the Young Elf",
+        "name": "Fennick the Young Elf",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Grub the Ogre",
+        "name": "Grub the Ogre",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Master Aldric",
+        "name": "Master Aldric",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Morwenna of the Deep",
+        "name": "Morwenna of the Deep",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Old Mortlake",
+        "name": "Old Mortlake",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Sir Bramwell",
+        "name": "Sir Bramwell",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "The Snow Queen",
+        "name": "The Snow Queen",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "The Thing Under the Stairs",
+        "name": "The Thing Under the Stairs",
+        "languageTag": "en",
+        "category": "character"
+      },
+      {
+        "id": "Vyrmathrax the Ancient",
+        "name": "Vyrmathrax the Ancient",
+        "languageTag": "en",
+        "category": "character"
+      }
+    ]
   }
 ]
     """.trimIndent())

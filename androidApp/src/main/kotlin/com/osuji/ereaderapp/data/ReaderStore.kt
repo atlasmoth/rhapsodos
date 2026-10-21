@@ -39,10 +39,11 @@ import kotlinx.serialization.json.Json
 @Serializable data class SearchMatch(val kind: String, val id: String, val documentId: String, val passageId: String, val title: String, val text: String, val pageIndex: Int)
 @Serializable data class RemovedFiles(val paths: List<String> = emptyList())
 @Serializable data class PackFile(val path: String, val url: String, val sha256: String, val bytes: Long)
+@Serializable data class ModelVoice(val id: String, val name: String, val languageTag: String, val category: String)
 @Serializable data class ModelPack(
     val id: String, val name: String, val capability: String, val platform: String, val runtime: String, val version: String,
     val languageTags: List<String>, val minimumOS: Int, val minimumMemoryMB: Int, val license: String, val licenseUrl: String,
-    val description: String, val files: List<PackFile>, val totalBytes: Long, val adapter: String = id,
+    val description: String, val files: List<PackFile>, val totalBytes: Long, val adapter: String = id, val voices: List<ModelVoice> = emptyList(),
 )
 @Serializable data class ModelCatalogStatus(val revision: Long = 0, val acceptedAt: Long = 0, val source: String = "bundled")
 @Serializable data class ModelInstall(val packId: String, val generation: String, val status: String, val bytesDownloaded: Long, val totalBytes: Long, val installedPath: String = "", val error: String = "", val updatedAt: Long)

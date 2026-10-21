@@ -86,6 +86,9 @@ data class ModelFile(val path: String, val url: String, val sha256: String, val 
 data class VerifiedModelFile(val path: String, val sha256: String, val bytes: Long)
 
 @Serializable
+data class ModelVoice(val id: String, val name: String, val languageTag: String, val category: String)
+
+@Serializable
 data class ModelPack(
     val id: String,
     val name: String,
@@ -102,6 +105,7 @@ data class ModelPack(
     val files: List<ModelFile>,
     val totalBytes: Long = files.sumOf { it.bytes },
     val adapter: String = id,
+    val voices: List<ModelVoice> = emptyList(),
 )
 
 @Serializable
