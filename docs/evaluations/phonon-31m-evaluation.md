@@ -1,6 +1,6 @@
 # Phonon 31M evaluation — 21 October 2026
 
-**Decision: add Phonon as an optional downloadable English voice after the native integration checks pass.** The measured memory, preparation-speed and text-fidelity improvements justify the additional adapter. Keep existing voice selections and system speech. This comparison does not establish a preferred voice personality or physical-phone release readiness.
+**Evaluation conclusion: the measured memory, preparation-speed and text-fidelity improvements justified integrating Phonon.** The subsequent 21 October product decision makes Phonon the sole downloadable narration family and removes system speech, Kitten and Kokoro. This is a curation decision; the comparison does not establish universal perceptual dominance, a preferred voice personality or physical-phone release readiness. The active policy is in [model-manager.md](../model-manager.md).
 
 The [protocol](phonon-31m-protocol.md), [authored corpus](phonon-31m-corpus.json) and [structured results with transcripts](phonon-31m-results.json) record the evidence. All Python ran in conda `dl`; no user content was processed. Experimental code, model files and WAVs are outside the repository at `/private/tmp/rhapsodos-phonon-evaluation-m926hyez`.
 

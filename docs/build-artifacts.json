@@ -340,7 +340,7 @@
       "earlier_fixture_repair": {
         "association": "Initial pre-quarter-turn-correction broad whole-trim run; APK digest was not captured. Do not attribute this repair to the final strict-provenance artifact.",
         "proof": "Fresh complete OCR text differs from canonical only in terminal LF; literal UTF16 regions intersected/offset; geometry-only update left canonical source/passages/revision/notes/progress and source bytes unchanged.",
-        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded\u2192embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
+        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded→embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
         "subsequentPaintingEvidence": {
           "debug6b10a82e": {
             "rotationAssertions": 61,
@@ -4192,6 +4192,307 @@
       "x86-64 execution",
       "Live catalogue hosting/trust configuration and native HTTPS refresh",
       "Broader document fidelity and full PDF-to-note interaction qualification"
+    ]
+  },
+  "download_only_narration_verification": {
+    "recorded_on": "2026-10-21",
+    "source_revision": "c6cd732efec2b072bf2611a737cb0b28fedaffb4",
+    "identity": {
+      "name": "Rhapsodos",
+      "application_id": "com.osuji.ereaderapp",
+      "version": "0.01",
+      "build": 1,
+      "min_ios": "18.0",
+      "min_android": 28
+    },
+    "catalogue": {
+      "revision": 4,
+      "packs": 4,
+      "assets": 31,
+      "expiry": null,
+      "envelope_sha256": "731a30013f1b7bc599b27d11aab285c3bb5fa710f4fe6ef279217126b562168e",
+      "signature_verification": "passed"
+    },
+    "android": {
+      "builds": [
+        "Debug APK",
+        "unsigned Release APK",
+        "Release AAB"
+      ],
+      "lint": {
+        "errors": 0,
+        "warnings": 10
+      },
+      "native_integration": {
+        "device": "Pixel_10_Pro_Fold API37 ARM64 emulator, generic CPU",
+        "checks": 18,
+        "reports": {
+          "integration-remove": [
+            {
+              "step": "catalogue_and_pack_specific_voices",
+              "detail": true
+            },
+            {
+              "step": "ready_install_revalidated_after_process_restart",
+              "detail": true
+            },
+            {
+              "step": "removal_clears_selection_and_blocks_cached_audio_without_fallback",
+              "detail": true
+            }
+          ],
+          "integration-restart": [
+            {
+              "step": "catalogue_and_pack_specific_voices",
+              "detail": true
+            },
+            {
+              "step": "selection_and_ready_install_survive_process_restart",
+              "detail": true
+            },
+            {
+              "step": "retired_files_and_inventory_removed_preserving_recordings",
+              "detail": true
+            },
+            {
+              "step": "corrupt_asset_rejected_without_fallback_or_cached_playback",
+              "detail": true
+            },
+            {
+              "step": "redownload_replaces_damaged_pack_and_recovers",
+              "detail": true
+            }
+          ],
+          "integration-download": [
+            {
+              "step": "catalogue_and_pack_specific_voices",
+              "detail": true
+            },
+            {
+              "step": "fresh_install_requires_download_and_explicit_selection",
+              "detail": true
+            },
+            {
+              "step": "download_paused",
+              "detail": 2985629
+            },
+            {
+              "step": "https_resume_sha256_check_and_native_smoke",
+              "detail": 65049306
+            },
+            {
+              "step": "select_exact_pack_and_default_voice",
+              "detail": true
+            },
+            {
+              "step": "render_and_cache_reuse",
+              "detail": 226604
+            },
+            {
+              "step": "cancel_discards_partial_audio",
+              "detail": true
+            },
+            {
+              "step": "render_recovers_after_cancel",
+              "detail": 195884
+            },
+            {
+              "step": "explicit_device_check",
+              "detail": true
+            },
+            {
+              "step": "staged_retired_inventory_cleanup_fixture",
+              "detail": true
+            }
+          ]
+        },
+        "limits": "No physical-device quality or sustained performance qualification; no full PDF/voice-note UI journey"
+      },
+      "provenance": {
+        "original_production_apk": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "production_sha256": "1c1d08b125a768ab13fe0a01c54150a8ba8c0c4078ad54270f310ced8589917e",
+        "qa_sha256": "e9902d3ed184c1af785d608586505cd08c04bd37576370a80a4e1d7bec6fa7fd",
+        "isolation": "Separate application ID, production ReaderApplication/DEX/assets/resources/native libraries unchanged, adds external Kotlin QA activity. No consumer data access.",
+        "model_source": "Actual pinned HTTPS catalogue descriptors through production ModelManager",
+        "model_version": "0.4.0-eos1-52433c46975b",
+        "qa_sources": {
+          "Main.kt": "5f7c556144e50c84cc8df560f174afb3683cdbf4902c328a0c3f68a094dec4f5",
+          "AndroidManifest.xml": "5bfca5ebe57efe3031f7f9306744cf0df162e040fe95a623ea63661d9ed1a283",
+          "build.py": "4f6be43df1a29380bdc5b1bc64f29fc1bc2102ea817cdd8682677faecb7c8770"
+        }
+      },
+      "consumer_install": {
+        "status": "installed_and_launched",
+        "device": "emulator-5554 API37 ARM64",
+        "application": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": 1,
+        "apk_bytes": 173243827,
+        "apk_sha256": "1c1d08b125a768ab13fe0a01c54150a8ba8c0c4078ad54270f310ced8589917e",
+        "cleanup": "Exported task Phonon QA evidence then removed its package; exported older verified progressqa container then removed that disposable QA package; exported and hashed two duplicate consumer staging APKs before removing only those from /data/local/tmp. Bounded OS-cache trim also ran. Consumer container, recordings, documents and unrelated catcollector app preserved."
+      },
+      "artifacts": [
+        {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+          "sha256": "1c1d08b125a768ab13fe0a01c54150a8ba8c0c4078ad54270f310ced8589917e",
+          "bytes": 173243827
+        },
+        {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+          "sha256": "dc38d3f60656bb231693e0b77bad5379f37ebf1171b97d3f56f377a9eae76845",
+          "bytes": 147178735
+        },
+        {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+          "sha256": "1b03884bd6febf5b587f3635d33ed81ae2531cea3630c18aefc31f73f657fc81",
+          "bytes": 66366995
+        }
+      ]
+    },
+    "ios": {
+      "builds": [
+        "arm64 Simulator Debug",
+        "unsigned arm64 device Release"
+      ],
+      "provenance": {
+        "sources": {
+          "iosApp/Sources/ModelPacks.swift": "b28eb35ff1b4305e23519678674bad308468a3714589e9dead35b6d54cde868e",
+          "iosApp/Sources/ReaderStore.swift": "b00276bbfc7ead84dd012325da5c682c391889a2c89244e349b62274fab4b4b2",
+          "iosApp/Sources/NarrationText.swift": "ed30e89685bd78597ffe8b36f3157b89fe5aefc4a6bd7fbb193f61acf7980990",
+          "iosApp/Sources/DocumentArchives.swift": "c83913d216748b2599123152165777b2464742becbc9973405cbbf33f3b9dbab",
+          "iosApp/Sources/ModelCatalogClient.swift": "8502ab83a22e1f6f402a706e1aee4a0e3944e11dcd51546e48a3a87847ba0ae2",
+          "iosApp/Sources/FileDurability.swift": "51be283a89e9e7a52c680ead19c1a9bba91327ce855205f5d766b6117efd132a",
+          "iosApp/Sources/ReaderViews.swift": "b282f5675411e2706b8f4ffdfff02f3f68ef7da0bb38dce6b872ac776c87d0b0",
+          "iosApp/Sources/ReaderTools.swift": "1bbbbd2779262b67e5f078fd78ed08af0234ba1d93dab100580daf55cedfee38",
+          "iosApp/Sources/PhononAssets.swift": "c7e36c2bf5825b92bdfcf35f20a1ebd65fa6e35df16f7f196c3e07dd7e7734fe",
+          "iosApp/Sources/NarrationWave.swift": "afc5153101614ff2e065794ee61e6535de36fb0a5786914b0b038c01f86729b1",
+          "iosApp/Sources/PDFSurface.swift": "f7af9d1bb47aba28967e87eff3d658d970f8338f17445614f996c8cc8dd1bb5b",
+          "iosApp/Sources/VoiceVault.swift": "c848c53c90a6961c52b41af78c7e59695ad14c97a6e8ed8bc775425d36d77df3",
+          "iosApp/Sources/CoreMLSpeech.swift": "cff479b3427b330405957b8e95c6be7a79029e06b129b1106f6a623e2fe8e9f7",
+          "iosApp/Sources/TranscriptionFailure.swift": "c9038960b69e0e103e3a39ce4d2c16a508b2faf6bc251d22446bcbea9b74de49",
+          "iosApp/Sources/PhononVoice.swift": "da7a1cc1f1a3d2e29753e9aa67f7250a4f80840f4492d48c898a25b47a4efc40",
+          "iosApp/Sources/AudioCoordinator.swift": "4f6359b9ed1920c3af740a3c95fee7d5461c72e0a2b03bffd2de755d5896b067",
+          "iosApp/Sources/Brand.swift": "1e6932c7ab677fedfba307ee1a8a3c240a5202412bd78406f72895d69a4afead",
+          "iosApp/Sources/SharedRepository.swift": "e8db0434c19b62f4c3d033ef7debd8f3d8133e2dc8cf56a82e4d0f41613566e0",
+          "iosApp/Sources/EReaderApp.swift": "8c50875bb4302ff2065c590b47b498767e161824b2ead29eec5993fbdd34a1ee",
+          "iosApp/Sources/Feedback.swift": "99fbfce4766a658c0df0ea585e4ed2757455c099251a9114134c9250f4a62a05"
+        },
+        "Debug-iphonesimulator": {
+          "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app",
+          "metadata": {
+            "CFBundleDisplayName": "Rhapsodos",
+            "CFBundleIdentifier": "com.osuji.ereaderapp",
+            "CFBundleShortVersionString": "0.01",
+            "CFBundleVersion": "1",
+            "MinimumOSVersion": "18.0"
+          },
+          "retired_resources": [],
+          "main_executable_sha256": "5074b3aa667b15188ca9112d44ba5beec3e9500886e937c84cfe6c48d3a4d30a"
+        },
+        "Release-iphoneos": {
+          "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Release-iphoneos/EReader.app",
+          "metadata": {
+            "CFBundleDisplayName": "Rhapsodos",
+            "CFBundleIdentifier": "com.osuji.ereaderapp",
+            "CFBundleShortVersionString": "0.01",
+            "CFBundleVersion": "1",
+            "MinimumOSVersion": "18.0"
+          },
+          "retired_resources": [],
+          "main_executable_sha256": "98583fa2176f27dadad2d7487d3cba76b4ee0f856df99268411d901dcd89b143"
+        }
+      },
+      "debug_code": {
+        "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app/EReader.debug.dylib",
+        "sha256": "a0bda2813cce9ea0b0c7e8073cff93504555454e24739ea28a28bd85e757ced8",
+        "bytes": 44881920
+      },
+      "native_speech_transport_checks": 13,
+      "cleanup_checks": 4,
+      "cleanup_scope": "Actual production deletion/ownership/sync methods extracted into host filesystem harness; in-memory repository stand-in, not SQLDelight.",
+      "speech_permission_absent": true,
+      "retired_resources_absent": true,
+      "evidence_directory": "/private/tmp/rhapsodos-download-only-ios-qa",
+      "main_app_ui": {
+        "manifest_path": "/private/tmp/rhapsodos-phone-navigation-qa/evidence.json",
+        "manifest_sha256": "5f05e86d116e50e712e5c740a279cfe5c464f3cf48cd08fcfa6e44afe209e2f6",
+        "build_log": "/private/tmp/rhapsodos-phone-navigation-qa/final-debug-build.log",
+        "shared_framework_sha256": "f3a03d32e4f914990ba07c81b98060faa7f2debc6be62add3dd7476998ec0519",
+        "checks": [
+          "iPhone QA18.4 portrait: original PDF only, single library icon; library overlays full width; return and same-book selection work.",
+          "iPhone QA18.4 page2 browsed via Pages sheet remains after library toggle/same-book selection; listening cursor stays0%.",
+          "iPhone QA18.4 rotation portrait-to-landscape: reader and library remain single-column; browsed page2 preserved. Layout checked before final clean package; same ReaderRoot phone code.",
+          "iPad QA18.4 final clean package: split pane has exactly one Hide library control; hide/show works; listening cursor unchanged.",
+          "iPad QA18.4 fresh no-model Play opens model gallery with Phonon narration and Whisper transcription.",
+          "iPhone QA18.4 final Settings has only downloaded voices/transcription and Off; no system narration or system ASR; gallery has Phonon+Whisper, no Kokoro.",
+          "iPhone QA18.4 downloaded Phonon through final UI; device check3.8s succeeded; Active.",
+          "iPhone QA18.4 terminated/relaunched: Phonon selected and usable state retained.",
+          "iPhone QA18.4 reinstalled identical final app preserving container then relaunched: Phonon still Active; repeated device check2.6s.",
+          "Final .app clean rebuild after moving stale generated package aside; no retired bundle resources.",
+          "Final app installed on all four listed simulators, containers preserved, installed code hashes match final package."
+        ],
+        "installs": [
+          {
+            "device": "BE11DA8E-BF6F-4E91-AF75-A8804A638377",
+            "name": "iPhone QA18.4",
+            "container_preserved": true,
+            "app_path": "/Users/atlasmoth/Library/Developer/CoreSimulator/Devices/BE11DA8E-BF6F-4E91-AF75-A8804A638377/data/Containers/Bundle/Application/45BFF24B-9C16-4B20-A68C-7043E1079B36/EReader.app",
+            "debug_dylib_sha256": "a0bda2813cce9ea0b0c7e8073cff93504555454e24739ea28a28bd85e757ced8",
+            "matches_final_package": true
+          },
+          {
+            "device": "4AF3B089-E15E-4D14-9BEC-F9DBD916CC01",
+            "name": "iPad QA18.4",
+            "container_preserved": true,
+            "app_path": "/Users/atlasmoth/Library/Developer/CoreSimulator/Devices/4AF3B089-E15E-4D14-9BEC-F9DBD916CC01/data/Containers/Bundle/Application/ECE7F648-7A19-4ABE-A3C8-5F3970A3C4D1/EReader.app",
+            "debug_dylib_sha256": "a0bda2813cce9ea0b0c7e8073cff93504555454e24739ea28a28bd85e757ced8",
+            "matches_final_package": true
+          },
+          {
+            "device": "81A30D9D-454F-490A-9162-8A86AD0104B8",
+            "name": "Consumer iPhone Duo27.1",
+            "container_preserved": true,
+            "app_path": "/Users/atlasmoth/Library/Developer/CoreSimulator/Devices/81A30D9D-454F-490A-9162-8A86AD0104B8/data/Containers/Bundle/Application/C006DD28-39DC-466F-A208-76CF363AE600/EReader.app",
+            "debug_dylib_sha256": "a0bda2813cce9ea0b0c7e8073cff93504555454e24739ea28a28bd85e757ced8",
+            "matches_final_package": true
+          },
+          {
+            "device": "4E05A37D-19E7-4C2D-8A1E-65059327776B",
+            "name": "Consumer iPad27.0",
+            "container_preserved": true,
+            "app_path": "/Users/atlasmoth/Library/Developer/CoreSimulator/Devices/4E05A37D-19E7-4C2D-8A1E-65059327776B/data/Containers/Bundle/Application/C5E3F381-A803-423B-B8E6-671A70A748DC/EReader.app",
+            "debug_dylib_sha256": "a0bda2813cce9ea0b0c7e8073cff93504555454e24739ea28a28bd85e757ced8",
+            "matches_final_package": true
+          }
+        ],
+        "screenshots": {
+          "ipad-final-library-hidden.png": "f5c52fd5f10a1770d267923c6b2ba2b5e4a5d23c84e376e586b2d97071036382",
+          "ipad-final-play-needs-model.png": "7c12e2441ab0ed622b3d8880649517e0387845452241ff8af16b45b3d20086a4",
+          "ipad-final-split.png": "eb8ac1ad376db501c0e33a4c8712f366158eb58101806583ad530394b2f04e4c",
+          "phone-final-phonon-active.png": "b205969b9663ee3fee5997af042be555be889b98e4274c62bc840d6de585b9b2",
+          "phone-final-phonon-after-reinstall.png": "75f4cff8ce6fe1af4c23699ca260cec2062e189a3559e31453dc1c2f78988d68",
+          "phone-final-phonon-after-relaunch.png": "4d1ab2b5f4e949811a35a835942f699206b3f19ff30356ff28a2d080b14228de",
+          "phone-portrait-page2.png": "0defc0cba89e79b8c1165354ac038fd0665bb553d5df1a579f133dbafc3f2243"
+        },
+        "limits": [
+          "Left-edge gesture handler unchanged; native simulator drag injection did not reliably deliver, so edge swipe not runtime qualified.",
+          "No physical-device performance, haptics, or audio-quality qualification claimed.",
+          "iOS27 consumer installs verified by executable hashes; UI interaction checked on iOS18.4 QA devices."
+        ]
+      }
+    },
+    "shared": {
+      "checks": 18,
+      "scope": "Compiled production ReaderCore and SQLDelight/JDBC SQLite; old catalogue retirement, signed release4, unsupported install rejection, restart and source/note/progress durability.",
+      "evidence_directory": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-download-only-or_wt90k",
+      "results_sha256": "36b62bc0988e4c369dcbf547cc0c0cebd27c7483820d2269fbb8872d5501fda6"
+    },
+    "limits": [
+      "No physical-device quality, sustained thermal/battery or microphone qualification in this task.",
+      "Host/emulator measurements are not fleet qualification.",
+      "No new full PDF-to-recorded-note UI journey.",
+      "iPhone left-edge gesture remains unqualified because native simulator drag injection was unreliable; existing handler unchanged.",
+      "Live hosted-catalogue refresh remains unconfigured; bundled model HTTPS downloads were exercised."
     ]
   }
 }
