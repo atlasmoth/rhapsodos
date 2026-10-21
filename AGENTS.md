@@ -23,7 +23,7 @@ Read [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/produc
 - Persist tagged `cropTopLeftV1` geometry in the unrotated PDF crop box. Apply rotation in native rendering and hit testing. Repair untagged geometry only after fresh preparation proves the canonical text: exact whole-page equality, or embedded whole-page outer-whitespace trimming with an explicit UTF-16 prefix offset. OCR requires exact equality. Never use substring/fuzzy matching or move user anchors to accommodate a drawing error.
 - Pause and freeze the source position before capture. Save durable audio before acknowledging a saved note. ASR failure must not prevent saving or move the attachment.
 - Enforce local-only policy in every content-processing and sync path. Never silently send a document or voice note to a remote fallback.
-- Core listening and note capture must not require a large language model, a network connection, an account or a flagship device. Optional packs need real device qualification.
+- Narration uses downloaded Phonon packs only; do not restore system voices, system recognition, Kitten or Kokoro. The initial explicit model download needs a network connection; subsequent listening and note capture run locally without an account or a large language model. Saving a note must not depend on a speech model. Future packs must demonstrate a useful measured advantage over Phonon for their narration use case, with real device qualification.
 - Use one canonical persistence schema and clear ownership. Avoid duplicate native stores that disagree about documents, notes or progress.
 - Treat user recordings and edits as durable user data; generated narration and model files are separately managed assets or caches.
 

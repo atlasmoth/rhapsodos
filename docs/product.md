@@ -37,7 +37,7 @@ Use the system file picker. Prefer a dependable local copy for the initial imple
 
 Preparation is progressive. Prioritize the first/current passage and nearby content. A full document scan must not block the first useful listen when the start is ready. Show uncertainty or preparation failure in context, with access to the original page.
 
-The first-run model choice should be simple: recommend one compatible voice and explain size and offline use. System speech can support immediate use where available. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
+The first-run model choice offers Phonon with its size, device requirements and offline use. Future voices must earn their additional complexity through a measured advantage. Listening requires the downloaded voice; there is no system speech option. Import, PDF viewing and durable note capture remain usable before download. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
 
 ### Listening
 

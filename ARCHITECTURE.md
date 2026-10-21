@@ -45,7 +45,7 @@ These are responsibility boundaries. Start with a small number of modules and ad
 | Area | Shared KMP responsibility | Native responsibility |
 | --- | --- | --- |
 | Documents | Identity, graph, reading order contracts, normalization, source mappings and search rules | Import access, PDF rendering/extraction, OCR and coordinate conversion |
-| Narration | Segments, editions, queue plans, cache identity and source alignment contracts | Model/system speech execution, audio output and validated timing |
+| Narration | Segments, editions, queue plans, cache identity and source alignment contracts | Downloaded model execution, audio output and validated timing |
 | Playback | User commands, durable progress, preparation policy and presentation snapshots | Transport clock, media session, audio focus/routes, interruptions and background lifetime |
 | Notes | Frozen anchors, records, transcript revisions, job state and conflict rules | Microphone permission, capture, recoverable files and audio-session transitions |
 | Persistence | One schema, repositories, transactions, outbox and recovery rules | Database driver, protected files, keys and backup exclusions |
@@ -121,7 +121,7 @@ Native player presentations share the arrangement in [docs/design.md](docs/desig
 
 Maintain segment audio together with source-to-spoken mappings and alignment metadata. An alignment track declares **word, sentence or passage precision**. If a voice only supports sentence alignment, use that honest precision. Do not spread word timings uniformly over a segment and claim accuracy.
 
-Provider timestamps, native live speech callbacks and optional post-generation alignment have different guarantees. Qualify each path. Prefer system speech rendered into sentence/segment buffers or files and played through the native transport where that route is supported. A direct live-speech fallback must declare coarser precision and cannot claim a seekable sample clock from a text-range callback. Only one transport adapter is active at a time. The player maps its actual media position, or explicitly limited live progress, through the edition's alignment to the source graph. Speed changes must not rely on a separate wall-clock estimate.
+Generated narration uses native media time as its clock. Qualify any model alignment track before presenting word timing; the current Phonon adapter provides passage-level highlighting. Only one native transport is active at a time. It maps measured media position through the narration edition to source progress. Playback speed must not rely on a separate wall-clock estimate. System speech execution and speech-range clocks are removed.
 
 Cache keys include document/graph and normalization revisions, model/voice version, language and audio-affecting synthesis settings. Changing playback speed at transport level normally does not require regeneration. A voice change creates a new edition and maps the current source point into it; do not mix incompatible segment/alignment files.
 
@@ -157,7 +157,7 @@ Translation is a separate later operation on the transcript; it retains original
 
 ## 7. Local model and resource strategy
 
-Ship a usable native/system speech path and qualify a compact enhanced local voice where feasible. Settings owns voice selection and access to curated **Offline voices** and **Voice-note transcription** packs, with language, storage, suitability and readiness. Voices are used for document narration; there is no separate sample-playback feature. Model execution is task-specific; do not force TTS and ASR into a large general model.
+Narration requires an explicitly downloaded, verified and selected Phonon pack. System TTS and system ASR are excluded. Kitten and Kokoro narration are retired; a future pack must demonstrate a useful quality, language, accessibility or resource advantage over Phonon before adding another adapter. Settings owns voice selection and access to curated **Offline voices** and **Voice-note transcription** packs, with language, storage, suitability and readiness. Voices are used for document narration; there is no separate sample-playback feature. Model execution is task-specific; do not force TTS and ASR into a large general model.
 
 The gallery borrows the discover/download/run pattern from [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery). Its implementation and benchmarks are references, not our production architecture or a guarantee that arbitrary imported models run on both platforms.
 
@@ -173,8 +173,8 @@ Curate artifacts first. Arbitrary model import is a later advanced capability wi
 
 | Tier | Intended experience |
 | --- | --- |
-| Baseline | Local document display, available system speech, durable note capture; compact ASR where qualified or deferred transcription |
-| Compact local | Qualified small custom voice and note ASR, bounded prefetch and one heavy inference task at a time |
+| Baseline | Local document display and durable note capture without speech packs; listening begins after a verified voice download |
+| Compact local | Downloaded Phonon narration and Moonshine/Whisper note ASR, bounded prefetch and one heavy inference task at a time |
 | Enhanced local | Larger optional voices/ASR on measured compatible devices, with explicit storage and preparation behavior |
 | Optional cloud | Explicit remote voice, note ASR or document processing, governed separately by privacy policy and budget |
 

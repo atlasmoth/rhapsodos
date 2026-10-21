@@ -39,7 +39,7 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 
 - Listening is the core experience. Reading primarily supports visual tracking and access to the original source.
 - Voice-note ASR transcribes a saved recording attached to a frozen source position. Saving and resuming do not wait for transcription.
-- Local-only content processing and curated downloadable speech packs are fundamental. Cloud processing remains a researched future capability behind separate consent.
+- Narration requires a downloaded and verified Phonon voice; system speech, Kitten and Kokoro are removed. Moonshine (Android) and Whisper (iOS) transcribe saved notes after download. Local-only content processing and curated speech packs are fundamental. Cloud processing remains a researched future capability behind separate consent.
 - Kotlin Multiplatform shares domain, data and policy. Android and iOS retain native interfaces, audio, document rendering and inference adapters.
 - Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin, Material3 Adaptive and LiteRT. iOS uses Swift, SwiftUI and CoreML, supporting iOS 18 and newer.
 - Wide windows, tablets and foldables receive deliberate layouts that preserve the listening session.
