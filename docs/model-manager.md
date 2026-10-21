@@ -1,6 +1,6 @@
 # Model manager
 
-Rhapsodos manages curated, compatible speech packs. Settings opens a shared arrangement on both platforms: Narration, then Voice-note transcription. Each card distinguishes Download, Downloading, Paused, Checking, Ready, Active, Failed and Unavailable. Transfer completion does not imply that a model can run. Voices and transcription have explicit persistent selections; disabling transcription leaves saved recordings and pending notes intact. Android defaults to the Moonshine pack and iOS to system on-device recognition. Downloads require explicit selection after verification; missing selected packs never trigger an undisclosed alternative.
+Rhapsodos manages curated, compatible speech packs. Settings opens a shared arrangement on both platforms: Narration, then Voice-note transcription. Each card distinguishes Download, Downloading, Paused, Checking, Ready, Active, Failed and Unavailable. Transfer completion does not imply that a model can run. Voices and transcription have explicit persistent selections; disabling transcription leaves saved recordings and pending notes intact. Android defaults to the Moonshine pack and iOS to the Whisper pack. Both wait for an explicit download; neither invokes system speech services. Downloads require explicit selection after verification; missing selected packs never trigger an undisclosed alternative.
 
 Device requirements explain the supported OS, minimum memory and storage. A successful local compatibility check establishes that the adapter can execute its public sanity input on that device. It does not establish listening quality, sustained speed, peak memory, battery usage or fleet qualification. Checking and optional work yield to narration and capture. Model changes preserve the frozen source position and user edits.
 
@@ -15,7 +15,7 @@ The payload is:
 ```json
 {
   "formatVersion": 1,
-  "revision": 3,
+  "revision": 4,
   "publishedAt": 1791417600000,
   "packs": []
 }
@@ -25,15 +25,15 @@ The example date is illustrative; publication tooling generates the current publ
 
 Signatures establish authenticity, not that a catalogue is the newest available. A permanent, correctly signed older catalogue remains acceptable to a fresh installation with no remembered revision; an existing installation rejects revisions below its last accepted revision. This is the deliberate tradeoff for eliminating renewal. Permanent validity does not guarantee that upstream model files remain hosted forever.
 
-`ModelPack.adapter` identifies one of the six compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Asset URLs pin Hugging Face or GitHub revisions; an exception accepts an exact compiled file descriptor (URL, path, size and hash together), allowing the pinned Phonon CoreML release ZIP without trusting arbitrary release URLs; sizes, hashes, identifiers and paths are bounded and validated. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
+`ModelPack.adapter` identifies one of the four compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Asset URLs pin Hugging Face or GitHub revisions; an exception accepts an exact compiled file descriptor (URL, path, size and hash together), allowing the pinned Phonon CoreML release ZIP without trusting arbitrary release URLs; sizes, hashes, identifiers and paths are bounded and validated. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
 
-New bundled profiles remain discoverable after an app update even when an older verified catalogue is cached; existing cached editions keep their identity. The canonical SQLDelight catalogue row owns revision, exact verified payload, accepted time and derived entries. An update retains omitted installed or unfinished editions. It does not alter model-install rows, source documents, notes or listening progress. Existing model identities cannot silently acquire different weights, versions or execution requirements. New compatible editions can be downloaded beside a working edition and explicitly selected after verification; removing the old one remains a deliberate action.
+New bundled profiles remain discoverable after an app update even when an older verified catalogue is cached; existing cached editions keep their identity. The canonical SQLDelight catalogue row owns revision, exact verified payload, accepted time and derived entries. An update retains omitted installed or unfinished editions only while their adapter remains supported. Discovery filters retired adapters out of cached catalogues, and native startup removes their model assets before clearing their install inventory. Documents, recordings and notes are never part of that cleanup. It does not alter model-install rows, source documents, notes or listening progress. Existing model identities cannot silently acquire different weights, versions or execution requirements. New compatible editions can be downloaded beside a working edition and explicitly selected after verification; removing the old one remains a deliberate action.
 
 ## Release setup
 
 No production catalogue address or trust key is configured yet. The apps use the bundled catalogue and say so. Configure live refresh only after preparing and reviewing a signed release; app implementation does not publish or host anything.
 
-The uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 3 contains the six bundled packs and has no expiry. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload. Apps built before permanent-catalogue support must be rebuilt.
+The uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 4 contains the four bundled packs and has no expiry. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload. Apps built before permanent-catalogue support must be rebuilt.
 
 Keep the signing secret outside the repository and protect a recoverable copy. Use a stable release key rather than temporary verification keys:
 
@@ -54,6 +54,12 @@ Qualification must include valid and invalid signatures, permanent validity, exp
 
 ## Phonon narration
 
-Settings → Narration offers Phonon as an optional download, followed by a quiet device check and explicit Use this voice action. Android downloads four pinned Q8/config/tokenizer/default-voice files (65.0 MB); iOS downloads one pinned CoreML ZIP (137.1 MB) and compiles its three models locally. Both packs use a 3 GB memory guard, which is an eligibility threshold rather than a physical-device guarantee. Android requires a supported 64-bit process. The iOS app requires iOS 18.
+Settings → Narration offers Phonon as the only narration download, followed by a quiet device check and explicit Use this voice action. Android downloads four pinned Q8/config/tokenizer/default-voice files (65.0 MB); iOS downloads one pinned CoreML ZIP (137.1 MB) and compiles its three models locally. Both packs use a 3 GB memory guard, which is an eligibility threshold rather than a physical-device guarantee. Android requires a supported 64-bit process. The iOS app requires iOS 18.
 
 iOS verifies the outer archive, its exact permitted paths, bounded sizes, duplicate/symlink restrictions and every inner digest before extraction into staging. Derived compiled models receive a checked receipt tied to the archive and OS. Native readiness synthesis precedes canonical activation. Android uses the existing resumable file downloader and per-file integrity checks. Both paths serialize inference with capture/transcription, discard cancelled or incomplete PCM and keep native audio time authoritative. Model code ships in the app; only assets are downloaded.
+
+## Downloaded speech only
+
+Narration requires a verified, explicitly selected Phonon pack. A fresh install opens and prepares documents and saves voice notes, but Play directs the listener to download a voice until one is ready. Removing or invalidating the selected pack pauses narration and requires download or repair; cached audio does not bypass readiness. There is no system TTS or system ASR selection or fallback. Whisper and Moonshine remain separate transcription capabilities; unavailable transcription leaves saved recordings pending.
+
+Kitten and Kokoro were removed by the product decision on 21 October 2026 after the recorded Phonon comparison. This simplifies the supported narration surface; it does not turn the speed/memory comparison into proof of universal listening-quality dominance. Future narration packs must justify a measured quality, language, accessibility or resource advantage against Phonon before adding runtime and gallery complexity.
