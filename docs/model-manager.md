@@ -32,6 +32,8 @@ The canonical SQLDelight catalogue row owns revision, exact verified payload, ac
 
 No production catalogue address or trust key is configured yet. The apps use the bundled catalogue and say so. Configure live refresh only after preparing and reviewing a signed release; app implementation does not publish or host anything.
 
+The first uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 1 contains the four bundled packs and expires on 19 January 2027. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload.
+
 Keep the signing secret outside the repository and protect a recoverable copy. Use a stable release key rather than temporary verification keys:
 
 ```sh
