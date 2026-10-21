@@ -72,6 +72,18 @@ class ReaderApplication : Application() {
         }
         koin.get<ModelManager>().beforeTranscriptionChange = { koin.get<TranscriptionCoordinator>().pauseForModelRemoval() }
         koin.get<ModelManager>().transcriptionSelectionAllowed = { !koin.get<PlaybackCoordinator>().capturing }
+        koin.get<ModelManager>().voiceActivationBlock = {
+            val audio = koin.get<PlaybackCoordinator>().state.value
+            when {
+                audio.capturing -> "Finish recording to continue"
+                audio.noteId != null -> "Finish note playback to continue"
+                else -> null
+            }
+        }
+        koin.get<ModelManager>().activateVoice = { pack, voice, token -> koin.get<PlaybackCoordinator>().selectVoice(koin.get(), pack, voice, token) }
+        applicationScope.launch {
+            koin.get<PlaybackCoordinator>().state.collect { koin.get<ModelManager>().resumePendingActivation() }
+        }
         koin.get<ModelManager>().catalogueWorkloadIdle = {
             val audio = koin.get<PlaybackCoordinator>().state.value
             foreground.value && !audio.playing && !audio.capturing && !audio.preparing && !koin.get<TranscriptionCoordinator>().hasActiveInference

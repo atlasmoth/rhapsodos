@@ -443,8 +443,9 @@ class PlaybackCoordinator(
         return persistSnapshot(reservation.reading) { isCaptureReservationValid(reservationId) } && isCaptureReservationValid(reservationId)
     }
 
-    suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String? = null): Unit = voiceSelection.withLock {
-        check(!capturing) { "Finish your recording before changing voices." }
+    suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String? = null, activationToken: String? = null): Unit = voiceSelection.withLock {
+        check(!capturing) { "Finish recording to continue" }
+        check(activationToken == null || models.activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
         publish()
         val current = state.value
         val document = contents
@@ -454,14 +455,16 @@ class PlaybackCoordinator(
         generation?.cancelAndJoin()
         check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
         val previousAdapter = models.state.value.catalog.firstOrNull { it.id == models.state.value.selectedVoice }?.adapter
-        models.selectVoice(packId, voiceId)
+        currentCoroutineContext().ensureActive()
+        check(activationToken == null || models.activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
+        models.selectVoice(packId, voiceId, activationToken)
         if (previousAdapter != null) models.runtime.close(previousAdapter)
         check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
         if (document == null) stop()
-        else if (note != null) playSavedNote(note, current.positionMillis, current.playing, document)
+        else if (note != null) playSavedNote(note, current.positionMillis, false, document)
         else {
             val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
-            listen(document, index, 0, current.playing, current.passageFraction)
+            listen(document, index, 0, false, current.passageFraction)
         }
     }
 

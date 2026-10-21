@@ -34,30 +34,41 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.URI
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.update
 import kotlin.coroutines.coroutineContext
 
+@Serializable
+data class SpeechActivationIntent(val token: String, val packId: String, val voiceId: String = "default", val generation: String? = null, val paused: Boolean = false)
+
 data class ModelState(
     val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(),
-    val selectedVoice: String = "", val voiceId: String = "default", val selectedTranscription: String = "android-moonshine-english",
+    val selectedVoice: String = "", val voiceId: String = "default", val selectedTranscription: String = "off",
     val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null,
     val catalogStatus: ModelCatalogStatus = ModelCatalogStatus(), val refreshing: Boolean = false,
     val catalogMessage: String? = null, val changingTranscription: Boolean = false, val initializing: Boolean = true,
     val checks: Map<String, Long> = emptyMap(),
     val unavailable: Map<String, String> = emptyMap(),
+    val pendingActivation: Map<String, SpeechActivationIntent> = emptyMap(),
+    val activating: Set<String> = emptySet(),
+    val activationMessage: Map<String, String> = emptyMap(),
 )
 
 fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in setOf("arm64-v8a", "armeabi-v7a", "x86_64") }
 
 class ModelManager(private val context: Context, private val store: ReaderStore, val runtime: OfflineSpeechRuntime, private val scope: CoroutineScope) {
     private val preferences = context.getSharedPreferences("speech", Context.MODE_PRIVATE)
-    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "") ?: "", voiceId = preferences.getString("voiceId", "default") ?: "default", selectedTranscription = preferences.getString("transcriptionPack", "android-moonshine-english") ?: "android-moonshine-english"))
+    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "") ?: "", voiceId = preferences.getString("voiceId", "default") ?: "default", selectedTranscription = preferences.getString("transcriptionPack", "off") ?: "off", pendingActivation = listOf("tts", "asr").mapNotNull { capability -> preferences.getString("activation.$capability", null)?.let { value -> runCatching { capability to Json.decodeFromString<SpeechActivationIntent>(value) }.getOrNull() } }.toMap()))
     val state = mutableState.asStateFlow()
     private val ready = MutableSharedFlow<String>(extraBufferCapacity = 2)
     val readyEvents = ready.asSharedFlow()
@@ -66,10 +77,15 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     var runIdleVerification: (suspend (suspend () -> Unit) -> Unit)? = null
     var beforeTranscriptionChange: (suspend () -> Unit)? = null
     var transcriptionSelectionAllowed: () -> Boolean = { false }
+    var voiceActivationBlock: () -> String? = { "Open Rhapsodos to finish setup." }
+    var activateVoice: (suspend (String, String, String) -> Unit)? = null
     var catalogueWorkloadIdle: () -> Boolean = { false }
     val catalogRefreshConfigured: Boolean get() = ModelCatalogSource.httpsUrl.isNotBlank() && ModelCatalogSource.publicKeyX963.isNotBlank()
     private val jobs = ConcurrentHashMap<String, Job>()
     private val validated = ConcurrentHashMap.newKeySet<String>()
+    private val activationJobs = mutableMapOf<String, Job>()
+    private val downloadGenerations = mutableMapOf<String, String>()
+    private val transcriptionSelection = Mutex()
     internal var downloadService: ModelDownloadService? = null
     internal fun hasDownloads() = jobs.isNotEmpty()
     private val client = HttpClient(OkHttp) {
@@ -82,6 +98,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             val catalog = store.modelCatalog()
             mutableState.update { it.copy(catalog = catalog) }
             removeRetiredPacks(catalog)
+            state.value.pendingActivation.filter { (_, intent) -> catalog.none { it.id == intent.packId } }.keys.forEach(::cancelActivation)
             if (catalog.none { it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" }) clearVoiceSelection()
             val installs = store.modelInstalls()
             val catalogStatus = store.modelCatalogStatus()
@@ -125,7 +142,84 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             state.value.installs.filter { it.status == "ready" }.forEach { ready.emit(it.packId) }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (failure: Exception) { mutableState.value = state.value.copy(error = failure.message ?: "Offline downloads could not be loaded. Restart Rhapsodos to retry.") }
-        finally { mutableState.update { it.copy(initializing = false) } }
+        finally {
+            mutableState.update { it.copy(initializing = false) }
+            resumePendingActivation()
+        }
+    }
+
+    fun setup(packId: String) = scope.launch(Dispatchers.Main.immediate) {
+        if (state.value.initializing || state.value.refreshing || packId in state.value.removing) return@launch
+        val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return@launch
+        val generation = downloadGenerations[packId] ?: state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" }?.generation
+        try {
+            cancelActivation(pack.capability)
+            val intent = SpeechActivationIntent(UUID.randomUUID().toString(), packId, generation = generation)
+            saveActivation(pack.capability, intent)
+            mutableState.update { it.copy(error = null) }
+            if (installed(packId) != null) resumePendingActivation()
+            else {
+                if (state.value.installs.any { it.packId == packId && it.status in setOf("failed", "paused") }) jobs[packId]?.join()
+                if (activationIsCurrent(pack.capability, intent.token)) download(packId)
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) { reportError(failure.message ?: "Setup could not be saved. Try again.") }
+    }
+
+    fun activationIsCurrent(capability: String, token: String): Boolean = state.value.pendingActivation[capability]?.token == token
+
+    private fun saveActivation(capability: String, intent: SpeechActivationIntent?) {
+        val editor = preferences.edit()
+        if (intent == null) editor.remove("activation.$capability") else editor.putString("activation.$capability", Json.encodeToString(intent))
+        check(editor.commit()) { "Setup could not be saved. Free storage and try again." }
+        mutableState.update { it.copy(pendingActivation = if (intent == null) it.pendingActivation - capability else it.pendingActivation + (capability to intent), activationMessage = it.activationMessage - capability) }
+    }
+
+    fun cancelActivation(capability: String) {
+        saveActivation(capability, null)
+        activationJobs.remove(capability)?.cancel()
+        mutableState.update { it.copy(activating = it.activating - capability) }
+    }
+
+    fun disableTranscription() {
+        try { cancelActivation("asr") }
+        catch (failure: Exception) { reportError(failure.message ?: "Transcription could not be turned off."); return }
+        scope.launch(Dispatchers.Main.immediate) {
+            runCatching { selectTranscription("off") }.onFailure { reportError(it.message ?: "Transcription could not be turned off.") }
+        }
+    }
+
+    fun resumePendingActivation() {
+        if (state.value.initializing || state.value.refreshing) return
+        for ((capability, intent) in state.value.pendingActivation) {
+            if (activationJobs[capability]?.isActive == true || intent.paused) continue
+            val install = state.value.installs.firstOrNull { it.packId == intent.packId && it.status == "ready" && it.generation == intent.generation }
+            if (install == null || installed(intent.packId) == null) continue
+            val blocked = if (capability == "tts") voiceActivationBlock() else if (!transcriptionSelectionAllowed()) "Finish recording to continue" else null
+            if (blocked != null) {
+                mutableState.update { it.copy(activationMessage = it.activationMessage + (capability to blocked)) }
+                continue
+            }
+            val task = scope.launch(Dispatchers.Main.immediate, start = CoroutineStart.LAZY) {
+                mutableState.update { it.copy(activating = it.activating + capability, activationMessage = it.activationMessage - capability) }
+                try {
+                    if (capability == "tts") checkNotNull(activateVoice).invoke(intent.packId, intent.voiceId, intent.token)
+                    else selectTranscription(intent.packId, intent.token)
+                    val selected = if (capability == "tts") state.value.selectedVoice == intent.packId && state.value.voiceId == intent.voiceId else state.value.selectedTranscription == intent.packId
+                    if (selected && activationIsCurrent(capability, intent.token)) saveActivation(capability, null)
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (failure: Exception) {
+                    if (activationIsCurrent(capability, intent.token)) mutableState.update { it.copy(activationMessage = it.activationMessage + (capability to (failure.message ?: "Setup could not finish. Try again."))) }
+                } finally {
+                    if (activationJobs[capability] == coroutineContext[Job]) {
+                        activationJobs.remove(capability)
+                        mutableState.update { it.copy(activating = it.activating - capability) }
+                    }
+                }
+            }
+            activationJobs[capability] = task
+            task.start()
+        }
     }
 
     private suspend fun removeRetiredPacks(catalog: List<ModelPack>) {
@@ -185,23 +279,29 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     fun asrDirectory(): File? = if (asrAdapter() == null) null else installed(state.value.selectedTranscription)
     fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-moonshine-english" }?.adapter
 
-    suspend fun selectTranscription(packId: String) {
+    suspend fun selectTranscription(packId: String, activationToken: String? = null) {
         withContext(Dispatchers.Main.immediate) {
-            check(transcriptionSelectionAllowed()) { "Finish your recording before changing transcription." }
-            check(!state.value.changingTranscription) { "Wait for transcription selection to finish." }
-            check(packId == "off" || state.value.catalog.any { it.id == packId && it.capability == "asr" && it.adapter == "android-moonshine-english" } && installed(packId) != null) { "Download and check this transcription pack first." }
-            if (state.value.selectedTranscription == packId) return@withContext
-            mutableState.update { it.copy(changingTranscription = true) }
-            try {
-                beforeTranscriptionChange?.invoke()
-                check(transcriptionSelectionAllowed()) { "Finish your recording before changing transcription." }
-                check(packId == "off" || installed(packId) != null) { "This transcription pack is no longer available." }
-                preferences.edit().putString("transcriptionPack", packId).apply()
-                mutableState.update { it.copy(selectedTranscription = packId) }
-            } finally {
-                mutableState.update { it.copy(changingTranscription = false) }
-                val selected = state.value.selectedTranscription
-                if (selected != "off" && installed(selected) != null) ready.emit(selected)
+            if (activationToken == null) cancelActivation("asr")
+            transcriptionSelection.withLock {
+                fun requested() = activationToken == null || activationIsCurrent("asr", activationToken)
+                check(requested()) { "Setup was cancelled." }
+                check(packId == "off" || transcriptionSelectionAllowed()) { "Finish recording to continue" }
+                check(packId == "off" || state.value.catalog.any { it.id == packId && it.capability == "asr" && it.adapter == "android-moonshine-english" } && installed(packId) != null) { "Download and check this transcription pack first." }
+                if (state.value.selectedTranscription == packId) return@withLock
+                mutableState.update { it.copy(changingTranscription = true) }
+                try {
+                    beforeTranscriptionChange?.invoke()
+                    coroutineContext.ensureActive()
+                    check(requested()) { "Setup was cancelled." }
+                    check(packId == "off" || transcriptionSelectionAllowed()) { "Finish recording to continue" }
+                    check(packId == "off" || installed(packId) != null) { "This transcription pack is no longer available." }
+                    check(preferences.edit().putString("transcriptionPack", packId).commit()) { "Transcription choice could not be saved." }
+                    mutableState.update { it.copy(selectedTranscription = packId) }
+                } finally {
+                    mutableState.update { it.copy(changingTranscription = false) }
+                    val selected = state.value.selectedTranscription
+                    if (selected != "off" && installed(selected) != null) ready.emit(selected)
+                }
             }
         }
     }
@@ -248,14 +348,16 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         } finally { mutableState.update { it.copy(checking = it.checking - packId) } }
     }
 
-    fun selectVoice(packId: String, voiceId: String? = null) {
+    fun selectVoice(packId: String, voiceId: String? = null, activationToken: String? = null) {
+        if (activationToken == null) cancelActivation("tts")
+        else check(activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
         require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
         require(installed(packId) != null) { "Download and verify this voice first." }
         require(state.value.catalog.any { it.id == packId && it.capability == "tts" && it.adapter == "android-phonon-english" })
         val voices = voiceIds(packId)
         val selected = voiceId ?: state.value.voiceId.takeIf { it in voices } ?: voices.firstOrNull()
         require(selected != null && selected in voices) { "This voice is not available in this pack." }
-        preferences.edit().putString("voicePack", packId).putString("voiceId", selected).apply()
+        check(preferences.edit().putString("voicePack", packId).putString("voiceId", selected).commit()) { "Voice choice could not be saved." }
         mutableState.update { it.copy(selectedVoice = packId, voiceId = selected) }
     }
 
@@ -274,6 +376,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return
         compatibility(pack)?.let { mutableState.value = state.value.copy(error = it); return }
         val generation = UUID.randomUUID().toString()
+        state.value.pendingActivation[pack.capability]?.takeIf { it.packId == packId }?.let { saveActivation(pack.capability, it.copy(generation = generation, paused = false)) }
         try { context.startForegroundService(Intent(context, ModelDownloadService::class.java)) }
         catch (failure: Exception) { reportError("Open Rhapsodos to start this download, then try again."); return }
         mutableState.update { it.copy(error = null) }
@@ -315,6 +418,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 }
                 refresh()
                 ready.emit(pack.id)
+                withContext(Dispatchers.Main.immediate) { resumePendingActivation() }
             } catch (cancelled: CancellationException) {
                 withContext(kotlinx.coroutines.NonCancellable) { store.updateModelInstall(pack.id, generation, "paused", stagedBytes(staging, pack)); refresh() }
                 throw cancelled
@@ -325,19 +429,27 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 val completed = coroutineContext[Job]
                 withContext(kotlinx.coroutines.NonCancellable + Dispatchers.Main.immediate) {
                     jobs.remove(pack.id, completed)
+                    if (downloadGenerations[pack.id] == generation) downloadGenerations.remove(pack.id)
                     if (jobs.isEmpty()) downloadService?.finishIfIdle()
                 }
             }
         }
         jobs[packId] = task
+        downloadGenerations[packId] = generation
         task.start()
     }
 
     fun reportError(error: String) { mutableState.update { it.copy(error = error) } }
 
-    fun pause(packId: String) { jobs[packId]?.cancel() }
-    fun pauseAll() { jobs.values.forEach { it.cancel() } }
-    fun remove(packId: String) = scope.launch {
+    fun pause(packId: String) {
+        try { state.value.pendingActivation.entries.firstOrNull { it.value.packId == packId }?.let { saveActivation(it.key, it.value.copy(paused = true)) } }
+        catch (failure: Exception) { reportError(failure.message ?: "The paused choice could not be saved.") }
+        jobs[packId]?.cancel()
+    }
+    fun pauseAll() { jobs.keys.toList().forEach(::pause) }
+    fun remove(packId: String) = scope.launch(Dispatchers.Main.immediate) {
+        try { state.value.pendingActivation.filterValues { it.packId == packId }.keys.forEach(::cancelActivation) }
+        catch (failure: Exception) { reportError(failure.message ?: "Removal could not be saved. Try again."); return@launch }
         if (packId in state.value.removing) return@launch
         if (packId in state.value.checking) { reportError("Wait for this download's integrity check before removing it."); return@launch }
         mutableState.update { it.copy(removing = it.removing + packId) }
@@ -356,6 +468,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             }
             store.removeModel(packId)
             if (state.value.selectedVoice == packId) clearVoiceSelection()
+            if (state.value.selectedTranscription == packId) selectTranscription("off")
             refresh()
         } catch (failure: Exception) {
             withContext(kotlinx.coroutines.NonCancellable) {
