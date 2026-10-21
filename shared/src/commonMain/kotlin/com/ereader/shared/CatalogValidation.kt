@@ -9,8 +9,12 @@ internal object CatalogValidation {
 
     fun validate(update: ModelCatalogUpdate, current: List<ModelPack>, now: Long) {
         require(update.formatVersion == 1 && update.revision > 0) { "Unsupported catalogue format" }
-        require(update.publishedAt > 0 && update.publishedAt <= now + 300_000 && update.expiresAt > now &&
-            update.expiresAt > update.publishedAt && update.expiresAt - update.publishedAt <= 90L * 86_400_000) { "Catalogue update is expired or has invalid dates" }
+        require(update.publishedAt > 0 && update.publishedAt <= now + 300_000) { "Catalogue update has an invalid publication date" }
+        update.expiresAt?.let { expiry ->
+            require(expiry > now && expiry > update.publishedAt && expiry - update.publishedAt <= 90L * 86_400_000) {
+                "Catalogue update is expired or has invalid dates"
+            }
+        }
         require(update.packs.size in 1..64 && update.packs.map { it.id }.toSet().size == update.packs.size) { "Invalid catalogue entries" }
         update.packs.forEach { pack ->
             val profile = ModelCatalog.packs.firstOrNull { it.id == pack.adapter } ?: error("This app cannot run the catalogue's model adapter")

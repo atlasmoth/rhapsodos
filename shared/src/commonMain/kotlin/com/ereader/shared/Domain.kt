@@ -109,7 +109,7 @@ data class ModelCatalogUpdate(
     val formatVersion: Int,
     val revision: Long,
     val publishedAt: Long,
-    val expiresAt: Long,
+    val expiresAt: Long? = null,
     val packs: List<ModelPack>,
 )
 

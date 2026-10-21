@@ -340,7 +340,7 @@
       "earlier_fixture_repair": {
         "association": "Initial pre-quarter-turn-correction broad whole-trim run; APK digest was not captured. Do not attribute this repair to the final strict-provenance artifact.",
         "proof": "Fresh complete OCR text differs from canonical only in terminal LF; literal UTF16 regions intersected/offset; geometry-only update left canonical source/passages/revision/notes/progress and source bytes unchanged.",
-        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded\u2192embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
+        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded→embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
         "subsequentPaintingEvidence": {
           "debug6b10a82e": {
             "rotationAssertions": 61,
@@ -3862,5 +3862,80 @@
       "android": "Final matching Debug APK installed with -r and launched on preserved Pixel_10_Pro_Fold API37 emulator; consumer data not cleared."
     },
     "interface_observation": "Android Studio could not attach a viewer to the running headless emulator. Its embedded relaunch did not register with adb; a preserved-data cold boot restored the usable CLI device. Final consumer was installed/launched, but model-gallery GUI was not qualified."
+  },
+  "permanent_catalogue_verification": {
+    "recorded_on": "2026-10-21",
+    "base_revision": "16db5e8bbf4962551de9be17afbbe0c5b947c430",
+    "source_attribution": "Source hashes identify the permanent-catalogue changes atop base_revision. Historical evidence elsewhere in this file retains its original source association.",
+    "source_sha256": {
+      "shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt": "efae2fbc7801aa0b424deb0d3fb57a350bd6486ad943ec43bad971ef5e6f21ce",
+      "shared/src/commonMain/kotlin/com/ereader/shared/CatalogValidation.kt": "3132266fafa3d3f7759da1e5b1c1c56aa3eed4ff932e24184cf8e88b81bc692e",
+      "tools/model-catalog.py": "310e0381545a24c40891498c7b3700fc7b17b6e310f273e1ba39b3b3c7f7f93d",
+      "catalogue/catalogue.json": "6016f23949c89c03d7164b5e7addf0420de8d38dddde88920f40175c30243430",
+      "gradle/verification-metadata.xml": "1818abcb10f42295d00433cc72e0779a1b72db2ec4f94ae8e990de9e031571f6"
+    },
+    "catalogue_revision": 2,
+    "expiry": null,
+    "catalogue_signature": "OpenSSL verified with unchanged public key; tampered payload rejected; four packs and 43 assets equal prior release",
+    "builds": {
+      "shared_android": "passed",
+      "shared_ios_simulator_debug": "passed",
+      "shared_ios_device_release": "passed",
+      "android_debug": "passed",
+      "android_lint": "0 errors, 9 warnings",
+      "ios_simulator_debug": "passed"
+    },
+    "artifact_sha256": {
+      "androidApp/build/outputs/apk/debug/androidApp-debug.apk": "20fc867c433bf361b2c7d895fccf19271f71b295b435f5867972009333ffb98b",
+      "iosApp/build/Debug-iphonesimulator/EReader.app/EReader": "5268dbd43dea3a6e662111e7991e5192418d57c682e532be0cc4cdd73d5b9971"
+    },
+    "checks": {
+      "passed": 38,
+      "mode": "normal-gradle-output",
+      "scope": "Actual ReaderCore and SQLite: permanent validity, cached finite upgrade, strict decode, explicit expiry, repeat, rollback, publication, retained installations, user-data preservation and restart"
+    },
+    "logs": {
+      "android": "/private/tmp/rhapsodos-permanent-catalogue-android-final.log",
+      "ios": "/private/tmp/rhapsodos-permanent-catalogue-ios-build.log",
+      "shared_checks": "/private/tmp/rhapsodos-permanent-catalogue-qa-tnto48er/results.txt",
+      "shared_evidence": "/private/tmp/rhapsodos-permanent-catalogue-qa-tnto48er/evidence.json",
+      "policy": "/private/tmp/rhapsodos-permanent-catalogue-policy.json"
+    },
+    "policy": {
+      "android_artifact": {
+        "application_id": "com.osuji.ereaderapp",
+        "arm64_native_16k_alignment": {
+          "libraries": 7,
+          "status": "passed"
+        },
+        "build": "1",
+        "display_name": "Rhapsodos",
+        "internet_permission": true,
+        "min_sdk": "28",
+        "target_sdk": "37",
+        "version": "0.01"
+      },
+      "device_qualification": "not_run",
+      "ios_artifact": {
+        "application_id": "com.osuji.ereaderapp",
+        "build": "1",
+        "display_name": "Rhapsodos",
+        "min_ios": "17.0",
+        "version": "0.01"
+      },
+      "pinned_assets": {
+        "bundled_ocr_models": 1,
+        "font_families": 3,
+        "model_packs": 4,
+        "status": "passed"
+      },
+      "unit_source_policy": "passed"
+    },
+    "limits": [
+      "No live hosted endpoint or app URL/public key configured",
+      "No new consumer installation or GUI interaction",
+      "No model download, inference, physical-device or iOS 17 runtime qualification",
+      "Android Release and iOS device app binaries were not rebuilt; prior release evidence retains its source association"
+    ]
   }
 }

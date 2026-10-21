@@ -6,7 +6,7 @@ Device requirements explain the supported OS, minimum memory and storage. A succ
 
 ## Catalogue updates
 
-The bundled catalogue always supports offline discovery. A user-requested Refresh can fetch a signed catalogue when the release has a configured HTTPS source and public key. Failed transfers, signatures, unsupported adapters, expired updates and rollback attempts retain the saved catalogue and all installed packs. No document, recording, transcript or provider credential is part of this request.
+The bundled catalogue always supports offline discovery. A user-requested Refresh can fetch a signed catalogue when the release has a configured HTTPS source and public key. New catalogues are permanent and require no scheduled renewal. Failed transfers, signatures, unsupported adapters and rollback attempts retain the saved catalogue and all installed packs. No document, recording, transcript or provider credential is part of this request.
 
 The native client verifies ECDSA P-256/SHA-256 before handing the exact UTF-8 payload to the shared core. Public keys use the 65-byte uncompressed X9.63 form; signatures use DER. The envelope has exactly `payload` and `signature`, both Base64. Limit the envelope to 3 MiB and the decoded payload to 2 MiB. HTTPS redirects remain on the configured host; cookies, credentials and caches are disabled. [Android Signature](https://developer.android.com/reference/java/security/Signature), [Apple P-256 public key](https://developer.apple.com/documentation/cryptokit/p256/signing/publickey/init(x963representation:))
 
@@ -15,14 +15,15 @@ The payload is:
 ```json
 {
   "formatVersion": 1,
-  "revision": 1,
+  "revision": 2,
   "publishedAt": 1791417600000,
-  "expiresAt": 1794009600000,
   "packs": []
 }
 ```
 
-The example dates are illustrative; publication tooling generates current dates and requires a nonempty list. Revisions increase monotonically. Exact repeats are idempotent; a reused revision with altered contents is rejected. Publication permits five minutes of clock skew and at most 90 days of validity. Existing cached, verified entries remain usable offline after expiry; fresh acceptance requires unexpired publication.
+The example date is illustrative; publication tooling generates the current publication time and requires a nonempty list. Revisions increase monotonically. Exact repeats are idempotent; a reused revision with altered contents is rejected. Publication permits five minutes of clock skew and cannot precede the last accepted publication. Omitted or null `expiresAt` means permanent. An explicitly supplied expiry still requires an unexpired interval of at most 90 days, allowing existing signed payloads to retain their stated meaning. Cached entries and downloaded models never stop working because of a catalogue date.
+
+Signatures establish authenticity, not that a catalogue is the newest available. A permanent, correctly signed older catalogue remains acceptable to a fresh installation with no remembered revision; an existing installation rejects revisions below its last accepted revision. This is the deliberate tradeoff for eliminating renewal. Permanent validity does not guarantee that upstream model files remain hosted forever.
 
 `ModelPack.adapter` identifies one of the four compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Asset URLs pin Hugging Face or GitHub revisions; sizes, hashes, identifiers and paths are bounded and validated. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
 
@@ -32,7 +33,7 @@ The canonical SQLDelight catalogue row owns revision, exact verified payload, ac
 
 No production catalogue address or trust key is configured yet. The apps use the bundled catalogue and say so. Configure live refresh only after preparing and reviewing a signed release; app implementation does not publish or host anything.
 
-The first uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 1 contains the four bundled packs and expires on 19 January 2027. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload.
+The uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 2 contains the four bundled packs and has no expiry. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload. Apps built before permanent-catalogue support must be rebuilt.
 
 Keep the signing secret outside the repository and protect a recoverable copy. Use a stable release key rather than temporary verification keys:
 
@@ -43,10 +44,10 @@ python3 tools/model-catalog.py verify --envelope /absolute/release/catalogue.jso
 python3 tools/model-catalog.py configure --url https://your-host.example/catalogue.json --public-key /absolute/private/catalog-keys/catalog-public-x963.txt
 ```
 
-The example host is a placeholder, not a deployed service. `configure` changes only the public URL/key in `ModelCatalogSource.kt`; review and commit those values, rebuild, then separately authorize hosting/distribution. The private key never enters the apps. `sign --catalog` accepts a reviewed pack-list file; the default is the bundled manifest. Increase the revision for each publication and renew before expiry. Signing proves publisher identity; the app separately enforces freshness and supported models.
+The example host is a placeholder, not a deployed service. `configure` changes only the public URL/key in `ModelCatalogSource.kt`; review and commit those values, rebuild, then separately authorize hosting/distribution. The private key never enters the apps. `sign --catalog` accepts a reviewed pack-list file; the default is the bundled manifest. Signing always creates a permanent catalogue. Increase the revision only when publishing a changed catalogue; no periodic signing or renewal is required. Signing proves publisher identity; the app separately enforces publication/revision constraints and supported models.
 
 ## Ownership and verification
 
 Shared code owns catalogue constraints and persistence. Native clients own HTTPS, cryptography, device checks, selected speech adapters and the audio/transcription transition. Selection changes cancel and join affected work before accepting later results. Generated narration and model files remain separate from durable user recordings.
 
-Qualification must include valid and invalid signatures, expiry/rollback, offline refresh, restart, interrupted downloads, missing assets, explicit selection and stale transcription results. Temporary harnesses stay outside the repository. Executed results and remaining device/hosting gates belong in [development.md](development.md).
+Qualification must include valid and invalid signatures, permanent validity, explicit-expiry rejection, revision rollback, offline refresh, restart, interrupted downloads, missing assets, explicit selection and stale transcription results. Temporary harnesses stay outside the repository. Executed results and remaining device/hosting gates belong in [development.md](development.md).

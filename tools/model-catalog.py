@@ -48,7 +48,7 @@ def sign(args):
         pack.setdefault("adapter", pack["id"])
     now = int(time.time() * 1000)
     payload = json.dumps({"formatVersion": 1, "revision": args.revision, "publishedAt": now,
-                          "expiresAt": now + args.valid_days * 86_400_000, "packs": packs},
+                          "packs": packs},
                          ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
     if len(payload) > 2 * 1024 * 1024:
         raise ValueError("Catalogue exceeds its 2 MiB payload limit")
@@ -78,7 +78,7 @@ def verify(args):
         (work / "signature.der").write_bytes(signature)
         openssl("dgst", "-sha256", "-verify", work / "key.pem", "-signature", work / "signature.der", data=payload)
     data = json.loads(payload.decode("utf-8"))
-    print(f"Verified signature for revision {data['revision']}; app acceptance also validates models and freshness.")
+    print(f"Verified signature for revision {data['revision']}; app acceptance also validates models, publication and revision.")
 
 
 def configure(args):
@@ -108,7 +108,6 @@ def main():
     release.add_argument("--catalog", type=Path, default=ROOT / "docs/model-catalog.json")
     release.add_argument("--private-key", type=Path, required=True)
     release.add_argument("--revision", type=int, required=True)
-    release.add_argument("--valid-days", type=int, choices=range(1, 91), default=30)
     release.add_argument("--output", type=Path, required=True)
     release.set_defaults(run=sign)
     check = commands.add_parser("verify")
