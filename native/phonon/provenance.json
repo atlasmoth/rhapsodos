@@ -1,0 +1,167 @@
+{
+  "runtime": "xn-ptts",
+  "version": "0.4.0",
+  "revision": "f07d7952db0c6127d5e4bc3f41c82b3304b6b5aa",
+  "sourceArchive": {
+    "url": "https://codeload.github.com/gradium-ai/xn-ptts/tar.gz/f07d7952db0c6127d5e4bc3f41c82b3304b6b5aa",
+    "sha256": "fc99775ae12cbd49e3aa7de279b4bff342dd6ac2776feb415ed70db53068fd27"
+  },
+  "toolchain": {
+    "rust": "1.99.1",
+    "rustCommit": "58cf8f9c35b355199727627d07ae34a4e2846d67",
+    "xcode": "27.1 (27A9275)",
+    "androidNDK": "27.1.12297006"
+  },
+  "targets": {
+    "aarch64-linux-android": {
+      "minimumAPI": 28,
+      "cpu": "generic",
+      "elfLoadAlignment": 16384
+    },
+    "x86_64-linux-android": {
+      "minimumAPI": 28,
+      "cpu": "x86-64",
+      "elfLoadAlignment": 16384
+    },
+    "aarch64-apple-ios": {
+      "minimumOS": "18.0",
+      "cpu": "generic"
+    },
+    "aarch64-apple-ios-sim": {
+      "minimumOS": "18.0",
+      "cpu": "generic"
+    },
+    "aarch64-apple-darwin": {
+      "minimumOS": "14.0",
+      "cpu": "generic"
+    }
+  },
+  "inputs": [
+    {
+      "path": "native/phonon/Cargo.lock",
+      "bytes": 143290,
+      "sha256": "bd49d2c9038a1ae992da46f0824852145fb2221bdaed684225d0e5e456bce61a"
+    },
+    {
+      "path": "native/phonon/patches/require-eos.patch",
+      "bytes": 1043,
+      "sha256": "1a13657a69a25a76d2d7013c7894d093c7051da12eaabcb3c7f352e534cef603"
+    },
+    {
+      "path": "native/phonon/include/ptts.h",
+      "bytes": 2219,
+      "sha256": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6"
+    },
+    {
+      "path": "native/phonon/build.sh",
+      "bytes": 4312,
+      "sha256": "82c9356b7fd08d444d6a040c8a2b937137405e989379a32e6e312622c08bdfe1"
+    },
+    {
+      "path": "native/phonon/THIRD_PARTY_NOTICES.txt",
+      "bytes": 2661153,
+      "sha256": "37347dc3e46d360296e8fe5b6369abfa2f3550a0c529dd3bba7770f770488cf1"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "androidApp/src/main/jniLibs/arm64-v8a/libptts_ffi.so",
+      "bytes": 7622224,
+      "sha256": "a379609b57e3d13102476dc62f88487a15578ee4898642ea122eff4b38f38e72"
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/x86_64/libptts_ffi.so",
+      "bytes": 8745064,
+      "sha256": "99db68abb29aabd17ccad197879f28e4f7c747bf66bc3a9f632e7fd370df5d60"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/Info.plist",
+      "bytes": 1626,
+      "sha256": "8f775b246e9d4e1aa304ce222086ef72a8bc5896ac9d455b3576019aed51db60"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64/Headers/module.modulemap",
+      "bytes": 55,
+      "sha256": "2879ca749c34cfca653ca38d22a6dae249f36f2f85014c509a7abd9462637b2a"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64/Headers/ptts.h",
+      "bytes": 2219,
+      "sha256": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64/libptts_ffi.a",
+      "bytes": 51719864,
+      "sha256": "cec7e897af7531a65a326a600ad558bfc29d945f3bffed0175a663246af40b85"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64-simulator/Headers/module.modulemap",
+      "bytes": 55,
+      "sha256": "2879ca749c34cfca653ca38d22a6dae249f36f2f85014c509a7abd9462637b2a"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64-simulator/Headers/ptts.h",
+      "bytes": 2219,
+      "sha256": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/ios-arm64-simulator/libptts_ffi.a",
+      "bytes": 51742192,
+      "sha256": "ffb7310a50787b828a284efbfdd439ab9bea063d355c5e315e1e1f30fa190350"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/macos-arm64/Headers/module.modulemap",
+      "bytes": 55,
+      "sha256": "2879ca749c34cfca653ca38d22a6dae249f36f2f85014c509a7abd9462637b2a"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/macos-arm64/Headers/ptts.h",
+      "bytes": 2219,
+      "sha256": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6"
+    },
+    {
+      "path": "iosApp/Vendor/PhononCore.xcframework/macos-arm64/libptts_ffi.a",
+      "bytes": 51227440,
+      "sha256": "a2ef7ae13752b60908a35f0bc9309a8d5900bbe786ee0bb059edb3628d81302b"
+    }
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "normalCorpusCasesPerRuntime": 10,
+    "runtimesExecuted": [
+      "Android ARM64 API37 emulator, 16 KiB pages",
+      "macOS ARM64 Core ML CPU"
+    ],
+    "finitePCM": true,
+    "cancelThenReuse": true,
+    "missingEOSReturnsFailure": true,
+    "x86_64Executed": false,
+    "physicalDevicesQualified": false,
+    "externalEvidence": [
+      {
+        "file": "guard.c",
+        "sha256": "ac879ea7cb314927cc865d77379ff848363c8b5d7a360e098f2baeb8db182e90"
+      },
+      {
+        "file": "corpus.txt",
+        "sha256": "d601675f7848aff3304d465c485cb9b072162decb61595ba9e2b0cc53e4a3622"
+      },
+      {
+        "file": "guard-android-normal.log",
+        "sha256": "b488fa13953985bb4dd3a7d38bf4cc78c6a7fced802ca262f70c3287bce58bab"
+      },
+      {
+        "file": "guard-android-fault.log",
+        "sha256": "ab664a1532127466a2e1f2f85752f7f4335ddca96a90bf722b1f5fc58ee1ca28"
+      },
+      {
+        "file": "guard-apple-normal.log",
+        "sha256": "5fe5595ce7b0dc90293ab3f2d237e392eaee1b79d207778f02573ec0d61821bb"
+      },
+      {
+        "file": "guard-apple-fault.log",
+        "sha256": "06d970ab6c41305a326e017807f6bd6b6c8d4b074d7aa62046761e941abde3d1"
+      }
+    ]
+  }
+}

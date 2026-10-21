@@ -1,0 +1,34 @@
+--- a/ptts/src/synth.rs
++++ b/ptts/src/synth.rs
+@@ -1184,6 +1184,9 @@
+             }
+             prev = Some(next);
+         }
++        if !eos.saw_eos() {
++            return Err(Error::invalid_data("speech did not reach EOS before the frame limit"));
++        }
+         if latent_tx.send(Frame::ChunkEnd).is_err() {
+             return Ok(());
+         }
+@@ -1254,6 +1257,9 @@
+             }
+             prev = Some(next);
+         }
++        if !eos.saw_eos() {
++            return Err(Error::invalid_data("speech did not reach EOS before the frame limit"));
++        }
+         mimi_state = mimi_init.clone();
+     }
+     let latency = post.latency();
+--- a/ptts-coreml/src/phonon/driver.rs
++++ b/ptts-coreml/src/phonon/driver.rs
+@@ -490,6 +490,9 @@
+             while let Ok(r) = pcm_rx.recv() {
+                 deliver(r?);
+             }
++            if !stopped.get() && countdown.is_none() {
++                return Err("speech did not reach EOS before the frame limit".into());
++            }
+             Ok(())
+         })?;
+ 

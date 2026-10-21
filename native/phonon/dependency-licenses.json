@@ -1,0 +1,4004 @@
+{
+  "cargoLockSHA256": "bd49d2c9038a1ae992da46f0824852145fb2221bdaed684225d0e5e456bce61a",
+  "rustStandardLibraryNoticeSHA256": "5647be074c8edf7339fd863055923a8fc80bc5610a8d4661ec3b767b9d392c27",
+  "packages": [
+    {
+      "name": "ahash",
+      "version": "0.8.12",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/tkaitchuck/ahash",
+      "authors": [
+        "Tom Kaitchuck <Tom.Kaitchuck@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0444c6991eead6822f7b9102e654448d51624431119546492e8b231db42c48bb"
+        }
+      ]
+    },
+    {
+      "name": "aho-corasick",
+      "version": "1.1.4",
+      "license": "Unlicense OR MIT",
+      "repository": "https://github.com/BurntSushi/aho-corasick",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYING",
+          "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f"
+        }
+      ]
+    },
+    {
+      "name": "allocator-api2",
+      "version": "0.2.21",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/zakarumych/allocator-api2",
+      "authors": [
+        "Zakarum <zaq.dev@icloud.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "20fe7b00e904ed690e3b9fd6073784d3fc428141dbd10b81c01fd143d0797f58"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9"
+        }
+      ]
+    },
+    {
+      "name": "anyhow",
+      "version": "1.0.102",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/anyhow",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "base64",
+      "version": "0.13.1",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/marshallpierce/rust-base64",
+      "authors": [
+        "Alice Maz <alice@alicemaz.com>",
+        "Marshall Pierce <marshall@mpierce.org>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0dd882e53de11566d50f8e8e2d5a651bcf3fabee4987d70f306233cf39094ba7"
+        }
+      ]
+    },
+    {
+      "name": "bit-set",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "repository": "https://github.com/contain-rs/bit-set",
+      "authors": [
+        "Alexis Beingessner <a.beingessner@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "08807e080ed7f9d5433fa9b275196cfc35414f66a0c79d864dc51a0d825231a3",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "f51ac2c59a222f7476ce507ca879960e2b64ea64bb2786eefdbeb7b0b538d1b7"
+        }
+      ]
+    },
+    {
+      "name": "bit-vec",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "repository": "https://github.com/contain-rs/bit-vec",
+      "authors": [
+        "Alexis Beingessner <a.beingessner@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "5e764a1d40d510daf35e07be9eb06e75770908c27d411ee6c92109c9840eaaf7",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "f51ac2c59a222f7476ce507ca879960e2b64ea64bb2786eefdbeb7b0b538d1b7"
+        }
+      ]
+    },
+    {
+      "name": "bitflags",
+      "version": "1.3.2",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/bitflags/bitflags",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "bitflags",
+      "version": "2.11.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/bitflags/bitflags",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "block2",
+      "version": "0.6.2",
+      "license": "MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [
+        "Mads Marquart <mads@marquart.dk>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "cdeb9d870516001442e364c5220d3574d2da8dc765554b4a617230d33fa58ef5",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/b4167b582b2f75f9a1be75495c41b765344fd03c/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "bytemuck",
+      "version": "1.25.0",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/Lokathor/bytemuck",
+      "authors": [
+        "Lokathor <zefria@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "c8efb64bd706a16a1bdde310ae86b351e4d21550d98d056f22f8a7f7a2183fec",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "e3ba223bb1423f0aad8c3dfce0fe3148db48926d41e6fbc3afbbf5ff9e1c89cb"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "9df9ba60a11af705f2e451b53762686e615d86f76b169cf075c3237730dbd7e2"
+        },
+        {
+          "source": "LICENSE-ZLIB",
+          "sha256": "84b34dd7608f7fb9b17bd588a6bf392bf7de504e2716f024a77d89f1b145a151"
+        }
+      ]
+    },
+    {
+      "name": "bytemuck_derive",
+      "version": "1.10.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/Lokathor/bytemuck",
+      "authors": [
+        "Lokathor <zefria@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "f9abbd1bc6865053c427f7198e6af43bfdedc55ab791faed4fbd361d789575ff",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "e3ba223bb1423f0aad8c3dfce0fe3148db48926d41e6fbc3afbbf5ff9e1c89cb"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "9df9ba60a11af705f2e451b53762686e615d86f76b169cf075c3237730dbd7e2"
+        },
+        {
+          "source": "LICENSE-ZLIB",
+          "sha256": "84b34dd7608f7fb9b17bd588a6bf392bf7de504e2716f024a77d89f1b145a151"
+        }
+      ]
+    },
+    {
+      "name": "byteorder",
+      "version": "1.5.0",
+      "license": "Unlicense OR MIT",
+      "repository": "https://github.com/BurntSushi/byteorder",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYING",
+          "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f"
+        }
+      ]
+    },
+    {
+      "name": "bytes",
+      "version": "1.11.1",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/bytes",
+      "authors": [
+        "Carl Lerche <me@carllerche.com>",
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "45f522cacecb1023856e46df79ca625dfc550c94910078bd8aec6e02880b3d42"
+        }
+      ]
+    },
+    {
+      "name": "castaway",
+      "version": "0.2.4",
+      "license": "MIT",
+      "repository": "https://github.com/sagebind/castaway",
+      "authors": [
+        "Stephen M. Coakley <me@stephencoakley.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "dec551ab6e7578819132c713a93c022a05d60159dc86e7a7050223577484c55a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "f98e09091d5ae02b2f2ec1ead4f7f28c4c44d1cb98b078739ba67091637e170c"
+        }
+      ]
+    },
+    {
+      "name": "cfg-if",
+      "version": "1.0.4",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/cfg-if",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+        }
+      ]
+    },
+    {
+      "name": "compact_str",
+      "version": "0.9.0",
+      "license": "MIT",
+      "repository": "https://github.com/ParkMyCar/compact_str",
+      "authors": [
+        "Parker Timmerman <parker@parkertimmerman.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "3fdb1325a1cece981e8a296ab8f0f9b63ae357bd0784a9faaf548cc7b480707a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "0d52feec79589df30138dad3800323fe5686b764b73347330a2dfef8ac83efe8"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-deque",
+      "version": "0.8.6",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-epoch",
+      "version": "0.9.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-utils",
+      "version": "0.8.21",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
+        }
+      ]
+    },
+    {
+      "name": "daachorse",
+      "version": "1.0.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/daac-tools/daachorse",
+      "authors": [
+        "Koichi Akabe <vbkaisetsu@gmail.com>",
+        "Shunsuke Kanda <shnsk.knd@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "6f55d7153ba3b507595872a3874803f07a8a81d1e888abed8e5db7da0597d6e2",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "darling",
+      "version": "0.20.11",
+      "license": "MIT",
+      "repository": "https://github.com/TedDriggs/darling",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6"
+        }
+      ]
+    },
+    {
+      "name": "darling_core",
+      "version": "0.20.11",
+      "license": "MIT",
+      "repository": "https://github.com/TedDriggs/darling",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "0d00b9596d185e565c2207a0b01f8bd1a135483d02d9b7b0a54b11da8d53412e",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6"
+        }
+      ]
+    },
+    {
+      "name": "darling_macro",
+      "version": "0.20.11",
+      "license": "MIT",
+      "repository": "https://github.com/TedDriggs/darling",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "8ea93490d74a5a1b1af3ff71d786271b3f1e5f0bea79ac16e02ec533cef040d6"
+        }
+      ]
+    },
+    {
+      "name": "dary_heap",
+      "version": "0.3.9",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/hanmertens/dary_heap",
+      "authors": [
+        "Han Mertens <hanmertens@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "8b1e3a325bc115f096c8b77bbf027a7c2592230e70be2d985be950d3d5e60ebe",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "dasp_frame",
+      "version": "0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rustaudio/dasp.git",
+      "authors": [
+        "mitchmindtree <mitchell.nordine@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b2a3937f5fe2135702897535c8d4a5553f8b116f76c1529088797f2eee7c5cd6",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/rustaudio/dasp/221b81038c528bf3fc364a8ab5cc4b2e52f7dbfc/LICENSE-APACHE",
+          "sha256": "756c8d2ab2dc24f256e1455b5f03937f4933d83d7bc9f2d55009fc962377d512"
+        },
+        {
+          "source": "https://raw.githubusercontent.com/rustaudio/dasp/221b81038c528bf3fc364a8ab5cc4b2e52f7dbfc/LICENSE-MIT",
+          "sha256": "b1d6df41ed3aa96806e74c729444d7c121d90e6660a6aed01d298e03fde475a0"
+        }
+      ]
+    },
+    {
+      "name": "dasp_sample",
+      "version": "0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rustaudio/sample.git",
+      "authors": [
+        "mitchmindtree <mitchell.nordine@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/rustaudio/sample/97c3bb9b2363c0b46ac1633858bf1054fd02a980/LICENSE-APACHE",
+          "sha256": "756c8d2ab2dc24f256e1455b5f03937f4933d83d7bc9f2d55009fc962377d512"
+        },
+        {
+          "source": "https://raw.githubusercontent.com/rustaudio/sample/97c3bb9b2363c0b46ac1633858bf1054fd02a980/LICENSE-MIT",
+          "sha256": "b1d6df41ed3aa96806e74c729444d7c121d90e6660a6aed01d298e03fde475a0"
+        }
+      ]
+    },
+    {
+      "name": "derive_builder",
+      "version": "0.20.2",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/colin-kiegel/rust-derive-builder",
+      "authors": [
+        "Colin Kiegel <kiegel@gmx.de>",
+        "Pascal Hertleif <killercup@gmail.com>",
+        "Jan-Erik Rediger <janerik@fnordig.de>",
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "507dfb09ea8b7fa618fcf76e953f4f5e192547945816d5358edffe39f6f94947",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "8c9612877aacfa1b42f5e80b679e6c3c93a7ba2bb99dfaf6e87e200dca4b4e6c"
+        }
+      ]
+    },
+    {
+      "name": "derive_builder_core",
+      "version": "0.20.2",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/colin-kiegel/rust-derive-builder",
+      "authors": [
+        "Colin Kiegel <kiegel@gmx.de>",
+        "Pascal Hertleif <killercup@gmail.com>",
+        "Jan-Erik Rediger <janerik@fnordig.de>",
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2d5bcf7b024d6835cfb3d473887cd966994907effbe9227e8c8219824d06c4e8",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "8c9612877aacfa1b42f5e80b679e6c3c93a7ba2bb99dfaf6e87e200dca4b4e6c"
+        }
+      ]
+    },
+    {
+      "name": "derive_builder_macro",
+      "version": "0.20.2",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/colin-kiegel/rust-derive-builder",
+      "authors": [
+        "Colin Kiegel <kiegel@gmx.de>",
+        "Pascal Hertleif <killercup@gmail.com>",
+        "Jan-Erik Rediger <janerik@fnordig.de>",
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "8c9612877aacfa1b42f5e80b679e6c3c93a7ba2bb99dfaf6e87e200dca4b4e6c"
+        }
+      ]
+    },
+    {
+      "name": "dispatch2",
+      "version": "0.3.1",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [
+        "Mads Marquart <mads@marquart.dk>",
+        "Mary <mary@mary.zone>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/8852b424193ca41602281b3d7540d7c8ed51e49a/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "dyn-stack",
+      "version": "0.13.2",
+      "license": "MIT",
+      "repository": "https://codeberg.org/sarah-quinones/dyn-stack",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1c4713e43e2886ba72b8271aa66c93d722116acf7a75555cce11dcde84388fe8",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "bf5a93d1014429b43e01c57d45bea928748fbf37d059306145a1a0a91aec2014"
+        }
+      ]
+    },
+    {
+      "name": "dyn-stack-macros",
+      "version": "0.1.3",
+      "license": "MIT",
+      "repository": "https://github.com/kitegi/dynstack/",
+      "authors": [
+        "sarah qui\u00f1ones<sarah@veganb.tw>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "4263a9907c8e8d799f714d5cf2ec18663772f09e7eef3eeaaab074ea29ee1358"
+        }
+      ]
+    },
+    {
+      "name": "ebur128",
+      "version": "0.1.10",
+      "license": "MIT",
+      "repository": "https://github.com/sdroege/ebur128",
+      "authors": [
+        "Sebastian Dr\u00f6ge <sebastian@centricular.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e227cc62d64d6fe01abbef48134b9c1f17d470cef1e7a56337ad05b1f81df7f9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "34b4ff1c457f0ac5a0289e8a817bbaa4ff4c6c77d9d4df48f99b077c26100f13"
+        }
+      ]
+    },
+    {
+      "name": "either",
+      "version": "1.15.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rayon-rs/either",
+      "authors": [
+        "bluss"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7576269ea71f767b99297934c0b2367532690f8c4badc695edf8e04ab6a1e545"
+        }
+      ]
+    },
+    {
+      "name": "enum-as-inner",
+      "version": "0.6.1",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/bluejekyll/enum-as-inner",
+      "authors": [
+        "Benjamin Fry <benjaminfry@me.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a1e6a265c649f3f5979b601d26f1d05ada116434c87741c9493cb56218f76cbc",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "10d73bf26900fa6dd6f2613bb962b7bd8fa1e66618fcf0f9f899aa071a4ee200"
+        },
+        {
+          "source": "copyright.txt",
+          "sha256": "b54db71f7d0b1f62c8c1b6b297347b81f7c217b4ce7e58223a20d2275535cd17"
+        }
+      ]
+    },
+    {
+      "name": "equivalent",
+      "version": "1.0.2",
+      "license": "Apache-2.0 OR MIT",
+      "repository": "https://github.com/indexmap-rs/equivalent",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7365cc8878a1d7ce155a58c4ca09c3d7a6be413efa5334a80ea842912b669349"
+        }
+      ]
+    },
+    {
+      "name": "esaxx-rs",
+      "version": "0.1.10",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/Narsil/esaxx-rs",
+      "authors": [
+        "Nicolas Patry <patry.nicolas@protonmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d817e038c30374a4bcb22f94d0a8a0e216958d4c3dcde369b1439fec4bdda6e6",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "fancy-regex",
+      "version": "0.17.0",
+      "license": "MIT",
+      "repository": "https://github.com/fancy-regex/fancy-regex",
+      "authors": [
+        "Raph Levien <raph@google.com>",
+        "Robin Stocker <robin@nibor.org>",
+        "Keith Hall <keith.hall@available.systems>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "72cf461f865c862bb7dc573f643dd6a2b6842f7c30b07882b56bd148cc2761b8",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "3bc70e239e91272782006c638fc0452a714d384224f11f0923036b7be07cf9b5"
+        }
+      ]
+    },
+    {
+      "name": "fnv",
+      "version": "1.0.7",
+      "license": "Apache-2.0 / MIT",
+      "repository": "https://github.com/servo/rust-fnv",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "65fdb6c76cd61612070c066eec9ecdb30ee74fb27859d0d9af58b9f499fd0c3e"
+        }
+      ]
+    },
+    {
+      "name": "foldhash",
+      "version": "0.2.0",
+      "license": "Zlib",
+      "repository": "https://github.com/orlp/foldhash",
+      "authors": [
+        "Orson Peters <orsonpeters@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "b1181a40b2a7b25cf66fd01481713bc1005df082c53ef73e851e55071b102744"
+        }
+      ]
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/getrandom",
+      "authors": [
+        "The Rand Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "29e9fe5074bd27e0e5d5d110394fbbcd841baee2651a3c4b4560a632702cede4"
+        }
+      ]
+    },
+    {
+      "name": "getrandom",
+      "version": "0.4.2",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/getrandom",
+      "authors": [
+        "The Rand Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "0de51e6874e94e7bf76d726fc5d13ba782deca734ff60d5bb2fb2607c7406555",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "aaff376532ea30a0cd5330b9502ad4a4c8bf769c539c87ffe78819d188a18ebf"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "523a42c25d245dde9c015f882cec7f4555aad883382a6cf19b4b7d9b2cd5419b"
+        }
+      ]
+    },
+    {
+      "name": "half",
+      "version": "2.7.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/VoidStarKat/half-rs",
+      "authors": [
+        "Kathryn Long <squeeself@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+        }
+      ]
+    },
+    {
+      "name": "hashbrown",
+      "version": "0.16.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/hashbrown",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2"
+        }
+      ]
+    },
+    {
+      "name": "heck",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/withoutboats/heck",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+        }
+      ]
+    },
+    {
+      "name": "ident_case",
+      "version": "1.0.1",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/TedDriggs/ident_case",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+        }
+      ]
+    },
+    {
+      "name": "itertools",
+      "version": "0.14.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-itertools/itertools",
+      "authors": [
+        "bluss"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7576269ea71f767b99297934c0b2367532690f8c4badc695edf8e04ab6a1e545"
+        }
+      ]
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/itoa",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "lazy_static",
+      "version": "1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang-nursery/lazy-static.rs",
+      "authors": [
+        "Marvin L\u00f6bel <loebel.marvin@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+        }
+      ]
+    },
+    {
+      "name": "libc",
+      "version": "0.2.186",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/libc",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "123a331b5dbf04c30097fa43b8f858bc85df671fe776de498d01f3d6b7c1f69e"
+        }
+      ]
+    },
+    {
+      "name": "libm",
+      "version": "0.2.16",
+      "license": "MIT",
+      "repository": "https://github.com/rust-lang/compiler-builtins",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>",
+        "Amanieu d'Antras <amanieu@gmail.com>",
+        "Jorge Aparicio <japaricious@gmail.com>",
+        "Trevor Gross <tg@trevorgross.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE.txt",
+          "sha256": "3823dda7cf046602f4b4e77ec8e227863dc4736037cc85bb33d9f19febe16bb7"
+        }
+      ]
+    },
+    {
+      "name": "log",
+      "version": "0.4.29",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/log",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "macro_rules_attribute",
+      "version": "0.2.2",
+      "license": "Apache-2.0 OR MIT OR Zlib",
+      "repository": "https://github.com/danielhenrymantilla/macro_rules_attribute-rs",
+      "authors": [
+        "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "65049d7923698040cd0b1ddcced9b0eb14dd22c5f86ae59c3740eab64a676520",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "388e98b08de12ba8a9d4575883c8b0386c747cea188ed459380fc58d60da15c9"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "603fb27ef3266ea516872eefd9ae587746b8c34614a35c0fb24e4e9e0c17e137"
+        },
+        {
+          "source": "LICENSE-ZLIB",
+          "sha256": "1c41c0e19caa2c20b0adfeb8219b606b21b7c63914aa3ae74ae3e091d7ce09ca"
+        }
+      ]
+    },
+    {
+      "name": "macro_rules_attribute-proc_macro",
+      "version": "0.2.2",
+      "license": "Apache-2.0 OR MIT OR Zlib",
+      "repository": "https://github.com/danielhenrymantilla/macro_rules_attribute-rs",
+      "authors": [
+        "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "670fdfda89751bc4a84ac13eaa63e205cf0fd22b4c9a5fbfa085b63c1f1d3a30",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "388e98b08de12ba8a9d4575883c8b0386c747cea188ed459380fc58d60da15c9"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "603fb27ef3266ea516872eefd9ae587746b8c34614a35c0fb24e4e9e0c17e137"
+        },
+        {
+          "source": "LICENSE-ZLIB",
+          "sha256": "1c41c0e19caa2c20b0adfeb8219b606b21b7c63914aa3ae74ae3e091d7ce09ca"
+        }
+      ]
+    },
+    {
+      "name": "matchers",
+      "version": "0.2.0",
+      "license": "MIT",
+      "repository": "https://github.com/hawkw/matchers",
+      "authors": [
+        "Eliza Weisman <eliza@buoyant.io>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "a47129d738752a6ae52247fea645b42cb320d19e9327f1eb2d1a7f99d9455ad3"
+        }
+      ]
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.0",
+      "license": "Unlicense OR MIT",
+      "repository": "https://github.com/BurntSushi/memchr",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>",
+        "bluss"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYING",
+          "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f"
+        }
+      ]
+    },
+    {
+      "name": "memmap2",
+      "version": "0.9.10",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/RazrFalcon/memmap2-rs",
+      "authors": [
+        "Dan Burkert <dan@danburkert.com>",
+        "Yevhenii Reizner <razrfalcon@gmail.com>",
+        "The Contributors"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "714098028fe011992e1c3962653c96b2d578c4b4bce9036e15ff220319b1e0e3",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "04ea4849dba9dcae07113850c6f1b1a69052c625210639914eee352023f750ad"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0d25d03b5ab49576178ad0cae7a2648d12c17ad0452fe49c07e55e4b59aa5257"
+        }
+      ]
+    },
+    {
+      "name": "minimal-lexical",
+      "version": "0.2.1",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/Alexhuszagh/minimal-lexical",
+      "authors": [
+        "Alex Huszagh <ahuszagh@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "source": "LICENSE.md",
+          "sha256": "dbe1fff0fb1314b6af94f161511406275cf01c5a32441fbf24528a57a051d599"
+        }
+      ]
+    },
+    {
+      "name": "monostate",
+      "version": "0.1.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/monostate",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "3341a273f6c9d5bef1908f17b7267bbab0e95c9bf69a0d4dcf8e9e1b2c76ef67",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "monostate-impl",
+      "version": "0.1.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/monostate",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e4db6d5580af57bf992f59068d4ea26fd518574ff48d7639b255a36f9de6e7e9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "nom",
+      "version": "7.1.3",
+      "license": "MIT",
+      "repository": "https://github.com/Geal/nom",
+      "authors": [
+        "contact@geoffroycouprie.com"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "4dbda04344456f09a7a588140455413a9ac59b6b26a1ef7cdf9c800c012d87f0"
+        }
+      ]
+    },
+    {
+      "name": "nu-ansi-term",
+      "version": "0.50.3",
+      "license": "MIT",
+      "repository": "https://github.com/nushell/nu-ansi-term",
+      "authors": [
+        "ogham@bsago.me",
+        "Ryan Scheel (Havvy) <ryan.havvy@gmail.com>",
+        "Josh Triplett <josh@joshtriplett.org>",
+        "The Nushell Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "284465860407420254e39be4e1bdcaaf2e7f2d18e06f9bab75bc75341a5d8501"
+        }
+      ]
+    },
+    {
+      "name": "num-complex",
+      "version": "0.4.6",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-num/num-complex",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "num-traits",
+      "version": "0.2.19",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-num/num-traits",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "num_cpus",
+      "version": "1.17.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/seanmonstar/num_cpus",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "91df4bbde75afed763b708b7eee1e8e7651e02d97f6d5dd763e89367e957b23b",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "391a5396cec6230bfabd4ef4eb2350eb895bc5efce377a2218f5702ed020d3e3"
+        }
+      ]
+    },
+    {
+      "name": "objc2",
+      "version": "0.6.4",
+      "license": "MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [
+        "Mads Marquart <mads@marquart.dk>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "3a12a8ed07aefc768292f076dc3ac8c48f3781c8f2d5851dd3d98950e8c5a89f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/8852b424193ca41602281b3d7540d7c8ed51e49a/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-core-foundation",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2a180dd8642fa45cdb7dd721cd4c11b1cadd4929ce112ebd8b9f5803cc79d536",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-core-graphics",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e022c9d066895efa1345f8e33e584b9f958da2fd4cd116792e15e07e4720a807",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-core-ml",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "201b055e6acfa0f9f15568255d3f03ce2b54bc86d1814442dc69138e36813e18",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-core-video",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d425caf1df73233f29fd8a5c3e5edbc30d2d4307870f802d18f00d83dc5141a6",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-encode",
+      "version": "4.1.0",
+      "license": "MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [
+        "Mads Marquart <mads@marquart.dk>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ef25abbcd74fb2609453eb695bd2f860d389e457f67dc17cafc8b8cbc89d0c33",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/8d214f5477365ffcbcbb7de058c86ed9a518efb7/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-foundation",
+      "version": "0.3.2",
+      "license": "MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e3e0adef53c21f888deb4fa59fc59f7eb17404926ee8a6f59f5df0fd7f9f3272",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "src/copying.rs",
+          "sha256": "259b22f571b54fed25f68ec5abd8eda223e7b0547a806f13ba797a0eabecd64f"
+        },
+        {
+          "source": "src/tests/copying.rs",
+          "sha256": "23d608079a47693a26dfc8a5cb01894ad0136a50714d46221d9380aa4a4b4423"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-image-io",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "32b0446e98cf4a784cc7a0177715ff317eeaa8463841c616cfc78aa4f953c4ea",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "objc2-metal",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/madsmtm/objc2",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a0125f776a10d00af4152d74616409f0d4a2053a6f57fa5b7d6aa2854ac04794",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+        },
+        {
+          "source": "MIT license terms; selected from the declared license alternatives",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "once_cell",
+      "version": "1.21.4",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/matklad/once_cell",
+      "authors": [
+        "Aleksey Kladov <aleksey.kladov@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "paste",
+      "version": "1.0.15",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/paste",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "license": "Apache-2.0 OR MIT",
+      "repository": "https://github.com/taiki-e/pin-project-lite",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "ppv-lite86",
+      "version": "0.2.21",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/cryptocorrosion/cryptocorrosion",
+      "authors": [
+        "The CryptoCorrosion Contributors"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "0218327e7a480793ffdd4eb792379a9709e5c135c7ba267f709d6f6d4d70af0a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "4cada0bd02ea3692eee6f16400d86c6508bbd3bafb2b65fed0419f36d4f83e8f"
+        }
+      ]
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.106",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/proc-macro2",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>",
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "prost",
+      "version": "0.13.5",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/tokio-rs/prost",
+      "authors": [
+        "Dan Burkert <dan@danburkert.com>",
+        "Lucio Franco <luciofranco14@gmail.com>",
+        "Casper Meijn <casper@meijn.net>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2796faa41db3ec313a31f7624d9286acf277b52de526150b7e69f3debf891ee5",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        }
+      ]
+    },
+    {
+      "name": "prost-derive",
+      "version": "0.13.5",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/tokio-rs/prost",
+      "authors": [
+        "Dan Burkert <dan@danburkert.com>",
+        "Lucio Franco <luciofranco14@gmail.com>",
+        "Casper Meijn <casper@meijn.net>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        }
+      ]
+    },
+    {
+      "name": "ptts",
+      "version": "0.4.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/gradium-ai/xn-ptts",
+      "authors": [],
+      "source": "https://github.com/gradium-ai/xn-ptts",
+      "checksum": null,
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "ptts-coreml",
+      "version": "0.4.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/gradium-ai/xn-ptts",
+      "authors": [],
+      "source": "https://github.com/gradium-ai/xn-ptts",
+      "checksum": null,
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "ptts-ffi",
+      "version": "0.4.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/gradium-ai/xn-ptts",
+      "authors": [],
+      "source": "https://github.com/gradium-ai/xn-ptts",
+      "checksum": null,
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "pulp",
+      "version": "0.22.2",
+      "license": "MIT",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "authors": [
+        "sarah qui\u00f1ones <sarah@veganb.tw>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2e205bb30d5b916c55e584c22201771bcf2bad9aabd5d4127f38387140c38632",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "pulp-wasm-simd-flag",
+      "version": "0.1.0",
+      "license": "MIT",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "authors": [
+        "sarah qui\u00f1ones <sarah@veganb.tw>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "40e24eee682d89fb193496edf918a7f407d30175b2e785fe057e4392dfd182e0",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/sarah-quinones/pulp//28ba9b9a75da773d9426f18019fed63eff0e591f/LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "quote",
+      "version": "1.0.45",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/quote",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "rand",
+      "version": "0.9.4",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/rand",
+      "authors": [
+        "The Rand Project Developers",
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "44c5af06bb1b7d3216d91932aed5265164bf384dc89cd6ba05cf59a35f5f76ea",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "35242e7a83f69875e6edeff02291e688c97caafe2f8902e4e19b49d3e78b4cab"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b"
+        }
+      ]
+    },
+    {
+      "name": "rand_chacha",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/rand",
+      "authors": [
+        "The Rand Project Developers",
+        "The Rust Project Developers",
+        "The CryptoCorrosion Contributors"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "35242e7a83f69875e6edeff02291e688c97caafe2f8902e4e19b49d3e78b4cab"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b"
+        }
+      ]
+    },
+    {
+      "name": "rand_core",
+      "version": "0.9.5",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/rand",
+      "authors": [
+        "The Rand Project Developers",
+        "The Rust Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "6df43f6f4b5d4587f3d8d71e45532c688fd168afa5fe89d571cb32fa09c4ef51"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "209fbbe0ad52d9235e37badf9cadfe4dbdc87203179c0899e738b39ade42177b"
+        }
+      ]
+    },
+    {
+      "name": "rand_distr",
+      "version": "0.5.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-random/rand_distr",
+      "authors": [
+        "The Rand Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "6a8615d50dcf34fa31f7ab52692afec947c4dd0ab803cc87cb3b0b4570ff7463",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "90eb64f0279b0d9432accfa6023ff803bc4965212383697eee27a0f426d5f8d5"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "6df43f6f4b5d4587f3d8d71e45532c688fd168afa5fe89d571cb32fa09c4ef51"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "a771e4354f6b3ad4c92da1a5c9a239b6c291527db869632ecea4f20e24ca1135"
+        }
+      ]
+    },
+    {
+      "name": "raw-cpuid",
+      "version": "11.6.0",
+      "license": "MIT",
+      "repository": "https://github.com/gz/rust-cpuid",
+      "authors": [
+        "Gerd Zellweger <mail@gerdzellweger.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "498cd0dc59d73224351ee52a95fee0f1a617a2eae0e7d9d720cc622c73a54186",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE.md",
+          "sha256": "cdd45f4d0c552c3a51725728215919e0dedb1e1af250f130e7c2d60eef6721fe"
+        }
+      ]
+    },
+    {
+      "name": "rayon",
+      "version": "1.12.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rayon-rs/rayon",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "fb39b166781f92d482534ef4b4b1b2568f42613b53e5b6c160e24cfbfa30926d",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+        }
+      ]
+    },
+    {
+      "name": "rayon-cond",
+      "version": "0.4.0",
+      "license": "Apache-2.0/MIT",
+      "repository": "https://github.com/cuviper/rayon-cond",
+      "authors": [
+        "Josh Stone <cuviper@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2964d0cf57a3e7a06e8183d14a8b527195c706b7983549cd5462d5aa3747438f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac"
+        }
+      ]
+    },
+    {
+      "name": "rayon-core",
+      "version": "1.13.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rayon-rs/rayon",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+        }
+      ]
+    },
+    {
+      "name": "reborrow",
+      "version": "0.5.5",
+      "license": "MIT",
+      "repository": "https://github.com/sarah-ek/reborrow/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "03251193000f4bd3b042892be858ee50e8b3719f2b08e5833ac4353724632430",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "bf5a93d1014429b43e01c57d45bea928748fbf37d059306145a1a0a91aec2014"
+        }
+      ]
+    },
+    {
+      "name": "regex",
+      "version": "1.12.3",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/regex",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "regex-automata",
+      "version": "0.4.14",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/regex",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        }
+      ]
+    },
+    {
+      "name": "regex-syntax",
+      "version": "0.8.10",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/rust-lang/regex",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+        },
+        {
+          "source": "src/unicode_tables/LICENSE-UNICODE",
+          "sha256": "74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3"
+        }
+      ]
+    },
+    {
+      "name": "rustversion",
+      "version": "1.0.22",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/rustversion",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "ryu",
+      "version": "1.0.23",
+      "license": "Apache-2.0 OR BSL-1.0",
+      "repository": "https://github.com/dtolnay/ryu",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-BOOST",
+          "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+        }
+      ]
+    },
+    {
+      "name": "safetensors",
+      "version": "0.7.0",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/huggingface/safetensors",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "675656c1eabb620b921efea4f9199f97fc86e36dd6ffd1fbbe48d0f59a4987f5",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "seq-macro",
+      "version": "0.3.6",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/seq-macro",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "serde",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/serde-rs/serde",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/serde-rs/serde",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.228",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/serde-rs/serde",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.149",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/serde-rs/json",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "sharded-slab",
+      "version": "0.1.7",
+      "license": "MIT",
+      "repository": "https://github.com/hawkw/sharded-slab",
+      "authors": [
+        "Eliza Weisman <eliza@buoyant.io>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "eafbfa606bc005ed7fd2f623d65af17ffe4ef7c017221ac14405bf4140771ea9"
+        }
+      ]
+    },
+    {
+      "name": "smallvec",
+      "version": "1.15.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/servo/rust-smallvec",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "0b28172679e0009b655da42797c03fd163a3379d5cfa67ba1f1655e974a2a1a9"
+        }
+      ]
+    },
+    {
+      "name": "spm_precompiled",
+      "version": "0.1.4",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/huggingface/spm_precompiled",
+      "authors": [
+        "Nicolas Patry <patry.nicolas@protonmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "5851699c4033c63636f7ea4cf7b7c1f1bf06d0cc03cfb42e711de5a5c46cf326",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "stable_deref_trait",
+      "version": "1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/storyyeller/stable_deref_trait",
+      "authors": [
+        "Robert Grosse <n210241048576@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "5e05b024f653a5ce199e77cbbbd42fb5553562ec714b819421ed0c3e552a75d7"
+        }
+      ]
+    },
+    {
+      "name": "static_assertions",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/nvzqz/static-assertions-rs",
+      "authors": [
+        "Nikolai Vazquez"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "ea084a2373ebc1f0902c09266e7bf25a05ab3814c1805bb017ffa7308f90c061"
+        }
+      ]
+    },
+    {
+      "name": "strsim",
+      "version": "0.11.1",
+      "license": "MIT",
+      "repository": "https://github.com/rapidfuzz/strsim-rs",
+      "authors": [
+        "Danny Guo <danny@dannyguo.com>",
+        "maxbachmann <oss@maxbachmann.de>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "1e697ce8d21401fbf1bddd9b5c3fd4c4c79ae1e3bdf51f81761c85e11d5a89cd"
+        }
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "2.0.117",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/syn",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "synstructure",
+      "version": "0.13.2",
+      "license": "MIT",
+      "repository": "https://github.com/mystor/synstructure",
+      "authors": [
+        "Nika Layzell <nika@thelayzells.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "219920e865eee70b7dcfc948a86b099e7f4fe2de01bcca2ca9a20c0a033f2b59"
+        }
+      ]
+    },
+    {
+      "name": "sysctl",
+      "version": "0.6.0",
+      "license": "MIT",
+      "repository": "https://github.com/johalun/sysctl-rs",
+      "authors": [
+        "Johannes Lundberg <johalun0@gmail.com>",
+        "Ivan Temchenko <ivan.temchenko@yandex.ua>",
+        "Fabian Freyer <fabian.freyer@physik.tu-berlin.de>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "01198a2debb237c62b6826ec7081082d951f46dbb64b0e8c7649a452230d1dfc",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "53c2dcd4a0105784749459719bc59d759bb8dbb28939fd742645ac543416b556"
+        }
+      ]
+    },
+    {
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "thiserror",
+      "version": "2.0.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "2.0.18",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "thread_local",
+      "version": "1.1.9",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/Amanieu/thread_local-rs",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5"
+        }
+      ]
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.1",
+      "license": "Apache-2.0",
+      "repository": "https://github.com/huggingface/tokenizers",
+      "authors": [
+        "Anthony MOI <m.anthony.moi@gmail.com>",
+        "Nicolas Patry <patry.nicolas@protonmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "44e5bea67576e04b6ff8564c5d9e09c2ef0cf476502245f2f120e497769d3112",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/tracing",
+      "authors": [
+        "Eliza Weisman <eliza@buoyant.io>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        }
+      ]
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/tracing",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>",
+        "Eliza Weisman <eliza@buoyant.io>",
+        "David Barsky <dbarsky@amazon.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        }
+      ]
+    },
+    {
+      "name": "tracing-core",
+      "version": "0.1.36",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/tracing",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        },
+        {
+          "source": "src/spin/LICENSE",
+          "sha256": "58545fed1565e42d687aecec6897d35c6d37ccb71479a137c0deb2203e125c79"
+        }
+      ]
+    },
+    {
+      "name": "tracing-log",
+      "version": "0.2.0",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/tracing",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        }
+      ]
+    },
+    {
+      "name": "tracing-subscriber",
+      "version": "0.3.23",
+      "license": "MIT",
+      "repository": "https://github.com/tokio-rs/tracing",
+      "authors": [
+        "Eliza Weisman <eliza@buoyant.io>",
+        "David Barsky <me@davidbarsky.com>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        }
+      ]
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.24",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "repository": "https://github.com/dtolnay/unicode-ident",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "source": "LICENSE-UNICODE",
+          "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+        }
+      ]
+    },
+    {
+      "name": "unicode-normalization-alignments",
+      "version": "0.1.12",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/n1t0/unicode-normalization",
+      "authors": [
+        "Anthony MOI <m.anthony.moi@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "43f613e4fa046e69818dd287fdc4bc78175ff20331479dab6e1b0f98d57062de",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+        }
+      ]
+    },
+    {
+      "name": "unicode-segmentation",
+      "version": "1.13.2",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/unicode-rs/unicode-segmentation",
+      "authors": [
+        "kwantam <kwantam@gmail.com>",
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9629274872b2bfaf8d66f5f15725007f635594914870f65218920345aa11aa8c",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "COPYRIGHT",
+          "sha256": "23860c2a7b5d96b21569afedf033469bab9fe14a1b24a35068b8641c578ce24d"
+        },
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+        }
+      ]
+    },
+    {
+      "name": "unicode_categories",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/swgillespie/unicode-categories",
+      "authors": [
+        "Sean Gillespie <sean@swgillespie.me>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "98a817e7b85e5fe4e79d165c656a4a139793b8b643d0f3d9cbcc3538ef82ec82"
+        }
+      ]
+    },
+    {
+      "name": "uuid",
+      "version": "1.23.1",
+      "license": "Apache-2.0 OR MIT",
+      "repository": "https://github.com/uuid-rs/uuid",
+      "authors": [
+        "Ashley Mannix<ashleymannix@live.com.au>",
+        "Dylan DPC<dylan.dpc@gmail.com>",
+        "Hunar Roop Kahlon<hunar.roop@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "ddd74a9687298c6858e9b88ec8935ec45d22e8fd5e6394fa1bd4e99a87789c76",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "436bc5a105d8e57dcd8778730f3754f7bf39c14d2f530e4cde4bd2d17a83ec3d"
+        }
+      ]
+    },
+    {
+      "name": "xn",
+      "version": "0.2.11",
+      "license": "MIT/Apache-2.0",
+      "repository": "https://github.com/LaurentMazare/xn",
+      "authors": [],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "0f0498e2301d24e347fd391df00eda2d33b2529e9b32e1ba9ce215cfc5f1fd36",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "https://raw.githubusercontent.com/LaurentMazare/xn/878928e6bc9e10686b3bcd5dd422ae81f54c24cb/LICENSE-APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "source": "https://raw.githubusercontent.com/LaurentMazare/xn/878928e6bc9e10686b3bcd5dd422ae81f54c24cb/LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "0f5bcb177032cca83eb7aae3de9d6fa9cc5cbb29a0090bb07ef8880cf82e3c7d",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-c32",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9137ec88a81f5510045a45b1d5fce27b67f9748b8d83400b39163a51ecae6f04",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-c64",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "e9ab9a0de939c339098e4b20da0aa863f66dfbf1a4b0396dff9a13645443d510",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-common",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "c22f986c37636c5cbc0a6b4e120a5315ef8ba25615504c554a075e3b3286f642",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-f16",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "c971a82caab9a5960a7c3a6c32bf0c5b6bf5b76492f403997825a4d308b7f233",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-f32",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "56b8b45a6a11b6d9fedcea8be60bb175c1278170484e7956b29bae507e3c3039",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "xn-gemm-f64",
+      "version": "0.20.2",
+      "license": "MIT",
+      "repository": "https://github.com/gradium-ai/gemm/",
+      "authors": [
+        "sarah <>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2be9f43b557116575751164c7ce2c9e1a7a5bde9e944843bf87ca3314da7eb41",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9"
+        }
+      ]
+    },
+    {
+      "name": "yoke",
+      "version": "0.8.2",
+      "license": "Unicode-3.0",
+      "repository": "https://github.com/unicode-org/icu4x",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "abe8c5fda708d9ca3df187cae8bfb9ceda00dd96231bed36e445a1a48e66f9ca",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+        }
+      ]
+    },
+    {
+      "name": "yoke-derive",
+      "version": "0.8.2",
+      "license": "Unicode-3.0",
+      "repository": "https://github.com/unicode-org/icu4x",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "de844c262c8848816172cef550288e7dc6c7b7814b4ee56b3e1553f275f1858e",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+        }
+      ]
+    },
+    {
+      "name": "zerocopy",
+      "version": "0.8.48",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/google/zerocopy",
+      "authors": [
+        "Joshua Liebow-Feeser <joshlf@google.com>",
+        "Jack Wrenn <jswrenn@amazon.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "eed437bf9d6692032087e337407a86f04cd8d6a16a37199ed57949d415bd68e9",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3"
+        },
+        {
+          "source": "LICENSE-BSD",
+          "sha256": "83c1763356e822adde0a2cae748d938a73fdc263849ccff6b27776dff213bd32"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df"
+        }
+      ]
+    },
+    {
+      "name": "zerocopy-derive",
+      "version": "0.8.48",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/google/zerocopy",
+      "authors": [
+        "Joshua Liebow-Feeser <joshlf@google.com>",
+        "Jack Wrenn <jswrenn@amazon.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "70e3cd084b1788766f53af483dd21f93881ff30d7320490ec3ef7526d203bad4",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-APACHE",
+          "sha256": "9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3"
+        },
+        {
+          "source": "LICENSE-BSD",
+          "sha256": "83c1763356e822adde0a2cae748d938a73fdc263849ccff6b27776dff213bd32"
+        },
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df"
+        }
+      ]
+    },
+    {
+      "name": "zerofrom",
+      "version": "0.1.7",
+      "license": "Unicode-3.0",
+      "repository": "https://github.com/unicode-org/icu4x",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "69faa1f2a1ea75661980b013019ed6687ed0e83d069bc1114e2cc74c6c04c4df",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+        }
+      ]
+    },
+    {
+      "name": "zerofrom-derive",
+      "version": "0.1.7",
+      "license": "Unicode-3.0",
+      "repository": "https://github.com/unicode-org/icu4x",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "11532158c46691caf0f2593ea8358fed6bbf68a0315e80aae9bd41fbade684a1",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+        }
+      ]
+    },
+    {
+      "name": "zmij",
+      "version": "1.0.21",
+      "license": "MIT",
+      "repository": "https://github.com/dtolnay/zmij",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa",
+      "targets": [
+        "aarch64-apple-darwin",
+        "aarch64-apple-ios",
+        "aarch64-apple-ios-sim",
+        "aarch64-linux-android",
+        "x86_64-linux-android"
+      ],
+      "licenseFiles": [
+        {
+          "source": "LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ]
+    }
+  ]
+}
