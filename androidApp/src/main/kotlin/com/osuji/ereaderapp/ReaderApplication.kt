@@ -121,7 +121,7 @@ class ReaderApplication : Application() {
             val playback = koin.get<PlaybackCoordinator>().state.value
             koin.get<PdfAdapter>().releaseParserWhenIdle()
             koin.get<TranscriptionCoordinator>().pauseForMemoryPressure()
-            runtime.close("android-moonshine-english")
+            runtime.close("android-whisper-base-en")
             if (!playback.playing && !playback.capturing && !playback.preparing) {
                 runtime.close("android-phonon-english")
             }
