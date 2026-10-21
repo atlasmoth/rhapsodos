@@ -2,9 +2,11 @@
 
 ## Decision supported by this experiment
 
-**Do not replace Whisper with the default Moonshine streaming pipeline on the evidence collected.** Whisper Small.en has the best transcription quality in this sample; Whisper Base.en is the stronger compact-default candidate pending native runtime checks. Base makes fewer word errors than both Moonshine streaming sizes, particularly on the quiet second-source recordings and controlled noise. Small.en improves quality further but its larger artifact and runtime footprint need a real mobile tradeoff, not an automatic extra model option.
+**Use Whisper Base English on both apps.** On the same 66 speech cases, Base has 3.54% word error rate versus 5.76% for Moonshine Small streaming and 9.06% for Moonshine Tiny streaming. Whisper Small.en is more accurate at 2.52%, but in the matched native subset it corrects only three additional words versus Base on each platform. Its full CoreML package also used nearly twice the measured process memory and about three times the long-note decoding time. Base is the compact default; Small does not justify an additional download option for this release.
 
-This is a bounded engineering comparison, not a published benchmark or physical-phone qualification. Native WhisperKit/CoreML and whisper.cpp quantized results must determine the shipping choice. These host results compare transcript quality on identical audio; they do **not** establish mobile speed superiority for any model. Do not rank raw Whisper silence outputs against Moonshine's built-in VAD as if the pipelines use the same filtering.
+Android now uses pinned whisper.cpp 1.9.5 with an 81,781,811-byte Q8 Base English pack. iOS uses WhisperKit 0.18.0 with a 149,150,649-byte Base English CoreML/tokenizer pack. Phonon narration is unchanged. Old transcription profiles are removed; their selections become off and the new download requires explicit Download & enable. Saved recordings, transcript edits, source attachments and listening position are preserved.
+
+This is a bounded engineering comparison, not a published benchmark or physical-phone qualification. Host results compare transcript quality on identical audio; they do **not** establish mobile speed superiority. Native evidence below uses the actual saved-file paths and separately checks silence, quiet speech, long boundaries and cancellation. Do not rank ungated Whisper reference outputs against Moonshine’s built-in VAD as if the pipelines use identical filtering.
 
 The [committed metrics and provenance](note-asr-metrics.json) retain aggregate counts, artifact hashes and corpus identifiers without raw recordings or transcripts.
 
@@ -132,6 +134,26 @@ cd /private/tmp/rhapsodos-asr-evaluation
 
 Primary runtime/model references: [Moonshine accuracy and quantization notes](https://moonshine-voice.readthedocs.io/en/latest/models/accuracy/), [Moonshine native runtime](https://github.com/moonshine-ai/moonshine), [pinned upstream accuracy script](https://github.com/moonshine-ai/moonshine/blob/234f60faa0eb388b01cdf7e60aca232af37aefda/scripts/eval-librispeech.py), [OpenAI Whisper](https://github.com/openai/whisper).
 
-## Remaining selection gates
+## Native integration and remaining qualification
 
-Native qualification is being performed separately on the exact saved-file pipeline: quantized whisper.cpp on Android and WhisperKit/CoreML on iOS, including the quiet FLEURS omissions, silence/noise, long-note boundaries, cancellation and resource behavior. Emulator/simulator measurements remain host-dependent, so physical ordinary-phone sustained-memory, thermal, battery and latency checks remain required. The present sample cannot establish accent breadth, spontaneous disfluencies, names across cultures, multilingual quality, real-room noise or far-field microphone robustness. It is sufficient to reject an assumed automatic Moonshine upgrade and identify Whisper Base/Small as the next native candidates, not to claim universally best ASR.
+The native comparison reuses six LibriSpeech originals, all ten quiet FLEURS clips and one constructed 53.155-second note: **17 speech cases / 488 reference words**, plus blank probes. The long note repeats source utterances. This deliberately selected subset emphasizes the discovered quiet-speech and boundary failure cases; it is not an independent population estimate. [Native aggregate evidence](note-asr-native-metrics.json) preserves source hashes and counts without recordings or transcripts.
+
+| Native candidate | S / D / I | WER / 488 words | Raw blank outputs in matched pair |
+|---|---:|---:|---:|
+| iOS previous Whisper Tiny | 27 / 4 / 10 | 8.40% | 2/2 |
+| iOS final Whisper Base | 15 / 2 / 4 | 4.30% | 0/2 |
+| iOS Whisper Small, full CoreML candidate | 15 / 2 / 1 | 3.69% | 1/2 before the final no-speech fix |
+| Android Moonshine Tiny streaming | 39 / 31 / 10 | 16.39% | 0/2 |
+| Android Moonshine Small streaming | 24 / 29 / 6 | 12.09% | 0/2 |
+| Android final Whisper Base Q8 | 15 / 2 / 2 | 3.89% | 0/2 |
+| Android Whisper Small Q8 candidate | 13 / 2 / 1 | 3.28% | 1/2 before the final no-speech fix |
+
+Native Moonshine Tiny and Small each omitted one speech clip in this subset. Both final Base adapters retain every speech clip; the expanded blank panel below contains eight probes. The Small candidate’s no-speech behavior was not retuned, so blank counts do not establish a Base-versus-Small model-quality ranking.
+
+The iOS final Base replay reached approximately **432 MiB** process RSS and transcribed the 53.155-second note in **3.46 s**. Full CoreML Small reached **801 MiB** and **10.02 s**, with a 488,953,880-byte download. Android final Base reached **423 MiB** sampled process RSS and **3.70 s** for the long note; Small Q8 reached **710 MiB** and **12.44 s**. These are host-backed simulator/emulator observations, not physical-phone budgets or cross-platform speed comparisons. The previous iOS Tiny probe used physical footprint rather than RSS and must not be directly compared to these memory numbers. A separately inspected 217 MB palettized Small variant was not executed and is not a qualified alternative.
+
+Both shipping adapters read saved audio in contiguous, pause-aware windows no longer than 30 seconds, preserving short tails. The boundary detector never discards audio. A failed or cancelled window prevents any partial result from committing; retry starts from the saved recording. Models unload after work has joined. No speech model is required to save or replay a note.
+
+The final adapters reject segments whose true start-token no-speech probability exceeds 0.6. Android must retain Whisper’s English SOT-only prompt; its previous no-timestamps prompt obscured that probability. WhisperKit 0.18.0 leaves no-speech probability at zero, so iOS computes it through a small public-protocol decoder wrapper. The English tokenizer uses `<|nocaptions|>`, verified by round-trip token lookup. This avoids a louder-audio cutoff or a blacklist of words that could suppress valid notes. All eight 1/5/15/30-second digital-silence and white-noise probes return no raw text on both final paths, and all ten quiet FLEURS clips retain transcripts. These targeted corrections were developed on these probes; independent real-room validation remains necessary.
+
+Simulator/emulator measurements remain host-dependent. Physical ordinary-phone sustained-memory, thermal, battery, microphone-route and latency qualification is still required. Both packs use a provisional 3 GB device-memory eligibility guard, not a claim that all 3 GB phones are qualified. The present sample cannot establish accent breadth, spontaneous disfluencies, names across cultures, multilingual quality or far-field microphone robustness. This evidence supports the selected release configuration, not universally best ASR.
