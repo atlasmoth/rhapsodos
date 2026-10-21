@@ -389,7 +389,12 @@ fun ReaderApp() {
             Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
                 SheetHeader("Settings", doneEnabled = archiveTransportReady) { if (archiveTransportReady) showSettings = false }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    OutlinedButton(onClick = { showSettings = false; returnToSettings = true; speechSetup = "all"; haptic(view) }, enabled = archiveTransportReady, modifier = Modifier.fillMaxWidth()) { Text("Download voices and transcription") }
+                    Surface(onClick = { showSettings = false; returnToSettings = true; speechSetup = "all"; haptic(view) }, enabled = archiveTransportReady, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Download voices and transcription", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                            Icon(Icons.Default.ChevronRight, null)
+                        }
+                    }
                     Surface(onClick = { showSettings = false; returnToSettings = true; speechSetup = "tts"; haptic(view) }, enabled = archiveTransportReady, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
                         Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {

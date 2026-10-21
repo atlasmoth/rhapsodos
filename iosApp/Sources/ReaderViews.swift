@@ -548,8 +548,14 @@ private struct VoiceSettings: View {
             ReaderSheetHeader(title: "Settings") { dismiss() }.disabled(store.busy)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Button("Download voices and transcription", systemImage: "arrow.down.circle") { store.feedback.play(.selection); gallery = true }
-                        .frame(minHeight: 44).disabled(store.models == nil)
+                    Button { store.feedback.play(.selection); gallery = true } label: {
+                        HStack(spacing: 16) {
+                            Text("Download voices and transcription").font(.headline).multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.muted).accessibilityHidden(true)
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
+                            .background(Palette.soft, in: RoundedRectangle(cornerRadius: 20)).contentShape(Rectangle())
+                    }.buttonStyle(.plain).disabled(store.models == nil)
                     Button { store.feedback.play(.selection); setup = .narration } label: {
                         HStack(spacing: 16) {
                             VStack(alignment: .leading, spacing: 6) {
