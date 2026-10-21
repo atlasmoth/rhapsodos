@@ -160,7 +160,8 @@ fun ReaderApp() {
     }
     var importing by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var showVoices by rememberSaveable { mutableStateOf(false) }
+    var speechSetup by rememberSaveable { mutableStateOf<String?>(null) }
+    var returnToSettings by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
     var libraryAction by remember { mutableStateOf<Pair<String, LibraryDocument>?>(null) }
@@ -311,7 +312,7 @@ fun ReaderApp() {
                 if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback,
                     available = !playback.capturing && !exporting && exportDocumentId == null,
                     voiceReady = models.installed(modelState.selectedVoice) != null,
-                    downloadVoice = { showVoices = true }, record = { recordThought() })
+                    downloadVoice = { returnToSettings = false; speechSetup = "tts" }, record = { recordThought() })
             },
         ) { padding ->
             ModalNavigationDrawer(
@@ -374,7 +375,7 @@ fun ReaderApp() {
 
         if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("A quick note") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Got it") } })
 
-        if (showVoices) OfflineSpeechSheet(scope) { showVoices = false; showSettings = true }
+        speechSetup?.let { capability -> SpeechSetupSheet(capability) { speechSetup = null; if (returnToSettings) showSettings = true } }
         if (showSearch) SearchSheet("", { hit ->
             val accepted = playback.openSearchPassage(hit.documentId, hit.passageId)
             if (accepted) openDocument(hit.documentId)
@@ -383,38 +384,39 @@ fun ReaderApp() {
 
         if (showSettings) ModalBottomSheet(onDismissRequest = { if (archiveTransportReady) showSettings = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = { it != SheetValue.Hidden || archiveSheetDismissal.value }),
+            containerColor = MaterialTheme.colorScheme.background,
             properties = ModalBottomSheetProperties(shouldDismissOnBackPress = archiveTransportReady, shouldDismissOnClickOutside = archiveTransportReady)) {
             Column(Modifier.fillMaxWidth().heightIn(max = 760.dp).navigationBarsPadding().padding(horizontal = 24.dp)) {
                 SheetHeader("Settings", doneEnabled = archiveTransportReady) { if (archiveTransportReady) showSettings = false }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                    SettingsSection("Voices") {
-                        Text(if (modelState.selectedVoice.isBlank()) "Download and select Phonon to start listening." else models.voiceName(modelState.selectedVoice, modelState.voiceId))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            modelState.catalog.filter { it.capability == "tts" && models.installed(it.id) != null }.forEach { pack ->
-                                models.voiceIds(pack.id).forEach { voice ->
-                                    FilterChip(modelState.selectedVoice == pack.id && modelState.voiceId == voice, onClick = {
-                                        scope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
-                                    }, label = { Text(models.voiceName(pack.id, voice)) }, enabled = archiveTransportReady && !playback.capturing)
+                    OutlinedButton(onClick = { showSettings = false; returnToSettings = true; speechSetup = "all"; haptic(view) }, enabled = archiveTransportReady, modifier = Modifier.fillMaxWidth()) { Text("Download voices and transcription") }
+                    Surface(onClick = { showSettings = false; returnToSettings = true; speechSetup = "tts"; haptic(view) }, enabled = archiveTransportReady, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Reading voice", style = MaterialTheme.typography.titleMedium)
+                                Text(speechSetupStatus("tts", modelState, models), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(Icons.Default.ChevronRight, null)
+                        }
+                    }
+                    Surface(onClick = { showSettings = false; returnToSettings = true; speechSetup = "asr"; haptic(view) }, enabled = archiveTransportReady, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Transcribe voice notes", style = MaterialTheme.typography.titleMedium)
+                                Text(speechSetupStatus("asr", modelState, models), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Switch(checked = models.asrDirectory() != null || modelState.pendingActivation["asr"] != null, onCheckedChange = { enabled ->
+                                if (!enabled) models.disableTranscription()
+                                else {
+                                    val ready = modelState.catalog.firstOrNull { it.capability == "asr" && models.installed(it.id) != null }
+                                    if (ready != null) models.setup(ready.id)
+                                    else { showSettings = false; returnToSettings = true; speechSetup = "asr" }
                                 }
-                            }
+                                haptic(view)
+                            }, enabled = archiveTransportReady && !modelState.initializing, modifier = Modifier.semantics { contentDescription = "Transcribe voice notes" })
                         }
-                        OutlinedButton(onClick = { showSettings = false; showVoices = true; haptic(view) }, enabled = archiveTransportReady) { Text("Download voices and transcription") }
-                        modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     }
-                    SettingsSection("Voice-note transcription") {
-                        Text(if (modelState.selectedTranscription == "off") "Off · recordings remain saved" else modelState.catalog.firstOrNull { it.id == modelState.selectedTranscription }?.name ?: "Selected pack is unavailable")
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            FilterChip(modelState.selectedTranscription == "off", onClick = {
-                                scope.launch { runCatching { models.selectTranscription("off"); haptic(view) }.onFailure { models.reportError(it.message ?: "Transcription could not be selected.") } }
-                            }, label = { Text("Off") }, enabled = archiveTransportReady && !modelState.changingTranscription && !audio.capturing)
-                            modelState.catalog.filter { it.capability == "asr" && models.installed(it.id) != null }.forEach { pack ->
-                                FilterChip(modelState.selectedTranscription == pack.id, onClick = {
-                                    scope.launch { runCatching { models.selectTranscription(pack.id); haptic(view) }.onFailure { models.reportError(it.message ?: "Transcription could not be selected.") } }
-                                }, label = { Text(pack.name) }, enabled = archiveTransportReady && !modelState.changingTranscription && !audio.capturing)
-                            }
-                        }
-                        if (modelState.selectedTranscription != "off" && models.asrDirectory() == null) Text("Choose a checked download to transcribe saved voice notes.", style = MaterialTheme.typography.bodySmall)
-                    }
+                    modelState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     SettingsSection("Playback speed") {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
@@ -1115,7 +1117,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
     } else if (visible) ModalBottomSheet(onDismissRequest = close) {
         content(Modifier.fillMaxWidth().heightIn(max = 620.dp).navigationBarsPadding().padding(horizontal = 22.dp))
     }
-    if (showDownloads) OfflineSpeechSheet(scope) { showDownloads = false }
+    if (showDownloads) SpeechSetupSheet("asr") { showDownloads = false }
     deleting?.let { note -> AlertDialog(onDismissRequest = { if (!deletingBusy) deleting = null }, title = { Text("Delete this thought?") }, text = { Column { Text("The recording and its transcript will be removed from this device."); deletingError?.let { Text(it, color = MaterialTheme.colorScheme.error) } } }, confirmButton = {
         TextButton(enabled = !deletingBusy, onClick = {
             deletingBusy = true
@@ -1158,7 +1160,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
             if (audio.error != null) Text(audio.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            if (!voiceReady && audio.noteId == null) TextButton(onClick = downloadVoice, enabled = available) { Text("Download and select a voice") }
+            if (!voiceReady && audio.noteId == null) TextButton(onClick = downloadVoice, enabled = available) { Text("Choose reading voice") }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
             val compact = maxWidth < 600.dp
             Column {
