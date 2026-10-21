@@ -66,6 +66,21 @@ public final class PhononEngine: @unchecked Sendable {
         return samples
     }
 
+    public func selectVoice(_ name: String) async throws {
+        try Task.checkCancellation()
+        try await perform {
+            guard let handle = self.handle, var pointer = ptts_voices(handle), !name.isEmpty, !name.utf8.contains(0) else { throw PhononFailure.runtime }
+            var found = false
+            while pointer.pointee != 0 {
+                guard let voice = String(validatingCString: pointer) else { throw PhononFailure.runtime }
+                if voice == name { found = true; break }
+                pointer = pointer.advanced(by: voice.utf8.count + 1)
+            }
+            guard found, name.withCString({ ptts_set_voice(handle, $0) }) else { throw PhononFailure.runtime }
+        }
+        try Task.checkCancellation()
+    }
+
     public func close() async {
         try? await perform { if let handle = self.handle { ptts_free(handle); self.handle = nil } }
     }
