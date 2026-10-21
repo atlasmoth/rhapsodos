@@ -461,7 +461,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     }
     nonisolated private static func allowed(_ url: URL) -> Bool {
         guard url.scheme == "https", url.user == nil, url.password == nil, url.port == nil || url.port == 443, let host = url.host else { return false }
-        return host == "huggingface.co" || host == "cdn-lfs.huggingface.co" || host == "cdn-lfs-us-1.hf.co" || host == "cdn-lfs-eu-1.hf.co" || host == "cas-bridge.xethub.hf.co" || host == "cas-server.xethub.hf.co" || host == "github.com" || host == "release-assets.githubusercontent.com" || host == "raw.githubusercontent.com"
+        return host == "huggingface.co" || host == "cdn-lfs.huggingface.co" || host == "cdn-lfs-us-1.hf.co" || host == "cdn-lfs-eu-1.hf.co" || host == "us.aws.cdn.hf.co" || host == "cas-bridge.xethub.hf.co" || host == "cas-server.xethub.hf.co" || host == "github.com" || host == "release-assets.githubusercontent.com" || host == "raw.githubusercontent.com"
     }
     private func decode(_ description: String?) -> Transfer? { description.flatMap { try? JSONDecoder().decode(Transfer.self, from: Data($0.utf8)) } }
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(request.url.flatMap { Self.allowed($0) ? request : nil }) }
@@ -489,7 +489,9 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 try await self.refresh()
                 try Task.checkCancellation()
                 guard self.installs.contains(where: { $0.packId == pack.id && $0.generation == transfer.generation && $0.status == "downloading" }) else { throw CancellationError() }
-                guard let response = downloadTask.response as? HTTPURLResponse, response.statusCode == 200 || response.statusCode == 206 else {
+                guard let response = downloadTask.response as? HTTPURLResponse,
+                      response.statusCode == 200 || response.statusCode == 206,
+                      let finalURL = response.url, Self.allowed(finalURL) else {
                     try? FileManager.default.removeItem(at: self.resumeURL(transfer))
                     throw PackFailure.transport
                 }
