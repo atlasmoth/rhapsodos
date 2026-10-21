@@ -1,0 +1,42 @@
+[
+  {
+    "id": "narrative",
+    "text": "The rain had stopped by morning. Clara opened the window and listened to the river below. For the first time in weeks, she had nowhere else to be. She put the kettle on and began reading the letter again."
+  },
+  {
+    "id": "dialogue",
+    "text": "\"Are you coming?\" Maya asked. \"In a moment,\" he replied. \"I want to finish this page.\" She smiled, closed the door quietly, and waited by the stairs."
+  },
+  {
+    "id": "numbers",
+    "text": "The parcel cost $24.50, including tax. It arrived on October 21, 2026, at 9:15 a.m. The temperature was 18.5 degrees Celsius, and the battery had 42% remaining."
+  },
+  {
+    "id": "abbreviations",
+    "text": "Dr. Adams lives on St. James Street. She works for NASA and reads PDF documents on an iPhone. For example, a short note can explain an unfamiliar term without interrupting the story."
+  },
+  {
+    "id": "names",
+    "text": "Ada Lovelace and Alan Turing changed how people think about computers. Chinua Achebe wrote stories that travelled far beyond Nigeria. Today, readers in Lagos, Edinburgh, and S\u00e3o Paulo can hear those stories in their own homes."
+  },
+  {
+    "id": "fidelity",
+    "text": "Do not skip the final sentence. The first box contains seven blue pencils. The second box contains twelve red pencils. There are no green pencils in either box. Remember the final word: lighthouse."
+  },
+  {
+    "id": "technical",
+    "text": "A reliable reader stores the original document and keeps each note attached to its source. Audio time alone is not enough. If a voice changes, the note should still refer to the same passage, and playback should resume where the listener paused."
+  },
+  {
+    "id": "punctuation",
+    "text": "She paused\u2014just for a moment\u2014then continued. The answer was simple: read, listen, and remember. Could it really work? Yes! Even offline. (The quiet details mattered most.)"
+  },
+  {
+    "id": "long",
+    "text": "The path followed the edge of the old garden, past a wooden bench and a low stone wall. Every few steps, the sound of the town faded until only birds and distant traffic remained. Daniel had walked this way many times, but today he noticed a small brass plate beside the gate. It carried a date, a name, and a sentence about patience. He stopped to read it twice. Later, when he tried to describe the morning, he found that the smallest details were the ones he remembered best: the cool handle of the gate, the smell of wet earth, and the patch of sunlight beneath the apple tree. He made a short note before continuing home. The final destination was the library."
+  },
+  {
+    "id": "literal",
+    "text": "The note literally says open parenthesis, close parenthesis, and ampersand. A link can contain slashes and dots, but the surrounding sentence must still be spoken. Do not invent a chapter, omit a warning, or repeat a paragraph."
+  }
+]
