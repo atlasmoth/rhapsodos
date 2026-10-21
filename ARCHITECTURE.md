@@ -174,7 +174,7 @@ Curate artifacts first. Arbitrary model import is a later advanced capability wi
 | Tier | Intended experience |
 | --- | --- |
 | Baseline | Local document display and durable note capture without speech packs; listening begins after a verified voice download |
-| Compact local | Downloaded Phonon narration and Moonshine/Whisper note ASR, bounded prefetch and one heavy inference task at a time |
+| Compact local | Downloaded Phonon narration and Whisper note ASR, bounded prefetch and one heavy inference task at a time |
 | Enhanced local | Larger optional voices/ASR on measured compatible devices, with explicit storage and preparation behavior |
 | Optional cloud | Explicit remote voice, note ASR or document processing, governed separately by privacy policy and budget |
 

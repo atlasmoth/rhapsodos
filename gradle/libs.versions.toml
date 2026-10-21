@@ -10,7 +10,6 @@ compose-bom = "2026.09.01"
 material3 = "1.5.0-alpha29"
 adaptive = "1.3.0"
 navigation3 = "1.2.0"
-litert = "2.1.5"
 tesseract = "4.9.0"
 pdfbox = "2.0.27.0"
 media3 = "1.11.1"
@@ -46,7 +45,6 @@ adaptive-layout = { module = "androidx.compose.material3.adaptive:adaptive-layou
 adaptive-navigation3 = { module = "androidx.compose.material3.adaptive:adaptive-navigation3", version.ref = "adaptive" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
-litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
 tesseract-android = { module = "cz.adaptech.tesseract4android:tesseract4android", version.ref = "tesseract" }
 pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfbox" }
 

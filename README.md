@@ -25,7 +25,7 @@ The documentation records the implementation, product decisions and remaining qu
 | [UI quality](docs/ui-quality.md) | Rich haptics, Metal/AGSL effects, responsiveness budgets and sustained performance qualification |
 | [Brand](docs/brand.md) | Unified identity, licensed fonts, light/dark palette and native launch animation |
 | [Integration contract](docs/implementation-contract.md) | Actual shared commands, canonical JSON contracts and native download/asset responsibilities |
-| [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and LiteRT architecture |
+| [Android](docs/android.md) | Compose, Material3 Expressive, Navigation3, Material3 Adaptive, Media3 and native speech architecture |
 | [iOS](docs/ios.md) | SwiftUI, NavigationSplitView, CoreML and native media architecture with an iOS 18 floor |
 | [Models and evaluation](docs/models-and-evaluation.md) | Local and remote candidates, model gallery, costs, licensing and device qualification |
 | [Model manager](docs/model-manager.md) | Explicit selections, catalogue signing/refresh, supported adapter profiles and release setup |
@@ -39,9 +39,9 @@ Start with [AGENTS.md](AGENTS.md), [Product](docs/product.md) and [ARCHITECTURE.
 
 - Listening is the core experience. Reading primarily supports visual tracking and access to the original source.
 - Voice-note ASR transcribes a saved recording attached to a frozen source position. Saving and resuming do not wait for transcription.
-- Narration requires a downloaded and verified Phonon voice; system speech, Kitten and Kokoro are removed. Moonshine (Android) and Whisper (iOS) transcribe saved notes after download. Local-only content processing and curated speech packs are fundamental. Cloud processing remains a researched future capability behind separate consent.
+- Narration requires a downloaded and verified Phonon voice; system speech, Kitten and Kokoro are removed. Whisper transcribes saved notes after download on both platforms. Local-only content processing and curated speech packs are fundamental. Cloud processing remains a researched future capability behind separate consent.
 - Kotlin Multiplatform shares domain, data and policy. Android and iOS retain native interfaces, audio, document rendering and inference adapters.
-- Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin, Material3 Adaptive and LiteRT. iOS uses Swift, SwiftUI and CoreML, supporting iOS 18 and newer.
+- Android uses Compose, Material3 Expressive, Navigation3, Ktor, Koin and Material3 Adaptive, with bounded native speech adapters. LiteRT remains a preferred route for future qualified model artifacts. iOS uses Swift, SwiftUI and CoreML, supporting iOS 18 and newer.
 - Wide windows, tablets and foldables receive deliberate layouts that preserve the listening session.
 - Rich haptics, native motion and GPU effects accompany a snappy interface with measurable performance budgets and accessible resource-aware fallbacks.
 - Keep code comments necessary and sparse. Do not commit unit-test files. During this pre-release build, remove obsolete features without compatibility shims.

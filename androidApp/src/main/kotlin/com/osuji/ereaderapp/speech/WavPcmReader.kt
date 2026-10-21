@@ -12,7 +12,7 @@ internal class WavPcmReader(path: File) : Closeable {
     val targetSamples = ceil(header.frames.toDouble() * 16_000 / header.rate).toLong()
 
     fun window(start: Long, length: Int): FloatArray {
-        require(start >= 0 && length in 1..80_000)
+        require(start >= 0 && length in 1..480_000)
         val result = FloatArray(length)
         val ratio = header.rate.toDouble() / 16_000
         val firstFrame = floor(start * ratio).toLong()

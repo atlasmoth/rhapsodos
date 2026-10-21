@@ -2,7 +2,6 @@ package com.osuji.ereaderapp.speech
 
 import android.content.Context
 import java.io.File
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -17,15 +16,15 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
     private val worker = Dispatchers.Default.limitedParallelism(1)
     private val mutex = Mutex()
     private var phonon: Pair<String, PhononEngine>? = null
-    private var moonshine: Pair<String, MoonshineEngine>? = null
+    private var whisper: Pair<String, WhisperEngine>? = null
 
     suspend fun synthesize(adapter: String, modelDirectory: File, text: String, voiceId: String): SpeechAudio =
         withContext(worker) {
             val job = currentCoroutineContext()
             mutex.withLock {
                 job.ensureActive()
-                moonshine?.second?.close()
-                moonshine = null
+                whisper?.second?.close()
+                whisper = null
                 val samples = when (adapter) {
                     "android-phonon-english" -> {
                         try {
@@ -42,45 +41,42 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
             }
         }
 
-    suspend fun transcribe(modelDirectory: File, wav: File, adapter: String = "android-moonshine-english"): String = withContext(worker) {
-        require(adapter == "android-moonshine-english") { "Unsupported transcription adapter" }
+    suspend fun transcribe(modelDirectory: File, wav: File, adapter: String = "android-whisper-base-en"): String = withContext(worker) {
+        require(adapter == "android-whisper-base-en") { "Unsupported transcription adapter" }
         val job = currentCoroutineContext()
         try {
             WavPcmReader(wav).use { reader ->
                 require(reader.targetSamples <= 16_000L * 1_800) { "This transcription pack supports notes up to 30 minutes" }
                 var position = 0L
-                var transcript = ""
-                var previousWindowWords = 0
-                var overlapPending = false
+                val transcript = StringBuilder()
                 while (position < reader.targetSamples) {
                     job.ensureActive()
-                    val audio = reader.window(position, 80_000)
-                    val finalWindow = position + 80_000 >= reader.targetSamples
-                    val pause = if (finalWindow) null else silenceBoundary(audio)
-                    if (pause != null) audio.fill(0f, pause)
+                    val remaining = reader.targetSamples - position
+                    val audio = reader.window(position, minOf(remaining, 480_000L).toInt())
+                    val count = if (remaining > audio.size) transcriptionBoundary(audio) else audio.size
+                    val window = if (count == audio.size) audio else audio.copyOf(count)
                     val next = mutex.withLock {
                         job.ensureActive()
-                        if (audio.none { kotlin.math.abs(it) > 0.001f }) ""
+                        if (window.all { it == 0f }) ""
                         else {
                             phonon?.second?.close()
                             phonon = null
-                            moonshine(modelDirectory).recognize(audio) { job.ensureActive() }
+                            whisper(modelDirectory).recognize(window) { job.ensureActive() }
                         }
+                    }.trim()
+                    job.ensureActive()
+                    if (next.isNotEmpty()) {
+                        if (transcript.isNotEmpty()) transcript.append(' ')
+                        transcript.append(next)
                     }
-                    // A natural pause needs no overlap. Otherwise only one fifth of consecutive windows overlaps.
-                    val overlapLimit = if (overlapPending) minOf(8, (previousWindowWords + 4) / 5 + 1) else 0
-                    transcript = joinOverlapping(transcript, next, overlapLimit)
-                    previousWindowWords = if (next.isBlank()) 0 else next.trim().split(Regex("\\s+")).size
-                    if (finalWindow) break
-                    overlapPending = pause == null
-                    position += pause ?: 64_000
+                    position += count
                     yield()
                 }
-                transcript
+                transcript.toString()
             }
         } finally {
             withContext(kotlinx.coroutines.NonCancellable) {
-                mutex.withLock { moonshine?.second?.close(); moonshine = null }
+                mutex.withLock { whisper?.second?.close(); whisper = null }
             }
         }
     }
@@ -92,21 +88,16 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
             // Verification runs while playback is idle; retain no second model arena beside its fresh engine.
             phonon?.second?.close()
             phonon = null
-            moonshine?.second?.close()
-            moonshine = null
+            whisper?.second?.close()
+            whisper = null
             when (adapter) {
                 "android-phonon-english" -> PhononEngine(modelDirectory).use { engine ->
                     val samples = engine.synthesize("Hello. This voice works offline.", "default") { job.ensureActive() }
                     check(samples.size >= 2_400 && samples.all { it.isFinite() }) { "Voice validation failed" }
                 }
-                "android-moonshine-english" -> MoonshineEngine(modelDirectory).use { engine ->
-                    WavPcmReader(File(modelDirectory, "golden.wav")).use { reader ->
-                        check(reader.targetSamples in 16_000..80_000) { "Invalid transcription validation clip" }
-                        val audio = reader.window(0, 80_000)
-                        check(audio.any { kotlin.math.abs(it) > 0.001f }) { "The validation clip contains no speech" }
-                        val result = engine.recognize(audio) { job.ensureActive() }
-                        check(result.isNotBlank() && result.length <= 1_024) { "Transcription validation failed" }
-                    }
+                "android-whisper-base-en" -> WhisperEngine(modelDirectory).use { engine ->
+                    val result = engine.recognize(FloatArray(32_000)) { job.ensureActive() }
+                    check(result.length <= 16_384) { "Transcription validation failed" }
                 }
                 else -> error("Unsupported offline speech pack")
             }
@@ -117,19 +108,19 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
         mutex.withLock {
             when (adapter) {
                 "android-phonon-english" -> { phonon?.second?.close(); phonon = null }
-                "android-moonshine-english" -> { moonshine?.second?.close(); moonshine = null }
+                "android-whisper-base-en" -> { whisper?.second?.close(); whisper = null }
             }
         }
     }
 
-    private fun moonshine(directory: File): MoonshineEngine {
+    private fun whisper(directory: File): WhisperEngine {
         val path = directory.canonicalPath
-        if (moonshine?.first != path) {
-            moonshine?.second?.close()
-            moonshine = null
-            moonshine = path to MoonshineEngine(directory)
+        if (whisper?.first != path) {
+            whisper?.second?.close()
+            whisper = null
+            whisper = path to WhisperEngine(directory)
         }
-        return checkNotNull(moonshine).second
+        return checkNotNull(whisper).second
     }
 
     private fun phonon(directory: File): PhononEngine {
@@ -142,32 +133,20 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
         return checkNotNull(phonon).second
     }
 
-    private fun silenceBoundary(audio: FloatArray): Int? {
-        var quiet = 0
-        var boundary: Int? = null
-        for (start in 0 until 76_800 step 320) {
+    private fun transcriptionBoundary(audio: FloatArray): Int {
+        var start = 0
+        var count = 0
+        var bestStart = 0
+        var bestCount = 0
+        for (offset in 240_000 until 480_000 step 1_600) {
             var energy = 0.0
-            var peak = 0f
-            for (index in start until start + 320) {
-                energy += audio[index] * audio[index]
-                peak = maxOf(peak, kotlin.math.abs(audio[index]))
-            }
-            if (energy / 320 < 0.000004 && peak < 0.015f) quiet += 320 else quiet = 0
-            if (start >= 32_000 && quiet >= 1_280) boundary = start + 320
+            for (index in offset until offset + 1_600) energy += audio[index] * audio[index]
+            if (kotlin.math.sqrt(energy / 1_600) <= 0.02) {
+                if (count == 0) start = offset
+                count++
+                if (count > bestCount) { bestStart = start; bestCount = count }
+            } else count = 0
         }
-        return boundary
-    }
-
-    private fun joinOverlapping(previous: String, next: String, overlapLimit: Int): String {
-        if (previous.isBlank()) return next.trim()
-        if (next.isBlank()) return previous
-        val left = previous.split(Regex("\\s+"))
-        val right = next.trim().split(Regex("\\s+"))
-        fun key(word: String) = word.lowercase(Locale.ROOT).trim('.', ',', '!', '?', ';', ':')
-        var overlap = 0
-        for (count in 1..minOf(overlapLimit, left.size, right.size)) {
-            if ((0 until count).all { key(left[left.size - count + it]) == key(right[it]) }) overlap = count
-        }
-        return (left + right.drop(overlap)).joinToString(" ")
+        return if (bestCount == 0) audio.size else bestStart + bestCount / 2 * 1_600
     }
 }

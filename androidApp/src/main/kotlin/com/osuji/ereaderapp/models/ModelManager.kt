@@ -64,7 +64,7 @@ data class ModelState(
     val activationMessage: Map<String, String> = emptyMap(),
 )
 
-fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in setOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in setOf("arm64-v8a", "x86_64") }
 
 class ModelManager(private val context: Context, private val store: ReaderStore, val runtime: OfflineSpeechRuntime, private val scope: CoroutineScope) {
     private val preferences = context.getSharedPreferences("speech", Context.MODE_PRIVATE)
@@ -97,8 +97,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         try {
             val catalog = store.modelCatalog()
             mutableState.update { it.copy(catalog = catalog) }
-            removeRetiredPacks(catalog)
             state.value.pendingActivation.filter { (_, intent) -> catalog.none { it.id == intent.packId } }.keys.forEach(::cancelActivation)
+            if (state.value.selectedTranscription != "off" && catalog.none { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-whisper-base-en" }) selectTranscription("off")
+            removeRetiredPacks(catalog)
             if (catalog.none { it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" }) clearVoiceSelection()
             val installs = store.modelInstalls()
             val catalogStatus = store.modelCatalogStatus()
@@ -250,9 +251,8 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     private fun runtimeCompatibility(pack: ModelPack): String? {
-        if (pack.adapter !in setOf("android-phonon-english", "android-moonshine-english")) return "This model needs an app update before it can run."
-        if (pack.adapter == "android-phonon-english" && (!android.os.Process.is64Bit() || Build.SUPPORTED_ABIS.none { it in setOf("arm64-v8a", "x86_64") })) return "This voice requires a supported 64-bit device. You can still read PDFs and save voice notes."
-        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still read PDFs and save voice notes."
+        if (pack.adapter !in setOf("android-phonon-english", "android-whisper-base-en")) return "This model needs an app update before it can run."
+        if (!android.os.Process.is64Bit() || !supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This speech pack requires a supported 64-bit device. You can still read PDFs and save voice notes."
         if (Build.VERSION.SDK_INT < pack.minimumOS) return "Requires Android API ${pack.minimumOS} or newer"
         val memory = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
         if (memory.totalMem / (1024 * 1024) < pack.minimumMemoryMB) return "Requires ${pack.minimumMemoryMB} MB of device memory"
@@ -277,7 +277,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     fun voiceName(packId: String, voiceId: String): String = if (voiceId == "default" && state.value.catalog.any { it.id == packId && it.adapter == "android-phonon-english" }) "Phonon" else voiceId.replaceFirstChar { it.uppercase() }
     fun asrDirectory(): File? = if (asrAdapter() == null) null else installed(state.value.selectedTranscription)
-    fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-moonshine-english" }?.adapter
+    fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-whisper-base-en" }?.adapter
 
     suspend fun selectTranscription(packId: String, activationToken: String? = null) {
         withContext(Dispatchers.Main.immediate) {
@@ -286,7 +286,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 fun requested() = activationToken == null || activationIsCurrent("asr", activationToken)
                 check(requested()) { "Setup was cancelled." }
                 check(packId == "off" || transcriptionSelectionAllowed()) { "Finish recording to continue" }
-                check(packId == "off" || state.value.catalog.any { it.id == packId && it.capability == "asr" && it.adapter == "android-moonshine-english" } && installed(packId) != null) { "Download and check this transcription pack first." }
+                check(packId == "off" || state.value.catalog.any { it.id == packId && it.capability == "asr" && it.adapter == "android-whisper-base-en" } && installed(packId) != null) { "Download and check this transcription pack first." }
                 if (state.value.selectedTranscription == packId) return@withLock
                 mutableState.update { it.copy(changingTranscription = true) }
                 try {

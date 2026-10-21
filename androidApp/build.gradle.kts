@@ -50,7 +50,6 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.tesseract.android)
     implementation(libs.pdfbox.android)
-    implementation(libs.litert)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     debugImplementation(libs.compose.tooling)

@@ -6,14 +6,14 @@ Research snapshot: **4 October 2026**. The implementation inventory below is sep
 
 | Platform | Capability | Pinned implementation | Download | Eligibility guard |
 | --- | --- | --- | --- | --- |
-| Android | Saved-note English transcription | Moonshine tiny 5-second INT8 LiteRT, tokenizer and public runtime sanity clip | 54,140,870 bytes | API 28+, 1 GB device memory |
+| Android | Saved-note English transcription | Whisper Base English Q8, pinned whisper.cpp 1.9.5 CPU adapter | 81,781,811 bytes | API 28+, ARM64/x86_64 process, 3 GB device memory |
 | iOS | Saved-note English transcription | Whisper tiny.en CoreML, WhisperKit 0.18.0 and exclusively local tokenizer | 79,066,059 bytes | iOS 18 app baseline, 2 GB device memory |
 | Android | Downloaded Phonon English narration | Phonon 31M Q8, pinned native CPU runtime 0.4.0 with EOS exhaustion checks | 65,049,306 bytes | API 28+, ARM64/x86_64, 3 GB device memory |
 | iOS | Downloaded Phonon English narration | Phonon 31M CoreML, pinned native runtime 0.4.0 with EOS exhaustion checks | 137,096,081 bytes | iOS 18+, 3 GB device memory |
 
 Exact bundled URLs, bytes and SHA-256 values are in [model-catalog.json](model-catalog.json), with licenses in [third-party.md](third-party.md). These guards prevent known incompatible choices; they are not device-fleet qualification. The bundled catalogue supports offline discovery. Native clients can refresh from a configured, signed catalogue; the shared store restricts additions to compatible compiled adapters and rejects stale or altered model identities. Hosting and release trust configuration remain a deployment step. Narration requires a ready selected Phonon download. Raw note capture remains independent of packs; there is no system speech fallback. [Model manager](model-manager.md) records the signing, acceptance and selection contract.
 
-Moonshine also requires a supported native ABI: `arm64-v8a`, `armeabi-v7a` or `x86_64`. An x86-only or unidentified ABI keeps the built-in reading/capture path available while withholding this pack. Phonon requires a 64-bit ARM64 or x86_64 process; its generic CPU build does not require ARMv8.2 dot-product/FP16 extensions. Runtime activation waits for foreground/idle resources on both platforms, even when asset transfer has completed.
+Android Whisper requires an ARM64 or x86_64 process. Unsupported processes retain PDF reading and durable note capture while withholding transcription. Phonon requires a 64-bit ARM64 or x86_64 process; its generic CPU build does not require ARMv8.2 dot-product/FP16 extensions. Runtime activation waits for foreground/idle resources on both platforms, even when asset transfer has completed.
 
 Phonon is the only shipped narration family following the 21 October product decision. Kitten and Kokoro runtime code, catalogue profiles and unused resources are removed. The [comparison report](evaluations/phonon-31m-evaluation.md) retains measured speed, memory and ASR-proxy evidence; it does not establish universal perceptual dominance. Physical-phone performance, sustained battery/thermal behavior and blinded listening preference remain unqualified.
 
@@ -69,7 +69,7 @@ Piper is not the default closed-app recommendation: the maintained engine is GPL
 
 ### Phonon candidate review — 21 October 2026
 
-**The initial research below is superseded by the [measured comparison and integration decision](evaluations/phonon-31m-evaluation.md).** Phonon 31M is now the only downloadable narration family on both apps; Moonshine and Whisper remain for note transcription. The app minimum is now iOS 18 by explicit user decision. Physical-phone performance and blinded listening preference remain unqualified. Phonon is streaming narration TTS, not voice-note transcription. The family uses a flow-matching transformer and Mimi audio decoder to produce 24 kHz mono audio. Long inputs are split into sentences, so whole-book prosody is not established by streaming support. [Pinned public family/model card](https://huggingface.co/gradium/phonon-31m-en/blob/52433c46975bfa13144c56204c9f4ee1c5b148aa/README.md)
+**The initial research below is superseded by the [measured comparison and integration decision](evaluations/phonon-31m-evaluation.md).** Phonon 31M is now the only downloadable narration family on both apps; Whisper remains for note transcription. The app minimum is now iOS 18 by explicit user decision. Physical-phone performance and blinded listening preference remain unqualified. Phonon is streaming narration TTS, not voice-note transcription. The family uses a flow-matching transformer and Mimi audio decoder to produce 24 kHz mono audio. Long inputs are split into sentences, so whole-book prosody is not established by streaming support. [Pinned public family/model card](https://huggingface.co/gradium/phonon-31m-en/blob/52433c46975bfa13144c56204c9f4ee1c5b148aa/README.md)
 
 | Candidate | Evidence and decision |
 | --- | --- |

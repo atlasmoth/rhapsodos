@@ -6,41 +6,29 @@ internal object ModelCatalog {
     val packs: List<ModelPack> = Json.decodeFromString("""
 [
   {
-    "id": "android-moonshine-english",
+    "id": "android-whisper-base-en",
     "name": "English transcription",
     "capability": "asr",
     "platform": "android",
-    "runtime": "litert",
-    "version": "4d0fd016df00-g1",
+    "runtime": "whisper-cpu-q8",
+    "version": "1.9.5-5359861c739e-q8",
     "languageTags": [
       "en"
     ],
     "minimumOS": 28,
-    "minimumMemoryMB": 1024,
-    "license": "MIT + Apache-2.0 synthetic validation sample",
-    "licenseUrl": "https://huggingface.co/litert-community/moonshine-tiny",
-    "description": "Compact local transcription for saved thoughts. Your recording remains available while transcription runs.",
+    "minimumMemoryMB": 3072,
+    "license": "MIT",
+    "licenseUrl": "https://github.com/openai/whisper/blob/86098128c0b4f24f0e2aa2994de830614b474227/LICENSE",
+    "description": "Local English transcription of saved voice notes. Device checking is required before enabling transcription; recordings remain available independently.",
     "files": [
       {
-        "path": "moonshine_tiny_5s_i8.tflite",
-        "url": "https://huggingface.co/litert-community/moonshine-tiny/resolve/4d0fd016df005c889aaa738b4765ede92736424f/moonshine_tiny_5s_i8.tflite",
-        "sha256": "97abdeea122d579229091659c24c59d988c6419d453a200f6471241a53b9a9b9",
-        "bytes": 51936896
-      },
-      {
-        "path": "tokenizer.json",
-        "url": "https://huggingface.co/UsefulSensors/moonshine-tiny/resolve/390624ed33d594443aa4aa221f5b9f283b545b5a/tokenizer.json",
-        "sha256": "6579793438bc4fbafffacf699169ff53e3769c5a0a0f5e71cdee8853e8130deb",
-        "bytes": 1985530
-      },
-      {
-        "path": "golden.wav",
-        "url": "https://huggingface.co/litert-community/kitten-tts-nano-0.8/resolve/d4662d891f9bf54b3d93432610d0d296d229e026/samples/litert_golden.wav",
-        "sha256": "4fed2852ebbbb2aaf41c30f7ca1a5be1bf96f0f673f31650e94d1e8ce638bf15",
-        "bytes": 218444
+        "path": "ggml-base.en-q8_0.bin",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.en-q8_0.bin",
+        "sha256": "a4d4a0768075e13cfd7e19df3ae2dbc4a68d37d36a7dad45e8410c9a34f8c87e",
+        "bytes": 81781811
       }
     ],
-    "totalBytes": 54140870
+    "totalBytes": 81781811
   },
   {
     "id": "whisper-tiny-en-coreml",
