@@ -8,10 +8,10 @@ internal class PhononEngine(directory: File) : Closeable {
 
     fun synthesize(text: String, voiceId: String, checkCancellation: () -> Unit): FloatArray {
         require(text.isNotBlank() && text.length <= 2_000 && '\u0000' !in text) { "Speak a shorter non-empty passage." }
-        require(voiceId == "default") { "This voice is not in the installed pack." }
+        require(voiceId.matches(Regex("[A-Za-z][A-Za-z0-9 -]{0,95}"))) { "This voice is not in the installed pack." }
         check(handle != 0L) { "This offline voice is closed." }
         checkCancellation()
-        val samples = PhononNative.synthesize(handle, text.toByteArray(Charsets.UTF_8), Runnable(checkCancellation))
+        val samples = PhononNative.synthesize(handle, text.toByteArray(Charsets.UTF_8), voiceId.toByteArray(Charsets.UTF_8), Runnable(checkCancellation))
         checkCancellation()
         return samples
     }
@@ -25,6 +25,6 @@ internal class PhononEngine(directory: File) : Closeable {
 internal object PhononNative {
     init { System.loadLibrary("rhapsodos_phonon") }
     external fun open(path: ByteArray): Long
-    external fun synthesize(handle: Long, text: ByteArray, cancellation: Runnable): FloatArray
+    external fun synthesize(handle: Long, text: ByteArray, voice: ByteArray, cancellation: Runnable): FloatArray
     external fun close(handle: Long)
 }

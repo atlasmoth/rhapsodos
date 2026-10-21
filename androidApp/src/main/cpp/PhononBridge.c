@@ -104,12 +104,18 @@ JNIEXPORT jlong JNICALL Java_com_osuji_ereaderapp_speech_PhononNative_open(JNIEn
     return (jlong)(intptr_t)handle;
 }
 
-JNIEXPORT jfloatArray JNICALL Java_com_osuji_ereaderapp_speech_PhononNative_synthesize(JNIEnv *env, jobject owner, jlong value, jbyteArray input, jobject cancellation) {
+JNIEXPORT jfloatArray JNICALL Java_com_osuji_ereaderapp_speech_PhononNative_synthesize(JNIEnv *env, jobject owner, jlong value, jbyteArray input, jbyteArray voice, jobject cancellation) {
     (void)owner;
     if (!value) { fail(env, "This offline voice is closed."); return NULL; }
     char *text = utf8(env, input, 8000);
     if (!text) return NULL;
+    char *name = utf8(env, voice, 96);
+    if (!name) { free(text); return NULL; }
+    bool selected = set_voice((PttsHandle *)(intptr_t)value, name);
+    free(name);
+    if (!selected) { free(text); fail(env, "This voice is not in the installed pack."); return NULL; }
     jclass type = (*env)->GetObjectClass(env, cancellation);
+    if (!type) { free(text); return NULL; }
     jmethodID check = (*env)->GetMethodID(env, type, "run", "()V");
     (*env)->DeleteLocalRef(env, type);
     if (!check) { free(text); return NULL; }
