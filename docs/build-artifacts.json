@@ -340,7 +340,7 @@
       "earlier_fixture_repair": {
         "association": "Initial pre-quarter-turn-correction broad whole-trim run; APK digest was not captured. Do not attribute this repair to the final strict-provenance artifact.",
         "proof": "Fresh complete OCR text differs from canonical only in terminal LF; literal UTF16 regions intersected/offset; geometry-only update left canonical source/passages/revision/notes/progress and source bytes unchanged.",
-        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded→embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
+        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded\u2192embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
         "subsequentPaintingEvidence": {
           "debug6b10a82e": {
             "rotationAssertions": 61,
@@ -3936,6 +3936,262 @@
       "No new consumer installation or GUI interaction",
       "No model download, inference, physical-device or iOS 17 runtime qualification",
       "Android Release and iOS device app binaries were not rebuilt; prior release evidence retains its source association"
+    ]
+  },
+  "phonon_integration_verification": {
+    "recorded_on": "2026-10-21",
+    "source_revision": "96cafc45a1f26c436e5938d21419c75cab25324b",
+    "source_attribution": "This revision contains final runtime, Android, iOS and shared/catalogue code. Earlier evidence retains its original source association. Final documentation follows in a separate commit.",
+    "source_sha256": {
+      "androidApp/build.gradle.kts": "1615a14b114429edcdb97b90ea264932cb9f3db0f30f99415550d62ab1d846be",
+      "androidApp/src/main/cpp/PhononBridge.c": "36f780d6f4a3546f6c9f20a9aeecc876dcb855079e5d0d794eab48839f197a1b",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ReaderApplication.kt": "b2303e7db22746a0470c6d5b4aa1ace1f0b8bb2b7f45f4effd747d34bdea96b9",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/OfflineSynthesizer.kt": "e614265c92b84bb2f5838fe43c62b8081d9ba5410c656fa440df63e7aab97e6c",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/PlaybackCoordinator.kt": "14eace0b75e4c47fb400a036dd450363ee15bf99fe296485c3991198900101e4",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "3a4dd4d7c5eb9a9d05d5d00606899e864246b685a0e42cbd8d6ee66ca98bca29",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/OfflineSpeechRuntime.kt": "2a912d173c86d7c734dcd898cde8ba8235aba96f6cd6ccd25a8f2ec0f51a52d7",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/PhononEngine.kt": "2593308509a8bb7b8ed4bb65aa840b124ab98a197d79e924cd87ebea14ea7150",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ui/ReaderApp.kt": "8666fd79a5cc9946e642883b9131635aef4a74cdf2e557b66bfaf28ef9cf6d5b",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ui/ReaderTools.kt": "e58ce8c2b4e1da540900ec2fafca5e310e1296b6946113da5be86dd3e131b734",
+      "catalogue/catalogue.json": "99cb3f57e0b1aa635f93a16713cfc1a11aa27e1a0819437c059ff3a1be445416",
+      "docs/model-catalog.json": "fa17108ea28007d74062415461acd46a753ca8f0375c4156967edc5b67e92b53",
+      "iosApp/EReader.xcodeproj/project.pbxproj": "ce5fc5d5590d2d48bbba0177402ddd746f5e372574584f7ce9a9b6c6cfc1ff77",
+      "iosApp/Sources/AudioCoordinator.swift": "9cec17a4f08d012efaa25b1083fc8c8198eef24730a1cf50f753565b1a162c90",
+      "iosApp/Sources/CoreMLVoice.swift": "4815d8bc94866c6db4faaff1a71a1558a9d53ea12765171b5568bd17e96c3f06",
+      "iosApp/Sources/ModelCatalogClient.swift": "d794fc944179af98e54a19053bffb07fd087601880fa325339cdf050f46ce8d5",
+      "iosApp/Sources/ModelPacks.swift": "613632a7d524baa7b9d705c47e67035842c15e04ebdc4c7afb85c22e2cd9031e",
+      "iosApp/Sources/PhononAssets.swift": "c7e36c2bf5825b92bdfcf35f20a1ebd65fa6e35df16f7f196c3e07dd7e7734fe",
+      "iosApp/Sources/PhononVoice.swift": "5e39fbf4412b15cd49cddc0da77a058912f96335d554de0a8e2617700a6d7b58",
+      "iosApp/Sources/ReaderStore.swift": "0d6cb1b745cb76d3e49495d392b36e7c4617e7bb220ec917a3cbf9e0c3c75b81",
+      "iosApp/Sources/ReaderViews.swift": "b6715f2758e861d2f385fc62952d62f266c2d67235ce6ef9e247ecc525349d85",
+      "iosApp/Vendor/Package.swift": "0df97cd1ce9d84babb0b339afd4293dce7df4d55231761298abb1a5d4c2b56a6",
+      "iosApp/Vendor/Phonon/Sources/PhononRuntime/PhononEngine.swift": "bfc99f8f12ab8dae61845f57b66c6bc4aa54965700bf72eb555bdf0dd62a68f7",
+      "iosApp/Vendor/PhononCore.xcframework/ios-arm64-simulator/Headers/ptts.h": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6",
+      "iosApp/Vendor/PhononCore.xcframework/ios-arm64/Headers/ptts.h": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6",
+      "iosApp/Vendor/PhononCore.xcframework/macos-arm64/Headers/ptts.h": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6",
+      "iosApp/project.yml": "543555ae9f4c60df1a086ec67750c33dc9b238b7450f30f654de475eefca877b",
+      "native/phonon/Cargo.lock": "bd49d2c9038a1ae992da46f0824852145fb2221bdaed684225d0e5e456bce61a",
+      "native/phonon/build.sh": "82c9356b7fd08d444d6a040c8a2b937137405e989379a32e6e312622c08bdfe1",
+      "native/phonon/include/ptts.h": "df199f7a174e2eb935797a12d1f484f9cea097db421cc274c61749e63d7bb3a6",
+      "native/phonon/patches/require-eos.patch": "1a13657a69a25a76d2d7013c7894d093c7051da12eaabcb3c7f352e534cef603",
+      "native/phonon/provenance.json": "97bc04937dc2dcf8781285bbaec73855d9e5d4392e2aaa185f42ee896d6f6bc3",
+      "shared/src/commonMain/kotlin/com/ereader/shared/CatalogValidation.kt": "e6e6661048e2a0832475123555561599e4cebfe09fa6cca651895c2584289b6a",
+      "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt": "6ba7c29b85abaf0f8f407979c02c20e234197475e0137399379b5b8a6df64196",
+      "shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt": "e223c6bc6688615ec9ddfd4499198c91569bee3de79feb6bb9639ae9be99ad6c"
+    },
+    "artifacts": [
+      {
+        "path": "androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "bytes": 173244006,
+        "sha256": "2ff4f882259ae2f2a5b550a82fc520d7bf96e0a08a56f651196523b98ef80e4e"
+      },
+      {
+        "path": "androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+        "bytes": 147213438,
+        "sha256": "e7f843547193e4cb5140019368e9a669b8e49cd0986968e95dd08721df20a76f"
+      },
+      {
+        "path": "androidApp/build/outputs/bundle/release/androidApp-release.aab",
+        "bytes": 66383838,
+        "sha256": "3e655fb9088d58e6fc37531414967b86bc2e634d82dc53b3393a97de734fc85b"
+      },
+      {
+        "path": "iosApp/build/Debug-iphonesimulator/EReader.app/EReader",
+        "bytes": 40496,
+        "sha256": "2ce7f37248898eab68e1ff9cd252bb266857a2ef9c495d2ac9b4a22634a89705"
+      },
+      {
+        "path": "iosApp/build/Debug-iphonesimulator/EReader.app/EReader.debug.dylib",
+        "bytes": 45702688,
+        "sha256": "da419667ea809c76a362d49d78c140ba8276f6e4fd7e0f40c51a1a22d5145bea"
+      },
+      {
+        "path": "iosApp/build/Release-iphoneos/EReader.app/EReader",
+        "bytes": 23084696,
+        "sha256": "8987b44aca287be13578febe9bbcbc6d332f731a22685861eb2ecbfa2886a148"
+      },
+      {
+        "path": "shared/build/bin/iosSimulatorArm64/debugFramework/SharedCore.framework/SharedCore",
+        "bytes": 59959728,
+        "sha256": "e5dd07b6faada892fa9a1d31d8166abd602a76f362e7978d3f2cf80ea7681643"
+      },
+      {
+        "path": "shared/build/bin/iosArm64/releaseFramework/SharedCore.framework/SharedCore",
+        "bytes": 13374800,
+        "sha256": "598d405b792e6fe4aa04a8508b7e7e51ab974ff29b13115dd4dbed21ec16ceb9"
+      }
+    ],
+    "builds": {
+      "shared_android": "passed",
+      "shared_ios_simulator_debug": "passed",
+      "shared_ios_device_release": "passed",
+      "android_debug": "passed",
+      "android_unsigned_release_apk": "passed",
+      "android_release_aab": "passed",
+      "android_lint": "0 errors,9 warnings",
+      "ios_simulator_debug": "passed",
+      "ios_unsigned_device_release": "passed"
+    },
+    "policies": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 9,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 6,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "release": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 9,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 6,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "catalogue": {
+      "revision": 3,
+      "packs": 6,
+      "assets": 48,
+      "expires_at": null,
+      "signature": "OpenSSL verified with unchanged public key",
+      "live_url_configured": false
+    },
+    "evaluation": "docs/evaluations/phonon-31m-results.json",
+    "native_runtime_provenance": "native/phonon/provenance.json",
+    "verification": {
+      "shared_catalogue_checks": 31,
+      "android_recorded_production_journey_steps": 15,
+      "ios_host_production_adapter_checks": 7,
+      "ios_native_simulator_checks": 8,
+      "ios_malformed_archive_cases": 5,
+      "ios_main_app_gallery": "Actual HTTPS download/check/select/restart/remove/redownload on isolated iOS18.4 simulator. Application debug dylib byte-identical to final artifact; signed launcher differed only with final normalized notice resource.",
+      "android_qualification_artifact": "Initial production APK retained in external QA evidence; final addition clears stale retry message and packages notices.",
+      "consumer_installations": "Final Android installed and running; final iOS phone/tablet apps installed preserving containers. Task-only Android QA package removed after its exported evidence was verified to recover install space.",
+      "physical_devices": false,
+      "x86_64_execution": false,
+      "live_catalogue_https_refresh": false,
+      "full_pdf_capture_ui_newly_qualified": false
+    },
+    "evidence": [
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/android/integrationqa/results.json",
+        "bytes": 2563,
+        "sha256": "2d6cf5d3a396f518987314bcb27c79ea2d12c46d836a15d7789641aad4b28ddf"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/android/integrationqa/provenance.json",
+        "bytes": 2924,
+        "sha256": "6f11753d9a7ad46e3eb320ae8816b335b2bcbf976db92009053c4f7aea3204fa"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/ios/native-integration-results.txt",
+        "bytes": 503,
+        "sha256": "d89605b552edbb6c7fb7e847cbe6844906be7f4560acd7d2b513e8b8f57f3edf"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/ios/integration-run.log",
+        "bytes": 314,
+        "sha256": "74f7c8283594ab2936af0c71293baa69950e65815efecb3e74e3257c11fa9f60"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/ios/archive-checks.log",
+        "bytes": 234,
+        "sha256": "4df0d631648db46123e01ef45d6bd84910363232e0f4e0a05e52ac54db113b87"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-evaluation-m926hyez/ios/gallery-qa.json",
+        "bytes": 1505,
+        "sha256": "3af4f9e767ab18ba77f2f7dfe0b0f7ecf69d4092e05bffd6b68d6e788ace889c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-catalogue-qa-h79wlibr/results.txt",
+        "bytes": 1465,
+        "sha256": "7c24cac2b41563254c52ac7365a3a274a1e095cf06a57730735fa2241398916e"
+      }
+    ],
+    "logs": [
+      {
+        "path": "/private/tmp/rhapsodos-phonon-gradle.log",
+        "bytes": 10945,
+        "sha256": "1dbb767de21537be171602f5dc52559e13fa2af2c4ec47d2b2e0e7b8337318e1"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-release-gradle.log",
+        "bytes": 11565,
+        "sha256": "a2aed1f4d31762f9b0435ac01665c9f7fdb30690fe2a3165a0709e1150762b47"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-android-final.log",
+        "bytes": 8511,
+        "sha256": "9a1355a640f2c293c1bd2885dd4fa1e68e651ac2ea53d31918b7108dbb85be8d"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-android-package-final.log",
+        "bytes": 7722,
+        "sha256": "c5c81d1a187881d7772ffe8643c2b4e0cf71f10147502a39c67cff5842fcc1a5"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-ios-debug-package-final.log",
+        "bytes": 71938,
+        "sha256": "9fbf4aa74bccf4a740582765034d3bfacf1777f5d522033a0e0bc35cf6656867"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-phonon-ios-release-package-final.log",
+        "bytes": 66533,
+        "sha256": "36c0af8064362102a8cae3e368322b1757b34d9f76366e4580a5f83be6e72d41"
+      }
+    ],
+    "remaining": [
+      "Physical-device listening preference, memory, sustained playback, battery, thermal and microphone/routes",
+      "x86-64 execution",
+      "Live catalogue hosting/trust configuration and native HTTPS refresh",
+      "Broader document fidelity and full PDF-to-note interaction qualification"
     ]
   }
 }

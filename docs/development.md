@@ -7,9 +7,10 @@ Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform cor
 | Path | Responsibility |
 | --- | --- |
 | `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search and model inventory |
-| `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers and LiteRT speech |
+| `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers, LiteRT speech and Phonon CPU narration |
 | `iosApp/` | SwiftUI split navigation, PDFKit/Vision, native audio and protected capture, background URLSession transfers and CoreML speech |
 | `tools/` | Build/policy checks, artifact metadata and pinned asset inspection |
+| `native/phonon/` | Pinned runtime builds, completion guard, provenance and dependency notices |
 | `docs/` | Product decisions, contracts, provenance and qualification evidence |
 
 The shared store owns documents, source positions and notes. Native code owns files, PCM, inference, OS services and views. Harmless presentation preferences and generated caches are separate from durable user data.
@@ -34,7 +35,7 @@ See [implementation-contract.md](implementation-contract.md) for the actual shar
 
 The current app implements local-only content processing. App-managed HTTP transfers fetch explicitly requested public model assets. There is no cloud provider, account service, analytics client or sync backend. Installed system speech engines are separate OS services whose offline eligibility must be checked.
 
-[model-catalog.json](model-catalog.json) pins every public asset. Android offers Kitten English narration and Moonshine English saved-note transcription. iOS offers Whisper tiny English transcription on the iOS 17 baseline and optional Kokoro CoreML voices on iOS 18+. Memory/OS guards constrain eligibility; physical qualification is pending.
+[model-catalog.json](model-catalog.json) pins every public asset. Android offers Kitten and Phonon English narration and Moonshine English saved-note transcription. iOS offers Whisper tiny English transcription and optional Kokoro and Phonon CoreML voices on the iOS 18 baseline. Memory/OS guards constrain eligibility; physical qualification is pending.
 
 Native managers verify all artifacts, check runtime execution, install atomically and update the shared generation-scoped inventory. Failed ASR retains the recording and its attachment. The iOS Whisper adapter overrides an upstream tokenizer fallback to require local assets even after a parsing failure.
 
@@ -338,3 +339,24 @@ All 38 focused checks passed against normal Gradle-produced shared classes and r
 Shared Android, iOS simulator Debug and iOS device Release frameworks compiled; Android Debug/lint and iOS arm64 simulator Debug builds passed. Lint reports zero errors and nine warnings. Produced identity, pinned assets, Android native alignment and repository unit-source policy passed. Build resolution required two missing POM checksum entries for already selected Guava/Groovy dependencies; cached bytes matched Maven Central and its published SHA-1, and SHA-256 pins were added without changing dependency versions. A duplicate build attempt collided on generated APK metadata; the final isolated build passed. Exact source/artifact hashes and logs are in the `permanent_catalogue_verification` record in [build-artifacts.json](build-artifacts.json).
 
 No live URL or public trust key is configured in the apps yet. Hosting, native HTTPS refresh, consumer installation and physical model qualification were not exercised in this change. The catalogue's permanent validity does not guarantee perpetual upstream hosting or latest-catalogue discovery on a fresh installation. Phonon remains a researched candidate, described in [models and evaluation](models-and-evaluation.md#phonon-candidate-review--21-october-2026).
+
+## Phonon narration and iOS 18 — 21 October 2026
+
+The [measured Phonon comparison](evaluations/phonon-31m-evaluation.md) justified adding an optional English voice on both apps. Android uses a pinned generic CPU Q8 runtime; iOS uses the corresponding CoreML runtime. Native EOS exhaustion now fails explicitly, and cancelled or incomplete PCM cannot become a cached passage. The user approved raising the iOS app minimum to **18.0**; earlier iOS 17 statements in this execution history describe their original builds.
+
+Settings → Download voices and transcription now includes Phonon, a quiet device check and explicit voice selection. Android downloads 65.0 MB; iOS downloads 137.1 MB and verifies, stages and compiles its assets before activation. Existing voice choices remain available. The signed, permanent catalogue is revision 3 with six packs and 48 assets. New bundled packs remain visible with an older cached catalogue. The live catalogue URL and trust configuration remain unset; bundled model downloads work independently.
+
+| Verification | Executed result and scope |
+| --- | --- |
+| Builds | Shared Android plus matching iOS simulator/device frameworks; Android Debug, unsigned Release APK, Release AAB and lint; iOS arm64 simulator Debug and unsigned device Release passed. Lint: zero errors, nine warnings. |
+| Identity and packaging | Both apps remain Rhapsodos / `com.osuji.ereaderapp` / `0.01` / `1`; Android API 28, iOS 18.0. Nine Android ARM64 native libraries pass 16 KiB packaging/alignment checks. Kitten/ASR 32-bit libraries remain; Phonon is restricted to 64-bit. Notices match the source in all four app bundles; no unit-test source was committed. |
+| Native completion guards | Final Android ARM64 and Mac CoreML libraries each passed the ten public passages, finite PCM, cancellation and handle reuse. Forced missing EOS returned an error instead of a successful partial result on both. x86-64 was built and inspected, not executed. |
+| Shared catalogue | 31 checks passed against compiled production classes and real SQLite: six profiles, exact ZIP exception, rejected altered assets/requirements, permanent validity, offline discovery with an older cache, revision/restart behavior and unchanged notes/source/progress/install state. Revision 3 signature verified with the existing public key. |
+| Android production integration | Isolated app using actual production DEX/Koin/SQLite passed 15 recorded steps covering real HTTPS pause/resume, all four hashes, native readiness, exact voice selection, generation/cache, cancellation, restart, corrupt-file rejection without fallback, redownload, interrupted activation and removal. The final build additionally clears stale retry text and bundles notices. |
+| iOS production adapters | Seven host checks and eight native iOS 27 simulator checks passed preparation, real CoreML generation, restart, cancellation, source/compiled repair and interrupted derived replacement. Native AVAudioPlayer rate 1.5 preserved the authoritative source clock through pause/resume and a fraction seek. Five malformed archive fixtures were rejected without changing the existing derived marker. |
+| iOS main-app gallery | A dedicated iOS 18.4 simulator completed Settings → download → Ready → Use this voice → Active, restart/revalidation, removal and a clean redownload. Real URLSession transfers and canonical activation ran with production code; final readiness synthesis took 2.0 seconds. The executed app dylib matches the final Debug artifact. Full PDF/note capture was not newly exercised through this UI. |
+| Consumer installs | Final Android Debug installed and launched on the preserved emulator; final iOS Debug installed on the existing phone and tablet simulators without clearing their containers. Android initially lacked install space; removing only the already-exported task QA package freed enough space. Consumer documents and recordings were retained. |
+
+Exact source, binary, report and log hashes are in the `phonon_integration_verification` record in [build-artifacts.json](build-artifacts.json). Native build provenance and notices are in [native/phonon](../native/phonon/README.md). External harnesses and public synthetic recordings remain under `/private/tmp/rhapsodos-phonon-evaluation-m926hyez` and `/private/tmp/rhapsodos-phonon-catalogue-qa-h79wlibr`; none entered the repository.
+
+This is an optional preview, not physical-device release qualification. Blinded listening preference, sustained phone playback, battery/thermal pressure, low-memory phones, real microphone/routes, x86-64 execution and live signed-catalogue HTTPS refresh remain unqualified. Host/emulator memory and speed comparisons must not be represented as physical-phone measurements. The current transport still waits for a complete passage before playback; first PCM latency is not app start latency.
