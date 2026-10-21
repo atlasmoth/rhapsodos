@@ -340,7 +340,7 @@
       "earlier_fixture_repair": {
         "association": "Initial pre-quarter-turn-correction broad whole-trim run; APK digest was not captured. Do not attribute this repair to the final strict-provenance artifact.",
         "proof": "Fresh complete OCR text differs from canonical only in terminal LF; literal UTF16 regions intersected/offset; geometry-only update left canonical source/passages/revision/notes/progress and source bytes unchanged.",
-        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded→embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
+        "currentPolicy": "OCR geometry repair requires complete byte-exact canonical text. Embedded\u2192embedded permits complete whole outer-trim equality. Previously verified tagged fixture was retained as explicitly requested.",
         "subsequentPaintingEvidence": {
           "debug6b10a82e": {
             "rotationAssertions": 61,
@@ -4493,6 +4493,496 @@
       "No new full PDF-to-recorded-note UI journey.",
       "iPhone left-edge gesture remains unqualified because native simulator drag injection was unreliable; existing handler unchanged.",
       "Live hosted-catalogue refresh remains unconfigured; bundled model HTTPS downloads were exercised."
+    ]
+  },
+  "simple_speech_setup_verification": {
+    "recorded_on": "2026-10-21",
+    "source_revision": "68f47349282875900ab2408b311956ff6d71f64b",
+    "implementation_commits": [
+      "48ab8bd",
+      "1173b3e",
+      "1d61dcf",
+      "1d1790a",
+      "4ca8e79",
+      "68f4734"
+    ],
+    "scope": "Simplified native speech settings and cards; durable explicit setup downloads, checks and activates in one flow; pause/restart, latest-choice/Off/removal ordering and focused note setup.",
+    "android": {
+      "builds": {
+        "android_artifacts": [
+          {
+            "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+            "bytes": 173243827,
+            "sha256": "923947351781b2837e4249c18a3e8860c9f70c89056a7eaa375e674ff2d0a5fa"
+          },
+          {
+            "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+            "bytes": 147178735,
+            "sha256": "f305f9c4fe4b2d25b35a62ff8fcf66c4402aeb62a8888532ed9f5ec560462486"
+          },
+          {
+            "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+            "bytes": 66366542,
+            "sha256": "fb685d2b415cfb967aa35f0b31f1148333599b277f45ab2a82fd9ef2f142b5ad"
+          }
+        ],
+        "source_sha256": {
+          "ReaderApplication.kt": "8584c14f8a8e9d4466e6733f98d26db199c55d500dfc8551d5f634a3c544a763",
+          "models/ModelManager.kt": "0103f9c439e0b311a9797f33d46d74b15bbe8e5a04107a59303bb20e0a77485c",
+          "audio/PlaybackCoordinator.kt": "97dc46205d207e20ad890c338368cc0ce6b96f31f086cc2786efc6e02d0a88f5",
+          "ui/ReaderApp.kt": "ef8a5191d259776fac9b261e3b7fad492fb9a2f592de32aa31b67b089ec1816b",
+          "ui/ReaderTools.kt": "7e6afada4c6f99aa652b9d8a1513844212f0765abebffe4ec7d2fb013a7f5ea1"
+        },
+        "install": {
+          "application_id": "com.osuji.ereaderapp",
+          "method": "adb install --streaming -r; consumer app data preserved",
+          "result": "Success",
+          "launch": "am start -n com.osuji.ereaderapp/.MainActivity",
+          "qa_package_removed_after_export": "com.osuji.rhapsodos.phononintegrationqa",
+          "installed_apk_sha256": "923947351781b2837e4249c18a3e8860c9f70c89056a7eaa375e674ff2d0a5fa",
+          "latest_build_install": "Final root preserving install and UI check passed"
+        }
+      },
+      "lint": {
+        "errors": 0,
+        "warnings": 11
+      },
+      "integration": {
+        "status": "passed",
+        "checks": [
+          {
+            "phase": "pause",
+            "step": "fresh_install_off_and_no_voice",
+            "detail": true
+          },
+          {
+            "phase": "pause",
+            "step": "explicit_setup_pause_retains_intent",
+            "detail": "984f4957-12aa-42a6-9519-eaa1dcedaac5"
+          },
+          {
+            "phase": "resume",
+            "step": "restart_retains_paused_intent_without_transfer",
+            "detail": true
+          },
+          {
+            "phase": "resume",
+            "step": "download_validation_then_capture_defers_activation",
+            "detail": true
+          },
+          {
+            "phase": "resume",
+            "step": "download_and_use_activates_without_autoplay",
+            "detail": true
+          },
+          {
+            "phase": "continuation",
+            "step": "generic_download_never_activates",
+            "detail": true
+          },
+          {
+            "phase": "continuation",
+            "step": "off_cancels_suspended_activation_and_clears_busy_state",
+            "detail": true
+          },
+          {
+            "phase": "continuation",
+            "step": "latest_intent_wins_after_cancel_and_join",
+            "detail": true
+          },
+          {
+            "phase": "continuation",
+            "step": "off_preserves_assets_note_edit_anchor_and_source_cursor",
+            "detail": true
+          },
+          {
+            "phase": "continuation",
+            "step": "ready_intent_retained_for_restart",
+            "detail": true
+          },
+          {
+            "phase": "restart",
+            "step": "verified_pending_setup_activates_after_restart_without_autoplay",
+            "detail": true
+          },
+          {
+            "phase": "restart",
+            "step": "removal_cancels_inflight_activation",
+            "detail": true
+          },
+          {
+            "phase": "restart",
+            "step": "failed_device_check_never_selects",
+            "detail": true
+          },
+          {
+            "phase": "retry",
+            "step": "failed_check_never_selects_after_restart",
+            "detail": true
+          },
+          {
+            "phase": "retry",
+            "step": "immediate_retry_joins_failed_generation_and_activates",
+            "detail": true
+          },
+          {
+            "phase": "retry",
+            "step": "emulator_setup_plus_off_latency_ms",
+            "detail": {
+              "n": 20,
+              "p50": 3.622959,
+              "p95": 5.239,
+              "max": 5.382583
+            }
+          },
+          {
+            "phase": "retry",
+            "step": "retry_and_repeated_off_preserve_note_and_progress",
+            "detail": true
+          }
+        ],
+        "test_method": "External QA activity uses production DEX/assets/native libraries in isolated app ID; real pinned HTTPS assets and runtime checks, controlled callback barriers for race checks. Failed/retry check injects verification exception before retry runs native check.",
+        "resolved_test_issues": [
+          "Incorrect test-only note state complete changed to transcribed.",
+          "Transient activating flag awaited through coroutine finally.",
+          "Reused ready fixture no longer unnecessarily starts second generic download."
+        ],
+        "resolved_product_issue": "Immediate retry after failure now joins terminating transfer and rechecks intent before starting another generation.",
+        "limitations": [
+          "Emulator, not physical-device audio quality or sustained performance qualification.",
+          "Synchronous preferences persistence latency measured only on emulator."
+        ]
+      },
+      "integration_evidence": {
+        "results.json": {
+          "path": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-one-flow-android-f1r1glzg/results.json",
+          "sha256": "69ec3ff7ed35d59db49b513076fcbda1796b6643228621cffaa27d23e50b9b2a"
+        },
+        "provenance.json": {
+          "path": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-one-flow-android-f1r1glzg/provenance.json",
+          "sha256": "79fc25652f615339bcfc44ab80bbbdc0ccf8df2839daa462b9087d42487b010d"
+        },
+        "builds.log": {
+          "path": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-one-flow-android-f1r1glzg/builds.log",
+          "sha256": "5690d5e6dac5f74e5ea3cff2a221b7411e40e3d334b7e5f3aa49e40769162f3d"
+        },
+        "workspace-check.json": {
+          "path": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-one-flow-android-f1r1glzg/workspace-check.json",
+          "sha256": "8aa1f788b1bf48ad81fd4b9889fa7e083f53e96e24e06c590f92cc9052924cb9"
+        }
+      },
+      "main_app_ui": {
+        "status": "passed",
+        "device": "emulator-5554 / Android API37",
+        "installed_apk_sha256": "923947351781b2837e4249c18a3e8860c9f70c89056a7eaa375e674ff2d0a5fa",
+        "production_ui_source_commit": "4ca8e79",
+        "main_app_journey": [
+          "Top Download voices and transcription button precedes Reading voice",
+          "Combined modal separates Reading voice and Transcribe voice notes",
+          "Download & use on Phonon completed real HTTPS transfer, native check and automatic Selected without second selection tap",
+          "Selection survived preserving reinstall of final Debug",
+          "Reading voice row opens focused narration sheet",
+          "Transcription switch while missing pack opens focused download offer without activating or downloading automatically",
+          "Details expands to technical requirements; collapsed by default",
+          "Light compact1080x2400, Dark wide2076x2152 and font scale1.5 checked; source attachment and playback untouched"
+        ],
+        "selected_voice": {
+          "voiceId": "default",
+          "voicePack": "android-phonon-english"
+        },
+        "restored": {
+          "size": "Physical size: 2076x2152",
+          "font_scale": "1.0",
+          "app_appearance": "dark"
+        },
+        "screenshots": {
+          "android-settings-phone-light-final.png": "d4e298d5d2bf1fb6717a1944e8b9bd643329a31d159493a4c0fb500aff0ca6dc",
+          "android-downloads-phone-selected-final.png": "c7844b87948931ae1b17d2ca51f5ce53386acf1ac9fa1eb1a57dacdd21dacf9e",
+          "android-downloads-phone-large-text-final.png": "114c475b7fa94bb3d1ead7aa0bc15b0288c2ce63b66618af683e4c2a75e5a180",
+          "android-transcription-phone-large-text-final.png": "210f74e4311955fad2cca622ea660e31f3d04d77c46edcc945dd479ae8debe30",
+          "android-transcription-details-large-text-final.png": "74ad9b4f8875af4359f96f74baba4cf7727985ec41c6126e7f9f120826326e68",
+          "android-settings-wide-dark-final.png": "ac58553e35f8400f9543840516b0ccc0b0dcfdfae4bc256c6e286c07eb424107",
+          "android-downloads-wide-final.png": "56db647cc3be356e6a82a4909e5e6d235581cc4347647b81062f11e7bc51a09a"
+        },
+        "limitations": [
+          "Actual Download & use journey ran on immediately preceding same-runtime Debug; final Debug changes only modal background colour, selection retained.",
+          "No new microphone, full document-to-note UI, physical-device or TalkBack qualification."
+        ]
+      }
+    },
+    "ios": {
+      "builds": {
+        "source_hashes": {
+          "iosApp/Sources/SpeechSetup.swift": "615daca065c38e62d3d8e6281b0ebd3d25c605e5336f67a54031735623990aff",
+          "iosApp/Sources/AudioCoordinator.swift": "2aae24ef4b14e97866a9858374e49ef3699120534b0b6ead13748e1500c57f8c",
+          "iosApp/Sources/ReaderStore.swift": "c1fed6f6b195829f96235ea30f1cceb94133e62b60e341cf070440ec8533635d",
+          "iosApp/Sources/ReaderViews.swift": "24222d2a397ce4f03146907eedf9b49e5976d51fc001e7b4852a115adc3272b4",
+          "iosApp/Sources/ModelPacks.swift": "4112675c99bedbcebf76b959f30710d1759c3641648f556b48f14d8326546ec6"
+        },
+        "builds": {
+          "Debug-iphonesimulator": {
+            "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app",
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            },
+            "hashes": {
+              "EReader": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+              "EReader.debug.dylib": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+              "Info.plist": "dc86c059231e96ad71a0f8ba4e0a7e736336d6fc19d8448bb854a4cc15b77d8a"
+            }
+          },
+          "Release-iphoneos": {
+            "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Release-iphoneos/EReader.app",
+            "metadata": {
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            },
+            "hashes": {
+              "EReader": "5f75b1c32715bf3e50956ce7d5613d882dfbebac2311ab6d48a8eef7eb858660",
+              "Info.plist": "3090f70d4aa7ba53b4f4457e7ffe32cd4afa2abfed8e24028a8ea675ad200654"
+            }
+          }
+        },
+        "logs": {
+          "Debug": "/private/tmp/rhapsodos-ios-speech-setup-ui-debug.log",
+          "Release": "/private/tmp/rhapsodos-ios-speech-setup-ui-release.log"
+        }
+      },
+      "focused_checks": {
+        "concurrency": 6,
+        "low_storage": 4,
+        "removal": 4,
+        "boundary": "Concurrency uses copied AudioCoordinator/SpeechSetup and unchanged selection method in controlled dependencies. Low-storage/removal extract unchanged production methods with fixture backends; real model UI journey is recorded separately."
+      },
+      "focused_evidence": {
+        "results.txt": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/results.txt",
+          "sha256": "0e56c9e814b14bdf3ba0d4de3408de38cbd886ba5952ce5b621bf2dc8e4e2fa0"
+        },
+        "provenance.json": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/provenance.json",
+          "sha256": "5def06c02d7098f7e863a9dd106d3e180a2a396acaf4066d48447cd4bc6daeed"
+        },
+        "storage-results.txt": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/storage-results.txt",
+          "sha256": "22c2039b8559b4bf03cf4c9610c859214c1ef0b4d8ced1c9c42d34109448ee5b"
+        },
+        "storage-provenance.json": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/storage-provenance.json",
+          "sha256": "a0a23220b9e1339f79e6e23bdc5508c1ecf332a57008d3279bbd3ebd4b421c15"
+        },
+        "removal-results.txt": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/removal-results.txt",
+          "sha256": "59e776322b1144004047045b4c84b88e951a0eaa93adc7cc4460ad970d039c1d"
+        },
+        "removal-provenance.json": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/removal-provenance.json",
+          "sha256": "bbe38b4f2e1d3b7542eb66b02b33dee3b02049c70832576f1f6bb618be5277c4"
+        },
+        "final-method-match.json": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/final-method-match.json",
+          "sha256": "9385f3af92a4e99f31910a1e7f79e61ed5209033a5ec9253b810e7d7abce334d"
+        }
+      },
+      "main_app_ui": {
+        "recorded_at": "2026-10-21T04:39:21.820857+00:00",
+        "debug_binary": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app",
+        "executable_sha256": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+        "debug_dylib_sha256": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+        "installed_devices": {
+          "phone_qa_ios184": {
+            "udid": "BE11DA8E-BF6F-4E91-AF75-A8804A638377",
+            "preserving_install_and_launch_success": true,
+            "executable_sha256": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+            "debug_dylib_sha256": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+            "metadata": {
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            }
+          },
+          "ipad_qa_ios184": {
+            "udid": "4AF3B089-E15E-4D14-9BEC-F9DBD916CC01",
+            "preserving_install_and_launch_success": true,
+            "executable_sha256": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+            "debug_dylib_sha256": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+            "metadata": {
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            }
+          },
+          "consumer_phone_ios271": {
+            "udid": "81A30D9D-454F-490A-9162-8A86AD0104B8",
+            "preserving_install_and_launch_success": true,
+            "executable_sha256": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+            "debug_dylib_sha256": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+            "metadata": {
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            }
+          },
+          "consumer_ipad_ios27": {
+            "udid": "4E05A37D-19E7-4C2D-8A1E-65059327776B",
+            "preserving_install_and_launch_success": true,
+            "executable_sha256": "f57f2f8f51332d92882f3ff5f2be5e582c0a055f144ec840429806eb67f7d3c3",
+            "debug_dylib_sha256": "f1f210a8e46e57c54d07a81db4f4a3d314d25f9ef1e9fdba1a2b11b681c2b8b9",
+            "metadata": {
+              "CFBundleIdentifier": "com.osuji.ereaderapp",
+              "CFBundleDisplayName": "Rhapsodos",
+              "CFBundleShortVersionString": "0.01",
+              "CFBundleVersion": "1",
+              "MinimumOSVersion": "18.0"
+            }
+          }
+        },
+        "ui_checks": {
+          "compact_settings_top_order": "Download voices and transcription above Reading voice, then Transcribe voice notes; passed",
+          "focused_sheets": "Reading voice and Transcribe voice notes capability-only; passed",
+          "combined_manager": "Voices and transcription includes both minimal cards; passed",
+          "ipad_download_and_use": "137.1MB Phonon Download & use, pause16%, terminate/relaunch preserves paused21.5MB, Resume, dismiss, automatic Selected after runtime validation with reader still paused0%; passed",
+          "compact_pending_note_route": "Imported authored1s silence WAV through real document picker; Pending note; Transcribe saved recording opens focused Transcribe voice notes; passed",
+          "off_during_transcription_download": "Switch immediately Off and remains Off after restart; no-intent ongoing transfer offers Download & enable; passed through in-progress state",
+          "transcription_download_completion": "Not completed: nsurlsessiond repeated NSURLErrorDomain -1001 timeouts on current-generation fileIndex6, retry_count2, suspend_count0; native agent verified next public243-byte asset host HTTP200/5.1s and captured whisper-background.log. No dropped completion found; final UI run does not claim Whisper download/auto-enable completion.",
+          "theme": "Light phone and dark iPad cards examined; contrast fix visually verified",
+          "dynamic_type": "Phone maximum accessibility XXXL Settings and transcription title wrap correctly after stacked header fix; cards expand naturally. Scroll by native drag injection unreliable; below-fold accessibility actions still reachable. Restored content_size large.",
+          "scope_limit": "Simulator interaction, not physical-device qualification, sustained audio performance or full VoiceOver traversal.",
+          "final_phone_qa_state": "Through UI: Download & enable attached intent, Pause retained16.8MB21%, Done\u2192switch Off revoked intent; reopened focused sheet still Paused/Resume. Recording and downloaded files preserved; no further transfer running."
+        },
+        "runtime_evidence": [
+          "results.txt",
+          "provenance.json",
+          "storage-results.txt",
+          "storage-provenance.json",
+          "final-method-match.json"
+        ],
+        "screenshots": [
+          "ipad-auto-selected-after-dismissal.png",
+          "ipad-combined-dark-f57f.png",
+          "ipad-combined-dark-final.png",
+          "ipad-paused-after-restart.png",
+          "ipad-settings-dark-f57f.png",
+          "ipad-settings-dark-final.png",
+          "phone-combined-light.png",
+          "phone-note-transcription-route.png",
+          "phone-paused-off-final.png",
+          "phone-settings-accessibility-xxxl-before-header-fix.png",
+          "phone-settings-accessibility-xxxl-final.png",
+          "phone-settings-light-final.png",
+          "phone-transcription-accessibility-xxxl-final.png",
+          "phone-transcription-contrast-final.png"
+        ],
+        "screenshot_versions": "phone-settings-light-final, phone-settings-accessibility-xxxl-final, phone-transcription-accessibility-xxxl-final, phone-paused-off-final, ipad-settings-dark-f57f, ipad-combined-dark-f57f show finalf57f2f8f. Other final-labelled contrast screenshots show809271a1 before accessibility header adjustment. Remaining images are historical flow evidence."
+      },
+      "transport_timeout_evidence": {
+        "whisper-background.log": {
+          "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/whisper-background.log",
+          "sha256": "4b84b8e0a91ce3b09bca61276bf98709c907ca665227709198dbfa746eb1cd91"
+        }
+      },
+      "ui_evidence": {
+        "path": "/private/tmp/rhapsodos-speech-setup-ios-qa/ui-evidence.json",
+        "sha256": "b0925e4df459a1023b13b595bd71589de2eb34f5303d8faa950ab1e16872404e"
+      },
+      "screenshot_sha256": {
+        "ipad-auto-selected-after-dismissal.png": "27bf6a7d95e72719b16f2a28ba115bd4f856fd209684fb202a340e6fcfd00320",
+        "ipad-combined-dark-f57f.png": "f7c0b3daf30245011277d7a9f3920d09c8dd4e5ec8c79bd4e9bb796ccf270553",
+        "ipad-combined-dark-final.png": "d0d7f496813c86da4eb20585e8a1fa8c347eb999cbe4ca9912a09414634be3b4",
+        "ipad-paused-after-restart.png": "9ef3ba0739e85ed7e6d9597112617f211dccb311ea05041359d355f3cb18e5dc",
+        "ipad-settings-dark-f57f.png": "f5f3408e65a2a56ca0064b87d7306204affad8497ab9c588175862df7b56f856",
+        "ipad-settings-dark-final.png": "203c1e5acd8607280499be19c50e0ff295f2460f114fe42a34711e18c5f1250c",
+        "phone-combined-light.png": "c5644dd3b8d3870e6f822765f191dbac6eecaf4e395575d0e1057efbea22247f",
+        "phone-note-transcription-route.png": "860d07ece662cf1dfa1e67c35f98029af99d5a5d90ba9493062e22766ff9a5a1",
+        "phone-paused-off-final.png": "87cac5789fdecdcf7ce5111aff551691c82d840d1edbdf06d300de463f1c1fa2",
+        "phone-settings-accessibility-xxxl-before-header-fix.png": "faabf75612165f86990d16761c28e3165265f25ce6f209acf265c57b290ced5a",
+        "phone-settings-accessibility-xxxl-final.png": "45100587039861bea519d39fce9c968c2631201060d72f5ac15ffb78c35d1830",
+        "phone-settings-light-final.png": "25fd685ae553abc09207457336b532dde83336951cdc93389f580ba28a5c84da",
+        "phone-transcription-accessibility-xxxl-final.png": "0f887aa341742523c3da7fefd8d2d7a5ca8b43c9daf8aea956471cb4da9dc80a",
+        "phone-transcription-contrast-final.png": "88c4a0a9ce9302f257f42c3ac3664a480d5b0b558d7b6fa26e3d0af2435a041c"
+      }
+    },
+    "artifact_policy": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 9,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "release": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 9,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "limits": [
+      "iOS Whisper background URLSession received repeated NSURLErrorDomain -1001 timeouts at21%; full ASR download-to-activation not completed this run. Actual Phonon setup completed on both apps.",
+      "No new real microphone or full PDF-to-recorded-note UI qualification.",
+      "Simulator/emulator measurements are not physical-device voice quality, sustained battery/thermal/memory or fleet qualification.",
+      "Maximum iOS Dynamic Type layout inspected; simulator drag injection unreliable, so scrolling not newly qualified. No full VoiceOver/TalkBack traversal claimed.",
+      "Live catalogue URL/trust configuration remains unset; public bundled-pack HTTPS transfers were exercised."
     ]
   }
 }

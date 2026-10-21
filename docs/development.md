@@ -27,15 +27,15 @@ Source ranges use UTF-16 code units, with page texts separated by `\n\f\n`. Spok
 | Navigate | Dedicated document/library search sheets with fixed scopes, literal local passage/note results, truthful states and paused durable destinations; outline/page fallback |
 | Manage | Rename/delete, owned-file cleanup and restore of existing portable document/audio/note archives |
 | Offline speech | Curated platform catalog, explicit downloads, pause/resume, pinned verification, runtime checks, atomic activation, repair and removal |
-| Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, haptic preferences and wide layouts |
+| Presentation | Rhapsodos icon, licensed unified typography/palette, system/light/dark preference, native launch motion, system-aware haptics and wide layouts |
 
 See [implementation-contract.md](implementation-contract.md) for the actual shared commands. These entries describe code paths; the verification record determines which scenarios have been exercised.
 
 ## Speech, privacy and durability
 
-The current app implements local-only content processing. App-managed HTTP transfers fetch explicitly requested public model assets. There is no cloud provider, account service, analytics client or sync backend. Installed system speech engines are separate OS services whose offline eligibility must be checked.
+The current app implements local-only content processing. App-managed HTTP transfers fetch explicitly requested public model assets. There is no cloud provider, account service, analytics client, sync backend or system speech fallback.
 
-[model-catalog.json](model-catalog.json) pins every public asset. Android offers Kitten and Phonon English narration and Moonshine English saved-note transcription. iOS offers Whisper tiny English transcription and optional Kokoro and Phonon CoreML voices on the iOS 18 baseline. Memory/OS guards constrain eligibility; physical qualification is pending.
+[model-catalog.json](model-catalog.json) pins every public asset. Phonon is the sole narration family on both apps. Android uses Moonshine English saved-note transcription; iOS uses Whisper tiny English transcription on the iOS 18 baseline. Memory/OS guards constrain eligibility; physical qualification is pending.
 
 Native managers verify all artifacts, check runtime execution, install atomically and update the shared generation-scoped inventory. Failed ASR retains the recording and its attachment. The iOS Whisper adapter overrides an upstream tokenizer fallback to require local assets even after a parsing failure.
 
@@ -384,3 +384,22 @@ iPhone now uses a focused NavigationStack in both orientations. Its library open
 Seven code/policy commits are `f6776b9`, `4ed3bb2`, `55c63a1`, `9897564`, `0e6d45c`, `1b152f7` and `c6cd732`; this verification record follows separately. Exact artifact/source/report hashes are in the `download_only_narration_verification` entry in [build-artifacts.json](build-artifacts.json). External harnesses remain outside the repository. The comparison report distinguishes model curation from unproven universal perceptual dominance. Physical voice quality, sustained phone performance, real microphone/routes and live hosted-catalogue refresh remain separate qualification gates.
 
 The iOS UI evidence manifest and screenshots are at `/private/tmp/rhapsodos-phone-navigation-qa/evidence.json`. Left-edge swipe injection was unreliable, so the unchanged gesture handler is not newly runtime-qualified. iOS 27 consumer installations were verified by code hashes; interactive navigation checks used iOS 18.4.
+
+## Simple speech setup and download sheets — 21 October 2026
+
+Settings now starts with **Download voices and transcription**, above a compact Reading voice row and a Transcribe voice notes switch. The combined sheet separates those two capabilities; voice, transcription and saved-note entry points open focused sheets. Each download card shows its name, language, size and one contextual action. Requirements, runtime information, removal and rechecking sit under collapsed Details. Duplicate selection controls, catalogue setup prose and routine explanatory paragraphs are removed. Both platforms use the app palette; iOS accessibility sizes give the header enough room without breaking words.
+
+**Download & use** and **Download & enable** persist an explicit choice, download and verify the files, run the existing device check, then select automatically. This continues after dismissal or restart, without automatically starting narration. Pause survives restart and requires Resume. Off immediately revokes pending transcription activation while retaining recordings and downloaded files. Newer choices win suspended operations; recording defers activation. Removing a selected pack clears that selection without cancelling a pending different edition.
+
+Validation caught and fixed an Android immediate-Retry race and an iOS low-storage failure that previously lacked a durable failed installation. All checks and fixtures remain outside the repository.
+
+| Verification | Executed result and scope |
+| --- | --- |
+| Builds | Android Debug APK, unsigned Release APK, Release AAB and lint passed (zero errors, eleven warnings); iOS arm64 simulator Debug and unsigned device Release passed. Actual metadata remains Rhapsodos / `com.osuji.ereaderapp` / `0.01` / `1`, iOS minimum 18.0. Artifact policy, pinned assets, Android native alignment and no-unit-source policy passed. |
+| Android integration | Seventeen recorded checks/measurements using production DEX, Koin, SQLite and real pinned HTTPS/native Phonon and Moonshine checks passed. Covers pause/restart, deferred activation, Off/latest-choice races, no autoplay, generic-download nonselection, failed validation, immediate Retry and unchanged fixture recording/edit/anchor/progress. Callback barriers and a deliberate verification exception exercise races and failure. |
+| iOS concurrency | Six focused native simulator checks passed with byte-identical AudioCoordinator and SpeechSetup, plus the unchanged selection method in dependency fixtures. Covers persisted intent, latest choice, source fraction, capture during join, Off and no autoplay. ASR readiness/unload dependencies are substituted; this does not qualify microphone or inference. |
+| iOS failure/recovery | Four extracted-production-method filesystem checks passed low-space failure, retry and staged/resume ownership, with injected capacity and an in-memory repository. Four removal-method checks with fake deletion/audio backends passed selection revocation, pending-edition isolation and visible failure. Final method hashes match the executed extractions. |
+| Android main app | Real Phonon Download & use completed transfer/check/automatic selection, retained after preserving final reinstall. Top-button order, focused rows, missing-transcription offer, Details, compact/wide, light/dark and 1.5× text passed visual and UI checks. Original emulator size, text scale and app theme restored. |
+| iOS main app | Real iPad Phonon Download & use → Pause → terminate/relaunch → Resume → dismiss → automatic Selected passed without playback. A durable imported synthetic recording's pending-note action opened focused transcription on iPhone. Compact/wide, light/dark and accessibility XXXL were inspected; the header wrapping defect was fixed and rechecked. |
+
+Implementation commits are `48ab8bd`, `1173b3e`, `1d61dcf`, `1d1790a`, `4ca8e79` and `68f4734`; this verification record follows separately. Exact artifact/source/report hashes, consumer installation evidence and remaining gates are in `simple_speech_setup_verification` in [build-artifacts.json](build-artifacts.json). Final Debug builds were installed and launched on the existing Android emulator and four iOS simulators without clearing their containers. The iOS Whisper transfer encountered repeated simulator background-network timeouts at 21%; full transcription download-to-activation remains unverified in this run. Phonon completed the real flow on both platforms. The Android latency sample measures only an emulator and is not physical-device performance qualification. Physical audio quality, sustained battery/thermal performance, real microphone/routes and hosted catalogue refresh remain separate gates.
