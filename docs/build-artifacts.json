@@ -5700,5 +5700,431 @@
       }
     },
     "source_revision": "7811f8e9a0754b7258c5c80f8db2e3b7b1e0cc19"
+  },
+  "english_voice_selection_verification": {
+    "date": "2026-10-21",
+    "source_revision": "a4e71ee493ff24d5c135a9ec96bf14c1083cb431",
+    "implementation_commits": [
+      "a8226cb",
+      "ab7e0c5",
+      "af8d092",
+      "a69c1a7",
+      "a4e71ee"
+    ],
+    "production_source_sha256": {
+      "androidApp/src/main/cpp/PhononBridge.c": "83dbc12d95d840874d9cd9cf07ba24b14ee35d36dc248d88ca825df7de491a29",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/PlaybackCoordinator.kt": "69f057be6e2bc18ee32fd6b8204982f194bae3d690dde8e9858d0d264d189539",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/data/ReaderStore.kt": "2f6b61f9ceedf3c5f4c76a39795109e9b5bb104c53bfa2c116a307531097b340",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "d945871be2983b7eb623d40c85ac8ea2810deafa4f80c24f111560dac162681d",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/PhononEngine.kt": "74ba6da470fa9799216033e101e22f3d887b9f317036261d89e97e0f4fe1c5d1",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ui/ReaderTools.kt": "273a318dbc74d3658080519cce74e0a9aaca8fbf49cf48b61c2376a700f8fa2c",
+      "catalogue/catalogue.json": "0133aa4f1dc19ce00210377f1c66e4879a45821719070ab298f6978cda3365b0",
+      "docs/model-catalog.json": "c4a66c15c2e85f8aaaf19de93a06f5e7c19ffde8679a5314d8c2fffd1b4849f9",
+      "iosApp/Sources/ModelCatalogClient.swift": "bfc4a47b8b4e19839252ec5b31cb70daeb7a8d40fed022b65ac5f09aff5f4bcb",
+      "iosApp/Sources/ModelPacks.swift": "4fc055f27225c884d43f8ef073d4b36a085c71f15e220eaef3b7f4ffbf66afd7",
+      "iosApp/Sources/PhononVoice.swift": "f765481932b0ff547d732204d6e1ad7fa2e710f652c5aec542d9c751ae8f257e",
+      "iosApp/Sources/ReaderStore.swift": "36fc478cad8af4b91ce4ed93f4e41a3b80f165c8c89abc9246ae420886aa877e",
+      "iosApp/Vendor/Phonon/Sources/PhononRuntime/PhononEngine.swift": "460d38563e9e120129eacec223b87fa88a504001f5b9af7c9ad4930e7fa45281",
+      "shared/src/commonMain/kotlin/com/ereader/shared/CatalogValidation.kt": "35128d66a80cf58c2dc1d315c93c7cb963c96908c3e5f18b67db84edada821e6",
+      "shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt": "411ff96ac2e17cf153fc21570278cabaa5abebfd8c275c364e0e4f518a135191",
+      "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt": "eeb82af6ea7dcc06ba99a3495b80d0a84da5d11b9b11d1c417b218eb78708693",
+      "shared/src/commonMain/kotlin/com/ereader/shared/PhononCatalog.kt": "47724d5a2eb9f6debe1aea339d1749c87d07708ccbaa0c72695a6b83194f5771",
+      "shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt": "2f08bb5a10e34b3102884512b420b59c4e5a7392dee30a048edba2e2af0e14b8"
+    },
+    "catalogue": {
+      "revision": 6,
+      "permanent": true,
+      "packs": 4,
+      "assets": 66,
+      "signature_verified": true,
+      "published_at": 1792563468737,
+      "envelope_sha256": "0133aa4f1dc19ce00210377f1c66e4879a45821719070ab298f6978cda3365b0",
+      "not_published": true
+    },
+    "voice_source": {
+      "catalog_revision": "da6c9ec0d47be8df5c87c730a3aa97187f3229c3",
+      "catalog_url": "https://huggingface.co/gradium/phonon-voices/resolve/da6c9ec0d47be8df5c87c730a3aa97187f3229c3/voices.jsonl",
+      "catalog_sha256": "874f34998ce581b94f2b8912aa015639f52b5fd62eba3ba11e1b64dcaed7d802",
+      "coreml_archive_sha256": "10f3a99fd39256db44f826267ef21d78cca959b16c0554926344c09fde27b436",
+      "default_named_aliases_coreml": [],
+      "default_named_aliases": [],
+      "profile_count": 37,
+      "profile_total_bytes": 9477032
+    },
+    "asset_reuse": {
+      "coreml_inner_profiles_verified": 38,
+      "coreml_inner_files_match_archive": true,
+      "coreml_inner_files_match_bundle_manifest": true,
+      "android_core_files_unchanged": true,
+      "android_old_total_bytes": 65049306,
+      "android_new_total_bytes": 74526338,
+      "android_additional_bytes": 9477032,
+      "ios_archive_descriptor_unchanged": true
+    },
+    "shared": {
+      "production_sqlite_checks_passed": 43,
+      "evidence": {
+        "path": "/private/tmp/rhapsodos-phonon-voices-shared/evidence.json",
+        "sha256": "c20b203096bcd1dbbabde3c2a07fbe22cec8d587361e69b025b38f624c3e05fb"
+      },
+      "build_log": {
+        "path": "/private/tmp/rhapsodos-phonon-voices-shared/shared-build.log",
+        "sha256": "4457e081a31a082b239db20ca33d3a0093028a32b8f1501cc83fcdeae3a329db"
+      }
+    },
+    "android": {
+      "artifacts": {
+        "debug": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+          "bytes": 154174408,
+          "sha256": "394245849f2a03acbe44ef6eaaa5ac7b821bb8048f8f5dc397150de7bd05ddcd"
+        },
+        "release": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+          "bytes": 130460800,
+          "sha256": "e62ec9828499f1986c776a0d67ffcf7e96071682235b063fe69ff62b9d25b4f7"
+        },
+        "bundle": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+          "bytes": 56087668,
+          "sha256": "a75343dfba2a677107e0786ae402be81d67c5af87ad1f3ddaed1b08b23a1d464"
+        }
+      },
+      "build_log": {
+        "path": "/private/tmp/rhapsodos-voices-android-finalbuild.log",
+        "sha256": "ef24a7e3c3de738fe2ae46c2006d3548f4ab6935b683892b10f1c7018cb41eef"
+      },
+      "lint": {
+        "errors": 0,
+        "warnings": 11
+      },
+      "native": {
+        "voices_passed": 38,
+        "missing_voice_rejected": true,
+        "cancellation_and_recovery_passed": true,
+        "evidence": {
+          "path": "/private/tmp/rhapsodos-voices-android-qa/native/native-results-all38.json",
+          "sha256": "0f291e499e0d1f12ecf7f0aea9f30dfc7fbf006b3e960935965c23ab7a010452"
+        },
+        "production_apk_sha256": "323e77316b23d94f5cd302a53767830deed525346e9f948c3ed698bf085e466a"
+      },
+      "manager": {
+        "evidence": {
+          "path": "/private/tmp/rhapsodos-voices-android-qa/manager-verification.json",
+          "sha256": "c174ebb4296cf82b5af3d951b73dffe06b2268d7cf7be974ec8d454164176f14"
+        },
+        "network": {
+          "uniquePinnedProfileRequests": 37,
+          "coreAssetRequests": 0,
+          "additionalProfileBytes": 9477032
+        },
+        "stages": [
+          {
+            "phase": "seed",
+            "production_apk_sha256": "323e77316b23d94f5cd302a53767830deed525346e9f948c3ed698bf085e466a",
+            "checks": [
+              "seed_old_verified_core_and_durable_note",
+              "passed"
+            ]
+          },
+          {
+            "phase": "pause",
+            "production_apk_sha256": "323e77316b23d94f5cd302a53767830deed525346e9f948c3ed698bf085e466a",
+            "checks": [
+              "old_default_available_and_only_additions_offered",
+              "pause_retains_default_source_and_note",
+              "passed"
+            ]
+          },
+          {
+            "phase": "fail",
+            "production_apk_sha256": "323e77316b23d94f5cd302a53767830deed525346e9f948c3ed698bf085e466a",
+            "checks": [
+              "restart_paused_without_automatic_transfer",
+              "failed_check_keeps_previous_default_and_durable_data",
+              "passed"
+            ]
+          },
+          {
+            "phase": "activate",
+            "production_apk_sha256": "323e77316b23d94f5cd302a53767830deed525346e9f948c3ed698bf085e466a",
+            "checks": [
+              "verified_upgrade_defers_during_capture",
+              "automatic_named_activation_prunes_old_weights_without_network"
+            ]
+          },
+          {
+            "phase": "switch",
+            "production_apk_sha256": "7bc1e7b2d4b9f6fa70ab40989a2d9ff51dd797ba5d7b6d88f4bdf852cc9ba0bf",
+            "checks": [
+              "switch_diagnostics",
+              "same_engine_character_switch_preserves_paused_fraction_and_note",
+              "latest_voice_choice_wins",
+              "passed"
+            ]
+          },
+          {
+            "phase": "restart",
+            "production_apk_sha256": "7bc1e7b2d4b9f6fa70ab40989a2d9ff51dd797ba5d7b6d88f4bdf852cc9ba0bf",
+            "checks": [
+              "restart_persists_character_and_offline_narrator_switch",
+              "removed_one_profile_for_repair_probe",
+              "passed"
+            ]
+          },
+          {
+            "phase": "repair",
+            "production_apk_sha256": "7bc1e7b2d4b9f6fa70ab40989a2d9ff51dd797ba5d7b6d88f4bdf852cc9ba0bf",
+            "checks": [
+              "missing_selected_profile_blocks_without_silent_default",
+              "same_version_missing_profile_repairs_without_core_redownload",
+              "passed"
+            ]
+          },
+          {
+            "phase": "repair-corrupt",
+            "production_apk_sha256": "7bc1e7b2d4b9f6fa70ab40989a2d9ff51dd797ba5d7b6d88f4bdf852cc9ba0bf",
+            "checks": [
+              "missing_selected_profile_blocks_without_silent_default",
+              "same_version_missing_profile_repairs_without_core_redownload",
+              "passed"
+            ]
+          }
+        ],
+        "fixture_corrections": "First activate phase had inconsistent synthetic cursor321ms/37%; source position fixture corrected to0ms/37%. Cached narration initially avoided native engine load; switch probe explicitly primes runtime. These two harness assertions were corrected without production changes. Original activate.json retained.",
+        "build_difference": "Nested profile parent-directory fsync and UI typography/selected-row no-op refinements; model/activation logic otherwise identical."
+      },
+      "final_main_app": {
+        "installed_final_debug_preserving_container": true,
+        "additional_voices_download_completed": true,
+        "uk_and_us_narrators_selected": true,
+        "combined_picker_collapsed_with_selected_name": true,
+        "durability": {
+          "positions": {
+            "unchanged": true,
+            "count": 6
+          },
+          "notes": {
+            "unchanged": true,
+            "count": 6
+          },
+          "sourceAndRecordingFiles": {
+            "unchanged": true,
+            "count": 12
+          }
+        },
+        "before": {
+          "path": "/private/tmp/rhapsodos-voices-android-qa/consumer-before.json",
+          "sha256": "9ac102776277cb137a62ffec5db9f3d6b0b150a536caa0b505aa5429f04cf72b"
+        },
+        "after": {
+          "path": "/private/tmp/rhapsodos-voices-android-qa/consumer-after.json",
+          "sha256": "9ac102776277cb137a62ffec5db9f3d6b0b150a536caa0b505aa5429f04cf72b"
+        },
+        "temporary_emulator_storage_setting": {
+          "key": "sys_storage_threshold_percentage",
+          "previous": "null",
+          "temporary": "1",
+          "installExit": 0,
+          "installOutput": "Performing Streamed Install\nSuccess\n",
+          "restored": true
+        },
+        "reviewed_screenshots": [
+          {
+            "path": "/private/tmp/rhapsodos-voices-android-qa/android-upgrade-additions.png",
+            "sha256": "239894ce6d061ad3501f307dec3d4ff942c6c2302a1524630ffa971ba6a92f85"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-voices-android-qa/android-voices-wide-dark.png",
+            "sha256": "78480a79e8ff2cc6fbb9e39532edf383bdff8244895958e30feac4123cc3c867"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-voices-android-qa/android-manager-wide-light.png",
+            "sha256": "a58b4e842fa0c1b405ae0be4ee421b4d5d4ac71038af22a050fb79b6ccf60853"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-voices-android-qa/android-manager-compact-light.png",
+            "sha256": "57270b967d82df3bc5ece7a81fe1eabd483158d72d89fee8f1488db897921d4a"
+          }
+        ],
+        "evidence": {
+          "path": "/private/tmp/rhapsodos-voices-android-qa/ui-final-verification.json",
+          "sha256": "43b5099377bfa944b14b54d54b9e90cc4030e1313de36bf410aa5bd4cde8aca4"
+        },
+        "model_weight_copies": 1,
+        "unchanged_weight_sha256": "a7d9aad2cd6dc66473f24a08bc6d2939030ef4d751ef82349361fbef3272dbae",
+        "compact_configuration": "2076x2152 physical emulator, temporary600dpi provides553.6dp compact layout; screenshot verifies compact width, not a physical phone. Folding attempt showed lockscreen and is not counted.",
+        "qa_settings_restored": {
+          "storageThreshold": "original null restored immediately after preserving install",
+          "displaySize": "no override",
+          "displayDensity": "original390dpi/no override",
+          "foldState": "original OPENED; override reset",
+          "appearance": "System"
+        }
+      }
+    },
+    "ios": {
+      "artifacts": {
+        "Debug-iphonesimulator": {
+          "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app",
+          "executable_sha256": "971aaf5961fabedd97dbf65c520c7d10be9098e6892ad8b1ad1f0c476922f175"
+        },
+        "Release-iphoneos": {
+          "path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Release-iphoneos/EReader.app",
+          "executable_sha256": "0a74ff21bbaa59d09cf401c0f3d32529204d14505694b4015ff352259e2b6f8f"
+        }
+      },
+      "debug_build_log": {
+        "path": "/private/tmp/rhapsodos-english-voices-ios-debug-final.log",
+        "sha256": "9514fd22e32bbe0c6c7b100ad41b829bea2f57b0d20420310d0876e19625cbfd"
+      },
+      "release_build_log": {
+        "path": "/private/tmp/rhapsodos-english-voices-ios-release-final.log",
+        "sha256": "89fbae3ddc97ea8b3b497a2469e15c659029eee73b7d4b31515b59c09699a5a4"
+      },
+      "native": {
+        "voices_passed": 38,
+        "distinct_pcm_hashes": 38,
+        "platform": "macOS ARM64 CPU with compiled CoreML models",
+        "evidence": {
+          "path": "/private/tmp/rhapsodos-english-voices-ios-native/results.json",
+          "sha256": "fe4ddd73133f844c4020a4b252924a8eed01d0fa94dc6c4464e277df32f71d56"
+        },
+        "source_provenance": {
+          "path": "/private/tmp/rhapsodos-english-voices-ios-native/provenance.json",
+          "sha256": "f09d95fd3da6fa606b0806a7d7db96e66fbce063ec31ea3e9b21b416873d532b"
+        },
+        "adapter_checks": {
+          "path": "/private/tmp/rhapsodos-english-voices-ios-native/adapter-run.log",
+          "sha256": "b0116fe185d40d427bfc7d6258a6b1146f4d17a7e7fde481a2afe5ca59c1e54b"
+        },
+        "network_denied_adapter_checks": {
+          "path": "/private/tmp/rhapsodos-english-voices-ios-native/offline-adapter-run.log",
+          "sha256": "ebaca0507d7e261b35b52176cb80d925f6e096cea9335f77c6617f253d6b4374"
+        }
+      },
+      "named_activation_checks": {
+        "passed": 6,
+        "results": {
+          "path": "/private/tmp/rhapsodos-named-voices-setup-qa/results.txt",
+          "sha256": "0e56c9e814b14bdf3ba0d4de3408de38cbd886ba5952ce5b621bf2dc8e4e2fa0"
+        },
+        "source_match": {
+          "path": "/private/tmp/rhapsodos-named-voices-setup-qa/source-match.json",
+          "sha256": "85658c90a7ef7689357a5430ecbc22b4ebe394931bb4628ac1876955aed0f331"
+        }
+      },
+      "final_main_app": {
+        "checks": {
+          "originalNoteFieldsRecordingHashDocumentUnchanged": true,
+          "sourceCursorUnchanged": true,
+          "playbackPaused": true,
+          "packInstallRowsUnchangedAfterVoiceSwitchAndRestart": true,
+          "namedNarratorUKSelected": "Alfie",
+          "namedNarratorUSSelected": "Harper",
+          "characterSelected": "Captain Silas Blackwater",
+          "lastNamedSelectionSurvivesRestart": "Harper",
+          "combinedPickerInitiallyCollapsed": true,
+          "charactersInitiallyCollapsed": true,
+          "focusedPickerImmediatelyVisible": true,
+          "lightPortraitDarkPortraitDarkLandscapeReviewed": true
+        },
+        "network_scope": "Main app kept exact installed model generation/locator/bytes with no new download. Native adapter four-voice generation additionally passed under macOS sandbox denying all network. Simulator networking was not disabled.",
+        "evidence": {
+          "path": "/private/tmp/rhapsodos-english-voices-ios-ui/evidence.json",
+          "sha256": "7937a935b6a31f34b10839adbb6fd5fd91296ec381bf2e1c884d5f90ce6987b8"
+        },
+        "screenshots": [
+          {
+            "path": "/private/tmp/rhapsodos-english-voices-ios-ui/focused-light-alfie.png",
+            "sha256": "995bf16ca72837384dfbd142e441b01b4707cd7e450db6feae30b4362a83873f"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-english-voices-ios-ui/combined-light-collapsed.png",
+            "sha256": "f4b7075447e8b5ab207bccbc2b0dbdf48a197e59db4f67ff9027cb7e3b34b845"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-english-voices-ios-ui/combined-character-selected.png",
+            "sha256": "d758cd48f5ad56b35adb65410314b6bfaa1693a3ecec79786e077d84ec15c604"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-english-voices-ios-ui/focused-dark-after-restart.png",
+            "sha256": "f5f582d0a97267a0bbc708cc54d9db5c001705b983800048c87778079f4c3c8e"
+          },
+          {
+            "path": "/private/tmp/rhapsodos-english-voices-ios-ui/focused-dark-landscape.png",
+            "sha256": "9c3b1f9080d3c709362d789fde98be3d06626d29d2513ff09069b1fbce492386"
+          }
+        ]
+      }
+    },
+    "artifact_policy": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "release": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "limitations": [
+      "Host and emulator/simulator execution is not physical-device voice quality, latency, battery, thermal or audio-route qualification.",
+      "The separately pinned voice repository lacks its own license file/metadata; confirm voice-asset redistribution terms before distribution.",
+      "The existing iOS presented sheet does not fully repaint during an appearance change until reopening/relaunch; dark launch and reopened sheets were checked.",
+      "Signed catalogue revision6 is prepared locally, not published; live endpoint and trust configuration remain unset."
+    ]
   }
 }

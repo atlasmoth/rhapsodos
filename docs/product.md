@@ -37,7 +37,7 @@ Use the system file picker. Prefer a dependable local copy for the initial imple
 
 Preparation is progressive. Prioritize the first/current passage and nearby content. A full document scan must not block the first useful listen when the start is ready. Show uncertainty or preparation failure in context, with access to the original page.
 
-The first-run voice choice offers Phonon with its language and download size. Download & use checks and selects it automatically; technical requirements remain in Details. Future voices must earn their additional complexity through a measured advantage. Listening requires the downloaded voice; there is no system speech option. Import, PDF viewing and durable note capture remain usable before download. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
+The first-run voice choice offers Phonon with its language and download size. Download & use checks and selects it automatically; technical requirements remain in Details. Its English speakers share one installed model and appear as named choices, with Narrators first and Characters collapsed initially. Changing the speaker preserves the listening position and leaves playback paused. Additional model families must earn their complexity through a measured advantage. Listening requires the downloaded voice; there is no system speech option. Import, PDF viewing and durable note capture remain usable before download. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
 
 ### Listening
 

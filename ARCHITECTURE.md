@@ -125,6 +125,8 @@ Generated narration uses native media time as its clock. Qualify any model align
 
 Cache keys include document/graph and normalization revisions, model/voice version, language and audio-affecting synthesis settings. Changing playback speed at transport level normally does not require regeneration. A voice change creates a new edition and maps the current source point into it; do not mix incompatible segment/alignment files.
 
+Phonon's English speaker profiles share the same installed engine and model weights. Shared catalogue metadata supplies the stable speaker ID, display name, language tag and narrator/character category. Native code checks profile availability and serializes speaker selection with synthesis. Selecting another speaker cancels and joins affected generation, preserves source progress, and cannot silently fall back to the default speaker. Cache identity includes the speaker ID; downloaded models and user recordings are unaffected by a speaker selection.
+
 Bound near-term prefetch by readiness, battery, memory and thermal state. Arbitrary source seeking may require generation; show that preparation truthfully. Keep the selected voice stable, and ask through an explicit product choice before changing providers or voice quality. Prepare selected chapters in advance when generation is slower than consumption.
 
 ## 6. Pause, capture, save and resume
