@@ -24,8 +24,8 @@ class ListeningService : MediaSessionService() {
         }
         val activity = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val guarded = object : ForwardingPlayer(player) {
-            override fun play() { if (!coordinator.capturing) super.play() }
-            override fun setPlayWhenReady(playWhenReady: Boolean) { super.setPlayWhenReady(playWhenReady && !coordinator.capturing) }
+            override fun play() { if (coordinator.canStartPlayback()) super.play() }
+            override fun setPlayWhenReady(playWhenReady: Boolean) { super.setPlayWhenReady(playWhenReady && coordinator.canStartPlayback()) }
             override fun seekTo(positionMs: Long) { if (!coordinator.capturing) super.seekTo(positionMs) }
             override fun seekTo(mediaItemIndex: Int, positionMs: Long) { if (!coordinator.capturing) super.seekTo(mediaItemIndex, positionMs) }
             override fun seekToDefaultPosition() { if (!coordinator.capturing) super.seekToDefaultPosition() }

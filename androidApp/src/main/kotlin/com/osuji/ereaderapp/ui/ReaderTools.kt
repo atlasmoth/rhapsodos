@@ -1,6 +1,5 @@
 package com.osuji.ereaderapp.ui
 
-import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,7 +41,6 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
     val playback = koinInject<PlaybackCoordinator>()
     val state by models.state.collectAsStateWithLifecycle()
     val audio by playback.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val view = LocalView.current
     fun chooseTranscription(packId: String) {
         selectionScope.launch {
@@ -72,18 +69,6 @@ fun OfflineSpeechSheet(selectionScope: CoroutineScope, dismiss: () -> Unit) {
                 }
                 state.error?.let { error -> item { Text(error, color = MaterialTheme.colorScheme.error) } }
                 item { Text("Narration", style = MaterialTheme.typography.titleLarge) }
-                item {
-                    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
-                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Installed Android voice", style = MaterialTheme.typography.titleMedium)
-                            Text("Offline availability is checked when listening starts.", style = MaterialTheme.typography.bodySmall)
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                FilledTonalButton(onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, enabled = !audio.capturing) { Text(if (state.selectedVoice == "system") "Active" else "Use system voice") }
-                                TextButton(onClick = { runCatching { context.startActivity(Intent("com.android.settings.TTS_SETTINGS")) } }) { Text("Android voice settings") }
-                            }
-                        }
-                    }
-                }
                 items(state.catalog.filter { it.capability == "tts" }, key = { it.id }) { pack ->
                     SpeechPackCard(pack, state, models, playback, selectionScope, ::chooseTranscription)
                 }

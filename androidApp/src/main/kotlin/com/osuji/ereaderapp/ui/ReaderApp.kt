@@ -308,7 +308,10 @@ fun ReaderApp() {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback, !playback.capturing && !exporting && exportDocumentId == null, { recordThought() })
+                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback,
+                    available = !playback.capturing && !exporting && exportDocumentId == null,
+                    voiceReady = models.installed(modelState.selectedVoice) != null,
+                    downloadVoice = { showVoices = true }, record = { recordThought() })
             },
         ) { padding ->
             ModalNavigationDrawer(
@@ -385,11 +388,8 @@ fun ReaderApp() {
                 SheetHeader("Settings", doneEnabled = archiveTransportReady) { if (archiveTransportReady) showSettings = false }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     SettingsSection("Voices") {
-                        Text(if (modelState.selectedVoice == "system") "System voice" else models.voiceName(modelState.selectedVoice, modelState.voiceId))
+                        Text(if (modelState.selectedVoice.isBlank()) "Download and select Phonon to start listening." else models.voiceName(modelState.selectedVoice, modelState.voiceId))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            FilterChip(modelState.selectedVoice == "system", onClick = {
-                                scope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
-                            }, label = { Text("System voice") }, enabled = archiveTransportReady && !playback.capturing)
                             modelState.catalog.filter { it.capability == "tts" && models.installed(it.id) != null }.forEach { pack ->
                                 models.voiceIds(pack.id).forEach { voice ->
                                     FilterChip(modelState.selectedVoice == pack.id && modelState.voiceId == voice, onClick = {
@@ -1153,11 +1153,12 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit, record: () -> Unit) {
     val view = LocalView.current
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
             if (audio.error != null) Text(audio.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            if (!voiceReady && audio.noteId == null) TextButton(onClick = downloadVoice, enabled = available) { Text("Download and select a voice") }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
             val compact = maxWidth < 600.dp
             Column {
@@ -1170,10 +1171,10 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
                 MediaVolumeControl()
-                if (!compact) TransportControls(audio, playback, available, record)
+                if (!compact) TransportControls(audio, playback, available, voiceReady, downloadVoice, record)
             }
             if (compact) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                TransportControls(audio, playback, available, record)
+                TransportControls(audio, playback, available, voiceReady, downloadVoice, record)
             }
             }
             }
@@ -1248,14 +1249,14 @@ private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoord
 }
 
 @Composable
-private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, record: () -> Unit) {
+private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit, record: () -> Unit) {
     val view = LocalView.current
-    IconButton(onClick = { haptic(view); playback.skip(-1) }, enabled = available && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipPrevious, "Previous passage") }
-    FilledIconButton(onClick = { haptic(view, true); playback.toggle() }, enabled = available, modifier = Modifier.size(52.dp)) {
+    IconButton(onClick = { haptic(view); playback.skip(-1) }, enabled = available && voiceReady && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipPrevious, "Previous passage") }
+    FilledIconButton(onClick = { haptic(view, true); if (!voiceReady && audio.noteId == null) downloadVoice() else playback.toggle() }, enabled = available, modifier = Modifier.size(52.dp)) {
         if (audio.preparing) CircularProgressIndicator(Modifier.size(22.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
         else Icon(if (audio.playing) Icons.Default.Pause else Icons.Default.PlayArrow, if (audio.playing) "Pause" else "Play")
                 }
-    IconButton(onClick = { haptic(view); playback.skip(1) }, enabled = available && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipNext, "Next passage") }
+    IconButton(onClick = { haptic(view); playback.skip(1) }, enabled = available && voiceReady && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipNext, "Next passage") }
     IconButton(onClick = record, enabled = available && audio.noteId == null && audio.durationMillis > 0 && !audio.preparing) { Icon(Icons.Default.Mic, "Pause and record a thought") }
 }
 

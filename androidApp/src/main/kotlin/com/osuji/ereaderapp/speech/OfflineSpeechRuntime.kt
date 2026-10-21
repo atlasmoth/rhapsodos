@@ -16,7 +16,6 @@ data class SpeechAudio(val samples: FloatArray, val sampleRate: Int)
 class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
     private val worker = Dispatchers.Default.limitedParallelism(1)
     private val mutex = Mutex()
-    private var kitten: Pair<String, KittenEngine>? = null
     private var phonon: Pair<String, PhononEngine>? = null
     private var moonshine: Pair<String, MoonshineEngine>? = null
 
@@ -28,14 +27,7 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
                 moonshine?.second?.close()
                 moonshine = null
                 val samples = when (adapter) {
-                    "android-kitten-english" -> {
-                        phonon?.second?.close()
-                        phonon = null
-                        kitten(modelDirectory).synthesize(text, voiceId) { job.ensureActive() }
-                    }
                     "android-phonon-english" -> {
-                        kitten?.second?.close()
-                        kitten = null
                         try {
                             phonon(modelDirectory).synthesize(text, voiceId) { job.ensureActive() }
                         } catch (failure: Throwable) {
@@ -70,8 +62,6 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
                         job.ensureActive()
                         if (audio.none { kotlin.math.abs(it) > 0.001f }) ""
                         else {
-                            kitten?.second?.close()
-                            kitten = null
                             phonon?.second?.close()
                             phonon = null
                             moonshine(modelDirectory).recognize(audio) { job.ensureActive() }
@@ -100,17 +90,11 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
         mutex.withLock {
             job.ensureActive()
             // Verification runs while playback is idle; retain no second model arena beside its fresh engine.
-            kitten?.second?.close()
-            kitten = null
             phonon?.second?.close()
             phonon = null
             moonshine?.second?.close()
             moonshine = null
             when (adapter) {
-                "android-kitten-english" -> KittenEngine(modelDirectory).use { engine ->
-                    val samples = engine.synthesize("Hello. This voice works offline.", "bella") { job.ensureActive() }
-                    check(samples.size >= 2_400 && samples.all { it.isFinite() }) { "Voice validation failed" }
-                }
                 "android-phonon-english" -> PhononEngine(modelDirectory).use { engine ->
                     val samples = engine.synthesize("Hello. This voice works offline.", "default") { job.ensureActive() }
                     check(samples.size >= 2_400 && samples.all { it.isFinite() }) { "Voice validation failed" }
@@ -132,21 +116,10 @@ class OfflineSpeechRuntime(@Suppress("UNUSED_PARAMETER") context: Context) {
     suspend fun close(adapter: String): Unit = withContext(worker) {
         mutex.withLock {
             when (adapter) {
-                "android-kitten-english" -> { kitten?.second?.close(); kitten = null }
                 "android-phonon-english" -> { phonon?.second?.close(); phonon = null }
                 "android-moonshine-english" -> { moonshine?.second?.close(); moonshine = null }
             }
         }
-    }
-
-    private fun kitten(directory: File): KittenEngine {
-        val path = directory.canonicalPath
-        if (kitten?.first != path) {
-            kitten?.second?.close()
-            kitten = null
-            kitten = path to KittenEngine(directory)
-        }
-        return checkNotNull(kitten).second
     }
 
     private fun moonshine(directory: File): MoonshineEngine {

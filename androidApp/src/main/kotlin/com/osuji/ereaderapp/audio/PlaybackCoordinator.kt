@@ -85,7 +85,7 @@ class PlaybackCoordinator(
         if (!playerReady.isCompleted) playerReady.complete(transport)
         transport.addListener(object : Player.Listener {
             override fun onEvents(player: Player, events: Player.Events) {
-                if (capturing && player.playWhenReady) player.pause()
+                if (player.playWhenReady && !canStartPlayback()) player.pause()
                 publish()
                 if (player.playbackState == Player.STATE_ENDED && transportEpoch == epoch && state.value.noteId == null &&
                     state.value.passageId == player.currentMediaItem?.mediaId && state.value.passageFraction == 1.0) {
@@ -289,9 +289,23 @@ class PlaybackCoordinator(
         .setMediaMetadata(MediaMetadata.Builder().setTitle(document.document.title).setArtist("Page ${passage.pageIndex + 1} · ${synthesizer.voiceLabel}").build())
         .build()
 
+    fun canStartPlayback(): Boolean {
+        if (capturing) return false
+        if (playingNote != null) return true
+        return try {
+            synthesizer.requireVoice()
+            true
+        } catch (failure: Exception) {
+            desiredPlaying = false
+            mutableState.value = state.value.copy(playing = false, preparing = false, error = failure.message)
+            false
+        }
+    }
+
     fun toggle() {
         if (capturing) return
         val transport = player ?: return
+        if (!transport.isPlaying && !canStartPlayback()) return
         publish()
         if (!transport.isPlaying && completedReading(state.value)) {
             contents?.let { listen(it) }

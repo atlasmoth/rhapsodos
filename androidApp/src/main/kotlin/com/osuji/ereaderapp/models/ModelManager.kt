@@ -45,7 +45,7 @@ import kotlin.coroutines.coroutineContext
 
 data class ModelState(
     val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(),
-    val selectedVoice: String = "system", val voiceId: String = "bella", val selectedTranscription: String = "android-moonshine-english",
+    val selectedVoice: String = "", val voiceId: String = "default", val selectedTranscription: String = "android-moonshine-english",
     val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null,
     val catalogStatus: ModelCatalogStatus = ModelCatalogStatus(), val refreshing: Boolean = false,
     val catalogMessage: String? = null, val changingTranscription: Boolean = false, val initializing: Boolean = true,
@@ -57,7 +57,7 @@ fun supportsOfflineSpeechAbi(abis: List<String>): Boolean = abis.any { it in set
 
 class ModelManager(private val context: Context, private val store: ReaderStore, val runtime: OfflineSpeechRuntime, private val scope: CoroutineScope) {
     private val preferences = context.getSharedPreferences("speech", Context.MODE_PRIVATE)
-    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "system") ?: "system", voiceId = preferences.getString("voiceId", "bella") ?: "bella", selectedTranscription = preferences.getString("transcriptionPack", "android-moonshine-english") ?: "android-moonshine-english"))
+    private val mutableState = MutableStateFlow(ModelState(selectedVoice = preferences.getString("voicePack", "") ?: "", voiceId = preferences.getString("voiceId", "default") ?: "default", selectedTranscription = preferences.getString("transcriptionPack", "android-moonshine-english") ?: "android-moonshine-english"))
     val state = mutableState.asStateFlow()
     private val ready = MutableSharedFlow<String>(extraBufferCapacity = 2)
     val readyEvents = ready.asSharedFlow()
@@ -80,6 +80,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     fun initialize() = scope.launch {
         try {
             val catalog = store.modelCatalog()
+            mutableState.update { it.copy(catalog = catalog) }
+            removeRetiredPacks(catalog)
+            if (catalog.none { it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" }) clearVoiceSelection()
             val installs = store.modelInstalls()
             val catalogStatus = store.modelCatalogStatus()
             mutableState.update { it.copy(catalog = catalog, installs = installs, catalogStatus = catalogStatus, checking = installs.filter { record -> record.status == "ready" }.map { record -> record.packId }.toSet()) }
@@ -118,11 +121,32 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 if (!recovered) store.updateModelInstall(install.packId, install.generation, "paused", install.bytesDownloaded)
             }
             mutableState.value = state.value.copy(catalog = catalog, installs = store.modelInstalls(), error = null)
-            if (state.value.selectedVoice != "system" && installed(state.value.selectedVoice) == null) mutableState.value = state.value.copy(error = "Your selected voice is unavailable. Choose a voice or download it again.")
+            if (state.value.selectedVoice.isNotBlank() && installed(state.value.selectedVoice) == null) mutableState.value = state.value.copy(error = "Your selected voice is unavailable. Choose a voice or download it again.")
             state.value.installs.filter { it.status == "ready" }.forEach { ready.emit(it.packId) }
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (failure: Exception) { mutableState.value = state.value.copy(error = "Offline downloads could not be loaded. Reopen to retry.") }
+        catch (failure: Exception) { mutableState.value = state.value.copy(error = failure.message ?: "Offline downloads could not be loaded. Restart Rhapsodos to retry.") }
         finally { mutableState.update { it.copy(initializing = false) } }
+    }
+
+    private suspend fun removeRetiredPacks(catalog: List<ModelPack>) {
+        for (install in store.modelInstalls().filter { saved -> catalog.none { it.id == saved.packId } }) {
+            try {
+                val packId = install.packId
+                require(packId.matches(Regex("[a-z0-9-]+")))
+                pause(packId)
+                jobs[packId]?.join()
+                beforeModelRemoval?.invoke(packId)
+                validated -= packId
+                withContext(Dispatchers.IO) {
+                    listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
+                        check(!directory.exists() || directory.deleteRecursively())
+                        if (directory.parentFile!!.isDirectory) syncDirectory(directory.parentFile!!, context.filesDir)
+                    }
+                }
+                store.removeModel(packId)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (failure: Exception) { throw IllegalStateException("Retired model files could not be removed. Restart Rhapsodos to retry.", failure) }
+        }
     }
 
     fun compatibility(pack: ModelPack): String? {
@@ -132,9 +156,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     private fun runtimeCompatibility(pack: ModelPack): String? {
-        if (pack.adapter !in setOf("android-kitten-english", "android-phonon-english", "android-moonshine-english")) return "This model needs an app update before it can run."
-        if (pack.adapter == "android-phonon-english" && (!android.os.Process.is64Bit() || Build.SUPPORTED_ABIS.none { it in setOf("arm64-v8a", "x86_64") })) return "This voice requires a supported 64-bit device. You can still use the other voices."
-        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still use the installed Android voice, read and save voice notes."
+        if (pack.adapter !in setOf("android-phonon-english", "android-moonshine-english")) return "This model needs an app update before it can run."
+        if (pack.adapter == "android-phonon-english" && (!android.os.Process.is64Bit() || Build.SUPPORTED_ABIS.none { it in setOf("arm64-v8a", "x86_64") })) return "This voice requires a supported 64-bit device. You can still read PDFs and save voice notes."
+        if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still read PDFs and save voice notes."
         if (Build.VERSION.SDK_INT < pack.minimumOS) return "Requires Android API ${pack.minimumOS} or newer"
         val memory = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
         if (memory.totalMem / (1024 * 1024) < pack.minimumMemoryMB) return "Requires ${pack.minimumMemoryMB} MB of device memory"
@@ -145,12 +169,14 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         owned(it.installedPath).takeIf { directory -> directory.isDirectory }
     }
 
-    fun selectedVoicePack(): ModelPack? = if (state.value.selectedVoice == "system") null else state.value.catalog.firstOrNull {
-        it.id == state.value.selectedVoice && it.capability == "tts" && installed(it.id) != null
-    } ?: error("The selected offline voice is unavailable. Choose a voice or download it again.")
+    fun selectedVoicePack(): ModelPack {
+        check(state.value.selectedVoice.isNotBlank()) { "Download and select Phonon in Settings to start listening." }
+        return state.value.catalog.firstOrNull {
+            it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" && installed(it.id) != null
+        } ?: error("The selected voice is unavailable. Download and check it in Settings before listening.")
+    }
 
     fun voiceIds(packId: String): List<String> = when (state.value.catalog.firstOrNull { it.id == packId }?.adapter) {
-        "android-kitten-english" -> listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki")
         "android-phonon-english" -> listOf("default")
         else -> emptyList()
     }
@@ -224,13 +250,18 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     fun selectVoice(packId: String, voiceId: String? = null) {
         require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
-        require(packId == "system" || installed(packId) != null) { "Download and verify this voice first." }
-        require(packId == "system" || state.value.catalog.any { it.id == packId && it.capability == "tts" })
+        require(installed(packId) != null) { "Download and verify this voice first." }
+        require(state.value.catalog.any { it.id == packId && it.capability == "tts" && it.adapter == "android-phonon-english" })
         val voices = voiceIds(packId)
-        val selected = voiceId ?: state.value.voiceId.takeIf { it in voices } ?: if ("bella" in voices) "bella" else voices.firstOrNull() ?: state.value.voiceId
-        require(packId == "system" || selected in voices) { "This voice is not available in this pack." }
+        val selected = voiceId ?: state.value.voiceId.takeIf { it in voices } ?: voices.firstOrNull()
+        require(selected != null && selected in voices) { "This voice is not available in this pack." }
         preferences.edit().putString("voicePack", packId).putString("voiceId", selected).apply()
         mutableState.update { it.copy(selectedVoice = packId, voiceId = selected) }
+    }
+
+    private fun clearVoiceSelection() {
+        preferences.edit().remove("voicePack").remove("voiceId").apply()
+        mutableState.update { it.copy(selectedVoice = "", voiceId = "default") }
     }
 
     fun download(packId: String) {
@@ -324,7 +355,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 }
             }
             store.removeModel(packId)
-            if (state.value.selectedVoice == packId) selectVoice("system")
+            if (state.value.selectedVoice == packId) clearVoiceSelection()
             refresh()
         } catch (failure: Exception) {
             withContext(kotlinx.coroutines.NonCancellable) {
@@ -374,7 +405,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 }
             }
         }
-        catch (failure: LinkageError) { throw IllegalStateException("This device cannot load this offline pack. Use the installed Android voice or remove the download.", failure) }
+        catch (failure: LinkageError) { throw IllegalStateException("This device cannot load this offline pack. Remove the download and try again.", failure) }
     }
 
     private suspend fun stream(source: String, destination: File, expectedBytes: Long, progress: suspend (Long) -> Unit) {

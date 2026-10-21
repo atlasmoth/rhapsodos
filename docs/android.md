@@ -2,9 +2,9 @@
 
 Status: native implementation and integration qualification, **4 October 2026**. Android starts at API 28. [Development](development.md) records executed checks; physical-device readiness remains to qualify.
 
-The `0.01` app uses native PDF pages, Media3 narration, a capture service, anchored voice/text notes and Compose adaptive scenes. PDFBox provides embedded extraction at API 28; bundled Tesseract processes scans without hidden downloads or telemetry. An isolated service owns PDF rendering/parsing and exchanges descriptors and bounded results with the app. The curated gallery executes pinned Kitten narration and Moonshine saved-file transcription through LiteRT. Missing transcription capability leaves saved audio attached and replayable.
+The `0.01` app uses native PDF pages, Media3 narration, a capture service, anchored voice/text notes and Compose adaptive scenes. PDFBox provides embedded extraction at API 28; bundled Tesseract processes scans without hidden downloads or telemetry. An isolated service owns PDF rendering/parsing and exchanges descriptors and bounded results with the app. The curated gallery executes pinned Phonon narration through its native CPU runtime and Moonshine saved-file transcription through LiteRT. Missing transcription capability leaves saved audio attached and replayable.
 
-The APK intentionally includes `INTERNET` for explicit public pack downloads. Ktor transfer requests originate in the embedded catalog and use approved HTTPS redirect hosts; downloaded bytes must match pinned sizes/hashes. A data-sync foreground service exposes progress and pause, and interrupted attempts recover safely. There is no document or recording upload provider. Installed system speech is a separate OS service: select voices marked offline and qualify the actual engine.
+The APK intentionally includes `INTERNET` for explicit public pack downloads. Ktor transfer requests originate in the embedded catalog and use approved HTTPS redirect hosts; downloaded bytes must match pinned sizes/hashes. A data-sync foreground service exposes progress and pause, and interrupted attempts recover safely. There is no document or recording upload provider. System speech is not used. Narration requires a downloaded and verified Phonon voice; missing or removed packs leave a download or repair action.
 
 ## Product and stack
 
@@ -35,7 +35,7 @@ flowchart TB
     Core[KMP document, narration, anchors, jobs and policy]
     PDF[Isolated native PDF and bundled OCR adapters]
     Audio[Media3 service and capture coordinator]
-    Speech[System speech and LiteRT adapters]
+    Speech[Phonon CPU and Moonshine LiteRT adapters]
     Storage[SQLite driver, protected files and journal]
     Work[Native downloads and background scheduling]
     UI --> Nav
@@ -84,7 +84,7 @@ Match the iOS dock arrangement: original cover and document title, visible speed
 
 The dock's volume control uses `AudioManager.STREAM_MUSIC` and its actual minimum, maximum and current index. Refresh from the system while the control is visible and after lifecycle changes; only explicit listener adjustments write the volume. Respect fixed-volume devices and keep the controls accessible without altering playback or microphone gain. This requires the normal `MODIFY_AUDIO_SETTINGS` permission. [AudioManager](https://developer.android.com/reference/android/media/AudioManager)
 
-Use Media3 with a session-owned player and a `MediaSessionService`-style background lifetime where appropriate. Prefer generating system-TTS chunks through `synthesizeToFile` and playing those files through the same Media3 transport as custom-model audio, with explicit sentence/segment alignment. Validate engine support and file completion before enqueueing. [Background playback](https://developer.android.com/media/media3/session/background-playback), [System TTS](https://developer.android.com/reference/android/speech/tts/TextToSpeech)
+Use Media3 with a session-owned player and background lifetime. Play verified generated PCM WAVs through this transport and keep its measured position authoritative. Both app and media-session Play require a ready selected model, even when prepared audio exists. [Background playback](https://developer.android.com/media/media3/session/background-playback)
 
 If direct live TTS output is retained as a fallback, give it a separate transport adapter and declared sentence/utterance precision. It has no ExoPlayer-style seekable media position; callbacks alone do not justify exact mid-word note anchoring. Switching between live and file-backed transport is serialized, with one active owner and source-based resume.
 
@@ -119,7 +119,7 @@ Microphone work has distinct permissions and foreground-service restrictions. Be
 
 Saving never waits for ASR or network. Each transcription job references an immutable recording revision and stable note ID. Keep machine output separate from user edits. Late/retried jobs cannot change the source anchor, attach to the wrong note or overwrite an edited transcript.
 
-The primary ASR adapter consumes saved files. Android system recognition is capability-dependent and often designed around live recognition; availability of an on-device recognizer alone does not prove stored-audio ingestion works for a selected service. Qualify that route or use a downloadable model. Any local-only native recognition adapter must require a local path and handle unavailable locales/assets without upload. [SpeechRecognizer](https://developer.android.com/reference/android/speech/SpeechRecognizer)
+The Moonshine ASR adapter consumes saved files through LiteRT. There is no system recognition route. Unavailable local assets leave the saved recording pending, without upload.
 
 Voice commands and continuous listening for an assistant are outside v1. Optional transcript translation is a separate operation that preserves original audio/text.
 
@@ -127,9 +127,9 @@ Voice commands and continuous listening for an assistant are outside v1. Optiona
 
 Prefer LiteRT for qualified Android artifacts. Use the appropriate current execution API, such as `CompiledModel`, and check actual supported operators, dynamic shapes, accelerator placement and runtime requirements. Compilation support is not a guarantee that an arbitrary graph works on every SoC. [LiteRT Android](https://developers.google.com/edge/litert/android)
 
-The compact KittenTTS sample is a useful first voice candidate. It demonstrates real Android execution, but its Pixel 8a figures do not qualify budget phones or our full pipeline. Local ASR candidates include compact Moonshine/Whisper options and an optional larger Parakeet LiteRT tier. Exact model/runtime/license gates are in [models-and-evaluation.md](models-and-evaluation.md).
+Kitten narration and its pronunciation frontend are removed. Phonon is the sole shipped narration family; additional packs need a measured quality, language, accessibility or resource advantage. Moonshine remains the separate downloaded transcription model. Exact model/runtime/license gates are in [models-and-evaluation.md](models-and-evaluation.md).
 
-Phonon 31M is an optional Q8 CPU narration adapter behind a small JNI bridge. Its pinned Rust runtime ships only for ARM64 and x86_64 with API 28 and 16 KiB alignment; Kitten and Moonshine retain their existing 32-bit support. The generic ARM64 build avoids mandatory dot-product/FP16 instructions. Only verified local assets reach the engine. PCM callbacks check cancellation, finite samples, duration bounds and a deadline; EOS exhaustion fails rather than caching truncated speech. Model changes join generation and unload the previous engine, and cache identities include the exact selected pack/runtime/version/voice.
+Phonon 31M is the Q8 CPU narration adapter behind a small JNI bridge. Its pinned Rust runtime ships only for ARM64 and x86_64 with API 28 and 16 KiB alignment; Moonshine retains its existing 32-bit support, but 32-bit-only devices cannot narrate. The generic ARM64 build avoids mandatory dot-product/FP16 instructions. Only verified local assets reach the engine. PCM callbacks check cancellation, finite samples, duration bounds and a deadline; EOS exhaustion fails rather than caching truncated speech. Model changes join generation and unload the previous engine, and cache identities include the exact selected pack/runtime/version/voice.
 
 Allow a small justified ONNX/native adapter when it delivers better qualified quality or reliability. LiteRT-LM is a separate optional general-language-model capability; the app's core does not depend on it.
 

@@ -1,19 +1,5 @@
 [
   {
-    "repo": "NeuralVox/OpenPhonemizer",
-    "commit": "15ffa723139a5e9a34b069e34c17fdac3095dba3",
-    "url": "https://raw.githubusercontent.com/NeuralVox/OpenPhonemizer/15ffa723139a5e9a34b069e34c17fdac3095dba3/LICENSE",
-    "spdx": "BSD-3-Clause-Clear",
-    "copyright": "The Clear BSD License\n\nCopyright (c) 2024 mrfakename, NeuralVox, OpenPhonemizer Contributors\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted (subject to the limitations in the disclaimer\nbelow) provided that the following conditions are met:\n\n  * Redistributions of source code must retain the above copyright notice,\nthis list of conditions and the following disclaimer.\n\n  * Redistributions in binary form must reproduce the above copyright\nnotice, this list of conditions and the following disclaimer in the\ndocumentation and/or other materials provided with the distribution.\n\n"
-  },
-  {
-    "repo": "as-ideas/DeepPhonemizer",
-    "commit": "5dce7e27556aef4426f5623baf6351d266a30a73",
-    "url": "https://raw.githubusercontent.com/axelspringer/DeepPhonemizer/5dce7e27556aef4426f5623baf6351d266a30a73/LICENSE",
-    "spdx": "MIT",
-    "copyright": "MIT License\n\nCopyright (c) 2021 Axel Springer News Media & Tech GmbH & Co. KG - Ideas Engineering\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the "
-  },
-  {
     "repo": "KittenML/KittenTTS",
     "commit": "ab5592c28b6f376ea4c3963e84ce6d6688241eca",
     "url": "https://raw.githubusercontent.com/KittenML/KittenTTS/ab5592c28b6f376ea4c3963e84ce6d6688241eca/LICENSE",
