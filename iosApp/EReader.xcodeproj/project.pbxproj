@@ -29,6 +29,7 @@
 		86627DF5AA11D095CEA33777 /* argmax-oss-swift.txt in Resources */ = {isa = PBXBuildFile; fileRef = 714529C0A75B0AF9890A5273 /* argmax-oss-swift.txt */; };
 		8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */; };
 		9C9EFD3D323721FAD5293F3E /* NarrationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E92111D5E2C960219B20BC /* NarrationText.swift */; };
+		9E1A69C831E6AEA2E5D738CE /* SpeechSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A021311C4FDFADCE25441CD /* SpeechSetup.swift */; };
 		A0C208A643BC480665D97354 /* ReaderTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51067617DC21E834D44D8570 /* ReaderTools.swift */; };
 		A6E3E8E1DBD9AC2150C3A4E1 /* OpenAI_Whisper.txt in Resources */ = {isa = PBXBuildFile; fileRef = 596569A77EEDDBC10422C7A8 /* OpenAI_Whisper.txt */; };
 		AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */; };
@@ -71,6 +72,7 @@
 		76261192C21D1EB5F2DEF773 /* Vendor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Vendor; path = Vendor; sourceTree = SOURCE_ROOT; };
 		79886DDA250105F28FCDC609 /* ReaderViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViews.swift; sourceTree = "<group>"; };
 		813B77F82EB0B3FFDE10B577 /* swift-argument-parser.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-argument-parser.txt"; sourceTree = "<group>"; };
+		8A021311C4FDFADCE25441CD /* SpeechSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechSetup.swift; sourceTree = "<group>"; };
 		8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFSurface.swift; sourceTree = "<group>"; };
 		940BE5C6D755CBC0B557F28D /* font-spacemono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-spacemono.txt"; sourceTree = "<group>"; };
 		9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCoordinator.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 				51067617DC21E834D44D8570 /* ReaderTools.swift */,
 				79886DDA250105F28FCDC609 /* ReaderViews.swift */,
 				B23EF19BE856883DC5656A94 /* SharedRepository.swift */,
+				8A021311C4FDFADCE25441CD /* SpeechSetup.swift */,
 				1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */,
 				3557A4212E8E793E32F863DF /* VoiceVault.swift */,
 			);
@@ -338,6 +341,7 @@
 				A0C208A643BC480665D97354 /* ReaderTools.swift in Sources */,
 				F7CF63F3E160D75C8051E8B3 /* ReaderViews.swift in Sources */,
 				3FC5903F2BD44315D82D5596 /* SharedRepository.swift in Sources */,
+				9E1A69C831E6AEA2E5D738CE /* SpeechSetup.swift in Sources */,
 				F176DF4CE03BE061E4511A17 /* TranscriptionFailure.swift in Sources */,
 				B382C6384FB9285D50B80F9D /* VoiceVault.swift in Sources */,
 			);

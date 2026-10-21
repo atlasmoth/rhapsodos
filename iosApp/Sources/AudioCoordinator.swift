@@ -219,16 +219,25 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         updateNowPlaying()
     }
 
-    func changeVoice(_ id: String) async {
-        guard id.isEmpty || DownloadedVoice(id) != nil else { return }
+    @discardableResult
+    func changeVoice(_ id: String, resumePlayback: Bool = true, ifStillValid: () -> Bool = { true }) async -> Bool {
+        guard (id.isEmpty || DownloadedVoice(id) != nil), !recording, !capturePending, ifStillValid() else { return false }
         let operation = UUID(); voiceChangeID = operation
-        let resume = playing
+        let resume = resumePlayback && playing
         let fraction = currentFraction
         let passageId = current?.id
+        let tasks = [narrationTask, preloadTask].compactMap { $0 } + (paceChange?.tasks ?? [])
+        pause(restart: true)
+        let transport = transportRevision
+        pendingFraction = fraction
+        positionAvailable = current != nil
+        for task in tasks { await task.value }
+        guard voiceChangeID == operation, transportRevision == transport, current?.id == passageId,
+              !recording, !capturePending, ifStillValid() else { return false }
         selectedVoice = id
         UserDefaults.standard.set(id, forKey: "voiceIdentifier")
-        await pauseAndJoinGeneration(restart: true)
-        if voiceChangeID == operation, current?.id == passageId { pendingFraction = fraction; positionAvailable = true; if resume { play() } }
+        if resume { play() }
+        return true
     }
 
     func changePace(_ value: Float) async {

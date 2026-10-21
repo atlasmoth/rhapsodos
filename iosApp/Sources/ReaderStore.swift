@@ -6,6 +6,7 @@ import SwiftUI
 final class ReaderStore: ObservableObject {
     let audio = AudioCoordinator()
     let feedback = Feedback()
+    let speechSetup = SpeechSetupIntents()
     @Published private(set) var library: [LibraryDocument] = []
     @Published private(set) var notes: [VoiceNote] = []
     @Published private(set) var document: DocumentSnapshot?
@@ -14,7 +15,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var preparingDocument = false
     @Published private(set) var preparationProgress = 0.0
-    @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "whisper-tiny-en-coreml"
+    @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "off"
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published private(set) var preparedArchive: PreparedDocumentArchive?
@@ -51,8 +52,16 @@ final class ReaderStore: ObservableObject {
     private var geometryRepairID: UUID?
     private var geometryRepairAttempts: Set<String> = []
     private var sceneActive = true
+    private var setupRequests: [UUID: Task<Void, Never>] = [:]
+    private var applyingSpeechSetup = false
+    private var speechSetupNeedsService = false
+    private var transcriptionSelectionID = UUID()
+    private var transcriptionStops: Set<UUID> = []
 
     init() {
+        speechSetup.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor in self?.objectWillChange.send(); self?.serviceSpeechSetup() }
+        }.store(in: &subscriptions)
         audio.canUseVoice = { [weak self] identifier in
             guard let choice = DownloadedVoice(identifier),
                   let (pack, _) = self?.models?.ready(capability: "tts", id: choice.packId) else { return false }
@@ -92,6 +101,7 @@ final class ReaderStore: ObservableObject {
                 self.follow = true
             }
         }.store(in: &subscriptions)
+        $loading.sink { [weak self] _ in Task { @MainActor in self?.serviceSpeechSetup() } }.store(in: &subscriptions)
         $preparingDocument.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $captureDraft.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
         $busy.sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions(); self?.repairCurrentGeometry() } }.store(in: &subscriptions)
@@ -196,10 +206,10 @@ final class ReaderStore: ObservableObject {
                 guard let self else { return false }
                 return self.sceneActive && !self.audio.playing && !self.audio.generating && !self.audio.replayPlaying
                     && !self.audio.recording && !self.audio.capturePending && self.captureDraft == nil
-                    && !self.preparingDocument && !self.busy && self.transcriptionTask == nil
+                    && !self.preparingDocument && !self.busy && self.transcriptionTask == nil && self.transcriptionStops.isEmpty
             }) { [weak self] pack, folder in
                 guard let self else { throw CancellationError() }
-                while self.audio.playing || self.audio.replayPlaying || self.audio.recording || self.captureDraft != nil || self.preparingDocument || self.busy || !self.sceneActive {
+                while self.audio.playing || self.audio.replayPlaying || self.audio.recording || self.captureDraft != nil || self.preparingDocument || self.busy || !self.sceneActive || !self.transcriptionStops.isEmpty {
                     try Task.checkCancellation(); try await Task.sleep(for: .milliseconds(100))
                 }
                 if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
@@ -211,7 +221,9 @@ final class ReaderStore: ObservableObject {
                 }
             } }
             models?.onReady = { [weak self] pack in
-                guard let self, pack.capability == "asr", self.selectedTranscription == pack.id else { return }
+                guard let self else { return }
+                self.serviceSpeechSetup()
+                guard pack.capability == "asr", self.selectedTranscription == pack.id else { return }
                 for note in self.notes where ["pending", "pendingModel"].contains(note.status) && !(note.recordingPath ?? "").isEmpty { self.enqueue(note.id) }
             }
             models?.objectWillChange.sink { [weak self] _ in Task { @MainActor in self?.objectWillChange.send(); self?.serviceTranscriptions() } }.store(in: &subscriptions)
@@ -778,19 +790,28 @@ final class ReaderStore: ObservableObject {
 
     private func reconcileSpeechSelections() async {
         guard let models, !models.loading, !models.refreshingCatalog else { return }
+        for intent in speechSetup.pending.values where !models.catalog.contains(where: { $0.id == intent.packId && $0.capability == intent.capability.rawValue && $0.supported }) {
+            speechSetup.cancel(intent.capability, matching: intent.id)
+        }
         if let selected = DownloadedVoice(audio.selectedVoice),
            !models.catalog.contains(where: { $0.id == selected.packId && $0.supported && DownloadedVoice.voices(for: $0).contains(where: { $0.0 == selected.voiceId }) }) {
             await audio.changeVoice("")
         }
-        if selectedTranscription != "off", !models.catalog.contains(where: { $0.id == selectedTranscription && $0.capability == "asr" && $0.supported }) {
+        if selectedTranscription != "off", !models.catalog.contains(where: { $0.id == selectedTranscription && $0.capability == "asr" && $0.supported })
+            || selectedTranscription != "off" && !models.installs.contains(where: { $0.packId == selectedTranscription && $0.status == "ready" }) {
+            let selection = selectedTranscription
+            let operation = transcriptionSelectionID
             let worker = transcriptionTask
             worker?.cancel(); await worker?.value
-            selectedTranscription = "whisper-tiny-en-coreml"
+            guard selectedTranscription == selection, transcriptionSelectionID == operation,
+                  models.ready(capability: "asr", id: selection) == nil else { return }
+            selectedTranscription = "off"
             UserDefaults.standard.set(selectedTranscription, forKey: "transcriptionModel")
         }
     }
 
     func removePack(_ pack: ModelPack) async {
+        speechSetup.cancel(packId: pack.id)
         guard !busy, !audio.playing, !audio.replayPlaying, !audio.recording, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
         busy = true
         defer { busy = false; serviceTranscriptions() }
@@ -802,30 +823,102 @@ final class ReaderStore: ObservableObject {
         catch { present(error) }
     }
 
-    func selectTranscription(_ value: String) async {
-        guard value != selectedTranscription, !busy, !loading, !audio.recording, !audio.capturePending,
-              captureDraft == nil, models?.refreshingCatalog != true else { return }
-        guard value == "off" || models?.ready(capability: "asr", id: value) != nil else {
-            errorMessage = "Finish downloading and checking this transcription pack before selecting it."
-            return
+    @discardableResult
+    func selectTranscription(_ value: String, ifStillValid: (() -> Bool)? = nil) async -> Bool {
+        if value == "off" {
+            speechSetup.cancel(.transcription)
+            let operation = UUID(); transcriptionSelectionID = operation
+            transcriptionStops.insert(operation)
+            defer { transcriptionStops.remove(operation); serviceTranscriptions() }
+            selectedTranscription = "off"
+            UserDefaults.standard.set(value, forKey: "transcriptionModel")
+            let worker = transcriptionTask
+            worker?.cancel(); await worker?.value
+            guard transcriptionSelectionID == operation else { return true }
+            await speechPacks.unload()
+            return true
         }
+        if ifStillValid == nil { speechSetup.cancel(.transcription) }
+        guard !busy, !loading, transcriptionStops.isEmpty, !audio.recording, !audio.capturePending, captureDraft == nil,
+              models?.refreshingCatalog != true, ifStillValid?() != false,
+              models?.ready(capability: "asr", id: value) != nil else { return false }
+        if value == selectedTranscription { return true }
+        let operation = UUID(); transcriptionSelectionID = operation
         busy = true
         defer { busy = false; serviceTranscriptions() }
         let worker = transcriptionTask
-        worker?.cancel()
-        await worker?.value
+        worker?.cancel(); await worker?.value
         await speechPacks.unload()
-        guard !audio.recording, !audio.capturePending, captureDraft == nil,
-              value == "off" || models?.ready(capability: "asr", id: value) != nil else {
-            errorMessage = "Transcription selection stopped because recording started or the pack became unavailable."
-            return
-        }
+        guard transcriptionSelectionID == operation, !audio.recording, !audio.capturePending, captureDraft == nil,
+              ifStillValid?() != false, models?.ready(capability: "asr", id: value) != nil else { return false }
         selectedTranscription = value
         UserDefaults.standard.set(value, forKey: "transcriptionModel")
         for note in notes where ["pending", "pendingModel", "failed"].contains(note.status) && !note.isDraft && !(note.recordingPath ?? "").isEmpty {
             if !transcriptionQueue.contains(note.id) { transcriptionQueue.append(note.id) }
         }
         feedback.play(.selection)
+        return true
+    }
+
+    func startSpeechSetup(_ pack: ModelPack) {
+        guard let capability = SpeechCapability(rawValue: pack.capability), let models, pack.eligible,
+              models.catalog.contains(where: { $0.id == pack.id }), !models.refreshingCatalog else { return }
+        let voice = capability == .narration ? DownloadedVoice.voices(for: pack).first?.0 : nil
+        guard capability != .narration || voice != nil else { return }
+        let intent = speechSetup.request(capability, packId: pack.id, voiceId: voice)
+        serviceSpeechSetup()
+        guard models.ready(capability: pack.capability, id: pack.id) == nil,
+              !models.installs.contains(where: { $0.packId == pack.id && ["ready", "downloading", "verifying"].contains($0.status) }) else { return }
+        setupRequests[intent.id] = Task { [weak self] in
+            defer { self?.setupRequests.removeValue(forKey: intent.id) }
+            guard self?.speechSetup.isActive(intent) == true else { return }
+            await models.download(pack)
+            self?.serviceSpeechSetup()
+        }
+    }
+
+    func pauseSpeechSetup(_ pack: ModelPack) {
+        speechSetup.pause(packId: pack.id)
+        models?.pause(pack)
+    }
+
+    var transcriptionRequested: Bool {
+        speechSetup.pending[.transcription] != nil || selectedTranscription != "off" && models?.ready(capability: "asr", id: selectedTranscription) != nil
+    }
+
+    private var canActivateSpeechSetup: Bool {
+        !loading && !busy && !preparingDocument && transcriptionStops.isEmpty && sceneActive && captureDraft == nil
+            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
+            && models?.loading == false && models?.validationActive == false && models?.refreshingCatalog == false
+    }
+
+    private func serviceSpeechSetup() {
+        if applyingSpeechSetup { speechSetupNeedsService = true; return }
+        guard canActivateSpeechSetup, let models,
+              let intent = SpeechCapability.allCases.compactMap({ speechSetup.pending[$0] }).first(where: {
+                  !$0.paused && models.ready(capability: $0.capability.rawValue, id: $0.packId) != nil
+              }) else { return }
+        applyingSpeechSetup = true
+        speechSetupNeedsService = false
+        Task { [weak self] in
+            guard let self else { return }
+            let current = { [weak self] in
+                guard let self else { return false }
+                return self.speechSetup.isActive(intent) && !self.loading && !self.preparingDocument && self.captureDraft == nil && !self.audio.recording
+                    && !self.audio.capturePending && self.sceneActive
+                    && self.models?.ready(capability: intent.capability.rawValue, id: intent.packId) != nil
+            }
+            let selected: Bool
+            if intent.capability == .narration, let voice = intent.voiceId {
+                selected = await self.audio.changeVoice(DownloadedVoice(packId: intent.packId, voiceId: voice).identifier,
+                    resumePlayback: false, ifStillValid: { current() && self.canActivateSpeechSetup })
+            } else {
+                selected = await self.selectTranscription(intent.packId, ifStillValid: current)
+            }
+            if selected { self.speechSetup.cancel(intent.capability, matching: intent.id) }
+            self.applyingSpeechSetup = false
+            if selected || self.speechSetupNeedsService { self.serviceSpeechSetup() }
+        }
     }
 
     func retry(_ note: VoiceNote) { enqueue(note.id) }
@@ -837,9 +930,10 @@ final class ReaderStore: ObservableObject {
     }
 
     private var transcriptionDeferred: Bool {
-        selectedTranscription == "off" || !sceneActive || audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || models?.refreshingCatalog == true || busy
+        selectedTranscription == "off" || !transcriptionStops.isEmpty || !sceneActive || audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || models?.loading == true || models?.validationActive == true || models?.refreshingCatalog == true || busy
     }
     private func serviceTranscriptions() {
+        serviceSpeechSetup()
         if audio.playing || audio.replayPlaying || audio.recording || captureDraft != nil || preparingDocument || busy || !sceneActive { models?.cancelRuntimeChecks() }
         else if models?.loading == false && models?.validationActive == false && models?.refreshingCatalog == false { Task { await models?.recheckReadyPacks() } }
         if transcriptionDeferred { transcriptionTask?.cancel(); return }
