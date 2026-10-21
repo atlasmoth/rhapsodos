@@ -52,16 +52,17 @@
 		D8FD94FF97E2DC8D1EDA66BC /* font-spacemono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 940BE5C6D755CBC0B557F28D /* font-spacemono.txt */; };
 		E00F7C9A4FB44E5EC2EB532D /* ModelCatalogClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */; };
 		EF568699FAA182F52BCAC66D /* swift-collections.txt in Resources */ = {isa = PBXBuildFile; fileRef = 09119DCD7C8BC9E09A797565 /* swift-collections.txt */; };
+		F176DF4CE03BE061E4511A17 /* TranscriptionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */; };
 		F5267469F8E24E91676C1480 /* Phonon.txt in Resources */ = {isa = PBXBuildFile; fileRef = EC132794F2FCE9235EB8BF42 /* Phonon.txt */; };
 		F52CFAECA44ADA7916B36503 /* Inter.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2A90175FA0D65721583D22D0 /* Inter.ttf */; };
 		F7CF63F3E160D75C8051E8B3 /* ReaderViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79886DDA250105F28FCDC609 /* ReaderViews.swift */; };
-		FD9A2B23D20329FDD060CA0E /* OnDeviceTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0296EB9FD3E50A29319E24C5 /* NativeSpeech-NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "NativeSpeech-NOTICE.txt"; sourceTree = "<group>"; };
 		09119DCD7C8BC9E09A797565 /* swift-collections.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-collections.txt"; sourceTree = "<group>"; };
 		0E530F16AD2DAF3149EFE82E /* Jud_KokoroCoreML-NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jud_KokoroCoreML-NOTICE.txt"; sourceTree = "<group>"; };
+		1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionFailure.swift; sourceTree = "<group>"; };
 		27CD1BEF3AEF3BF89165F42C /* NeuralVox_OpenPhonemizer.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = NeuralVox_OpenPhonemizer.txt; sourceTree = "<group>"; };
 		2A90175FA0D65721583D22D0 /* Inter.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Inter.ttf; sourceTree = "<group>"; };
 		2E0F8D42D167D96BFFA046D4 /* font-spacegrotesk.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-spacegrotesk.txt"; sourceTree = "<group>"; };
@@ -87,7 +88,6 @@
 		9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCoordinator.swift; sourceTree = "<group>"; };
 		95B8B359DCCBC2116CB9015B /* PhononVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhononVoice.swift; sourceTree = "<group>"; };
 		9789C7F06C01DBBA1CEF5181 /* UsefulSensors_moonshine.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = UsefulSensors_moonshine.txt; sourceTree = "<group>"; };
-		9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceTranscriber.swift; sourceTree = "<group>"; };
 		A0E78F9C1D3362B526593136 /* as-ideas_DeepPhonemizer.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "as-ideas_DeepPhonemizer.txt"; sourceTree = "<group>"; };
 		A5AAE0ED27AA27037F805EDA /* Kokoro */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Kokoro; path = Vendor/Kokoro; sourceTree = SOURCE_ROOT; };
 		B23EF19BE856883DC5656A94 /* SharedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRepository.swift; sourceTree = "<group>"; };
@@ -204,7 +204,6 @@
 				F38AAAFA5A978CBA22107C06 /* FileDurability.swift */,
 				3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */,
 				DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */,
-				9D17DE19921F895C3FAD04D0 /* OnDeviceTranscriber.swift */,
 				8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */,
 				3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */,
 				95B8B359DCCBC2116CB9015B /* PhononVoice.swift */,
@@ -212,6 +211,7 @@
 				51067617DC21E834D44D8570 /* ReaderTools.swift */,
 				79886DDA250105F28FCDC609 /* ReaderViews.swift */,
 				B23EF19BE856883DC5656A94 /* SharedRepository.swift */,
+				1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */,
 				3557A4212E8E793E32F863DF /* VoiceVault.swift */,
 			);
 			path = Sources;
@@ -364,7 +364,6 @@
 				1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */,
 				E00F7C9A4FB44E5EC2EB532D /* ModelCatalogClient.swift in Sources */,
 				AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */,
-				FD9A2B23D20329FDD060CA0E /* OnDeviceTranscriber.swift in Sources */,
 				AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */,
 				74DA643810151910DB13A018 /* Passage.metal in Sources */,
 				203147D2773D6AFB90E4BA54 /* PhononAssets.swift in Sources */,
@@ -373,6 +372,7 @@
 				A0C208A643BC480665D97354 /* ReaderTools.swift in Sources */,
 				F7CF63F3E160D75C8051E8B3 /* ReaderViews.swift in Sources */,
 				3FC5903F2BD44315D82D5596 /* SharedRepository.swift in Sources */,
+				F176DF4CE03BE061E4511A17 /* TranscriptionFailure.swift in Sources */,
 				B382C6384FB9285D50B80F9D /* VoiceVault.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

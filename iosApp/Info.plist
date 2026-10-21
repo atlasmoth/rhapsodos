@@ -80,8 +80,6 @@
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Record your thoughts at the passage you paused. Your recordings stay on this device.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Transcribe saved voice notes on your device when offline recognition is available. Audio is never sent to a server.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

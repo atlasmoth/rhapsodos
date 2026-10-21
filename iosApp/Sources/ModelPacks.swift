@@ -32,7 +32,7 @@ enum PackFailure: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .incompatible: "This pack requires a newer OS or more device memory."
-        case .notReady: "This installed pack is still being checked. Wait for its offline check to finish."
+        case .notReady: "Download and finish checking this pack in Settings before using it."
         case .integrity: "A model file failed verification. Resume to download it again."
         case .transport: "The model transfer could not be completed. Resume when connected."
         case .path: "The model pack contains an invalid file path."
@@ -545,10 +545,9 @@ struct TranscriptionChoices: View {
         Picker("Transcription", selection: Binding(get: { store.selectedTranscription }, set: { value in
             Task { await store.selectTranscription(value) }
         })) {
-            Text("System on-device").tag("system")
             Text("Off").tag("off")
             if let models = store.models {
-                if !["system", "off"].contains(store.selectedTranscription), models.ready(capability: "asr", id: store.selectedTranscription) == nil {
+                if store.selectedTranscription != "off", models.ready(capability: "asr", id: store.selectedTranscription) == nil {
                     Text("Unavailable downloaded transcription").tag(store.selectedTranscription).disabled(true)
                 }
                 ForEach(models.catalog.filter { $0.capability == "asr" && models.ready(capability: "asr", id: $0.id) != nil }) { pack in
@@ -570,11 +569,6 @@ struct ModelGallery: View {
         store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending || models.refreshingCatalog
     }
     private var changingVoiceUnavailable: Bool { transportUnavailable || audio.replayingNote != nil }
-    private var systemVoice: String? {
-        if DownloadedVoice(audio.selectedVoice) == nil, audio.voices.contains(where: { $0.identifier == audio.selectedVoice }) { return audio.selectedVoice }
-        return audio.voices.first(where: { $0.language == "en-US" })?.identifier ?? audio.voices.first?.identifier
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             ReaderSheetHeader(title: "Offline voices & transcription") { dismiss() }
@@ -597,19 +591,11 @@ struct ModelGallery: View {
                     }
                     if models.loading { ProgressView("Checking available downloads…") }
                     Text("Narration").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
-                    ReaderSheetCard(title: "System voice") {
-                        Text(DownloadedVoice(audio.selectedVoice) == nil ? "Active" : "Ready").font(.headline).foregroundStyle(Palette.accent)
-                        Text("System voices remain available. Additional voices can be managed in iOS Accessibility settings.").font(.subheadline).foregroundStyle(Palette.muted)
-                        Button(DownloadedVoice(audio.selectedVoice) == nil ? "Active" : "Use system voice") {
-                            if let systemVoice { Task { await audio.changeVoice(systemVoice) } }
-                        }.buttonStyle(.borderedProminent).frame(minHeight: 44)
-                            .disabled(changingVoiceUnavailable || systemVoice == nil || DownloadedVoice(audio.selectedVoice) == nil)
-                    }
                     ForEach(models.catalog.filter { $0.capability == "tts" }) { pack in packCard(pack) }
                     Text("Voice-note transcription").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
                     ReaderSheetCard(title: "Transcription") {
                         TranscriptionChoices().disabled(transportUnavailable)
-                        Text("Choose on-device system recognition, a checked downloaded pack, or Off. Recordings are saved independently.").font(.subheadline).foregroundStyle(Palette.muted)
+                        Text("Choose a checked downloaded pack or Off. Recordings are saved independently.").font(.subheadline).foregroundStyle(Palette.muted)
                     }
                     ForEach(models.catalog.filter { $0.capability == "asr" }) { pack in packCard(pack) }
                 }.padding(.horizontal, 24).padding(.vertical, 16).frame(maxWidth: 640).frame(maxWidth: .infinity)

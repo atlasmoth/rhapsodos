@@ -2,7 +2,7 @@
 
 Status: native implementation and integration qualification, 21 October 2026. The user-approved deployment floor is iOS 18; newer APIs and device capabilities remain gated. [Development](development.md) records executed evidence. Physical-device speech and performance qualification remains open.
 
-The `0.01` app uses PDFKit/Vision progressive preparation, SwiftUI split navigation and an inspector, system narration and encrypted recording chunks. Its curated downloads provide Whisper tiny English transcription and optional Kokoro and Phonon CoreML narration on eligible devices. Native background URLSession transfers verify artifacts and runtime readiness before activation. The attachment reports passage precision with native audio offset; word-aligned timing is not advertised.
+The `0.01` app uses PDFKit/Vision progressive preparation, SwiftUI split navigation and an inspector, downloaded narration and encrypted recording chunks. Its curated downloads provide Whisper tiny English transcription and optional Kokoro and Phonon CoreML narration on eligible devices. Native background URLSession transfers verify artifacts and runtime readiness before activation. The attachment reports passage precision with native audio offset; word-aligned timing is not advertised.
 
 Owned locators are relative to the app's data root so container relocation remains safe. Automatic backup is disabled; the recording key is non-synchronizing and device-bound. Settings exports the selected document as a portable ZIP archive through the native Files save picker. Protected transient staging contains the original PDF and decrypted portable WAVs only for archive creation; picker completion or cancellation removes the prepared archive. Restore verifies their PDF, notes and PCM16 WAV envelope, then seals audio with the receiving device's key. Portable recordings use mono/stereo PCM16 WAV at 8–192 kHz, with a 30-minute maximum per note and a 600 MiB total asset limit shared with Android. There is no remote key recovery. Vault checks reject truncated committed audio. An interrupted draft can explicitly recover its authenticated prefix into a verified durable asset before canonical commit; its original remains owned recovery data until deliberate note/document deletion. Recovered notes use the same strict playback and ASR paths as complete recordings.
 
@@ -17,7 +17,7 @@ The essential guarantees are:
 - Playback, reading position and annotations refer to the same source passage.
 - The pause position is frozen before recording begins and cannot move when transcription finishes.
 - Saving a voice note does not depend on ASR succeeding or a network connection being available.
-- The app remains useful with system speech and local document processing; downloading a large model is optional.
+- Narration requires a verified downloaded voice; document preparation and durable note capture remain available without speech models.
 - Local-only mode prevents content from leaving the device, including through automatic fallbacks.
 - Resizing the app or changing navigation does not recreate the audio session or lose a note draft.
 
@@ -32,7 +32,7 @@ flowchart TB
     Core[KMP document domain, anchors, narration rules, note jobs and privacy policy]
     PDF[PDFKit and Vision document adapter]
     Audio[Native audio interaction coordinator]
-    Speech[System speech and qualified CoreML adapters]
+    Speech[Downloaded CoreML speech adapters]
     Store[Local database, protected files and job journal]
     Platform[Native background, downloads, permissions and sync adapters]
     UI --> Facade
@@ -122,7 +122,7 @@ The frozen anchor belongs to the pause action, not ASR completion. If the person
 
 Match the Android dock arrangement: original cover and document title, visible playback-speed button, output-volume button and Previous → Play/Pause → Next → Record controls above the progress slider. Compact layouts center transport in a second row, retaining identity, speed and volume above it. The whole-file percentage sits immediately to the slider's right. Speed changes use the existing serialized native audio owner and retain the listening source position; the button remains available without opening Settings. See [design.md](design.md) for the common presentation contract.
 
-The dock presents a public `MPVolumeView` through SwiftUI, preserving the native slider and route-dependent behavior without inspecting private subviews. It adjusts the current output for system speech, downloaded narration and recorded-note playback. Do not emulate live volume by changing queued `AVSpeechUtterance.volume`: changes after enqueueing have no effect. Simulator builds can verify presentation but need a physical device to qualify output adjustment, routes and VoiceOver. [MPVolumeView](https://developer.apple.com/documentation/mediaplayer/mpvolumeview), [utterance volume](https://developer.apple.com/documentation/avfaudio/avspeechutterance/volume)
+The dock presents a public `MPVolumeView` through SwiftUI, preserving the native slider and route-dependent behavior without inspecting private subviews. It adjusts the current output for downloaded narration and recorded-note playback. Simulator builds can verify presentation but need a physical device to qualify output adjustment, routes and VoiceOver. [MPVolumeView](https://developer.apple.com/documentation/mediaplayer/mpvolumeview)
 
 Use `AVAudioSession`, `AVAudioEngine` or an appropriate native playback component, `MPNowPlayingInfoCenter` and `MPRemoteCommandCenter`. The system's playback category supports background audio and playback with the silent switch engaged; enable the corresponding app background capability for active narration. Use spoken-audio behavior deliberately and validate its interaction with VoiceOver. [Playback category](https://developer.apple.com/documentation/avfaudio/avaudiosession/category-swift.struct/playback), [spoken-audio mode](https://developer.apple.com/documentation/avfaudio/avaudiosession/mode-swift.struct/spokenaudio)
 
@@ -134,7 +134,7 @@ The primary interaction can expose “Pause and record note” as one action. Sa
 
 ### TTS alignment
 
-`AVSpeechSynthesizer` provides an on-device baseline. Its delegate reports the text range about to be spoken; this supports live highlighting but is not a sample-accurate alignment track for cached custom audio. [Apple speech synthesis](https://developer.apple.com/documentation/avfoundation/speech-synthesis), [speech-range callback](https://developer.apple.com/documentation/avfaudio/avspeechsynthesizerdelegate/speechsynthesizer(_:willspeakrangeofspeechstring:utterance:))
+Narration executes downloaded models only. The native audio player owns playback time; full-passage highlights avoid presenting fabricated word timing. There is no system speech route or speech-range callback clock.
 
 For custom generated audio, cache segment files with durations and alignment metadata. Derive source position from the native playback clock and the segment's validated alignment. If a model cannot supply dependable word timing, use sentence or passage highlighting and seek boundaries. Do not present fabricated word precision. Preserve source mapping whenever normalization changes the spoken string.
 
@@ -173,17 +173,17 @@ Support large Dynamic Type, sufficient contrast, reduced motion, Switch Control 
 
 ## Local speech and downloadable packs
 
-The current app processes content locally. Explicit model downloads fetch public assets; document text and voice recordings are not uploaded. A future cloud mode requires separate content permissions and an enforceable local-only policy. A failed local pack leaves a useful preparation, repair or built-in-voice choice.
+The current app processes content locally. Explicit model downloads fetch public assets; document text and voice recordings are not uploaded. A future cloud mode requires separate content permissions and an enforceable local-only policy. A missing or failed local pack leaves a useful download or repair action. There is no system narration or system recognition fallback.
 
 | Capability | iOS 18 baseline | Qualification rule |
 | --- | --- | --- |
-| Narration | Available system voices through `AVSpeechSynthesizer` | Confirm installed voice, language and playback behavior |
-| Voice-note transcription | Qualified compact CoreML ASR pack; optional system recognizer where offline capability is available | Validate model OS/runtime support and actual offline operation |
+| Narration | Verified, selected downloaded voice | Confirm model readiness, language and playback behavior |
+| Voice-note transcription | Downloaded Whisper tiny.en CoreML pack, or Off | Validate model OS/runtime support and actual offline operation |
 | OCR | Vision page-level recognition | Measure layout/reading-order quality and memory use |
 | Enhanced local voice | Optional Kokoro and Phonon CoreML packs on eligible devices | Sustained narration must keep up or use explicit preparation |
 | Local language model | Optional later feature | Never required for opening, listening or saving a note |
 
-Legacy `SFSpeechRecognizer` exposes an on-device capability check, but availability varies. Set the on-device requirement when private mode uses that adapter and handle unsupported locales/assets without silently using a server. Microphone permission is necessary for capture; legacy system speech recognition also has a speech-recognition authorization flow. [On-device recognition support](https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition), [speech authorization](https://developer.apple.com/documentation/speech/asking-permission-to-use-speech-recognition)
+Microphone permission is required for recording. Speech-recognition permission is not requested: saved notes use the downloaded Whisper adapter, and unavailable transcription leaves their durable audio pending.
 
 CoreML is the iOS inference baseline. `MLComputeUnits.all` allows the OS to select eligible compute resources; it does not promise that every operator or model runs on the Neural Engine. MLX is a separate runtime and should only be added for a justified, qualified model. A library's minimum deployment target is not proof that every model it loads works reliably on all supported devices. [CoreML compute units](https://developer.apple.com/documentation/coreml/mlcomputeunits)
 

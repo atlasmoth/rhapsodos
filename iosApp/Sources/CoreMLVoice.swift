@@ -8,8 +8,8 @@ enum NarrationFailure: LocalizedError {
     case unsupportedText, timedOut, voiceFailed
     var errorDescription: String? {
         switch self {
-        case .unsupportedText: "This English preview voice cannot pronounce part of this passage safely. Choose a built-in voice."
-        case .timedOut: "This passage took too long to prepare. Choose a built-in voice, or try again when the device is cool."
+        case .unsupportedText: "This English preview voice cannot pronounce part of this passage safely. Try another passage."
+        case .timedOut: "This passage took too long to prepare. Try again when the device is cool."
         case .voiceFailed: "This voice could not finish the passage. Try again, or choose another voice."
         }
     }

@@ -324,7 +324,7 @@ private struct PlaybackDock: View {
         Button {
             let next = audio.playbackSpeed >= 2 ? Float(0.75) : min(2, (audio.playbackSpeed * 4).rounded(.down) / 4 + 0.25)
             store.feedback.play(.selection)
-            Task { await audio.changePace(next * AVSpeechUtteranceDefaultSpeechRate) }
+            Task { await audio.changePace(next) }
         } label: {
             Text("\(audio.playbackSpeed.formatted(.number.precision(.fractionLength(0...2))))×")
                 .font(BrandFont.mono()).frame(minWidth: 44, minHeight: 44)
@@ -471,7 +471,7 @@ private struct VoiceSettings: View {
                 VStack(alignment: .leading, spacing: 16) {
                     ReaderSheetCard(title: "Voices") {
                         Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
-                            Text("System voice").tag("")
+                            Text("Choose a downloaded voice").tag("").disabled(true)
                             if let choice = DownloadedVoice(audio.selectedVoice), store.models?.ready(capability: "tts", id: choice.packId) == nil {
                                 Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true)
                             }
@@ -482,11 +482,10 @@ private struct VoiceSettings: View {
                                     }
                                 }
                             }
-                            ForEach(audio.voices, id: \.identifier) { voice in Text("\(voice.name) · \(voice.language)").tag(voice.identifier) }
                         }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
                         Button("Download voices and transcription", systemImage: "arrow.down.circle") { gallery = true }
                             .frame(minHeight: 44).disabled(store.models == nil || transportUnavailable)
-                        Text("Additional system voices can be managed in iOS Accessibility settings.").font(.caption).foregroundStyle(Palette.muted)
+                        Text("Download a voice, wait for its device check, then select it to listen offline.").font(.caption).foregroundStyle(Palette.muted)
                     }
                     ReaderSheetCard(title: "Voice-note transcription") {
                         TranscriptionChoices().disabled(transportUnavailable || store.models?.refreshingCatalog == true)
@@ -495,7 +494,7 @@ private struct VoiceSettings: View {
                     ReaderSheetCard(title: "Playback speed") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], spacing: 8) {
                             ForEach(speeds, id: \.self) { multiplier in
-                                Button { Task { await audio.changePace(multiplier * AVSpeechUtteranceDefaultSpeechRate) } } label: {
+                                Button { Task { await audio.changePace(multiplier) } } label: {
                                     Text("\(multiplier.formatted(.number.precision(.fractionLength(0...2))))×").font(BrandFont.mono(14, relativeTo: .subheadline))
                                         .frame(maxWidth: .infinity, minHeight: 44)
                                         .foregroundStyle(audio.playbackSpeed == multiplier ? Palette.onAccent : Palette.accent)

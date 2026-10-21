@@ -14,7 +14,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var preparingDocument = false
     @Published private(set) var preparationProgress = 0.0
-    @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "system"
+    @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "whisper-tiny-en-coreml"
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published private(set) var preparedArchive: PreparedDocumentArchive?
@@ -43,7 +43,6 @@ final class ReaderStore: ObservableObject {
     private var interruptedWhileBusy = false
     private var interruptedCaptureReason: String?
     private var pendingImport: URL?
-    private let transcriber = OnDeviceTranscriber()
     let speechPacks = CoreMLSpeech()
     let voicePacks = CoreMLVoice()
     let phononPacks = PhononVoice()
@@ -54,6 +53,10 @@ final class ReaderStore: ObservableObject {
     private var sceneActive = true
 
     init() {
+        if selectedTranscription == "system" {
+            selectedTranscription = "whisper-tiny-en-coreml"
+            UserDefaults.standard.set(selectedTranscription, forKey: "transcriptionModel")
+        }
         audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
             guard let self, let files = self.files, let choice = DownloadedVoice(voice),
@@ -66,10 +69,10 @@ final class ReaderStore: ObservableObject {
                 if pack.adapter == "phonon-english-coreml" {
                     await self.voicePacks.unload()
                     let file = try await self.phononPacks.render(passage, voice: choice.voiceId, pack: pack, folder: folder, cache: files.transient)
-                    return RenderedNarration(url: file, playbackRate: min(2, max(0.75, pace / AVSpeechUtteranceDefaultSpeechRate)))
+                    return RenderedNarration(url: file, playbackRate: min(2, max(0.75, pace)))
                 }
                 await self.phononPacks.unload()
-                let file = try await self.voicePacks.render(passage, voice: choice.voiceId, pace: pace, pack: pack, folder: folder, cache: files.transient)
+                let file = try await self.voicePacks.render(passage, voice: choice.voiceId, pace: pace * 0.5, pack: pack, folder: folder, cache: files.transient)
                 return RenderedNarration(url: file, playbackRate: 1)
             }
             catch {
@@ -121,19 +124,7 @@ final class ReaderStore: ObservableObject {
     var canBeginNote: Bool {
         !busy && !loading && sceneActive && captureDraft == nil && !audio.recording && audio.replayingNote == nil && !audio.capturePending && currentHighlightAnchor != nil
     }
-    var highlightSourceRange: NSRange? {
-        guard let passage = currentPassage else { return nil }
-        guard let spoken = audio.spokenRange else { return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart) }
-        let mapped = passage.spokenMapping.filter { $0.spokenStart < NSMaxRange(spoken) && $0.spokenEnd > spoken.location }.map { mapping -> (Int, Int) in
-            if mapping.kind == "linear" && mapping.spokenEnd - mapping.spokenStart == mapping.sourceEnd - mapping.sourceStart {
-                return (mapping.sourceStart + max(spoken.location, mapping.spokenStart) - mapping.spokenStart,
-                        mapping.sourceStart + min(NSMaxRange(spoken), mapping.spokenEnd) - mapping.spokenStart)
-            }
-            return (mapping.sourceStart, mapping.sourceEnd)
-        }
-        guard let start = mapped.map({ $0.0 }).min(), let end = mapped.map({ $0.1 }).max() else { return NSRange(location: passage.pageStart, length: passage.pageEnd - passage.pageStart) }
-        return NSRange(location: start, length: end - start)
-    }
+    var highlightSourceRange: NSRange? { passageSourceRange }
     var currentPage: SourcePage? {
         guard let passage = currentPassage else { return nil }
         return document?.pages.first { $0.pageIndex == passage.pageIndex }
@@ -803,7 +794,7 @@ final class ReaderStore: ObservableObject {
     func selectTranscription(_ value: String) async {
         guard value != selectedTranscription, !busy, !loading, !audio.recording, !audio.capturePending,
               captureDraft == nil, models?.refreshingCatalog != true else { return }
-        guard value == "off" || value == "system" || models?.ready(capability: "asr", id: value) != nil else {
+        guard value == "off" || models?.ready(capability: "asr", id: value) != nil else {
             errorMessage = "Finish downloading and checking this transcription pack before selecting it."
             return
         }
@@ -814,7 +805,7 @@ final class ReaderStore: ObservableObject {
         await worker?.value
         await speechPacks.unload()
         guard !audio.recording, !audio.capturePending, captureDraft == nil,
-              value == "off" || value == "system" || models?.ready(capability: "asr", id: value) != nil else {
+              value == "off" || models?.ready(capability: "asr", id: value) != nil else {
             errorMessage = "Transcription selection stopped because recording started or the pack became unavailable."
             return
         }
@@ -866,8 +857,7 @@ final class ReaderStore: ObservableObject {
                 try Task.checkCancellation()
                 await phononPacks.unload(); await voicePacks.unload()
                 let text: String
-                if choice == "system" { text = try await transcriber.transcribe(output) }
-                else if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-tiny-en-coreml" {
+                if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-tiny-en-coreml" {
                     text = try await speechPacks.transcribe(output, using: folder)
                 } else { throw TranscriptionFailure.unavailable }
                 try Task.checkCancellation()
