@@ -332,5 +332,73 @@
       }
     ],
     "totalBytes": 325316220
+  },
+  {
+    "id": "android-phonon-english",
+    "name": "Phonon • English voice",
+    "capability": "tts",
+    "platform": "android",
+    "runtime": "phonon-cpu-q8",
+    "version": "0.4.0-eos1-52433c46975b",
+    "languageTags": [
+      "en"
+    ],
+    "minimumOS": 28,
+    "minimumMemoryMB": 3072,
+    "license": "Apache-2.0",
+    "licenseUrl": "https://huggingface.co/gradium/phonon-31m-en/blob/52433c46975bfa13144c56204c9f4ee1c5b148aa/README.md",
+    "description": "An optional local English voice for 64-bit devices with at least 3 GB of memory. Device checking is required before selection; sustained physical-device qualification remains pending.",
+    "files": [
+      {
+        "path": "config.json",
+        "bytes": 2851,
+        "sha256": "7062ea376e6b158543c8abec8e5af67df171c49ad70eb7e2a0fb25c16f265e06",
+        "url": "https://huggingface.co/gradium/phonon-31m-en/resolve/52433c46975bfa13144c56204c9f4ee1c5b148aa/config.json"
+      },
+      {
+        "path": "default-voice.safetensors",
+        "bytes": 256136,
+        "sha256": "f739e8c4c76ee7f92e7c94a82002748c8cd22e99582ac49f7b9b94cd63786e18",
+        "url": "https://huggingface.co/gradium/phonon-31m-en/resolve/52433c46975bfa13144c56204c9f4ee1c5b148aa/default-voice.safetensors"
+      },
+      {
+        "path": "model.q8.gguf",
+        "bytes": 64512352,
+        "sha256": "a7d9aad2cd6dc66473f24a08bc6d2939030ef4d751ef82349361fbef3272dbae",
+        "url": "https://huggingface.co/gradium/phonon-31m-en/resolve/52433c46975bfa13144c56204c9f4ee1c5b148aa/model.q8.gguf"
+      },
+      {
+        "path": "tokenizer.json",
+        "bytes": 277967,
+        "sha256": "691a00068fa7b989f2f3e5ae5daa2d1a5bb319f2d5360deafcfb19a8bb6e7936",
+        "url": "https://huggingface.co/gradium/phonon-31m-en/resolve/52433c46975bfa13144c56204c9f4ee1c5b148aa/tokenizer.json"
+      }
+    ],
+    "totalBytes": 65049306
+  },
+  {
+    "id": "phonon-english-coreml",
+    "name": "Phonon • English voice",
+    "capability": "tts",
+    "platform": "ios",
+    "runtime": "phonon-coreml",
+    "version": "0.4.0-eos1",
+    "languageTags": [
+      "en"
+    ],
+    "minimumOS": 18,
+    "minimumMemoryMB": 3072,
+    "license": "Apache-2.0",
+    "licenseUrl": "https://huggingface.co/gradium/phonon-31m-en/blob/52433c46975bfa13144c56204c9f4ee1c5b148aa/README.md",
+    "description": "An optional local English voice for iOS 18 or newer. First use prepares the voice on this device; sustained physical-device qualification remains pending.",
+    "files": [
+      {
+        "path": "phonon-31m-en-coreml.zip",
+        "url": "https://github.com/gradium-ai/xn-ptts/releases/download/v0.4.0/phonon-31m-en-coreml.zip",
+        "sha256": "10f3a99fd39256db44f826267ef21d78cca959b16c0554926344c09fde27b436",
+        "bytes": 137096081
+      }
+    ],
+    "totalBytes": 137096081
   }
 ]

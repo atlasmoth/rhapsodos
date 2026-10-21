@@ -28,8 +28,9 @@ internal object CatalogValidation {
             require(pack.files.size == profile.files.size && pack.files.map { it.path }.toSet() == profile.files.map { it.path }.toSet() &&
                 pack.files.map { it.path }.toSet().size == pack.files.size) { "Model files do not match this app's adapter" }
             pack.files.forEach { file ->
+                val compiledAsset = profile.files.any { it == file }
                 require(asset.matches(file.path) && file.path.split('/').none { it == "." || it == ".." } &&
-                    hash.matches(file.sha256) && file.bytes in 1..1_073_741_824L && download.matches(file.url) &&
+                    hash.matches(file.sha256) && file.bytes in 1..1_073_741_824L && (download.matches(file.url) || compiledAsset) &&
                     file.url.substringAfter("https://").split('/').none { it == "." || it == ".." }) { "Invalid pinned model asset" }
             }
             require(pack.totalBytes == pack.files.sumOf { it.bytes } && pack.totalBytes <= 2_147_483_648L) { "Invalid model storage size" }

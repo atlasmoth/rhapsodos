@@ -15,7 +15,7 @@ The payload is:
 ```json
 {
   "formatVersion": 1,
-  "revision": 2,
+  "revision": 3,
   "publishedAt": 1791417600000,
   "packs": []
 }
@@ -25,15 +25,15 @@ The example date is illustrative; publication tooling generates the current publ
 
 Signatures establish authenticity, not that a catalogue is the newest available. A permanent, correctly signed older catalogue remains acceptable to a fresh installation with no remembered revision; an existing installation rejects revisions below its last accepted revision. This is the deliberate tradeoff for eliminating renewal. Permanent validity does not guarantee that upstream model files remain hosted forever.
 
-`ModelPack.adapter` identifies one of the four compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Asset URLs pin Hugging Face or GitHub revisions; sizes, hashes, identifiers and paths are bounded and validated. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
+`ModelPack.adapter` identifies one of the six compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Asset URLs pin Hugging Face or GitHub revisions; an exception accepts an exact compiled file descriptor (URL, path, size and hash together), allowing the pinned Phonon CoreML release ZIP without trusting arbitrary release URLs; sizes, hashes, identifiers and paths are bounded and validated. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
 
-The canonical SQLDelight catalogue row owns revision, exact verified payload, accepted time and derived entries. An update retains omitted installed or unfinished editions. It does not alter model-install rows, source documents, notes or listening progress. Existing model identities cannot silently acquire different weights, versions or execution requirements. New compatible editions can be downloaded beside a working edition and explicitly selected after verification; removing the old one remains a deliberate action.
+New bundled profiles remain discoverable after an app update even when an older verified catalogue is cached; existing cached editions keep their identity. The canonical SQLDelight catalogue row owns revision, exact verified payload, accepted time and derived entries. An update retains omitted installed or unfinished editions. It does not alter model-install rows, source documents, notes or listening progress. Existing model identities cannot silently acquire different weights, versions or execution requirements. New compatible editions can be downloaded beside a working edition and explicitly selected after verification; removing the old one remains a deliberate action.
 
 ## Release setup
 
 No production catalogue address or trust key is configured yet. The apps use the bundled catalogue and say so. Configure live refresh only after preparing and reviewing a signed release; app implementation does not publish or host anything.
 
-The uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 2 contains the four bundled packs and has no expiry. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload. Apps built before permanent-catalogue support must be rebuilt.
+The uploadable release is prepared in [catalogue/catalogue.json](../catalogue/catalogue.json), alongside its public verification key and [upload instructions](../catalogue/README.md). Revision 3 contains the six bundled packs and has no expiry. Reuse its private signing key for subsequent releases; the raw GitHub URL and matching public key still need to be configured in the apps after upload. Apps built before permanent-catalogue support must be rebuilt.
 
 Keep the signing secret outside the repository and protect a recoverable copy. Use a stable release key rather than temporary verification keys:
 
@@ -51,3 +51,9 @@ The example host is a placeholder, not a deployed service. `configure` changes o
 Shared code owns catalogue constraints and persistence. Native clients own HTTPS, cryptography, device checks, selected speech adapters and the audio/transcription transition. Selection changes cancel and join affected work before accepting later results. Generated narration and model files remain separate from durable user recordings.
 
 Qualification must include valid and invalid signatures, permanent validity, explicit-expiry rejection, revision rollback, offline refresh, restart, interrupted downloads, missing assets, explicit selection and stale transcription results. Temporary harnesses stay outside the repository. Executed results and remaining device/hosting gates belong in [development.md](development.md).
+
+## Phonon narration
+
+Settings → Narration offers Phonon as an optional download, followed by a quiet device check and explicit Use this voice action. Android downloads four pinned Q8/config/tokenizer/default-voice files (65.0 MB); iOS downloads one pinned CoreML ZIP (137.1 MB) and compiles its three models locally. Both packs use a 3 GB memory guard, which is an eligibility threshold rather than a physical-device guarantee. Android requires a supported 64-bit process. The iOS app requires iOS 18.
+
+iOS verifies the outer archive, its exact permitted paths, bounded sizes, duplicate/symlink restrictions and every inner digest before extraction into staging. Derived compiled models receive a checked receipt tied to the archive and OS. Native readiness synthesis precedes canonical activation. Android uses the existing resumable file downloader and per-file integrity checks. Both paths serialize inference with capture/transcription, discard cancelled or incomplete PCM and keep native audio time authoritative. Model code ships in the app; only assets are downloaded.

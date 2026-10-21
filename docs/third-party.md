@@ -6,6 +6,7 @@ Rhapsodos uses native operating-system frameworks and the pinned dependencies in
 | --- | --- | --- |
 | Google LiteRT and official samples | Android CPU model API and reference tensor contracts | Apache-2.0; [pinned license](https://raw.githubusercontent.com/google-ai-edge/LiteRT/f9c6371694c020b2fff1c7597dabcaf90674c434/LICENSE) |
 | KittenTTS | Compact English narration and public synthetic sanity audio | Apache-2.0; [pinned license](https://raw.githubusercontent.com/KittenML/KittenTTS/ab5592c28b6f376ea4c3963e84ce6d6688241eca/LICENSE) |
+| Phonon 31M English | Optional local narration on Android and iOS | Weights, tokenizer and included voices Apache-2.0; runtime MIT/Apache-2.0. [Pinned model](https://huggingface.co/gradium/phonon-31m-en/tree/52433c46975bfa13144c56204c9f4ee1c5b148aa), [native runtime provenance and dependency notices](../native/phonon/README.md). The 40M noncommercial model is excluded. |
 | Moonshine English | Saved-note transcription and tokenizer | MIT for the English models; [upstream licensing statement](https://raw.githubusercontent.com/moonshine-ai/moonshine/234f60faa0eb388b01cdf7e60aca232af37aefda/LICENSE) |
 | OpenPhonemizer | Pronunciation dictionary/checkpoint used by the compact voice frontend | BSD-3-Clause-Clear; [pinned license](https://raw.githubusercontent.com/NeuralVox/OpenPhonemizer/15ffa723139a5e9a34b069e34c17fdac3095dba3/LICENSE) |
 | DeepPhonemizer | Grapheme-to-phoneme reference | MIT; [pinned license](https://raw.githubusercontent.com/axelspringer/DeepPhonemizer/5dce7e27556aef4426f5623baf6351d266a30a73/LICENSE) |

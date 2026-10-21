@@ -386,7 +386,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     private fun catalogPacks(): List<ModelPack> = queries.currentModelCatalog().executeAsOneOrNull()?.let {
-        json.decodeFromString<List<ModelPack>>(it.packs_json)
+        (ModelCatalog.packs + json.decodeFromString<List<ModelPack>>(it.packs_json)).associateBy { pack -> pack.id }.values.toList()
     } ?: ModelCatalog.packs
 
     @Throws(Exception::class)
