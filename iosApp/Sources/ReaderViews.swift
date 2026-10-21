@@ -46,6 +46,9 @@ struct ReaderRoot: View {
             }
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
+        .sheet(isPresented: $store.modelGalleryPresented) {
+            if let models = store.models { ModelGallery(models: models) }
+        }
         .sheet(isPresented: $tools) { ReaderTools() }
         .sheet(item: $searchScope) { scope in ReaderSearchSheet(documentId: scope.documentId) }
         .alert("Rename your document", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {

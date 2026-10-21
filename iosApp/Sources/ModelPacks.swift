@@ -47,6 +47,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published private(set) var installs: [ModelInstall] = []
     @Published var message: String?
     @Published private(set) var loading = true
+    @Published private(set) var cleaningUnsupported = false
     @Published private(set) var validationActive = false
     @Published private(set) var refreshingCatalog = false
     @Published private(set) var catalogStatus: ModelCatalogStatus?
@@ -141,6 +142,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             let tasks = await session.allTasks
             for task in tasks {
                 guard let download = task as? URLSessionDownloadTask, let transfer = decode(task.taskDescription),
+                      catalog.contains(where: { $0.id == transfer.packId && $0.supported }),
                       installs.contains(where: { $0.packId == transfer.packId && $0.generation == transfer.generation }) else { task.cancel(); continue }
                 jobs[transfer.packId] = transfer; active[transfer.packId] = download
             }
@@ -148,9 +150,24 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 try await repository.updateInstall(id: item.packId, generation: item.generation, status: "paused", bytes: item.bytesDownloaded)
             }
             try await refresh()
+            await removeUnsupportedDownloads()
             await recheckReadyPacks()
         } catch { message = error.localizedDescription }
     }
+    var hasUnsupportedDownloads: Bool { installs.contains { item in !catalog.contains { $0.id == item.packId && $0.supported } } }
+
+    func removeUnsupportedDownloads() async {
+        guard !refreshingCatalog, !cleaningUnsupported, isIdle() else { return }
+        cleaningUnsupported = true
+        message = nil
+        defer { cleaningUnsupported = false }
+        let unsupported = installs.filter { item in !catalog.contains { $0.id == item.packId && $0.supported } }
+        for item in unsupported {
+            do { try await remove(packId: item.packId) }
+            catch { message = "Unused speech downloads could not be removed. Retry cleanup in the downloads sheet." }
+        }
+    }
+
     func canCheck(_ pack: ModelPack) -> Bool {
         !refreshingCatalog && !loading && !validationActive && pack.eligible && isIdle() && active.isEmpty && operations.isEmpty
             && installs.contains(where: { $0.packId == pack.id && $0.status == "ready" }) && !removing.contains(pack.id)
@@ -275,39 +292,58 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             }
         }
     }
-    func remove(_ pack: ModelPack) async throws {
-        guard !refreshingCatalog, !removing.contains(pack.id) else { throw PackFailure.transport }
-        removing.insert(pack.id)
-        qualified.remove(pack.id)
-        checks.removeValue(forKey: pack.id)
-        defer { removing.remove(pack.id) }
-        active.removeValue(forKey: pack.id)?.cancel()
-        jobs.removeValue(forKey: pack.id)
-        let operation = operations[pack.id]?.task
-        let readyCheck = readyChecks[pack.id]
-        let validation = validationTasks[pack.id]
+    func remove(_ pack: ModelPack) async throws { try await remove(packId: pack.id) }
+
+    private func remove(packId: String) async throws {
+        guard !refreshingCatalog, !removing.contains(packId) else { throw PackFailure.transport }
+        removing.insert(packId)
+        qualified.remove(packId)
+        checks.removeValue(forKey: packId)
+        defer { removing.remove(packId) }
+        active.removeValue(forKey: packId)?.cancel()
+        jobs.removeValue(forKey: packId)
+        let operation = operations[packId]?.task
+        let readyCheck = readyChecks[packId]
+        let validation = validationTasks[packId]
         operation?.cancel(); readyCheck?.cancel(); validation?.cancel()
         await operation?.value
         await readyCheck?.value
         _ = try? await validation?.value
         try await refresh()
-        guard safeComponent(pack.id) else { throw PackFailure.path }
+        guard safeComponent(packId) else { throw PackFailure.path }
         do {
-            let directory = files.models.appendingPathComponent(pack.id, isDirectory: true)
+            let directory = files.models.appendingPathComponent(packId, isDirectory: true)
             if FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.removeItem(at: directory) }
-            for url in try FileManager.default.contentsOfDirectory(at: files.staging, includingPropertiesForKeys: nil) where url.lastPathComponent.hasPrefix(pack.id + "-") { try FileManager.default.removeItem(at: url) }
+            for url in try FileManager.default.contentsOfDirectory(at: files.staging, includingPropertiesForKeys: nil)
+                where Self.ownsStagingFile(url.lastPathComponent, packId: packId)
+                    && !catalog.contains(where: { $0.id != packId && Self.ownsStagingFile(url.lastPathComponent, packId: $0.id) }) {
+                try FileManager.default.removeItem(at: url)
+            }
             try Self.syncDirectory(files.models)
             try Self.syncDirectory(files.staging)
         } catch {
-            if let current = installs.first(where: { $0.packId == pack.id && $0.status == "ready" }) {
-                try? await repository.invalidateModel(id: pack.id, generation: current.generation, error: "Removal could not finish. Retry removal or repair this pack. " + error.localizedDescription)
+            if let current = installs.first(where: { $0.packId == packId && $0.status == "ready" }) {
+                try? await repository.invalidateModel(id: packId, generation: current.generation, error: "Removal could not finish. Retry removal or repair this pack. " + error.localizedDescription)
                 try? await refresh()
             }
             throw error
         }
-        try await repository.removeModel(pack.id)
+        try await repository.removeModel(packId)
         try await refresh()
     }
+    nonisolated static func ownsStagingFile(_ name: String, packId: String) -> Bool {
+        let prefix = packId + "-"
+        guard name.hasPrefix(prefix) else { return false }
+        let suffix = String(name.dropFirst(prefix.count))
+        if UUID(uuidString: suffix) != nil { return true }
+        if suffix.hasPrefix("old-"), UUID(uuidString: String(suffix.dropFirst(4))) != nil { return true }
+        guard suffix.count > 44, suffix.hasSuffix(".resume") else { return false }
+        let generation = String(suffix.prefix(36))
+        let index = suffix.dropFirst(36).dropLast(7)
+        return UUID(uuidString: generation) != nil && index.first == "-"
+            && !index.dropFirst().isEmpty && index.dropFirst().allSatisfy(\.isNumber)
+    }
+
     private func stage(_ id: String, _ generation: String) throws -> URL {
         guard safeComponent(id), safeComponent(generation) else { throw PackFailure.path }
         return files.staging.appendingPathComponent(id + "-" + generation, isDirectory: true)
@@ -590,6 +626,13 @@ struct ModelGallery: View {
                         if let message = models.catalogMessage { Text(message).font(.caption).foregroundStyle(Palette.muted) }
                     }
                     if models.loading { ProgressView("Checking available downloads…") }
+                    else if models.hasUnsupportedDownloads {
+                        ReaderSheetCard(title: "Unused downloads") {
+                            Text("Remove speech downloads that this version no longer uses. Your documents and recordings are kept.")
+                            Button("Retry cleanup") { Task { await models.removeUnsupportedDownloads() } }
+                                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayPlaying || models.cleaningUnsupported)
+                        }
+                    }
                     Text("Narration").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
                     ForEach(models.catalog.filter { $0.capability == "tts" }) { pack in packCard(pack) }
                     Text("Voice-note transcription").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)

@@ -6,7 +6,7 @@ enum NarrationFailure: LocalizedError {
         switch self {
         case .unsupportedText: "This English preview voice cannot pronounce part of this passage safely. Try another passage."
         case .timedOut: "This passage took too long to prepare. Try again when the device is cool."
-        case .voiceFailed: "This voice could not finish the passage. Try again, or choose another voice."
+        case .voiceFailed: "This voice could not finish the passage. Try again or check the download in Settings."
         }
     }
 }

@@ -23,6 +23,8 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }()
     var onProgress: ((ListeningCursor) -> Void)?
     var renderVoice: ((Passage, String, Float) async throws -> RenderedNarration)?
+    var canUseVoice: ((String) -> Bool)?
+    var onVoiceUnavailable: (() -> Void)?
     var onError: ((String) -> Void)?
     var onCaptureInterrupted: ((String?) -> Void)?
     var passages: [Passage] = []
@@ -130,8 +132,10 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
 
     func play() {
         guard !recording, !capturePending, current != nil else { return }
-        guard DownloadedVoice(selectedVoice) != nil else {
-            onError?("Download and select a voice in Settings to start listening.")
+        guard DownloadedVoice(selectedVoice) != nil, canUseVoice?(selectedVoice) == true else {
+            pause()
+            if let onVoiceUnavailable { onVoiceUnavailable() }
+            else { onError?("Download and select a checked voice in Settings to start listening.") }
             return
         }
         transportRevision = UUID()
@@ -216,7 +220,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
 
     func changeVoice(_ id: String) async {
-        guard DownloadedVoice(id) != nil else { return }
+        guard id.isEmpty || DownloadedVoice(id) != nil else { return }
         let operation = UUID(); voiceChangeID = operation
         let resume = playing
         let fraction = currentFraction

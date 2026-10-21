@@ -18,6 +18,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published private(set) var preparedArchive: PreparedDocumentArchive?
+    @Published var modelGalleryPresented = false
     @Published var errorMessage: String?
     @Published var captureDraft: VoiceNote?
     @Published var captureMessage = ""
@@ -52,10 +53,12 @@ final class ReaderStore: ObservableObject {
     private var sceneActive = true
 
     init() {
-        if selectedTranscription == "system" {
-            selectedTranscription = "whisper-tiny-en-coreml"
-            UserDefaults.standard.set(selectedTranscription, forKey: "transcriptionModel")
+        audio.canUseVoice = { [weak self] identifier in
+            guard let choice = DownloadedVoice(identifier),
+                  let (pack, _) = self?.models?.ready(capability: "tts", id: choice.packId) else { return false }
+            return DownloadedVoice.voices(for: pack).contains { $0.0 == choice.voiceId }
         }
+        audio.onVoiceUnavailable = { [weak self] in self?.modelGalleryPresented = true }
         audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
             guard let self, let files = self.files, let choice = DownloadedVoice(voice),
@@ -213,7 +216,9 @@ final class ReaderStore: ObservableObject {
             }
             models?.objectWillChange.sink { [weak self] _ in Task { @MainActor in self?.objectWillChange.send(); self?.serviceTranscriptions() } }.store(in: &subscriptions)
             if let models {
-                models.$loading.merge(with: models.$validationActive).merge(with: models.$refreshingCatalog).sink { [weak self] _ in Task { @MainActor in self?.serviceTranscriptions() } }.store(in: &subscriptions)
+                models.$loading.merge(with: models.$validationActive).merge(with: models.$refreshingCatalog).sink { [weak self] _ in
+                    Task { @MainActor in await self?.reconcileSpeechSelections(); self?.serviceTranscriptions() }
+                }.store(in: &subscriptions)
             }
             try await refresh()
             await removePendingFiles()
@@ -771,6 +776,20 @@ final class ReaderStore: ObservableObject {
         catch { present(error) }
     }
 
+    private func reconcileSpeechSelections() async {
+        guard let models, !models.loading, !models.refreshingCatalog else { return }
+        if let selected = DownloadedVoice(audio.selectedVoice),
+           !models.catalog.contains(where: { $0.id == selected.packId && $0.supported && DownloadedVoice.voices(for: $0).contains(where: { $0.0 == selected.voiceId }) }) {
+            await audio.changeVoice("")
+        }
+        if selectedTranscription != "off", !models.catalog.contains(where: { $0.id == selectedTranscription && $0.capability == "asr" && $0.supported }) {
+            let worker = transcriptionTask
+            worker?.cancel(); await worker?.value
+            selectedTranscription = "whisper-tiny-en-coreml"
+            UserDefaults.standard.set(selectedTranscription, forKey: "transcriptionModel")
+        }
+    }
+
     func removePack(_ pack: ModelPack) async {
         guard !busy, !audio.playing, !audio.replayPlaying, !audio.recording, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
         busy = true
@@ -859,7 +878,9 @@ final class ReaderStore: ObservableObject {
                 try? await repository.status(id: id, value: "pending")
                 if !transcriptionQueue.contains(id) { transcriptionQueue.insert(id, at: 0) }
             } catch {
-                let status = error is TranscriptionFailure ? "pendingModel" : "failed"
+                let status: String
+                if case TranscriptionFailure.unavailable = error { status = "pendingModel" }
+                else { status = "failed" }
                 try? await repository.status(id: id, value: status)
             }
             activeTranscription = nil; try? FileManager.default.removeItem(at: output); try? await refresh()
