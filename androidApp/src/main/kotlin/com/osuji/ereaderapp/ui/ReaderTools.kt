@@ -150,8 +150,8 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
                 Text(if (seconds == null) "Checked on this device. Longer-session performance varies." else "Device check passed in $seconds s. Longer-session performance varies.", style = MaterialTheme.typography.bodySmall)
             }
             if (available && !removing && pack.capability == "tts") FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
-                    FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = !audio.capturing)
+                models.voiceIds(pack.id).forEach { voice ->
+                    FilterChip(state.selectedVoice == pack.id && state.voiceId == voice, onClick = { selectionScope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } } }, label = { Text(models.voiceName(pack.id, voice)) }, enabled = !audio.capturing)
                 }
             }
             if (status == "failed" && install!!.error.isNotBlank()) Text(install.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)

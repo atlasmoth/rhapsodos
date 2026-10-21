@@ -110,7 +110,10 @@ class ReaderApplication : Application() {
             koin.get<PdfAdapter>().releaseParserWhenIdle()
             koin.get<TranscriptionCoordinator>().pauseForMemoryPressure()
             runtime.close("android-moonshine-english")
-            if (!playback.playing && !playback.capturing && !playback.preparing) runtime.close("android-kitten-english")
+            if (!playback.playing && !playback.capturing && !playback.preparing) {
+                runtime.close("android-kitten-english")
+                runtime.close("android-phonon-english")
+            }
         }
     }
 }

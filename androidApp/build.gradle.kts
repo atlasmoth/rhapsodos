@@ -6,6 +6,7 @@ plugins {
 
 android {
     namespace = "com.osuji.ereaderapp"
+    ndkVersion = "27.1.12297006"
     compileSdk {
         version = release(37) { minorApiLevel = 1 }
     }
@@ -15,6 +16,7 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.01"
+        externalNativeBuild { cmake { abiFilters += listOf("arm64-v8a", "x86_64") } }
     }
     buildFeatures { compose = true; aidl = true }
     compileOptions {
@@ -22,6 +24,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
 }
 
 dependencies {

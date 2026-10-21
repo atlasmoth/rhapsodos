@@ -72,6 +72,7 @@ class PlaybackCoordinator(
     private var resumeOffset = 0L
     private var pendingCursor: PlaybackSnapshot? = null
     private val progressWrites = Mutex()
+    private val voiceSelection = Mutex()
     private var playingNote: VoiceNote? = null
     private var captureReservation: CaptureReservation? = null
     private var desiredPlaying = false
@@ -428,16 +429,20 @@ class PlaybackCoordinator(
         return persistSnapshot(reservation.reading) { isCaptureReservationValid(reservationId) } && isCaptureReservationValid(reservationId)
     }
 
-    suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String = models.state.value.voiceId) {
+    suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String? = null): Unit = voiceSelection.withLock {
         check(!capturing) { "Finish your recording before changing voices." }
         publish()
         val current = state.value
         val document = contents
         val note = playingNote
         player?.pause()
-        epoch++
+        val currentEpoch = ++epoch
         generation?.cancelAndJoin()
+        check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
+        val previousAdapter = models.state.value.catalog.firstOrNull { it.id == models.state.value.selectedVoice }?.adapter
         models.selectVoice(packId, voiceId)
+        if (previousAdapter != null) models.runtime.close(previousAdapter)
+        check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
         if (document == null) stop()
         else if (note != null) playSavedNote(note, current.positionMillis, current.playing, document)
         else {

@@ -7,6 +7,8 @@ import android.speech.tts.UtteranceProgressListener
 import com.osuji.ereaderapp.models.ModelManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -63,19 +65,21 @@ class OfflineSynthesizer(private val context: Context, private val models: Model
     }
 
     suspend fun synthesize(text: String): File = serial.withLock {
-        val selected = models.selectedDirectory()
-        selected?.let { directory ->
+        val selected = models.selectedVoicePack()
+        selected?.let { pack ->
+            val directory = checkNotNull(models.installed(pack.id)) { "The selected offline voice is unavailable." }
             val voiceId = models.state.value.voiceId
-            voiceLabel = "${voiceId.replaceFirstChar { it.uppercase() }} · offline"
-            val key = MessageDigest.getInstance("SHA-256").digest("kitten-v3:${directory.parentFile!!.name}:${directory.name}:$voiceId:$text".toByteArray()).joinToString("") { "%02x".format(it) }
+            voiceLabel = "${models.voiceName(pack.id, voiceId)} · offline"
+            val key = MessageDigest.getInstance("SHA-256").digest("narration-v4:${pack.id}:${pack.version}:${pack.runtime}:${pack.adapter}:$voiceId:$text".toByteArray()).joinToString("") { "%02x".format(it) }
             val cache = File(context.cacheDir, "narration").apply { mkdirs() }
             val destination = File(cache, "$key.wav")
             if (usableCache(destination)) return@withLock destination
-            val audio = models.runtime.synthesize(directory, text, voiceId)
+            val audio = models.runtime.synthesize(pack.adapter, directory, text, voiceId)
             require(audio.samples.isNotEmpty() && audio.sampleRate in 8000..48000) { "This offline voice produced no playable audio." }
             val temporary = File(cache, "$key.preparing.wav")
             try {
                 withContext(Dispatchers.IO) {
+                    currentCoroutineContext().ensureActive()
                     temporary.outputStream().use { output ->
                         val size = audio.samples.size * 2
                         val header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
@@ -90,6 +94,7 @@ class OfflineSynthesizer(private val context: Context, private val models: Model
                         if (buffer.position() > 0) output.write(buffer.array(), 0, buffer.position())
                         output.fd.sync()
                     }
+                    currentCoroutineContext().ensureActive()
                     validateRecording(temporary)
                     check(temporary.renameTo(destination)) { "Prepared speech could not be saved." }
                     trimCache(cache, destination)

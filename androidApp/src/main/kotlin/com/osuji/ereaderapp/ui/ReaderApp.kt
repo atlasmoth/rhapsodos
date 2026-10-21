@@ -385,16 +385,16 @@ fun ReaderApp() {
                 SheetHeader("Settings", doneEnabled = archiveTransportReady) { if (archiveTransportReady) showSettings = false }
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     SettingsSection("Voices") {
-                        Text(if (modelState.selectedVoice == "system") "System voice" else modelState.voiceId.replaceFirstChar { it.uppercase() })
+                        Text(if (modelState.selectedVoice == "system") "System voice" else models.voiceName(modelState.selectedVoice, modelState.voiceId))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             FilterChip(modelState.selectedVoice == "system", onClick = {
                                 scope.launch { runCatching { playback.selectVoice(models, "system"); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
                             }, label = { Text("System voice") }, enabled = archiveTransportReady && !playback.capturing)
                             modelState.catalog.filter { it.capability == "tts" && models.installed(it.id) != null }.forEach { pack ->
-                                listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki").forEach { voice ->
+                                models.voiceIds(pack.id).forEach { voice ->
                                     FilterChip(modelState.selectedVoice == pack.id && modelState.voiceId == voice, onClick = {
                                         scope.launch { runCatching { playback.selectVoice(models, pack.id, voice); haptic(view) }.onFailure { models.reportError(it.message ?: "This voice could not be selected.") } }
-                                    }, label = { Text(voice.replaceFirstChar { it.uppercase() }) }, enabled = archiveTransportReady && !playback.capturing)
+                                    }, label = { Text(models.voiceName(pack.id, voice)) }, enabled = archiveTransportReady && !playback.capturing)
                                 }
                             }
                         }

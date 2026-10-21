@@ -132,7 +132,8 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     private fun runtimeCompatibility(pack: ModelPack): String? {
-        if (pack.adapter !in setOf("android-kitten-english", "android-moonshine-english")) return "This model needs an app update before it can run."
+        if (pack.adapter !in setOf("android-kitten-english", "android-phonon-english", "android-moonshine-english")) return "This model needs an app update before it can run."
+        if (pack.adapter == "android-phonon-english" && (!android.os.Process.is64Bit() || Build.SUPPORTED_ABIS.none { it in setOf("arm64-v8a", "x86_64") })) return "This voice requires a supported 64-bit device. You can still use the other voices."
         if (!supportsOfflineSpeechAbi(Build.SUPPORTED_ABIS.toList())) return "This device's processor is not supported by this offline pack. You can still use the installed Android voice, read and save voice notes."
         if (Build.VERSION.SDK_INT < pack.minimumOS) return "Requires Android API ${pack.minimumOS} or newer"
         val memory = ActivityManager.MemoryInfo().also { context.getSystemService(ActivityManager::class.java).getMemoryInfo(it) }
@@ -144,7 +145,17 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         owned(it.installedPath).takeIf { directory -> directory.isDirectory }
     }
 
-    fun selectedDirectory(): File? = if (state.value.selectedVoice == "system") null else installed(state.value.selectedVoice) ?: error("The selected offline voice is unavailable. Choose a voice or download it again.")
+    fun selectedVoicePack(): ModelPack? = if (state.value.selectedVoice == "system") null else state.value.catalog.firstOrNull {
+        it.id == state.value.selectedVoice && it.capability == "tts" && installed(it.id) != null
+    } ?: error("The selected offline voice is unavailable. Choose a voice or download it again.")
+
+    fun voiceIds(packId: String): List<String> = when (state.value.catalog.firstOrNull { it.id == packId }?.adapter) {
+        "android-kitten-english" -> listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki")
+        "android-phonon-english" -> listOf("default")
+        else -> emptyList()
+    }
+
+    fun voiceName(packId: String, voiceId: String): String = if (voiceId == "default" && state.value.catalog.any { it.id == packId && it.adapter == "android-phonon-english" }) "Phonon" else voiceId.replaceFirstChar { it.uppercase() }
     fun asrDirectory(): File? = if (asrAdapter() == null) null else installed(state.value.selectedTranscription)
     fun asrAdapter(): String? = state.value.catalog.firstOrNull { it.id == state.value.selectedTranscription && it.capability == "asr" && it.adapter == "android-moonshine-english" }?.adapter
 
@@ -211,13 +222,15 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         } finally { mutableState.update { it.copy(checking = it.checking - packId) } }
     }
 
-    fun selectVoice(packId: String, voiceId: String = state.value.voiceId) {
+    fun selectVoice(packId: String, voiceId: String? = null) {
         require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
         require(packId == "system" || installed(packId) != null) { "Download and verify this voice first." }
         require(packId == "system" || state.value.catalog.any { it.id == packId && it.capability == "tts" })
-        require(voiceId in listOf("jasper", "bella", "bruno", "luna", "hugo", "rosie", "leo", "kiki"))
-        preferences.edit().putString("voicePack", packId).putString("voiceId", voiceId).apply()
-        mutableState.update { it.copy(selectedVoice = packId, voiceId = voiceId) }
+        val voices = voiceIds(packId)
+        val selected = voiceId ?: state.value.voiceId.takeIf { it in voices } ?: if ("bella" in voices) "bella" else voices.firstOrNull() ?: state.value.voiceId
+        require(packId == "system" || selected in voices) { "This voice is not available in this pack." }
+        preferences.edit().putString("voicePack", packId).putString("voiceId", selected).apply()
+        mutableState.update { it.copy(selectedVoice = packId, voiceId = selected) }
     }
 
     fun download(packId: String) {
@@ -232,6 +245,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         val generation = UUID.randomUUID().toString()
         try { context.startForegroundService(Intent(context, ModelDownloadService::class.java)) }
         catch (failure: Exception) { reportError("Open Rhapsodos to start this download, then try again."); return }
+        mutableState.update { it.copy(error = null) }
         val task = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
             val staging = owned("Models/.staging/${pack.id}/${pack.version}")
             try {

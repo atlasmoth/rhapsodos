@@ -3,6 +3,7 @@
 .kotlin/
 .idea/
 .build/
+.cxx/
 **/build/
 local.properties
 *.xcuserstate

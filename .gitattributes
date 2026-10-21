@@ -1,0 +1,3 @@
+native/phonon/THIRD_PARTY_NOTICES.txt -whitespace
+androidApp/src/main/assets/licenses/Phonon.txt -whitespace
+iosApp/Resources/Licenses/Phonon.txt -whitespace

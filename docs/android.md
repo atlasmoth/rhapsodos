@@ -129,6 +129,8 @@ Prefer LiteRT for qualified Android artifacts. Use the appropriate current execu
 
 The compact KittenTTS sample is a useful first voice candidate. It demonstrates real Android execution, but its Pixel 8a figures do not qualify budget phones or our full pipeline. Local ASR candidates include compact Moonshine/Whisper options and an optional larger Parakeet LiteRT tier. Exact model/runtime/license gates are in [models-and-evaluation.md](models-and-evaluation.md).
 
+Phonon 31M is an optional Q8 CPU narration adapter behind a small JNI bridge. Its pinned Rust runtime ships only for ARM64 and x86_64 with API 28 and 16 KiB alignment; Kitten and Moonshine retain their existing 32-bit support. The generic ARM64 build avoids mandatory dot-product/FP16 instructions. Only verified local assets reach the engine. PCM callbacks check cancellation, finite samples, duration bounds and a deadline; EOS exhaustion fails rather than caching truncated speech. Model changes join generation and unload the previous engine, and cache identities include the exact selected pack/runtime/version/voice.
+
 Allow a small justified ONNX/native adapter when it delivers better qualified quality or reliability. LiteRT-LM is a separate optional general-language-model capability; the app's core does not depend on it.
 
 Serialize expensive model work on constrained devices. Protect capture/playback first, then immediate prefetch, saved-note ASR and bulk preparation. Check memory/thermal conditions and defer lower-priority work. Model and PDF caches share a total resource budget. Avoid a mandatory large ASR model just to save a voice note.
