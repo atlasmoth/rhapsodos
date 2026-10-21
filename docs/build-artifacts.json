@@ -4984,5 +4984,721 @@
       "Maximum iOS Dynamic Type layout inspected; simulator drag injection unreliable, so scrolling not newly qualified. No full VoiceOver/TalkBack traversal claimed.",
       "Live catalogue URL/trust configuration remains unset; public bundled-pack HTTPS transfers were exercised."
     ]
+  },
+  "unified_note_transcription_verification": {
+    "recorded_on": "2026-10-21",
+    "implementation_commits": [
+      "370cecc",
+      "eaee66d",
+      "51efb70",
+      "63f1987",
+      "7811f8e"
+    ],
+    "catalogue_commit": "36094a3",
+    "comparison_commits": [
+      "cde9413",
+      "3c8e22a",
+      "8783d46"
+    ],
+    "selection": {
+      "family": "Whisper Base English",
+      "android": "android-whisper-base-en",
+      "ios": "whisper-base-en-coreml",
+      "android_download_bytes": 81781811,
+      "ios_download_bytes": 149150649,
+      "device_memory_guard_mb": 3072,
+      "guard_is_physical_qualification": false
+    },
+    "catalogue": {
+      "revision": 5,
+      "permanent": true,
+      "profiles": 4,
+      "file_entries": 29,
+      "signature": "OpenSSL verified with unchanged public key",
+      "payload_matches_bundled_manifest": true,
+      "shared_sqlite_checks_passed": 20,
+      "live_https_source_configured": false
+    },
+    "builds": {
+      "android": [
+        "assembleDebug",
+        "lintDebug",
+        "assembleRelease",
+        "bundleRelease"
+      ],
+      "ios": [
+        "Debug ARM64 simulator",
+        "unsigned Release ARM64 device"
+      ],
+      "shared": [
+        "Debug ARM64 simulator framework",
+        "Release ARM64 device framework",
+        "Android Kotlin"
+      ]
+    },
+    "android_artifacts": {
+      "androidApp-debug.apk": {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "bytes": 153520712,
+        "sha256": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563"
+      },
+      "androidApp-release-unsigned.apk": {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+        "bytes": 130395264,
+        "sha256": "eb5fa5a6edc30953ea9ec67a834cd0e49df7437fa03e2a134172632001a91f36"
+      },
+      "androidApp-release.aab": {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+        "bytes": 56065883,
+        "sha256": "876734a6a1d3e9776ec9f9f3a3bb3ced5bc3e6c2be5fe5ec142a772aca5e12da"
+      }
+    },
+    "ios_artifacts": {
+      "Debug-iphonesimulator": {
+        "CFBundleIdentifier": "com.osuji.ereaderapp",
+        "CFBundleDisplayName": "Rhapsodos",
+        "CFBundleShortVersionString": "0.01",
+        "CFBundleVersion": "1",
+        "MinimumOSVersion": "18.0",
+        "executable_sha256": "9ff8fd21d400d900a49d3d7c25543b3a8c53003907d71caaab2d6ab5aef99f78",
+        "app_path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app"
+      },
+      "Release-iphoneos": {
+        "CFBundleIdentifier": "com.osuji.ereaderapp",
+        "CFBundleDisplayName": "Rhapsodos",
+        "CFBundleShortVersionString": "0.01",
+        "CFBundleVersion": "1",
+        "MinimumOSVersion": "18.0",
+        "executable_sha256": "a68e5c26eedf130378a12c29fce7502f92c0e6b5229ab089af739c75a7a8d62f",
+        "app_path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Release-iphoneos/EReader.app"
+      },
+      "ModelPacks.swift_sha256": "a06360bb62e8b14fab36cdffbede6ed05cbe8f89bd0e42393b12256de1e21129"
+    },
+    "artifact_policy": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "release": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "native_transcription": {
+      "matched_speech_cases": 17,
+      "reference_words": 488,
+      "android_word_errors": 19,
+      "ios_word_errors": 21,
+      "quiet_speech_clips_retained_per_platform": 10,
+      "raw_nonempty_blank_probes_per_platform": "0/8",
+      "android_25case_source_note": "Recognition behavior replay preceded JNI exception/null hardening; final production DEX additionally exercised download, transcription, cancellation and memory-pressure paths.",
+      "ios_production_source_match": {
+        "CoreMLSpeech.swift": {
+          "commit_match": true,
+          "working_match": true,
+          "probe_match": true
+        },
+        "SavedAudioChunks.swift": {
+          "commit_match": true,
+          "working_match": true,
+          "probe_match": true
+        },
+        "NoSpeechTextDecoder.swift": {
+          "commit_match": true,
+          "working_match": true,
+          "probe_match": true
+        }
+      }
+    },
+    "ios_native_lifecycle": {
+      "resampled_stereo_short_tail": [
+        "44.1kHz:480000+592 samples",
+        "48kHz:480000+592 samples"
+      ],
+      "cancellation": [
+        "validation cancel/join/retry",
+        "saved transcription cancel/join/retry"
+      ],
+      "selection_checks_passed": 6
+    },
+    "evidence": {
+      "results.txt": {
+        "path": "/var/folders/7l/7rqgwlj54c11tjf2vdyn40780000gn/T/rhapsodos-unified-asr-shared-a0keifw9/results.txt",
+        "sha256": "a69929fca129de7fb386fd46385c417c2ccb4a6ba2a472491c4d8caff71d7bdf"
+      },
+      "rhapsodos-whisper-shared-build.log": {
+        "path": "/private/tmp/rhapsodos-whisper-shared-build.log",
+        "sha256": "7d73f401524be07ea06016d93dc5c11c68374a01ee866ca5e6fd5da8564f0ba7"
+      },
+      "final-provenance.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/final-provenance.json",
+        "sha256": "2f793888b025c488ec6d2e41daf96b0a0e18149e392ee9a02900b81208fcf0ae"
+      },
+      "result-final-base.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/result-final-base.json",
+        "sha256": "93c9ceed04e6a3c7cd703fdbb61a82f1d3c01f74de25f25ef9ca2733ed52319a"
+      },
+      "lifecycle-results.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/lifecycle-results.json",
+        "sha256": "27a8b6638d1a4ed9e854e3643c232c722e7fae999a7f18a9624722995bffdf16"
+      },
+      "concurrency-rerun-results.txt": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/concurrency-rerun-results.txt",
+        "sha256": "0e56c9e814b14bdf3ba0d4de3408de38cbd886ba5952ce5b621bf2dc8e4e2fa0"
+      },
+      "main-debug-final.log": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/main-debug-final.log",
+        "sha256": "2e8d0023b8c85b80ed116e84da0092560f9a607ca6ac17c9827c683582f1c8b5"
+      },
+      "main-release-final.log": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/main-release-final.log",
+        "sha256": "23c9d488a80cfb340ce610e12f4039063bb080688fb703c209f06a139a648b3f"
+      },
+      "android-final-build.log": {
+        "path": "/private/tmp/rhapsodos-whisper-android-final/android-final-build.log",
+        "sha256": "47e8894060de46c0ef02bf6df3b086de761bac1a5ec6317b5ef9b302eb293dca"
+      },
+      "android-verification.json": {
+        "path": "/private/tmp/rhapsodos-whisper-android-final/android-verification.json",
+        "sha256": "6ecc80a7a6d9f60d0f4b674b9386719d5755504d3e21fb155857baaa3397f339"
+      },
+      "run-attribution.json": {
+        "path": "/private/tmp/rhapsodos-whisper-android-final/setup-qa/run-attribution.json",
+        "sha256": "8332d846b19cd08ddb93bee08fe43baa010ad73527c92b47b5991b6c01c7e1df"
+      },
+      "main-artifacts-final-host.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/main-artifacts-final-host.json",
+        "sha256": "b5120de9f5b7182560a72c107499109f024bb84c09cde5063bd1931fbff4f200"
+      },
+      "main-debug-final-host.log": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/main-debug-final-host.log",
+        "sha256": "c9fcbe19de1eaf5b3b7eb4df0109dbd75857c4e7be027664294433de769de22c"
+      },
+      "main-release-final-host.log": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/main-release-final-host.log",
+        "sha256": "82d74a357b80aa09cea4b1a0120e41547256cd237a2885de7a9576ef616e03e1"
+      },
+      "network-ios27.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/network-ios27.json",
+        "sha256": "17fa287935af5c7058e426685868be066b517278899f539f79d66592ba7c8977"
+      },
+      "network-ios18.json": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/network-ios18.json",
+        "sha256": "17fa287935af5c7058e426685868be066b517278899f539f79d66592ba7c8977"
+      },
+      "download-diagnosis.log": {
+        "path": "/private/tmp/rhapsodos-moonshine-ios-probe/download-diagnosis.log",
+        "sha256": "e3ad05d46e627985b31607d8cd1ad93190d606921c1a8ad7a06319553ae922f8"
+      },
+      "ios27-ui-evidence.json": {
+        "path": "/private/tmp/rhapsodos-whisper-app-qa-ios27/ui-evidence.json",
+        "sha256": "129dd9609cd13f91d3d641fe09c4d555acd99266fffe2d75a8329f494e0bfd5b"
+      }
+    },
+    "limits": [
+      "Host-backed emulator/simulator evidence does not qualify ordinary physical phones, real microphone routes, sustained battery/thermal behavior or accent breadth.",
+      "3 GB memory floor is provisional eligibility, not a fleet guarantee.",
+      "Whisper Small palettized217 MB candidate was inspected but not executed.",
+      "Live signed-catalogue hosting/trust remains unconfigured; bundled-profile downloads work independently.",
+      "Distribution signing and store release remain outside this task."
+    ],
+    "android_integration": {
+      "scope": "Android Whisper Base.en Q8 saved-note ASR and setup recovery",
+      "builds": {
+        "status": "passed",
+        "tasks": [
+          "assembleDebug",
+          "lintDebug",
+          "assembleRelease",
+          "bundleRelease"
+        ],
+        "elapsedSeconds": 41,
+        "log": "/private/tmp/rhapsodos-whisper-android-final/android-final-build.log"
+      },
+      "artifacts": {
+        "androidApp-debug.apk": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+          "bytes": 153520712,
+          "sha256": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563"
+        },
+        "androidApp-release-unsigned.apk": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+          "bytes": 130395264,
+          "sha256": "eb5fa5a6edc30953ea9ec67a834cd0e49df7437fa03e2a134172632001a91f36"
+        },
+        "androidApp-release.aab": {
+          "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+          "bytes": 56065883,
+          "sha256": "876734a6a1d3e9776ec9f9f3a3bb3ced5bc3e6c2be5fe5ec142a772aca5e12da"
+        }
+      },
+      "metadata": {
+        "id": "com.osuji.ereaderapp",
+        "name": "Rhapsodos",
+        "version": "0.01",
+        "versionCode": 1,
+        "minSdk": 28,
+        "targetSdk": 37
+      },
+      "emulator": {
+        "sdk": 37,
+        "abi": "arm64-v8a",
+        "pageSize": 16384,
+        "physicalQualification": false
+      },
+      "setup": {
+        "passedBehavioralChecks": 21,
+        "checks": [
+          {
+            "phase": "pause",
+            "check": "fresh_install_off_and_no_voice",
+            "status": "passed"
+          },
+          {
+            "phase": "pause",
+            "check": "explicit_setup_pause_retains_intent",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "restart_retains_paused_intent_without_transfer",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "download_validation_then_capture_defers_activation",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "download_and_enable_activates_without_autoplay",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "generic_download_never_activates",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "off_cancels_suspended_activation_and_clears_busy_state",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "latest_intent_wins_after_cancel_and_join",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "off_preserves_assets_note_edit_anchor_and_source_cursor",
+            "status": "passed"
+          },
+          {
+            "phase": "resume",
+            "check": "ready_intent_retained_for_restart",
+            "status": "passed"
+          },
+          {
+            "phase": "restart",
+            "check": "verified_pending_setup_activates_after_restart_without_autoplay",
+            "status": "passed"
+          },
+          {
+            "phase": "restart",
+            "check": "removal_cancels_inflight_activation",
+            "status": "passed"
+          },
+          {
+            "phase": "restart",
+            "check": "failed_device_check_never_selects",
+            "status": "passed"
+          },
+          {
+            "phase": "restart",
+            "check": "retry_checks_and_activates",
+            "status": "passed"
+          },
+          {
+            "phase": "restart",
+            "check": "restart_removal_preserve_note_and_progress",
+            "status": "passed"
+          },
+          {
+            "phase": "notes",
+            "check": "durable_synthetic_saved_note_transcribed_with_edited_text_anchor_cursor_preserved",
+            "status": "passed"
+          },
+          {
+            "phase": "notes",
+            "check": "machine_retry_preserves_manual_edit",
+            "status": "passed"
+          },
+          {
+            "phase": "retire_verify",
+            "check": "retired_selection_intent_inventory_assets_cleared_without_new_selection_or_transfer",
+            "status": "passed"
+          },
+          {
+            "phase": "retire_verify",
+            "check": "retirement_preserves_recordings_manual_edits_source_cursor_and_pending_note",
+            "status": "passed"
+          },
+          {
+            "phase": "memory",
+            "check": "memory_pressure_cancels_joins_unloads_and_preserves_durable_pending_note",
+            "status": "passed",
+            "measurements": {
+              "responseMillis": 111.542834
+            }
+          },
+          {
+            "phase": "memory",
+            "check": "memory_recovery_reloads_transcribes_and_preserves_edit_anchor_cursor",
+            "status": "passed"
+          }
+        ],
+        "isolation": "Disposable com.osuji.rhapsodos.whisperintegrationqa, production DEX/resources/assets/native code plus external QA Activity. No repo tests. Exported before uninstall. Consumer and unrelated apps preserved.",
+        "productionApkAssociations": {
+          "pause_resume_restart_notes": "aadaaedd7452c1c1e5782b432883676ab13a4c1d233c92c44cff107db6d0a441",
+          "retire_verify_memory": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563"
+        },
+        "harness": {
+          "Main.kt": "c2aa981771c9e3e929ee10a09d84c11a641eef6d29a59c174831c04c06c9e148",
+          "AndroidManifest.xml": "3683fd5617ec3af35c75cb1b0a2b133604735e82dba3bf0b99e7afd03462fb0f",
+          "build.py": "244697c4c48821b97a0c045875d0511384d3cbd0c710c199f528993cd2a4bbad",
+          "all-results.json": "5254eb49224045044d6c5d3e7285d976c334fbf15adae96943faaa44b850d662"
+        },
+        "attribution": {
+          "phaseProductionApkSha256": {
+            "pause": "aadaaedd7452c1c1e5782b432883676ab13a4c1d233c92c44cff107db6d0a441",
+            "resume": "aadaaedd7452c1c1e5782b432883676ab13a4c1d233c92c44cff107db6d0a441",
+            "restart": "aadaaedd7452c1c1e5782b432883676ab13a4c1d233c92c44cff107db6d0a441",
+            "notes": "aadaaedd7452c1c1e5782b432883676ab13a4c1d233c92c44cff107db6d0a441",
+            "retire_seed": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563",
+            "retire_verify": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563",
+            "memory": "5d9a2a37f01a04a3ec38429943c01c3e3861f748c47b16532a4861d96c828563"
+          },
+          "explanation": "The first 17 behavior checks ran the preceding production Debug build. Retirement and memory-pressure checks ran the final Debug build. ASR bridge, engines, manager and transcription coordinator are identical (verified against eaee66d). Final build includes the updated shared iOS catalogue profile and the ReaderApplication low-memory close ID correction. No passed check has been relabeled as rerun.",
+          "unchangedBehaviorSourcesSha256": {
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/WhisperEngine.kt": "15ef9d425dfbd4797fd6e5c269e3ee44ac7458d1a74b2f51d31894ed088f4bc3",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/OfflineSpeechRuntime.kt": "be07795268a7a812ddf67fc54243265216985261c9ad3b50d974dbab575af739",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/WavPcmReader.kt": "4cc005c0a55e844453785156d0ca8ea379ffbefd8b9851fc233903534cf83fc6",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "21a4d871fbf336e2d3ee5af6833c91743d79ff0f45c2dbe097a4c8bfad2af803",
+            "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/TranscriptionCoordinator.kt": "c45f2bdf1e3316a8a2d4ae93fe3b65924424727be979675c5334f02e1cf5b549",
+            "androidApp/src/main/cpp/WhisperBridge.cpp": "18607fa85a6ac1e2c3636bad73a28edd6753285eabf0b761a62b0902fb7639ea"
+          }
+        }
+      },
+      "consumer": {
+        "installed_preserving_data": true,
+        "document_recording_digest_unchanged": {
+          "count": 12,
+          "sha256": "62852de6fb091250bd892c694323fbe53471786d54f6408cf8380e9f30b1ccfd"
+        },
+        "downloaded_model_sha256": "a4d4a0768075e13cfd7e19df3ae2dbc4a68d37d36a7dad45e8410c9a34f8c87e",
+        "canonical_model_state": {
+          "model_install": [
+            {
+              "pack_id": "android-whisper-base-en",
+              "generation": "6f75f201-0c2f-4702-a6de-b818b97db06d",
+              "status": "ready",
+              "bytes_downloaded": 81781811,
+              "total_bytes": 81781811,
+              "installed_path": "Models/android-whisper-base-en/1.9.5-5359861c739e-q8",
+              "error": "",
+              "updated_at": 1792561318599
+            }
+          ],
+          "model_catalog": []
+        }
+      },
+      "sourceSha256": {
+        "androidApp/src/main/kotlin/com/osuji/ereaderapp/ReaderApplication.kt": "d9dcfd11d6956db2001426bd1f2152570fa9f1830bf99eb760d7305114e6f144",
+        "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/WhisperEngine.kt": "15ef9d425dfbd4797fd6e5c269e3ee44ac7458d1a74b2f51d31894ed088f4bc3",
+        "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/OfflineSpeechRuntime.kt": "be07795268a7a812ddf67fc54243265216985261c9ad3b50d974dbab575af739",
+        "androidApp/src/main/kotlin/com/osuji/ereaderapp/speech/WavPcmReader.kt": "4cc005c0a55e844453785156d0ca8ea379ffbefd8b9851fc233903534cf83fc6",
+        "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "21a4d871fbf336e2d3ee5af6833c91743d79ff0f45c2dbe097a4c8bfad2af803",
+        "androidApp/src/main/cpp/WhisperBridge.cpp": "18607fa85a6ac1e2c3636bad73a28edd6753285eabf0b761a62b0902fb7639ea",
+        "androidApp/src/main/cpp/CMakeLists.txt": "90870d497c3da570992409d6eb7351732d1facef7a5400d4f16f5896d7fbc84e",
+        "androidApp/build.gradle.kts": "29b4c0f3c37f571f485ac423695ab2908b6faa43855213dbc54ed799a5cc14cb",
+        "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt": "4d17401b28b7cae74741470d24337dc27faf8771ecc61ec6900f1567c0012646",
+        "native/whisper/provenance.json": "1961bdaa920e953df8c1237d24dd197c959e3544e7dafe68f2d75b4f1646f669"
+      },
+      "nativeAccuracy": {
+        "resultSha256": "7a80c09f93ec14b0a3c821de4d321cbe261af29da625b764859f21072314932b",
+        "matchedWords": 488,
+        "errors": 19,
+        "speechErrorsOrEmpty": 0,
+        "quietFleursClipsRetained": 10,
+        "rawBlankOutputsEmpty": 8,
+        "note": "Matched nineteen cases plus six additional blank lengths. Native probability filter output independently scored by evaluation agent. Final JNI exception/null guards additionally compiled and exercised by saved-note/setup checks."
+      },
+      "remainingGates": [
+        "Physical ordinary-device speech quality, memory/thermal/battery and sustained execution.",
+        "x86_64 packaged/alignment checked but not executed.",
+        "Release signing/distribution not performed."
+      ]
+    },
+    "ios_artifacts_before_host_validation": {
+      "Debug-iphonesimulator": {
+        "CFBundleIdentifier": "com.osuji.ereaderapp",
+        "CFBundleDisplayName": "Rhapsodos",
+        "CFBundleShortVersionString": "0.01",
+        "CFBundleVersion": "1",
+        "MinimumOSVersion": "18.0",
+        "executable_sha256": "d88a753d8e28b141291fecae059b324b7450696c8be65f8b1e637802f50bb9fd",
+        "app_path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Debug-iphonesimulator/EReader.app"
+      },
+      "Release-iphoneos": {
+        "CFBundleIdentifier": "com.osuji.ereaderapp",
+        "CFBundleDisplayName": "Rhapsodos",
+        "CFBundleShortVersionString": "0.01",
+        "CFBundleVersion": "1",
+        "MinimumOSVersion": "18.0",
+        "executable_sha256": "607479044a7b0666a85e53b89c97cb17f1800a384b789095c4b103287e9c85f5",
+        "app_path": "/Users/atlasmoth/Desktop/ereader/iosApp/build/Release-iphoneos/EReader.app"
+      }
+    },
+    "ios_download_policy": {
+      "approved_observed_cdn": "us.aws.cdn.hf.co",
+      "initial_and_final_https_hosts_checked": true,
+      "intermediate_redirects_managed_by_os": true,
+      "temporary_policy_checks_passed": 11
+    },
+    "ios_18_4_simulator_transport": {
+      "status": "blocked by repeat-session HTTP3/QUIC simulator behavior before request bytes",
+      "main_app_failed_to_complete_download": true,
+      "native_fresh_session_pinned_url_checks": "same243byte pinned asset succeeded on18.4 and27 fresh background sessions",
+      "primary_reference": "https://developer.apple.com/forums/thread/777999",
+      "physical_device_inference": "No production-device networking failure inferred from simulator issue",
+      "production_simulator_workaround_added": false
+    },
+    "ios_main_app": {
+      "completed_at": "2026-10-21T05:52:04.841070+00:00",
+      "status": "passed",
+      "provenance": {
+        "captured_at": "2026-10-21T05:49:31.968085+00:00",
+        "simulator": "69C8F205-1E22-4A45-92FF-0B5BFBF9668D",
+        "runtime": "iOS27.0 simulator",
+        "bundle_id": "com.osuji.ereaderapp",
+        "version": "0.01",
+        "build": "1",
+        "executable_sha256": "9ff8fd21d400d900a49d3d7c25543b3a8c53003907d71caaab2d6ab5aef99f78",
+        "app_debug_dylib_sha256": "e19c0102c4fc4d123ad6fbfe9a71ebed287330b35e64b595b8d9b618806c3409",
+        "consumer_simulators_touched": false,
+        "production_sources": {
+          "CoreMLSpeech.swift": "e2b879201e38ee15252a1e73224eb044382f92ff164771db979da0eaa0bf9db5",
+          "SavedAudioChunks.swift": "e334ae0bfe2a835e7aa549d0b65ac54beba3a6bbef02a955b4686b3ed8ad006d",
+          "NoSpeechTextDecoder.swift": "558bed5cea5791283a97a35c232bd86c9aaf7ef680b39b5086bf9ef544275988",
+          "ReaderStore.swift": "1d9eab6e3e69f04f422766744f2e98209d50c72e664014adf3479322b5d3ab52",
+          "SpeechSetup.swift": "615daca065c38e62d3d8e6281b0ebd3d25c605e5336f67a54031735623990aff",
+          "ModelPacks.swift": "a06360bb62e8b14fab36cdffbede6ed05cbe8f89bd0e42393b12256de1e21129"
+        },
+        "source_commit": "7811f8e9a0754b7258c5c80f8db2e3b7b1e0cc19"
+      },
+      "fixture": {
+        "public_source": "LibriSpeech test-clean",
+        "source_clip_id": "6930-76324-0001",
+        "license": "CC-BY-4.0",
+        "duration_seconds": 3.2,
+        "fixture_pdf": "Task-authored3-page navigation check",
+        "import_method": "Both document and saved audio imported through actual native Files picker",
+        "frozen_listening_progress_ui_percent": 13,
+        "manual_transcript_saved_before_enable": true,
+        "recording_sha256": "c4291816309e2d582e0fe1f57a73a9a6b657bd5d046e54524860acf568746730"
+      },
+      "download": {
+        "user_action": "Download & enable",
+        "pack_id": "whisper-base-en-coreml",
+        "bytes": 149150649,
+        "transfer": "Actual main-app background URLSession from pinned public sources",
+        "validation_complete": true,
+        "selected_automatically": true,
+        "assets_injected": false,
+        "ready_retained_after_restart": true,
+        "pending_intent_cleared": true
+      },
+      "note_outcome": {
+        "selected_pack": "whisper-base-en-coreml",
+        "pending_intent_count": 0,
+        "status": "transcribed",
+        "reference_words": 10,
+        "substitutions": 1,
+        "deletions": 0,
+        "insertions": 0,
+        "manual_revision": 1,
+        "manual_edit_preserved": true
+      },
+      "durability_checks": {
+        "automatic_transcription": {
+          "before": "before-transcription",
+          "after": "after-transcription",
+          "notes": [
+            {
+              "note_id": "68B8F086-5BB2-42BC-A33D-CA79D2D4C999",
+              "anchor_recording_manual_edit_preserved": true,
+              "changed_fields": [],
+              "status_before": "pending",
+              "status_after": "transcribed",
+              "machine_output_available_after": true
+            }
+          ],
+          "documents_preserved": true,
+          "reading_progress_preserved": true,
+          "new_note_count": 0
+        },
+        "explicit_retry": {
+          "before": "before-transcription",
+          "after": "after-retry",
+          "notes": [
+            {
+              "note_id": "68B8F086-5BB2-42BC-A33D-CA79D2D4C999",
+              "anchor_recording_manual_edit_preserved": true,
+              "changed_fields": [],
+              "status_before": "pending",
+              "status_after": "transcribed",
+              "machine_output_available_after": true
+            }
+          ],
+          "documents_preserved": true,
+          "reading_progress_preserved": true,
+          "new_note_count": 0
+        },
+        "restart": {
+          "before": "before-transcription",
+          "after": "after-restart",
+          "notes": [
+            {
+              "note_id": "68B8F086-5BB2-42BC-A33D-CA79D2D4C999",
+              "anchor_recording_manual_edit_preserved": true,
+              "changed_fields": [],
+              "status_before": "pending",
+              "status_after": "transcribed",
+              "machine_output_available_after": true
+            }
+          ],
+          "documents_preserved": true,
+          "reading_progress_preserved": true,
+          "new_note_count": 0
+        },
+        "final_build_install": {
+          "before": "before-final-install",
+          "after": "before-transcription",
+          "notes": [
+            {
+              "note_id": "68B8F086-5BB2-42BC-A33D-CA79D2D4C999",
+              "anchor_recording_manual_edit_preserved": true,
+              "changed_fields": [],
+              "status_before": "pending",
+              "status_after": "pending",
+              "machine_output_available_after": false
+            }
+          ],
+          "documents_preserved": true,
+          "reading_progress_preserved": true,
+          "new_note_count": 0
+        }
+      },
+      "screenshots": [
+        {
+          "file": "download-and-enable.png",
+          "sha256": "c1c707206310054116e2dd9337229983bb7829b8d67919e91413936b37019a66"
+        },
+        {
+          "file": "download-progress.png",
+          "sha256": "2a4b6fb7fdea6f1b60ec49ad996ccb1a3026f0583108d4f31307b4ba3f9b7432"
+        },
+        {
+          "file": "note-after-restart.png",
+          "sha256": "0c63acd9c1e4b91cff1ec9802404f2722e5dea4f478cae39e940db6b541ba412"
+        },
+        {
+          "file": "note-retry-in-progress.png",
+          "sha256": "37b8d6abdd54bb8541bb0aa74940f30e01cb24eeee1c5e5df6dc4a47236da7b6"
+        },
+        {
+          "file": "note-transcribed-manual-preserved.png",
+          "sha256": "19e4588f9209d6e7a81883375259765683da313f3be5c33503288f627c0890d2"
+        },
+        {
+          "file": "reader-after-restart.png",
+          "sha256": "4c4c60cd9725f215394c95c638d2e2bb869a899dbb3656a1c2deb86fae837db4"
+        },
+        {
+          "file": "transcription-enabled.png",
+          "sha256": "84abf71ad04ccebce361d47932b547e95bca1155688c42188da9820cf7c4877a"
+        }
+      ],
+      "separate_ios18_4_result": {
+        "status": "Live download transport-blocked; not marked completed",
+        "reference_evidence": "/private/tmp/rhapsodos-whisper-app-qa/ui-evidence.json",
+        "cause": "Existing background transfer repeated no-byte QUIC timeout; isolated HTTP2 probes succeeded; consistent with Apple DTS iOS18.4 Simulator HTTP3 defect",
+        "apple_dts_url": "https://developer.apple.com/forums/thread/777999"
+      },
+      "limitations": [
+        "Simulator verification only; ordinary physical-device memory, latency, thermal and audio-session behavior remain qualification gates.",
+        "One public recording proves the actual app handoff, not population accuracy. Native matched corpus results are documented separately."
+      ],
+      "scope": {
+        "production_edits": false,
+        "model_assets_injected": false,
+        "consumer_simulators_touched": false,
+        "unrelated_data_deleted": false
+      }
+    },
+    "source_revision": "7811f8e9a0754b7258c5c80f8db2e3b7b1e0cc19"
   }
 }

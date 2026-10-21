@@ -7,10 +7,10 @@ Rhapsodos has native Android and iOS apps with a shared Kotlin Multiplatform cor
 | Path | Responsibility |
 | --- | --- |
 | `shared/` | Canonical SQLDelight schema, source pages/mappings, frozen anchors, progress, notes, search and model inventory |
-| `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers, LiteRT speech and Phonon CPU narration |
+| `androidApp/` | Compose/Material3 Expressive/Navigation3 adaptive UI, native PDF/OCR, Media3, capture, Ktor transfers and native Whisper/Phonon CPU speech |
 | `iosApp/` | SwiftUI split navigation, PDFKit/Vision, native audio and protected capture, background URLSession transfers and CoreML speech |
 | `tools/` | Build/policy checks, artifact metadata and pinned asset inspection |
-| `native/phonon/` | Pinned runtime builds, completion guard, provenance and dependency notices |
+| `native/phonon/`, `native/whisper/` | Pinned runtime builds, completion/cancellation guards, provenance and dependency notices |
 | `docs/` | Product decisions, contracts, provenance and qualification evidence |
 
 The shared store owns documents, source positions and notes. Native code owns files, PCM, inference, OS services and views. Harmless presentation preferences and generated caches are separate from durable user data.
@@ -35,7 +35,7 @@ See [implementation-contract.md](implementation-contract.md) for the actual shar
 
 The current app implements local-only content processing. App-managed HTTP transfers fetch explicitly requested public model assets. There is no cloud provider, account service, analytics client, sync backend or system speech fallback.
 
-[model-catalog.json](model-catalog.json) pins every public asset. Phonon is the sole narration family on both apps. Android uses Moonshine English saved-note transcription; iOS uses Whisper tiny English transcription on the iOS 18 baseline. Memory/OS guards constrain eligibility; physical qualification is pending.
+[model-catalog.json](model-catalog.json) pins every public asset. Phonon is the sole narration family on both apps. Both apps use Whisper Base English for saved-note transcription: Q8 CPU on Android and CoreML on the iOS 18 baseline. Memory/OS guards constrain eligibility; physical qualification is pending.
 
 Native managers verify all artifacts, check runtime execution, install atomically and update the shared generation-scoped inventory. Failed ASR retains the recording and its attachment. The iOS Whisper adapter overrides an upstream tokenizer fallback to require local assets even after a parsing failure.
 
@@ -403,3 +403,28 @@ Validation caught and fixed an Android immediate-Retry race and an iOS low-stora
 | iOS main app | Real iPad Phonon Download & use → Pause → terminate/relaunch → Resume → dismiss → automatic Selected passed without playback. A durable imported synthetic recording's pending-note action opened focused transcription on iPhone. Compact/wide, light/dark and accessibility XXXL were inspected; the header wrapping defect was fixed and rechecked. |
 
 Implementation commits are `48ab8bd`, `1173b3e`, `1d61dcf`, `1d1790a`, `4ca8e79` and `68f4734`; this verification record follows separately. Exact artifact/source/report hashes, consumer installation evidence and remaining gates are in `simple_speech_setup_verification` in [build-artifacts.json](build-artifacts.json). Final Debug builds were installed and launched on the existing Android emulator and four iOS simulators without clearing their containers. The iOS Whisper transfer encountered repeated simulator background-network timeouts at 21%; full transcription download-to-activation remains unverified in this run. Phonon completed the real flow on both platforms. The Android latency sample measures only an emulator and is not physical-device performance qualification. Physical audio quality, sustained battery/thermal performance, real microphone/routes and hosted catalogue refresh remain separate gates.
+
+
+## Unified downloaded note transcription — 21 October 2026
+
+The [matched-recording comparison](evaluations/note-asr-evaluation.md) selected **Whisper Base English on both apps**. Android replaces Moonshine with a pinned whisper.cpp Q8 CPU adapter; iOS replaces Whisper Tiny with Base CoreML. Downloads are 81,781,811 and 149,150,649 bytes respectively. Phonon narration remains unchanged. Retired transcription choices become off; explicit Download & enable installs, checks and activates the replacement. Existing source PDFs, recordings, edits, attachments and listening progress are retained.
+
+Both adapters decode contiguous, pause-aware windows of at most 30 seconds, retain short tails and commit only complete results. Cancellation joins active inference before unload/removal; retries start from the durable recording. iOS resamples incrementally rather than loading a whole note. Both adapters use true no-speech probabilities, without an amplitude rejection threshold that could drop quiet speech. Android’s memory-pressure callback now closes the Whisper adapter.
+
+| Check | Executed result |
+| --- | --- |
+| Model comparison | 74 host cases, including 66 speech cases/2,065 normalized words. Whisper Base 3.54% WER; Moonshine Small 5.76%, Tiny 9.06%; Whisper Small 2.52%. Same audio and normalizer, distinct runtimes; host timings are not mobile rankings. |
+| Native saved-file replay | Matched 17 speech cases/488 words: Android Base 19 errors (3.89%), iOS Base 21 (4.30%). Both retain all ten quiet FLEURS clips and produce no raw text for all eight silence/noise probes. Native Small improves only three words per platform in this subset at higher measured memory/latency. |
+| Android integration | Twenty-one production-DEX behavioral checks passed for setup, cancellation, retry, saved-note transcription, retired inventory cleanup and memory pressure. Actual final-app Download & enable fetched and validated 81.8 MB, then turned on automatically. All 12 pre-existing document/recording assets retained identical hashes. Per-build attribution is in [build-artifacts.json](build-artifacts.json). |
+| iOS native lifecycle | Exact committed adapter sources passed 44.1/48 kHz stereo resampling with a 592-sample final tail, validation/transcription cancellation followed by retry, and six existing setup/Off/latest-choice concurrency checks. |
+| iOS final main-app flow | On the dedicated iOS 27 simulator, actual Download & enable fetched all 149,150,649 bytes without injected model files, validated and turned on. A pending public saved note transcribed automatically; explicit retry and restart passed. Recording hash, manual edit/revision, source attachment and 13% listening position remained unchanged. |
+| Shared catalogue and durability | 20 production Kotlin/SQLite checks passed: final manifest parity, valid replacement catalogue, old-adapter/host/hash rejection, older cached catalogue behavior, explicit cleanup ownership, unchanged document/note/progress and restart. |
+| Builds | Android Debug, lint, unsigned Release APK and Release AAB passed. Shared simulator/device frameworks and Android Kotlin passed. iOS simulator Debug and unsigned device Release passed. No unit-test sources were added. |
+| Artifact inspection | Both actual apps remain Rhapsodos, com.osuji.ereaderapp, 0.01 build 1. Android API 28/target 37, all 12 ARM64 native libraries have 16 KiB alignment; iOS deployment floor 18.0. |
+| Catalogue release | Permanent signed revision 5 contains four profiles and 29 pinned file entries. OpenSSL signature, decoded manifest, asset totals, envelope bounds and external signing-key permissions passed. Live source/trust remain unset. |
+
+Implementation is split across the native runtime, Android adapter, iOS adapter, signed catalogue, measured decision and Android memory-pressure and iOS final-host validation commits; exact revisions and artifact hashes are retained in [build-artifacts.json](build-artifacts.json). Evaluation scripts and temporary lifecycle harnesses remain outside the repository and used the requested conda `dl` Python environment.
+
+iOS background downloads now also validate their final HTTPS destination before accepting an asset and allow the observed `us.aws.cdn.hf.co` endpoint. The OS owns intermediate redirects. Eleven temporary URL-policy checks and both final iOS builds passed. An established iOS 18.4 Simulator session stalled in HTTP/3 before request bytes; logs match the [Apple-confirmed simulator defect](https://developer.apple.com/forums/thread/777999). Fresh native sessions fetched the same pinned file successfully, and main-app download qualification moved to the dedicated iOS 27 simulator. No simulator-specific workaround or TLS relaxation entered the app.
+
+The 3 GB memory eligibility guard is provisional. These host-backed emulator/simulator checks do not qualify physical ordinary-phone latency, battery/thermal endurance, real microphone/routes, spontaneous-note accent breadth or every Android SoC. Distribution signing and live catalogue hosting remain owner release steps; bundled model downloads do not depend on hosting the catalogue.

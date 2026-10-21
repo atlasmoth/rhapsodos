@@ -2882,7 +2882,7 @@
   "final_pipeline_notes": {
     "selection": "Whisper Base English on both platforms; measured subset supports improved quiet-speech retention versus tested Moonshine defaults with lower resource use than Whisper Small.",
     "chunks": "Contiguous bounded 30-second PCM windows, pause-aware boundary selection, no VAD sample discarding; zero-only audio may be skipped.",
-    "blank_rule": "True first-SOT no-speech probability above 0.6 suppresses a chunk. No caption or punctuation string filtering.",
+    "blank_rule": "Segments with true first-SOT no-speech probability above 0.6 are omitted. No caption or punctuation string filtering.",
     "ios": "WhisperKit Base CoreML; corrected no-speech probability and windowClipTime=0.",
     "android": "whisper.cpp Base Q8; timestamps enabled for valid first-SOT no-speech probability.",
     "qualification_limit": "Host and simulator/emulator probes, not physical-device qualification. Small CoreML 217 MB variant was not run.",
