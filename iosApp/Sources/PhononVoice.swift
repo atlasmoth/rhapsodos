@@ -36,7 +36,7 @@ actor PhononVoice {
         let name = SHA256.hash(data: encoded).map { String(format: "%02x", $0) }.joined() + ".wav"
         let target = cache.appendingPathComponent(name)
         if FileManager.default.fileExists(atPath: target.path) {
-            if CoreMLVoice.validCachedWave(target), let audio = try? AVAudioFile(forReading: target), audio.length > 0 { return target }
+            if NarrationWave.isComplete(target), let audio = try? AVAudioFile(forReading: target), audio.length > 0 { return target }
             try FileManager.default.removeItem(at: target)
         }
         let runtime = try await load(folder.appendingPathComponent("Phonon"), identity: identity(pack, folder: folder))
@@ -98,7 +98,7 @@ actor PhononVoice {
             }
             output = nil
             try Task.checkCancellation()
-            guard wrote, CoreMLVoice.validCachedWave(partial) else { throw PackFailure.integrity }
+            guard wrote, NarrationWave.isComplete(partial) else { throw PackFailure.integrity }
             try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: partial.path)
             let handle = try FileHandle(forWritingTo: partial); try handle.synchronize(); try handle.close()
             try FileManager.default.moveItem(at: partial, to: target)

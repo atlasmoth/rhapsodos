@@ -17,8 +17,6 @@ settings:
 packages:
   Phonon:
     path: Vendor
-  Kokoro:
-    path: Vendor/Kokoro
   Argmax:
     url: https://github.com/argmaxinc/argmax-oss-swift.git
     exactVersion: 0.18.0
@@ -38,8 +36,6 @@ targets:
     dependencies:
       - package: Phonon
         product: PhononRuntime
-      - package: Kokoro
-        product: KokoroCoreML
       - package: Argmax
         product: WhisperKit
       - package: ZIPFoundation

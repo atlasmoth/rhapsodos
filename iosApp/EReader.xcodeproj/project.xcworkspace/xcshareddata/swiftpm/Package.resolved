@@ -1,5 +1,4 @@
 {
-  "originHash" : "6e61aacc823cd839e1f833714827071f9d17dacca8f755ac4bc42b67cd06b19b",
   "pins" : [
     {
       "identity" : "argmax-oss-swift",
@@ -17,15 +16,6 @@
       "state" : {
         "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
         "version" : "1.8.2"
-      }
-    },
-    {
-      "identity" : "swift-bart-g2p",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Jud/swift-bart-g2p.git",
-      "state" : {
-        "revision" : "1ed781e05fba7b4042212aecb6124a3aab83ce45",
-        "version" : "0.4.0"
       }
     },
     {
@@ -65,5 +55,5 @@
       }
     }
   ],
-  "version" : 3
+  "version" : 2
 }

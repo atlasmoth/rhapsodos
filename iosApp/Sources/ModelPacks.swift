@@ -11,7 +11,7 @@ struct ModelPack: Codable, Identifiable {
     let description: String; let files: [ModelAsset]; let totalBytes: Int64
     var requiredStorageBytes: Int64 { totalBytes * 4 + 100_000_000 }
     var supported: Bool {
-        capability == "tts" && ["kokoro-english-coreml", "phonon-english-coreml"].contains(adapter) || capability == "asr" && adapter == "whisper-tiny-en-coreml"
+        capability == "tts" && adapter == "phonon-english-coreml" || capability == "asr" && adapter == "whisper-tiny-en-coreml"
     }
     var eligible: Bool { supported && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= minimumOS && ProcessInfo.processInfo.physicalMemory / 1_048_576 >= minimumMemoryMB }
 }

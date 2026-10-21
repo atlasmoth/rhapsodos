@@ -44,7 +44,6 @@ final class ReaderStore: ObservableObject {
     private var interruptedCaptureReason: String?
     private var pendingImport: URL?
     let speechPacks = CoreMLSpeech()
-    let voicePacks = CoreMLVoice()
     let phononPacks = PhononVoice()
     private var preparationTask: Task<Void, Never>?
     private var geometryRepairTask: Task<Void, Never>?
@@ -66,14 +65,8 @@ final class ReaderStore: ObservableObject {
             try Task.checkCancellation()
             await self.speechPacks.unload()
             do {
-                if pack.adapter == "phonon-english-coreml" {
-                    await self.voicePacks.unload()
-                    let file = try await self.phononPacks.render(passage, voice: choice.voiceId, pack: pack, folder: folder, cache: files.transient)
-                    return RenderedNarration(url: file, playbackRate: min(2, max(0.75, pace)))
-                }
-                await self.phononPacks.unload()
-                let file = try await self.voicePacks.render(passage, voice: choice.voiceId, pace: pace * 0.5, pack: pack, folder: folder, cache: files.transient)
-                return RenderedNarration(url: file, playbackRate: 1)
+                let file = try await self.phononPacks.render(passage, voice: choice.voiceId, pack: pack, folder: folder, cache: files.transient)
+                return RenderedNarration(url: file, playbackRate: min(2, max(0.75, pace)))
             }
             catch {
                 if let installation = self.models?.installs.first(where: { $0.packId == pack.id }), !(error is CancellationError), !(error is NarrationFailure) {
@@ -209,9 +202,8 @@ final class ReaderStore: ObservableObject {
                 if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
                 try Task.checkCancellation()
                 switch pack.adapter {
-                case "whisper-tiny-en-coreml": await self.phononPacks.unload(); await self.voicePacks.unload(); try await self.speechPacks.validateASR(at: folder)
-                case "kokoro-english-coreml": await self.phononPacks.unload(); await self.speechPacks.unload(); try await self.voicePacks.validate(at: folder)
-                case "phonon-english-coreml": await self.voicePacks.unload(); await self.speechPacks.unload(); try await self.phononPacks.validate(pack: pack, at: folder)
+                case "whisper-tiny-en-coreml": await self.phononPacks.unload(); try await self.speechPacks.validateASR(at: folder)
+                case "phonon-english-coreml": await self.speechPacks.unload(); try await self.phononPacks.validate(pack: pack, at: folder)
                 default: throw PackFailure.incompatible
                 }
             } }
@@ -599,7 +591,7 @@ final class ReaderStore: ObservableObject {
         await worker?.value
         await geometryWorker?.value
         await speechPacks.unload()
-        await phononPacks.unload(); await voicePacks.unload()
+        await phononPacks.unload()
         func validAttachment() -> Bool {
             preparedPassage(at: anchor) == passage && currentHighlightAnchor == bookAnchor
                 && audio.transportRevision == stoppedTransport
@@ -787,7 +779,7 @@ final class ReaderStore: ObservableObject {
         worker?.cancel()
         await worker?.value
         await audio.pauseAndJoinGeneration()
-        do { await speechPacks.unload(); await phononPacks.unload(); await voicePacks.unload(); try await models.remove(pack) }
+        do { await speechPacks.unload(); await phononPacks.unload(); try await models.remove(pack) }
         catch { present(error) }
     }
 
@@ -855,7 +847,7 @@ final class ReaderStore: ObservableObject {
                 let rendering = Task.detached(priority: .utility) { try VoiceVault.render(input, to: output, expectedDurationMillis: note.durationMillis) }
                 _ = try await withTaskCancellationHandler(operation: { try await rendering.value }, onCancel: { rendering.cancel() })
                 try Task.checkCancellation()
-                await phononPacks.unload(); await voicePacks.unload()
+                await phononPacks.unload()
                 let text: String
                 if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-tiny-en-coreml" {
                     text = try await speechPacks.transcribe(output, using: folder)

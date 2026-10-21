@@ -7,37 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0CFBFEFBFC767FBB7CE11452 /* KokoroCoreML in Frameworks */ = {isa = PBXBuildFile; productRef = F07E887DBE89578B8E6DF71D /* KokoroCoreML */; };
+		0CFBFEFBFC767FBB7CE11452 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 408B4AA746EC0DA7E3367921 /* WhisperKit */; };
 		13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB800AE8658C38622C0342F1 /* Feedback.swift */; };
 		14659CFAD51C40BB6AFD1B83 /* swift-jinja.txt in Resources */ = {isa = PBXBuildFile; fileRef = 33314AC53448D24B7FD014E6 /* swift-jinja.txt */; };
 		1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38AAAFA5A978CBA22107C06 /* FileDurability.swift */; };
-		1CB35CA2FE8DDEBA8C585EB5 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 408B4AA746EC0DA7E3367921 /* WhisperKit */; };
+		1CB35CA2FE8DDEBA8C585EB5 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = ACCB12F96BAD9BECA72FD1EE /* ZIPFoundation */; };
 		203147D2773D6AFB90E4BA54 /* PhononAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */; };
 		20C891C733BA7ADC55FE6927 /* PhononRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = AB988C095418D804F1297F7B /* PhononRuntime */; };
-		279613870BBEC8A1D7118095 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = ACCB12F96BAD9BECA72FD1EE /* ZIPFoundation */; };
+		279613870BBEC8A1D7118095 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 9BD691A5A45C041AC1582C58 /* Tokenizers */; };
 		29F171A21B75FAD113E6DE95 /* font-spacegrotesk.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2E0F8D42D167D96BFFA046D4 /* font-spacegrotesk.txt */; };
 		32F057678EF9C76F39B081D7 /* ZIPFoundation.txt in Resources */ = {isa = PBXBuildFile; fileRef = CD285C7DBC7FC3CB78949930 /* ZIPFoundation.txt */; };
 		331A651D05D6052DD0502DD2 /* PhononVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B8B359DCCBC2116CB9015B /* PhononVoice.swift */; };
 		3845EE5CD3D096E616C54E07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9DFA4348DF0C8CE8EE64C57 /* Assets.xcassets */; };
 		386B6B7CF32A7E796084A9CA /* swift-transformers.txt in Resources */ = {isa = PBXBuildFile; fileRef = E125094F33E18E25076A697A /* swift-transformers.txt */; };
 		3FC5903F2BD44315D82D5596 /* SharedRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23EF19BE856883DC5656A94 /* SharedRepository.swift */; };
-		4F57137AE45BD99514CD9B6E /* KittenML_KittenTTS.txt in Resources */ = {isa = PBXBuildFile; fileRef = 329760A92B48CDC836589BE9 /* KittenML_KittenTTS.txt */; };
-		55792D0393087426DBF0D23C /* UsefulSensors_moonshine.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9789C7F06C01DBBA1CEF5181 /* UsefulSensors_moonshine.txt */; };
-		5AAE9E34F967382A92DE46C2 /* google-ai-edge_LiteRT.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3FD6265C06D48EA489467BD6 /* google-ai-edge_LiteRT.txt */; };
-		5AB930DF7AE3CD62485B786E /* NeuralVox_OpenPhonemizer.txt in Resources */ = {isa = PBXBuildFile; fileRef = 27CD1BEF3AEF3BF89165F42C /* NeuralVox_OpenPhonemizer.txt */; };
 		5B99F6788E3474D8B0C49E02 /* SpaceMono.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EEDF09C43D2A8F0BD0B8461D /* SpaceMono.ttf */; };
 		6129B2C910F6320DB613CCE2 /* ReaderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */; };
-		636755BEE523FFADF0ACEE98 /* CoreMLVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57510AB36675C4F53AA7EA68 /* CoreMLVoice.swift */; };
 		6A7E1B20FD0CC6C33645C915 /* swift-argument-parser.txt in Resources */ = {isa = PBXBuildFile; fileRef = 813B77F82EB0B3FFDE10B577 /* swift-argument-parser.txt */; };
 		74DA643810151910DB13A018 /* Passage.metal in Sources */ = {isa = PBXBuildFile; fileRef = E333FA0C1DD84687684EC5C4 /* Passage.metal */; };
 		8306BE50C5FD5D4F7F8959F9 /* font-inter.txt in Resources */ = {isa = PBXBuildFile; fileRef = 380BA033A09B115E1FA65D51 /* font-inter.txt */; };
 		86627DF5AA11D095CEA33777 /* argmax-oss-swift.txt in Resources */ = {isa = PBXBuildFile; fileRef = 714529C0A75B0AF9890A5273 /* argmax-oss-swift.txt */; };
 		8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */; };
-		95A42A287B1AF27C2E9A95CC /* Jud_KokoroCoreML.txt in Resources */ = {isa = PBXBuildFile; fileRef = ED6EE957F527F56F0B7C2E90 /* Jud_KokoroCoreML.txt */; };
+		9C9EFD3D323721FAD5293F3E /* NarrationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E92111D5E2C960219B20BC /* NarrationText.swift */; };
 		A0C208A643BC480665D97354 /* ReaderTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51067617DC21E834D44D8570 /* ReaderTools.swift */; };
-		A61966FBDA17A39DCFA2CA12 /* Jud_KokoroCoreML-NOTICE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0E530F16AD2DAF3149EFE82E /* Jud_KokoroCoreML-NOTICE.txt */; };
 		A6E3E8E1DBD9AC2150C3A4E1 /* OpenAI_Whisper.txt in Resources */ = {isa = PBXBuildFile; fileRef = 596569A77EEDDBC10422C7A8 /* OpenAI_Whisper.txt */; };
-		A855279F89651F1444696791 /* swift-bart-g2p.txt in Resources */ = {isa = PBXBuildFile; fileRef = F81CC45E70B52D700B139043 /* swift-bart-g2p.txt */; };
 		AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */; };
 		AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */; };
 		B1DA20F97D06996B4BAB9523 /* DocumentArchives.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613CD34F289B7C9CC25FC84 /* DocumentArchives.swift */; };
@@ -46,9 +39,8 @@
 		BB26C55F2C9F2BE355562107 /* SpaceGrotesk.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BDEBD9E22BE867A6A944D44F /* SpaceGrotesk.ttf */; };
 		BCF5C7B21945430890E0FC2E /* CoreMLSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED43090DCE4C338A4514829E /* CoreMLSpeech.swift */; };
 		BD459FFFA3A72139B573D5BD /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557290E63C255BEB5621E979 /* Brand.swift */; };
-		BD71D2DB872528FDB127E035 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 9BD691A5A45C041AC1582C58 /* Tokenizers */; };
 		BEB843607A44B0B8E2ED5F31 /* NativeSpeech-NOTICE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0296EB9FD3E50A29319E24C5 /* NativeSpeech-NOTICE.txt */; };
-		D32A8F5FBC84D9A0F5656AB4 /* as-ideas_DeepPhonemizer.txt in Resources */ = {isa = PBXBuildFile; fileRef = A0E78F9C1D3362B526593136 /* as-ideas_DeepPhonemizer.txt */; };
+		C7B146CEC3373421573E9A5E /* NarrationWave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2066543A2FF1C0616A50112D /* NarrationWave.swift */; };
 		D8FD94FF97E2DC8D1EDA66BC /* font-spacemono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 940BE5C6D755CBC0B557F28D /* font-spacemono.txt */; };
 		E00F7C9A4FB44E5EC2EB532D /* ModelCatalogClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */; };
 		EF568699FAA182F52BCAC66D /* swift-collections.txt in Resources */ = {isa = PBXBuildFile; fileRef = 09119DCD7C8BC9E09A797565 /* swift-collections.txt */; };
@@ -61,23 +53,19 @@
 /* Begin PBXFileReference section */
 		0296EB9FD3E50A29319E24C5 /* NativeSpeech-NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "NativeSpeech-NOTICE.txt"; sourceTree = "<group>"; };
 		09119DCD7C8BC9E09A797565 /* swift-collections.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-collections.txt"; sourceTree = "<group>"; };
-		0E530F16AD2DAF3149EFE82E /* Jud_KokoroCoreML-NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Jud_KokoroCoreML-NOTICE.txt"; sourceTree = "<group>"; };
 		1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionFailure.swift; sourceTree = "<group>"; };
-		27CD1BEF3AEF3BF89165F42C /* NeuralVox_OpenPhonemizer.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = NeuralVox_OpenPhonemizer.txt; sourceTree = "<group>"; };
+		2066543A2FF1C0616A50112D /* NarrationWave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationWave.swift; sourceTree = "<group>"; };
 		2A90175FA0D65721583D22D0 /* Inter.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Inter.ttf; sourceTree = "<group>"; };
 		2E0F8D42D167D96BFFA046D4 /* font-spacegrotesk.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-spacegrotesk.txt"; sourceTree = "<group>"; };
-		329760A92B48CDC836589BE9 /* KittenML_KittenTTS.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = KittenML_KittenTTS.txt; sourceTree = "<group>"; };
 		33314AC53448D24B7FD014E6 /* swift-jinja.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-jinja.txt"; sourceTree = "<group>"; };
 		3357A9916FD1C0B11EE3B583 /* ReaderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderStore.swift; sourceTree = "<group>"; };
 		3557A4212E8E793E32F863DF /* VoiceVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceVault.swift; sourceTree = "<group>"; };
 		380BA033A09B115E1FA65D51 /* font-inter.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-inter.txt"; sourceTree = "<group>"; };
 		3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalogClient.swift; sourceTree = "<group>"; };
 		3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhononAssets.swift; sourceTree = "<group>"; };
-		3FD6265C06D48EA489467BD6 /* google-ai-edge_LiteRT.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "google-ai-edge_LiteRT.txt"; sourceTree = "<group>"; };
 		4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EReaderApp.swift; sourceTree = "<group>"; };
 		51067617DC21E834D44D8570 /* ReaderTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderTools.swift; sourceTree = "<group>"; };
 		557290E63C255BEB5621E979 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
-		57510AB36675C4F53AA7EA68 /* CoreMLVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreMLVoice.swift; sourceTree = "<group>"; };
 		596569A77EEDDBC10422C7A8 /* OpenAI_Whisper.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OpenAI_Whisper.txt; sourceTree = "<group>"; };
 		714529C0A75B0AF9890A5273 /* argmax-oss-swift.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "argmax-oss-swift.txt"; sourceTree = "<group>"; };
 		76261192C21D1EB5F2DEF773 /* Vendor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Vendor; path = Vendor; sourceTree = SOURCE_ROOT; };
@@ -87,10 +75,8 @@
 		940BE5C6D755CBC0B557F28D /* font-spacemono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-spacemono.txt"; sourceTree = "<group>"; };
 		9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCoordinator.swift; sourceTree = "<group>"; };
 		95B8B359DCCBC2116CB9015B /* PhononVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhononVoice.swift; sourceTree = "<group>"; };
-		9789C7F06C01DBBA1CEF5181 /* UsefulSensors_moonshine.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = UsefulSensors_moonshine.txt; sourceTree = "<group>"; };
-		A0E78F9C1D3362B526593136 /* as-ideas_DeepPhonemizer.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "as-ideas_DeepPhonemizer.txt"; sourceTree = "<group>"; };
-		A5AAE0ED27AA27037F805EDA /* Kokoro */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Kokoro; path = Vendor/Kokoro; sourceTree = SOURCE_ROOT; };
 		B23EF19BE856883DC5656A94 /* SharedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRepository.swift; sourceTree = "<group>"; };
+		B2E92111D5E2C960219B20BC /* NarrationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationText.swift; sourceTree = "<group>"; };
 		BDEBD9E22BE867A6A944D44F /* SpaceGrotesk.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = SpaceGrotesk.ttf; sourceTree = "<group>"; };
 		CD285C7DBC7FC3CB78949930 /* ZIPFoundation.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ZIPFoundation.txt; sourceTree = "<group>"; };
 		D613CD34F289B7C9CC25FC84 /* DocumentArchives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentArchives.swift; sourceTree = "<group>"; };
@@ -101,10 +87,8 @@
 		E333FA0C1DD84687684EC5C4 /* Passage.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Passage.metal; sourceTree = "<group>"; };
 		EC132794F2FCE9235EB8BF42 /* Phonon.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Phonon.txt; sourceTree = "<group>"; };
 		ED43090DCE4C338A4514829E /* CoreMLSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreMLSpeech.swift; sourceTree = "<group>"; };
-		ED6EE957F527F56F0B7C2E90 /* Jud_KokoroCoreML.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Jud_KokoroCoreML.txt; sourceTree = "<group>"; };
 		EEDF09C43D2A8F0BD0B8461D /* SpaceMono.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = SpaceMono.ttf; sourceTree = "<group>"; };
 		F38AAAFA5A978CBA22107C06 /* FileDurability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDurability.swift; sourceTree = "<group>"; };
-		F81CC45E70B52D700B139043 /* swift-bart-g2p.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-bart-g2p.txt"; sourceTree = "<group>"; };
 		F9DFA4348DF0C8CE8EE64C57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -114,10 +98,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				20C891C733BA7ADC55FE6927 /* PhononRuntime in Frameworks */,
-				0CFBFEFBFC767FBB7CE11452 /* KokoroCoreML in Frameworks */,
-				1CB35CA2FE8DDEBA8C585EB5 /* WhisperKit in Frameworks */,
-				279613870BBEC8A1D7118095 /* ZIPFoundation in Frameworks */,
-				BD71D2DB872528FDB127E035 /* Tokenizers in Frameworks */,
+				0CFBFEFBFC767FBB7CE11452 /* WhisperKit in Frameworks */,
+				1CB35CA2FE8DDEBA8C585EB5 /* ZIPFoundation in Frameworks */,
+				279613870BBEC8A1D7118095 /* Tokenizers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,24 +121,16 @@
 			isa = PBXGroup;
 			children = (
 				714529C0A75B0AF9890A5273 /* argmax-oss-swift.txt */,
-				A0E78F9C1D3362B526593136 /* as-ideas_DeepPhonemizer.txt */,
 				380BA033A09B115E1FA65D51 /* font-inter.txt */,
 				2E0F8D42D167D96BFFA046D4 /* font-spacegrotesk.txt */,
 				940BE5C6D755CBC0B557F28D /* font-spacemono.txt */,
-				3FD6265C06D48EA489467BD6 /* google-ai-edge_LiteRT.txt */,
-				0E530F16AD2DAF3149EFE82E /* Jud_KokoroCoreML-NOTICE.txt */,
-				ED6EE957F527F56F0B7C2E90 /* Jud_KokoroCoreML.txt */,
-				329760A92B48CDC836589BE9 /* KittenML_KittenTTS.txt */,
 				0296EB9FD3E50A29319E24C5 /* NativeSpeech-NOTICE.txt */,
-				27CD1BEF3AEF3BF89165F42C /* NeuralVox_OpenPhonemizer.txt */,
 				596569A77EEDDBC10422C7A8 /* OpenAI_Whisper.txt */,
 				EC132794F2FCE9235EB8BF42 /* Phonon.txt */,
 				813B77F82EB0B3FFDE10B577 /* swift-argument-parser.txt */,
-				F81CC45E70B52D700B139043 /* swift-bart-g2p.txt */,
 				09119DCD7C8BC9E09A797565 /* swift-collections.txt */,
 				33314AC53448D24B7FD014E6 /* swift-jinja.txt */,
 				E125094F33E18E25076A697A /* swift-transformers.txt */,
-				9789C7F06C01DBBA1CEF5181 /* UsefulSensors_moonshine.txt */,
 				CD285C7DBC7FC3CB78949930 /* ZIPFoundation.txt */,
 			);
 			path = Licenses;
@@ -164,7 +139,6 @@
 		2E9B79DE647C9517DE5ABF01 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				A5AAE0ED27AA27037F805EDA /* Kokoro */,
 				76261192C21D1EB5F2DEF773 /* Vendor */,
 			);
 			name = Packages;
@@ -197,13 +171,14 @@
 				9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */,
 				557290E63C255BEB5621E979 /* Brand.swift */,
 				ED43090DCE4C338A4514829E /* CoreMLSpeech.swift */,
-				57510AB36675C4F53AA7EA68 /* CoreMLVoice.swift */,
 				D613CD34F289B7C9CC25FC84 /* DocumentArchives.swift */,
 				4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */,
 				DB800AE8658C38622C0342F1 /* Feedback.swift */,
 				F38AAAFA5A978CBA22107C06 /* FileDurability.swift */,
 				3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */,
 				DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */,
+				B2E92111D5E2C960219B20BC /* NarrationText.swift */,
+				2066543A2FF1C0616A50112D /* NarrationWave.swift */,
 				8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */,
 				3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */,
 				95B8B359DCCBC2116CB9015B /* PhononVoice.swift */,
@@ -244,7 +219,6 @@
 			name = EReader;
 			packageProductDependencies = (
 				AB988C095418D804F1297F7B /* PhononRuntime */,
-				F07E887DBE89578B8E6DF71D /* KokoroCoreML */,
 				408B4AA746EC0DA7E3367921 /* WhisperKit */,
 				ACCB12F96BAD9BECA72FD1EE /* ZIPFoundation */,
 				9BD691A5A45C041AC1582C58 /* Tokenizers */,
@@ -280,7 +254,6 @@
 				EF698B958B5A5A9515CB83F9 /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
 				9DCC23A1F88B24BE99E02562 /* XCRemoteSwiftPackageReference "swift-transformers" */,
 				7FD5C5D9C9933F9FC499E028 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
-				5D081D5DF3810EA280AB4401 /* XCLocalSwiftPackageReference "Vendor/Kokoro" */,
 				D0D6A5846F0BF4B1904E09C0 /* XCLocalSwiftPackageReference "Vendor" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -300,25 +273,17 @@
 			files = (
 				3845EE5CD3D096E616C54E07 /* Assets.xcassets in Resources */,
 				F52CFAECA44ADA7916B36503 /* Inter.ttf in Resources */,
-				A61966FBDA17A39DCFA2CA12 /* Jud_KokoroCoreML-NOTICE.txt in Resources */,
-				95A42A287B1AF27C2E9A95CC /* Jud_KokoroCoreML.txt in Resources */,
-				4F57137AE45BD99514CD9B6E /* KittenML_KittenTTS.txt in Resources */,
 				BEB843607A44B0B8E2ED5F31 /* NativeSpeech-NOTICE.txt in Resources */,
-				5AB930DF7AE3CD62485B786E /* NeuralVox_OpenPhonemizer.txt in Resources */,
 				A6E3E8E1DBD9AC2150C3A4E1 /* OpenAI_Whisper.txt in Resources */,
 				F5267469F8E24E91676C1480 /* Phonon.txt in Resources */,
 				BB26C55F2C9F2BE355562107 /* SpaceGrotesk.ttf in Resources */,
 				5B99F6788E3474D8B0C49E02 /* SpaceMono.ttf in Resources */,
-				55792D0393087426DBF0D23C /* UsefulSensors_moonshine.txt in Resources */,
 				32F057678EF9C76F39B081D7 /* ZIPFoundation.txt in Resources */,
 				86627DF5AA11D095CEA33777 /* argmax-oss-swift.txt in Resources */,
-				D32A8F5FBC84D9A0F5656AB4 /* as-ideas_DeepPhonemizer.txt in Resources */,
 				8306BE50C5FD5D4F7F8959F9 /* font-inter.txt in Resources */,
 				29F171A21B75FAD113E6DE95 /* font-spacegrotesk.txt in Resources */,
 				D8FD94FF97E2DC8D1EDA66BC /* font-spacemono.txt in Resources */,
-				5AAE9E34F967382A92DE46C2 /* google-ai-edge_LiteRT.txt in Resources */,
 				6A7E1B20FD0CC6C33645C915 /* swift-argument-parser.txt in Resources */,
-				A855279F89651F1444696791 /* swift-bart-g2p.txt in Resources */,
 				EF568699FAA182F52BCAC66D /* swift-collections.txt in Resources */,
 				14659CFAD51C40BB6AFD1B83 /* swift-jinja.txt in Resources */,
 				386B6B7CF32A7E796084A9CA /* swift-transformers.txt in Resources */,
@@ -357,13 +322,14 @@
 				B605F37340FE6FD390A9E30B /* AudioCoordinator.swift in Sources */,
 				BD459FFFA3A72139B573D5BD /* Brand.swift in Sources */,
 				BCF5C7B21945430890E0FC2E /* CoreMLSpeech.swift in Sources */,
-				636755BEE523FFADF0ACEE98 /* CoreMLVoice.swift in Sources */,
 				B1DA20F97D06996B4BAB9523 /* DocumentArchives.swift in Sources */,
 				8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */,
 				13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */,
 				1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */,
 				E00F7C9A4FB44E5EC2EB532D /* ModelCatalogClient.swift in Sources */,
 				AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */,
+				9C9EFD3D323721FAD5293F3E /* NarrationText.swift in Sources */,
+				C7B146CEC3373421573E9A5E /* NarrationWave.swift in Sources */,
 				AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */,
 				74DA643810151910DB13A018 /* Passage.metal in Sources */,
 				203147D2773D6AFB90E4BA54 /* PhononAssets.swift in Sources */,
@@ -569,10 +535,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		5D081D5DF3810EA280AB4401 /* XCLocalSwiftPackageReference "Vendor/Kokoro" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Vendor/Kokoro;
-		};
 		D0D6A5846F0BF4B1904E09C0 /* XCLocalSwiftPackageReference "Vendor" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Vendor;
@@ -625,10 +587,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7FD5C5D9C9933F9FC499E028 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
-		};
-		F07E887DBE89578B8E6DF71D /* KokoroCoreML */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = KokoroCoreML;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
