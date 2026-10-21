@@ -189,7 +189,7 @@ CoreML is the iOS inference baseline. `MLComputeUnits.all` allows the OS to sele
 
 Kokoro, its pronunciation frontend and unused package dependencies are removed. Phonon is the only narration adapter. Source preparation, recordings and ASR remain independent of voice availability. [models-and-evaluation.md](models-and-evaluation.md) records the measured comparison and remaining qualification.
 
-Phonon 31M provides the downloadable CoreML voice. Its pinned archive is verified and extracted under a strict path/size/hash contract before local compilation and readiness synthesis. A serial native queue joins cancellation before model release; partial or EOS-exhausted audio never enters the narration cache. Native `AVAudioPlayer.rate` controls speed while `currentTime` remains the source clock. The voice engine unloads before competing speech or capture work. Only the default Phonon voice is exposed until other voices are evaluated.
+Phonon 31M provides the downloadable CoreML voices. Its pinned archive is verified and extracted under a strict path/size/hash contract before local compilation and readiness synthesis. The archive already includes 37 named English speaker profiles plus the default; selecting them shares the installed model without another archive download or compilation. A serial native queue joins cancellation before speaker changes or model release; partial or EOS-exhausted audio never enters the narration cache. Native `AVAudioPlayer.rate` controls speed while `currentTime` remains the source clock. The voice engine unloads before competing speech or capture work. Speaker availability and runtime execution do not establish sustained listening quality; physical-device and listener qualification remain separate.
 
 ### Curated gallery
 

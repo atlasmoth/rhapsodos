@@ -108,14 +108,7 @@ struct DownloadedVoice {
     init(packId: String, voiceId: String) { self.packId = packId; self.voiceId = voiceId }
     init?(_ identifier: String) {
         let parts = identifier.split(separator: ":", omittingEmptySubsequences: false)
-        guard parts.count == 3, parts[0] == "pack", !parts[1].isEmpty,
-              parts[2] == "default" else { return nil }
+        guard parts.count == 3, parts[0] == "pack", !parts[1].isEmpty, !parts[2].isEmpty else { return nil }
         packId = String(parts[1]); voiceId = String(parts[2])
-    }
-    static func voices(for pack: ModelPack) -> [(String, String)] {
-        switch pack.adapter {
-        case "phonon-english-coreml": [("default", "Phonon")]
-        default: []
-        }
     }
 }

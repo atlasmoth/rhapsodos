@@ -65,14 +65,14 @@ final class ReaderStore: ObservableObject {
         audio.canUseVoice = { [weak self] identifier in
             guard let choice = DownloadedVoice(identifier),
                   let (pack, _) = self?.models?.ready(capability: "tts", id: choice.packId) else { return false }
-            return DownloadedVoice.voices(for: pack).contains { $0.0 == choice.voiceId }
+            return pack.voices.contains { $0.id == choice.voiceId }
         }
         audio.onVoiceUnavailable = { [weak self] in self?.speechSetupSheet = .narration }
         audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
             guard let self, let files = self.files, let choice = DownloadedVoice(voice),
                   let (pack, folder) = self.models?.ready(capability: "tts", id: choice.packId),
-                  DownloadedVoice.voices(for: pack).contains(where: { $0.0 == choice.voiceId }) else { throw PackFailure.notReady }
+                  pack.voices.contains(where: { $0.id == choice.voiceId }) else { throw PackFailure.notReady }
             if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
             try Task.checkCancellation()
             await self.speechPacks.unload()
@@ -790,11 +790,14 @@ final class ReaderStore: ObservableObject {
 
     private func reconcileSpeechSelections() async {
         guard let models, !models.loading, !models.refreshingCatalog else { return }
-        for intent in speechSetup.pending.values where !models.catalog.contains(where: { $0.id == intent.packId && $0.capability == intent.capability.rawValue && $0.supported }) {
+        for intent in speechSetup.pending.values where !models.catalog.contains(where: {
+            $0.id == intent.packId && $0.capability == intent.capability.rawValue && $0.supported
+                && (intent.capability != .narration || $0.voices.contains(where: { $0.id == intent.voiceId }))
+        }) {
             speechSetup.cancel(intent.capability, matching: intent.id)
         }
         if let selected = DownloadedVoice(audio.selectedVoice),
-           !models.catalog.contains(where: { $0.id == selected.packId && $0.supported && DownloadedVoice.voices(for: $0).contains(where: { $0.0 == selected.voiceId }) }) {
+           !models.catalog.contains(where: { $0.id == selected.packId && $0.supported && $0.voices.contains(where: { $0.id == selected.voiceId }) }) {
             await audio.changeVoice("")
         }
         if selectedTranscription != "off", !models.catalog.contains(where: { $0.id == selectedTranscription && $0.capability == "asr" && $0.supported })
@@ -866,11 +869,13 @@ final class ReaderStore: ObservableObject {
         return true
     }
 
-    func startSpeechSetup(_ pack: ModelPack) {
+    func startSpeechSetup(_ pack: ModelPack, voiceId: String? = nil) {
         guard let capability = SpeechCapability(rawValue: pack.capability), let models, pack.eligible,
               models.catalog.contains(where: { $0.id == pack.id }), !models.refreshingCatalog else { return }
-        let voice = capability == .narration ? DownloadedVoice.voices(for: pack).first?.0 : nil
-        guard capability != .narration || voice != nil else { return }
+        let retainedVoice = speechSetup.pending[.narration].flatMap { $0.packId == pack.id ? $0.voiceId : nil }
+        let selectedVoice = DownloadedVoice(audio.selectedVoice).flatMap { $0.packId == pack.id ? $0.voiceId : nil }
+        let voice = capability == .narration ? (voiceId ?? retainedVoice ?? selectedVoice ?? pack.voices.first?.id) : nil
+        guard capability != .narration || pack.voices.contains(where: { $0.id == voice }) else { return }
         let intent = speechSetup.request(capability, packId: pack.id, voiceId: voice)
         serviceSpeechSetup()
         guard models.ready(capability: pack.capability, id: pack.id) == nil,
@@ -910,9 +915,10 @@ final class ReaderStore: ObservableObject {
             guard let self else { return }
             let current = { [weak self] in
                 guard let self else { return false }
-                return self.speechSetup.isActive(intent) && !self.loading && !self.preparingDocument && self.captureDraft == nil && !self.audio.recording
-                    && !self.audio.capturePending && self.sceneActive
-                    && self.models?.ready(capability: intent.capability.rawValue, id: intent.packId) != nil
+                guard self.speechSetup.isActive(intent), !self.loading, !self.preparingDocument, self.captureDraft == nil, !self.audio.recording,
+                      !self.audio.capturePending, self.sceneActive,
+                      let (pack, _) = self.models?.ready(capability: intent.capability.rawValue, id: intent.packId) else { return false }
+                return intent.capability != .narration || pack.voices.contains(where: { $0.id == intent.voiceId })
             }
             let selected: Bool
             if intent.capability == .narration, let voice = intent.voiceId {

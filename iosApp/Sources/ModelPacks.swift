@@ -4,11 +4,14 @@ import SwiftUI
 import Darwin
 
 struct ModelAsset: Codable { let path: String; let url: String; let sha256: String; let bytes: Int64 }
+struct ModelVoice: Codable, Identifiable {
+    let id: String; let name: String; let languageTag: String; let category: String
+}
 struct ModelPack: Codable, Identifiable {
     let id: String; let name: String; let capability: String; let platform: String
     let runtime: String; let adapter: String; let version: String; let languageTags: [String]
     let minimumOS: Int; let minimumMemoryMB: Int; let license: String; let licenseUrl: String
-    let description: String; let files: [ModelAsset]; let totalBytes: Int64
+    let description: String; let files: [ModelAsset]; let totalBytes: Int64; let voices: [ModelVoice]
     var requiredStorageBytes: Int64 { totalBytes * 4 + 100_000_000 }
     var supported: Bool {
         capability == "tts" && adapter == "phonon-english-coreml" || capability == "asr" && adapter == "whisper-base-en-coreml"
@@ -584,6 +587,10 @@ struct SpeechSetupSheet: View {
                         if capability == nil { Text(section.title).font(.headline).accessibilityAddTraits(.isHeader) }
                         ForEach(models.catalog.filter { $0.capability == section.rawValue }) { pack in
                             SpeechPackCard(pack: pack, models: models)
+                            if section == .narration, models.ready(capability: pack.capability, id: pack.id) != nil, !pack.voices.isEmpty {
+                                if capability == nil { CollapsedNarrationVoices(pack: pack, models: models) }
+                                else { NarrationVoices(pack: pack, models: models) }
+                            }
                         }
                     }
                     if models.liveCatalogConfigured {
@@ -656,15 +663,17 @@ private struct SpeechPackCard: View {
                 Text("\(size(install.bytesDownloaded)) of \(size(pack.totalBytes))").font(.caption).foregroundStyle(Palette.muted)
             } else if working && !ready { ProgressView().accessibilityLabel("Checking speech download") }
             if let install, !install.error.isEmpty { Text(install.error).font(.caption).foregroundStyle(.red) }
-            Button {
-                store.feedback.play(.selection)
-                if working && !paused && pending != nil { store.pauseSpeechSetup(pack) }
-                else { store.startSpeechSetup(pack) }
-            } label: {
-                Text(actionTitle).font(.headline).foregroundStyle(actionDisabled ? Palette.muted : Palette.onAccent)
-                    .multilineTextAlignment(.center).frame(maxWidth: .infinity, minHeight: 44)
-            }.buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
-                .disabled(actionDisabled)
+            if pack.capability != "tts" || !ready || pack.voices.isEmpty {
+                Button {
+                    store.feedback.play(.selection)
+                    if working && !paused && pending != nil { store.pauseSpeechSetup(pack) }
+                    else { store.startSpeechSetup(pack) }
+                } label: {
+                    Text(actionTitle).font(.headline).foregroundStyle(actionDisabled ? Palette.muted : Palette.onAccent)
+                        .multilineTextAlignment(.center).frame(maxWidth: .infinity, minHeight: 44)
+                }.buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                    .disabled(actionDisabled)
+            }
             DisclosureGroup("Details", isExpanded: $details) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("\(pack.runtime) · \(pack.version)").font(.caption)
@@ -688,6 +697,80 @@ private struct SpeechPackCard: View {
     private func size(_ bytes: Int64) -> String { ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) }
 }
 
+private struct CollapsedNarrationVoices: View {
+    let pack: ModelPack
+    @ObservedObject var models: ModelPacks
+    @EnvironmentObject private var store: ReaderStore
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            NarrationVoices(pack: pack, models: models).padding(.top, 14)
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Choose a voice").font(.headline)
+                Text(store.speechSummary(.narration)).font(.subheadline).foregroundStyle(Palette.muted)
+            }
+        }.padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
+            .onChange(of: expanded) { _, _ in store.feedback.play(.selection) }
+    }
+}
+
+private struct NarrationVoices: View {
+    let pack: ModelPack
+    @ObservedObject var models: ModelPacks
+    @EnvironmentObject private var store: ReaderStore
+    @EnvironmentObject private var audio: AudioCoordinator
+    @State private var charactersExpanded = false
+    private var pending: SpeechSetupIntent? { store.speechSetup.pending[.narration].flatMap { $0.packId == pack.id ? $0 : nil } }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Narrators").font(.headline).accessibilityAddTraits(.isHeader)
+            rows(pack.voices.filter { $0.category == "narrator" })
+            if pack.voices.contains(where: { $0.category == "character" }) {
+                DisclosureGroup("Characters", isExpanded: $charactersExpanded) {
+                    rows(pack.voices.filter { $0.category == "character" }).padding(.top, 14)
+                }.font(.headline).padding(18)
+                    .background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
+                    .onChange(of: charactersExpanded) { _, _ in store.feedback.play(.selection) }
+            }
+        }
+    }
+
+    private func rows(_ voices: [ModelVoice]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(voices) { voice in
+                let selected = audio.selectedVoice == DownloadedVoice(packId: pack.id, voiceId: voice.id).identifier
+                let selecting = pending?.voiceId == voice.id
+                Button {
+                    guard !selected || pending != nil else { return }
+                    store.feedback.play(.selection); store.startSpeechSetup(pack, voiceId: voice.id)
+                } label: {
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(voice.name).font(.headline)
+                            Text(voice.localizedLanguage).font(.subheadline).foregroundStyle(Palette.muted)
+                            if selecting { Text(pending?.paused == true ? "Paused" : "Selecting…").font(.caption).foregroundStyle(Palette.accent) }
+                        }
+                        Spacer(minLength: 0)
+                        if selecting && pending?.paused != true { ProgressView().accessibilityHidden(true) }
+                        else if selected { Image(systemName: "checkmark").font(.body.weight(.semibold)).foregroundStyle(Palette.accent).accessibilityHidden(true) }
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(18).contentShape(Rectangle())
+                }.buttonStyle(.plain).disabled(models.loading || models.refreshingCatalog)
+                    .accessibilityLabel("\(voice.name), \(voice.localizedLanguage)")
+                    .accessibilityValue(selecting ? (pending?.paused == true ? "Paused" : "Selecting") : (selected ? "Selected" : ""))
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                if voice.id != voices.last?.id { Divider().padding(.horizontal, 18) }
+            }
+        }.background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+extension ModelVoice {
+    var localizedLanguage: String { Locale.current.localizedString(forIdentifier: languageTag.replacingOccurrences(of: "-", with: "_")) ?? languageTag }
+}
+
 extension ModelPack {
     var speechName: String { name.components(separatedBy: " • ").first ?? name }
     var speechLanguages: String {
@@ -698,7 +781,11 @@ extension ModelPack {
 extension ReaderStore {
     func speechPackSelected(_ pack: ModelPack) -> Bool {
         guard models?.ready(capability: pack.capability, id: pack.id) != nil else { return false }
-        return pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : selectedTranscription == pack.id
+        if pack.capability == "tts" {
+            guard let choice = DownloadedVoice(audio.selectedVoice), choice.packId == pack.id else { return false }
+            return pack.voices.contains { $0.id == choice.voiceId }
+        }
+        return selectedTranscription == pack.id
     }
 
     func speechPackStatus(_ pack: ModelPack) -> String {
@@ -730,7 +817,7 @@ extension ReaderStore {
         }
         if capability == .transcription { return transcriptionRequested ? "On" : "Off" }
         if let choice = DownloadedVoice(audio.selectedVoice), let pack = models?.catalog.first(where: { $0.id == choice.packId }) {
-            if speechPackSelected(pack) { return "\(pack.speechName) · \(pack.speechLanguages)" }
+            if speechPackSelected(pack), let voice = pack.voices.first(where: { $0.id == choice.voiceId }) { return "\(voice.name) · \(voice.localizedLanguage)" }
             return speechPackStatus(pack)
         }
         return "Not downloaded"

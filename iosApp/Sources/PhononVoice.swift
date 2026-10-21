@@ -29,7 +29,9 @@ actor PhononVoice {
     func render(_ passage: Passage, voice: String, pack: ModelPack, folder: URL, cache: URL) async throws -> URL {
         await acquire(); defer { release() }
         try Task.checkCancellation()
-        guard pack.adapter == "phonon-english-coreml", pack.runtime == "phonon-coreml", voice == "default" else { throw PackFailure.incompatible }
+        guard pack.adapter == "phonon-english-coreml", pack.runtime == "phonon-coreml",
+              pack.voices.contains(where: { $0.id == voice }),
+              FileManager.default.fileExists(atPath: folder.appendingPathComponent("Phonon/voices/" + voice + ".safetensors").path) else { throw PackFailure.incompatible }
         let text = try NarrationText.prepare(passage.spokenText)
         guard !text.isEmpty, text.count <= 20_000 else { throw NarrationFailure.unsupportedText }
         let encoded = try JSONEncoder().encode(["phonon-0.4.0-eos1-source-chunks-v1", NarrationText.version, identity(pack, folder: folder), passage.id, passage.spokenText, voice])
@@ -40,6 +42,8 @@ actor PhononVoice {
             try FileManager.default.removeItem(at: target)
         }
         let runtime = try await load(folder.appendingPathComponent("Phonon"), identity: identity(pack, folder: folder))
+        do { try await runtime.selectVoice(voice) }
+        catch { await close(); throw error }
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 24_000, channels: 1, interleaved: false) else { throw VaultFailure.format }
         let partial = cache.appendingPathComponent(UUID().uuidString + ".wav")
         defer { try? FileManager.default.removeItem(at: partial) }
