@@ -85,7 +85,7 @@ Map outline/source and source/notes relationships deliberately to scenes. Preser
 
 ### iOS
 
-Use `NavigationSplitView` for navigation and source detail. Use the iOS 17 inspector for supplementary anchored notes: it can appear as a trailing panel in suitable windows and a sheet in compact space. Notes are context, rather than an artificial next step in the navigation hierarchy. Preserve source selection and inspector state through collapse. [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview), [SwiftUI inspector](https://developer.apple.com/videos/play/wwdc2023/10161/)
+iPhones use a focused `NavigationStack` in portrait and landscape. Show library and the left-edge gesture open a full-width library overlay while the PDF remains mounted; Return to document closes it. First launch shows branding and library actions without an extra large Library title or disabled hide button. iPads use `NavigationSplitView` for library and source detail, including native collapse in narrow windows. Use the iOS 17 inspector for supplementary anchored notes: it can appear as a trailing panel in suitable windows and a sheet in compact space. Notes are context, rather than an artificial next step in the navigation hierarchy. Preserve source selection and inspector state through collapse. [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview), [SwiftUI inspector](https://developer.apple.com/videos/play/wwdc2023/10161/)
 
 Test iPad multitasking and resizable windows, large Dynamic Type, keyboard focus and panel dismissal. Native presentation is desirable even when Android and iOS expose the same domain actions.
 

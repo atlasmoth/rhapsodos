@@ -19,85 +19,15 @@ struct ReaderRoot: View {
     @State private var deleteTarget: LibraryDocument?
     @State private var columns: NavigationSplitViewVisibility = .all
     @State private var compactColumn: NavigationSplitViewColumn = .detail
+    @State private var phoneLibrary = false
+
+    private let usesPhoneNavigation = UIDevice.current.userInterfaceIdiom == .phone
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns, preferredCompactColumn: $compactColumn) {
-            List(selection: Binding(get: { store.selectedId }, set: { id in
-                if let id { compactColumn = .detail; Task { await store.select(id) } }
-            })) {
-                Section {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack(spacing: 6) {
-                            RhapsodosMark().frame(width: 38, height: 38)
-                            Text("Rhapsodos").font(BrandFont.display(26)).foregroundStyle(Palette.ink)
-                        }.accessibilityElement(children: .combine)
-                        HStack(spacing: 12) { libraryActions }
-                    }.padding(.vertical, 8).listRowBackground(Color.clear)
-                }
-                Section("Library") {
-                    ForEach(store.library) { document in
-                        NavigationLink(value: document.id) {
-                            HStack(spacing: 12) {
-                                BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath))
-                                    .frame(width: 44, height: 58)
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(document.title).font(.subheadline.weight(.semibold)).lineLimit(2)
-                                    LibraryProgress(document: document)
-                                }
-                            }.padding(.vertical, 5)
-                        }.accessibilityHint("Opens this book at your saved listening position.").contextMenu {
-                            Button("Rename", systemImage: "pencil") { renameTarget = document; renamedTitle = document.title }
-                            if document.extractionStatus == "preparing" { Button("Resume preparation", systemImage: "arrow.clockwise") { store.resumePreparation(document.id) } }
-                            Button("Delete from this device", systemImage: "trash", role: .destructive) { deleteTarget = document }
-                        }
-                    }
-                    if store.library.isEmpty {
-                        Button { importer = true } label: { Label("Import a PDF", systemImage: "plus") }
-                            .disabled(store.busy)
-                    }
-                }
-            }
-            .navigationTitle("Library")
-            .navigationSplitViewColumnWidth(min: 240, ideal: 290, max: 350)
-            .toolbar(removing: .sidebarToggle)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { setLibraryVisible(false) } label: { Image(systemName: "sidebar.left") }
-                        .accessibilityLabel("Hide library")
-                        .accessibilityHint("Focuses the document while keeping your listening position")
-                        .disabled(store.document == nil)
-                }
-            }
-        } detail: {
-            Group {
-                if store.loading { ProgressView(store.preparation) }
-                else if let document = store.document {
-                    ListeningView(snapshot: document)
-                        .navigationTitle(document.document.title)
-                        .navigationBarTitleDisplayMode(.inline)
-                } else { EmptyLibrary(importer: $importer).navigationTitle("Rhapsodos").navigationBarTitleDisplayMode(.inline) }
-            }
-            .toolbar {
-                if !libraryVisible {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button { setLibraryVisible(true) } label: { Image(systemName: "sidebar.left") }
-                            .accessibilityLabel("Show library")
-                            .accessibilityHint("Reveals the library without changing narration")
-                    }
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    if store.document != nil {
-                        Button { tools = true } label: { Image(systemName: "list.bullet.rectangle") }.accessibilityLabel("Document contents")
-                        Button { if let id = store.selectedId { searchScope = ReaderSearchScope(documentId: id) } } label: { Image(systemName: "magnifyingglass") }
-                            .accessibilityLabel("Find a passage").disabled(!store.canNavigatePreparedSource)
-                        Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
-                    }
-                }
-            }
-            .navigationBarBackButtonHidden()
-            .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
+        Group {
+            if usesPhoneNavigation { phoneNavigation }
+            else { splitNavigation }
         }
-        .navigationSplitViewStyle(.balanced)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let document = playbackDocument { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
         }
@@ -106,7 +36,9 @@ struct ReaderRoot: View {
                 LibraryEdgeReveal { setLibraryVisible(true) }.frame(width: 24).accessibilityHidden(true)
             }
         }
-        .onChange(of: store.selectedId) { _, id in if id != nil { compactColumn = .detail } }
+        .onChange(of: store.selectedId) { _, id in
+            if id != nil { compactColumn = .detail; phoneLibrary = false }
+        }
         .fileImporter(isPresented: $importer, allowedContentTypes: [.pdf]) { result in
             switch result {
             case .success(let url): Task { await store.importPDF(url) }
@@ -136,13 +68,145 @@ struct ReaderRoot: View {
         }
     }
 
+    private var phoneNavigation: some View {
+        NavigationStack {
+            ZStack {
+                readerContent
+                    .opacity(libraryVisible ? 0 : 1)
+                    .allowsHitTesting(!libraryVisible)
+                    .accessibilityHidden(libraryVisible)
+                if libraryVisible { libraryList.listStyle(.insetGrouped).transition(.move(edge: .leading).combined(with: .opacity)) }
+            }
+            .navigationTitle(libraryVisible ? "" : documentTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(libraryVisible && store.document == nil ? .hidden : .visible, for: .navigationBar)
+            .toolbar {
+                if libraryVisible {
+                    if store.document != nil {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button { setLibraryVisible(false) } label: { Image(systemName: "chevron.left") }
+                                .accessibilityLabel("Return to document")
+                        }
+                    }
+                } else { readerToolbar }
+            }
+            .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
+        }
+    }
+
+    private var splitNavigation: some View {
+        NavigationSplitView(columnVisibility: $columns, preferredCompactColumn: $compactColumn) {
+            libraryList
+                .listStyle(.sidebar)
+                .navigationTitle("Library")
+                .navigationSplitViewColumnWidth(min: 240, ideal: 290, max: 350)
+                .toolbar(removing: .sidebarToggle)
+                .toolbar {
+                    if store.document != nil {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button { setLibraryVisible(false) } label: { Image(systemName: "sidebar.left") }
+                                .accessibilityLabel("Hide library")
+                                .accessibilityHint("Focuses the document while keeping your listening position")
+                        }
+                    }
+                }
+        } detail: {
+            readerContent
+                .navigationTitle(documentTitle)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(removing: .sidebarToggle)
+                .toolbar { readerToolbar }
+                .navigationBarBackButtonHidden()
+                .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
+        }
+        .toolbar(removing: .sidebarToggle)
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    private var libraryList: some View {
+        List(selection: Binding(get: { store.selectedId }, set: { id in
+            if let id { selectDocument(id) }
+        })) {
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 6) {
+                        RhapsodosMark().frame(width: 38, height: 38)
+                        Text("Rhapsodos").font(BrandFont.display(26)).foregroundStyle(Palette.ink)
+                    }.accessibilityElement(children: .combine)
+                    HStack(spacing: 12) { libraryActions }
+                }.padding(.vertical, 8).listRowBackground(Color.clear)
+            }
+            Section("Library") {
+                ForEach(store.library) { document in
+                    Button { selectDocument(document.id) } label: {
+                        HStack(spacing: 12) {
+                            BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath))
+                                .frame(width: 44, height: 58)
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(document.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                                LibraryProgress(document: document)
+                            }
+                            Spacer(minLength: 0)
+                        }.padding(.vertical, 5).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .tag(document.id)
+                    .accessibilityHint("Opens this book at your saved listening position.")
+                    .contextMenu {
+                        Button("Rename", systemImage: "pencil") { renameTarget = document; renamedTitle = document.title }
+                        if document.extractionStatus == "preparing" { Button("Resume preparation", systemImage: "arrow.clockwise") { store.resumePreparation(document.id) } }
+                        Button("Delete from this device", systemImage: "trash", role: .destructive) { deleteTarget = document }
+                    }
+                }
+                if store.library.isEmpty {
+                    Button { importer = true } label: { Label("Import a PDF", systemImage: "plus") }
+                        .disabled(store.busy)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var readerContent: some View {
+        if store.loading { ProgressView(store.preparation) }
+        else if let document = store.document { ListeningView(snapshot: document) }
+        else { EmptyLibrary(importer: $importer) }
+    }
+
+    @ToolbarContentBuilder private var readerToolbar: some ToolbarContent {
+        if !libraryVisible {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { setLibraryVisible(true) } label: { Image(systemName: usesPhoneNavigation ? "books.vertical" : "sidebar.left") }
+                    .accessibilityLabel("Show library")
+                    .accessibilityHint("Reveals the library without changing narration")
+            }
+        }
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            if store.document != nil {
+                Button { tools = true } label: { Image(systemName: "list.bullet.rectangle") }.accessibilityLabel("Document contents")
+                Button { if let id = store.selectedId { searchScope = ReaderSearchScope(documentId: id) } } label: { Image(systemName: "magnifyingglass") }
+                    .accessibilityLabel("Find a passage").disabled(!store.canNavigatePreparedSource)
+                Button { store.inspector.toggle(); feedback.play(.selection) } label: { Image(systemName: "text.bubble") }.accessibilityLabel("Show anchored notes")
+            }
+        }
+    }
+
+    private var documentTitle: String { store.document?.document.title ?? "Rhapsodos" }
+
     private var libraryVisible: Bool {
-        horizontalSizeClass == .compact ? compactColumn == .sidebar : columns != .detailOnly
+        if usesPhoneNavigation { return phoneLibrary || (store.document == nil && !store.loading) }
+        return horizontalSizeClass == .compact ? compactColumn == .sidebar : columns != .detailOnly
+    }
+
+    private func selectDocument(_ id: String) {
+        compactColumn = .detail
+        phoneLibrary = false
+        Task { await store.select(id) }
     }
 
     private func setLibraryVisible(_ visible: Bool) {
         feedback.play(.selection)
         withAnimation(reduceMotion ? nil : .snappy(duration: 0.24)) {
+            phoneLibrary = visible
             columns = visible ? .all : .detailOnly
             compactColumn = visible && horizontalSizeClass == .compact ? .sidebar : .detail
         }
