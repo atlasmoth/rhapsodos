@@ -36,8 +36,8 @@ enum PackFailure: LocalizedError {
         switch self {
         case .incompatible: "This pack requires a newer OS or more device memory."
         case .notReady: "Download and finish checking this pack in Settings before using it."
-        case .integrity: "A model file failed verification. Resume to download it again."
-        case .transport: "The model transfer could not be completed. Resume when connected."
+        case .integrity: "A model file failed verification. Retry to download it again."
+        case .transport: "The model transfer could not be completed. Retry when connected."
         case .path: "The model pack contains an invalid file path."
         case .space: "There is not enough free storage to install this pack."
         }
@@ -160,16 +160,6 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         }
     }
 
-    func canCheck(_ pack: ModelPack) -> Bool {
-        !refreshingCatalog && !loading && !validationActive && pack.eligible && isIdle() && active.isEmpty && operations.isEmpty
-            && installs.contains(where: { $0.packId == pack.id && $0.status == "ready" }) && !removing.contains(pack.id)
-    }
-    func checkOnDevice(_ pack: ModelPack) async {
-        guard canCheck(pack) else { return }
-        qualified.remove(pack.id)
-        checks.removeValue(forKey: pack.id)
-        await recheckReadyPacks()
-    }
     func cancelRuntimeChecks() {
         readyChecks.values.forEach { $0.cancel() }
         validationTasks.values.forEach { $0.cancel() }
@@ -213,7 +203,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         } catch {
             try? await repository.invalidateModel(id: pack.id, generation: item.generation, error: error.localizedDescription)
             try? await refresh()
-            message = "The installed \(pack.name) pack could not be verified. Resume to repair it, or remove it."
+            message = "The installed \(pack.name) pack could not be verified. Retry to repair it, or remove it."
         }
     }
     private func updateValidationState() { validationActive = !finalizing.isEmpty || !readyChecks.isEmpty }
@@ -635,11 +625,11 @@ private struct SpeechPackCard: View {
     private var working: Bool { !paused && install?.status != "failed" && (pending != nil || ["downloading", "verifying"].contains(install?.status ?? "") || install?.status == "ready" && !ready) }
     private var checkingExisting: Bool { !paused && install?.status == "ready" && !ready && pending == nil && (pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : store.selectedTranscription == pack.id) }
     private var actionTitle: String {
+        if install?.status == "failed" { return "Retry" }
         if paused { return "Resume" }
         if checkingExisting { return "Checking…" }
         if working && pending != nil { return "Pause" }
         if selected { return pack.capability == "tts" ? "Selected" : "On" }
-        if install?.status == "failed" { return "Retry" }
         if ready { return pack.capability == "tts" ? "Use voice" : "Enable" }
         return pack.capability == "tts" ? "Download & use" : "Download & enable"
     }
@@ -681,10 +671,6 @@ private struct SpeechPackCard: View {
                         .font(.caption).foregroundStyle(Palette.muted)
                     if let check = models.checks[pack.id] {
                         Text("Last check: \(check.completedAt.formatted(date: .omitted, time: .shortened)) · \(check.seconds.formatted(.number.precision(.fractionLength(1)))) s").font(.caption).foregroundStyle(Palette.muted)
-                    }
-                    if install?.status == "ready" {
-                        Button("Check on this device", systemImage: "checkmark.shield") { store.feedback.play(.selection); Task { await models.checkOnDevice(pack) } }
-                            .frame(minHeight: 44).disabled(!models.canCheck(pack))
                     }
                     if install != nil {
                         Button("Remove downloaded files", role: .destructive) { store.feedback.play(.selection); Task { await store.removePack(pack) } }
@@ -791,8 +777,8 @@ extension ReaderStore {
     func speechPackStatus(_ pack: ModelPack) -> String {
         let intent = speechSetup.pending.values.first { $0.packId == pack.id }
         let status = models?.installs.first { $0.packId == pack.id }?.status
-        if intent?.paused == true || status == "paused" { return "Paused" }
         if status == "failed" { return "Try again" }
+        if intent?.paused == true || status == "paused" { return "Paused" }
         if status == "downloading" { return "Downloading…" }
         if models?.ready(capability: pack.capability, id: pack.id) != nil {
             if intent != nil {

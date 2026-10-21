@@ -72,10 +72,10 @@ internal fun speechSetupStatus(capability: String, state: ModelState, models: Mo
     if (intent != null) {
         val install = state.installs.firstOrNull { it.packId == intent.packId }
         return when {
+            install?.status == "failed" -> "Try again"
             intent.paused || install?.status == "paused" -> "Paused"
             install?.status == "downloading" -> "Downloading…"
             intent.packId in state.checking || install?.status == "verifying" -> "Checking…"
-            install?.status == "failed" -> "Try again"
             capability in state.activating -> "Finishing setup…"
             state.activationMessage[capability] != null -> state.activationMessage.getValue(capability)
             else -> "Ready to set up"
@@ -127,10 +127,10 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
                 activating -> "Finishing setup…"
                 checking && status != "verifying" -> "Checking…"
                 status in setOf("downloading", "verifying") -> if (pending != null) "Pause" else if (pack.capability == "tts") "Download & use" else "Download & enable"
+                status == "failed" -> "Retry"
                 pending?.paused == true || status == "paused" -> "Resume"
                 active -> if (pack.capability == "tts") "Selected" else "On"
                 available -> if (pack.capability == "tts") "Use voice" else "Enable"
-                status == "failed" -> "Retry"
                 extending -> "Download voices"
                 else -> if (pack.capability == "tts") "Download & use" else "Download & enable"
             }
@@ -152,7 +152,6 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
                 val storage = (pack.totalBytes + 32L * 1024 * 1024 + 999_999) / 1_000_000
                 Text("Android ${if (pack.minimumOS == 28) "9+" else "API ${pack.minimumOS}+"} · $memory RAM · $storage MB free storage", style = MaterialTheme.typography.bodySmall)
                 state.checks[pack.id]?.let { Text(String.format(locale, "Device check passed in %.1f s", it / 1000.0), style = MaterialTheme.typography.bodySmall) }
-                if (available && !removing && !checking) TextButton(onClick = { models.checkOnDevice(pack.id); haptic(view) }, enabled = !verificationBlocked && !state.refreshing) { Text("Check on this device") }
                 if (install != null && !removing && !checking && status != "downloading") TextButton(onClick = { models.remove(pack.id); haptic(view) }, enabled = !capturing && !state.changingTranscription) { Text("Remove downloaded files") }
                 if (models.catalogRefreshConfigured) {
                     TextButton(onClick = { models.refreshCatalog(); haptic(view) }, enabled = !state.refreshing && !state.initializing) { Text(if (state.refreshing) "Refreshing catalogue…" else "Refresh catalogue") }

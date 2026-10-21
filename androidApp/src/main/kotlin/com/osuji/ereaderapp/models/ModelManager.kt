@@ -345,29 +345,6 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     private fun canRefreshCatalog(): Boolean = jobs.isEmpty() && state.value.checking.isEmpty() && state.value.removing.isEmpty() && !state.value.initializing && !state.value.changingTranscription && state.value.installs.none { it.status in setOf("downloading", "verifying") } && catalogueWorkloadIdle()
 
-    fun checkOnDevice(packId: String) = scope.launch(Dispatchers.Main.immediate) {
-        if (state.value.refreshing || !canRefreshCatalog()) { reportError("Pause listening and wait for downloads and checks to finish before checking this device."); return@launch }
-        val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return@launch
-        val install = state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" } ?: return@launch
-        val directory = installed(packId) ?: return@launch
-        mutableState.update { it.copy(checking = it.checking + packId, error = null) }
-        try {
-            withContext(Dispatchers.IO) {
-                require(pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 }) { "Installed files failed their integrity check. Download this pack again." }
-                if (!catalogueWorkloadIdle()) throw CancellationException("The check stopped because another task started.")
-                validateRuntime(pack, directory, retryWhenInterrupted = false)
-            }
-        } catch (cancelled: CancellationException) {
-            reportError("The check stopped because another task started. Your download is unchanged.")
-            coroutineContext.ensureActive()
-        } catch (failure: Exception) {
-            validated -= packId
-            store.invalidateModel(packId, install.generation, "This pack failed its check. Download it again.")
-            refresh()
-            reportError(failure.message ?: "This pack failed its check. Download it again.")
-        } finally { mutableState.update { it.copy(checking = it.checking - packId) } }
-    }
-
     fun selectVoice(packId: String, voiceId: String? = null, activationToken: String? = null) {
         if (activationToken == null) cancelActivation("tts")
         else check(activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
@@ -559,7 +536,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return hash.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private suspend fun validateRuntime(pack: ModelPack, directory: File, retryWhenInterrupted: Boolean = true) {
+    private suspend fun validateRuntime(pack: ModelPack, directory: File) {
         try {
             while (true) {
                 val start = android.os.SystemClock.elapsedRealtime()
@@ -570,7 +547,6 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     return
                 } catch (cancelled: CancellationException) {
                     coroutineContext.ensureActive()
-                    if (!retryWhenInterrupted) throw cancelled
                     beforeVerification?.invoke()
                 }
             }
