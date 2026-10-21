@@ -454,11 +454,11 @@ class PlaybackCoordinator(
         val currentEpoch = ++epoch
         generation?.cancelAndJoin()
         check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
-        val previousAdapter = models.state.value.catalog.firstOrNull { it.id == models.state.value.selectedVoice }?.adapter
+        val previousPack = models.state.value.catalog.firstOrNull { it.id == models.state.value.selectedVoice }
         currentCoroutineContext().ensureActive()
         check(activationToken == null || models.activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
         models.selectVoice(packId, voiceId, activationToken)
-        if (previousAdapter != null) models.runtime.close(previousAdapter)
+        if (previousPack != null && previousPack.id != packId) models.runtime.close(previousPack.adapter)
         check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
         if (document == null) stop()
         else if (note != null) playSavedNote(note, current.positionMillis, false, document)
