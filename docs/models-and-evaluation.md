@@ -69,6 +69,23 @@ Current Kokoro LiteRT conversion artifacts are preview evidence, not a ready def
 
 Piper is not the default closed-app recommendation: the maintained engine is GPL 3.0 and voices have separate licenses; the archived MIT project is not the current license reference. [Maintained project](https://github.com/OHF-Voice/piper1-gpl).
 
+### Phonon candidate review — 21 October 2026
+
+**Research only: no Phonon model was downloaded, run, qualified or added to the catalogue.** Existing Kitten, Kokoro and ASR packs retain their current implementation and qualification status. Phonon is streaming narration TTS, not voice-note transcription. The family uses a flow-matching transformer and Mimi audio decoder to produce 24 kHz mono audio. Long inputs are split into sentences, so whole-book prosody is not established by streaming support. [Pinned public family/model card](https://huggingface.co/gradium/phonon-31m-en/blob/52433c46975bfa13144c56204c9f4ee1c5b148aa/README.md)
+
+| Candidate | Evidence and decision |
+| --- | --- |
+| **Phonon-31m-en** | Recommended first Phonon evaluation for English narration: ungated Apache 2.0 weights, tokenizer and included voices; q8 weights **64,512,352 bytes**. Compare against the installed voices before choosing a replacement. Research revision: `52433c46975bfa13144c56204c9f4ee1c5b148aa`. [Pinned files](https://huggingface.co/gradium/phonon-31m-en/tree/52433c46975bfa13144c56204c9f4ee1c5b148aa) |
+| **Phonon-40m-multilingual** | English, French, German, Spanish and Portuguese; q8 weights **74,553,568 bytes**, q4k **60,397,792 bytes**. Gated **CC BY-NC 4.0** weights: commercial distribution requires separate suitable rights; Gradium directs commercial users to sales. Research revision: `1267486cbcb55d2eaa61ba521c2ed8e4d22923c2`. Download sizes exclude support files, installed/compiled storage and peak RAM. The gated raw card was inaccessible; public metadata and official family documentation establish these facts. [Pinned files](https://huggingface.co/gradium/phonon-40m-multilingual/tree/1267486cbcb55d2eaa61ba521c2ed8e4d22923c2), [commercial licensing](https://gradium.ai/phonon) |
+
+Integration evidence is pinned to runtime revision `6f42148066dfe3640ab2099d5c2f088c826937d6`; this records research provenance, not a qualified dependency pin:
+
+- **iOS:** the official Swift/CoreML package requires **iOS 18+**, leaving the iOS 17 baseline on its existing supported speech path. Released CoreML bundles cover 31M; 40M requires an export. CoreML compilation adds installed storage and first-use work. [Swift guide](https://github.com/gradium-ai/xn-ptts/blob/6f42148066dfe3640ab2099d5c2f088c826937d6/ios/PhononTTS/README.md)
+- **Android CPU:** native Rust C library plus Kotlin/JNA wrapper, built from source; no published Gradle package. Default builds provide arm64-v8a and x86_64, without armeabi-v7a. The arm64 build assumes ARMv8.2 dotprod/fp16 and can crash on unsupported CPUs; upstream documents `ARM64_FEATURES=` for a slower build without those requirements. Detect capability or use a suitable build before advertising eligibility. [Android guide](https://github.com/gradium-ai/xn-ptts/blob/6f42148066dfe3640ab2099d5c2f088c826937d6/android/README.md)
+- **Android NPU:** the QNN path requires Android 12+, ARM64, working Snapdragon HTP support and a model compiled/tested for the exact SoC; it has no automatic CPU fallback. Its AAR is not yet published to Maven. [QNN guide](https://github.com/gradium-ai/xn-ptts/blob/6f42148066dfe3640ab2099d5c2f088c826937d6/qnn/android/README.md)
+
+A new native adapter and qualified artifact packaging are required; changing catalogue JSON cannot make the existing LiteRT/CoreML adapters execute Phonon. No official LiteRT/ONNX route was established in this review. Vendor speed/quality benchmarks do not qualify long PDF listening or affordable phones. Evaluate source alignment, sentence transitions, cancellation/resume, speech rate, sustained battery/thermal behavior and memory under the release gates below before promotion.
+
 ## Local recorded-note ASR candidates
 
 Use a small downloadable tier first. Larger models are optional upgrades, never prerequisites for recording and retaining a note. Benchmark file-based accuracy on the intended recordings rather than prioritizing live command endpoint latency.
