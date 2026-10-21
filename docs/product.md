@@ -29,7 +29,7 @@ The library has no separate continue-listening hero. Each file shows its own sou
 
 The player uses that same whole-file progress. Scrubbing commits a single source seek across the PDF; it does not reset at each passage. Scrubbing preserves whether narration was playing or paused, including after natural completion. Replayed notes retain the saved book progress, and seeking to the end leaves playback paused.
 
-Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next/record controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption. Exactly three icon-only library actions sit below branding in one row: Search → Import → Settings. Each retains an accessible name without a visible title. Voice selection, downloads and transcription configuration are reached through Settings.
+Both apps show document identity, a visible playback-speed button, output volume and previous/play-or-pause/next controls above the progress slider. Compact layouts center transport in a second row. The whole-file percentage sits immediately to the slider's right; do not add a separate “% of document” caption. Exactly three icon-only library actions sit below branding in one row: Search → Import → Settings. Each retains an accessible name without a visible title. Voice selection, downloads and transcription configuration are reached through Settings.
 
 ### First listen
 
@@ -41,7 +41,7 @@ The first-run voice choice offers Phonon with its language and download size. Do
 
 ### Listening
 
-The player emphasizes the current passage and clear controls: play/pause, skip or seek, speed, chapter/passage navigation, voice, output volume and record thought. Common actions remain reachable on phones; wide layouts keep a persistent playback dock.
+The player emphasizes the current passage and clear controls: play/pause, skip or seek, speed, chapter/passage navigation and output volume. Voice notes start from prepared PDF passages through double-tap or the equivalent accessible action; the dock has no recording button. Common actions remain reachable on phones; wide layouts keep a persistent playback dock.
 
 The dock provides output-volume controls through the native media-volume APIs. They follow the active output route and hardware volume buttons, without restarting narration or changing microphone gain. Opening the control never changes volume. Routes with fixed output volume explain where the listener can adjust it.
 
@@ -63,7 +63,7 @@ Settings → Documents provides Export document archive above Restore a document
 
 ### Voice note
 
-1. The listener double-taps a prepared passage in the PDF or invokes its accessible record-note action. The playback dock can record at the current narration.
+1. The listener double-taps a prepared passage in the PDF or invokes its accessible record-note action.
 2. Playback stops at its confirmed position. The app freezes the chosen passage's source attachment before opening the microphone, retaining the listening cursor independently.
 3. The recorder shows the attached passage, recording status and duration. The listener can stop, cancel or save.
 4. Save finalizes durable audio. **Save and resume** returns to listening without waiting for ASR.

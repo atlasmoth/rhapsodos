@@ -281,7 +281,7 @@ fun ReaderApp() {
             }
         }
     }
-    fun recordThought(expected: PreparedCaptureTarget? = null): Boolean {
+    fun recordThought(expected: PreparedCaptureTarget): Boolean {
         if (importing || exporting || exportDocumentId != null || recordRequestPending || typedNote || playback.capturing || capture.state.value.draft != null) return false
         val current = playback.state.value
         if (current.noteId != null) return false
@@ -312,7 +312,7 @@ fun ReaderApp() {
                 if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback,
                     available = !playback.capturing && !exporting && exportDocumentId == null,
                     voiceReady = models.installed(modelState.selectedVoice) != null,
-                    downloadVoice = { returnToSettings = false; speechSetup = "tts" }, record = { recordThought() })
+                    downloadVoice = { returnToSettings = false; speechSetup = "tts" })
             },
         ) { padding ->
             ModalNavigationDrawer(
@@ -941,7 +941,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, v
             if (geometry == null) geometry = pdf.pageGeometry(document.filePath, page)
             if (preparedPage.geometrySpace != "cropTopLeftV1" || preparedPage.regions.isEmpty()) geometryUpdated(preparation.repairGeometry(document.id, page))
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch (failure: Exception) { geometryError = "This page's highlighting is unavailable. Use the microphone button to record at your listening position." }
+        catch (failure: Exception) { geometryError = "This page's highlighting is unavailable. Reopen the document to retry." }
     }
     val active = activePassage?.takeIf { it.pageIndex == page }
     val displayRegions = if (preparedPage?.geometrySpace == "cropTopLeftV1" && geometry != null) preparedPage.regions.map { PdfPageCoordinates.displayed(it, geometry!!.rotation) } else emptyList()
@@ -1160,7 +1160,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit, record: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit) {
     val view = LocalView.current
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
@@ -1178,10 +1178,10 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
                 MediaVolumeControl()
-                if (!compact) TransportControls(audio, playback, available, voiceReady, downloadVoice, record)
+                if (!compact) TransportControls(audio, playback, available, voiceReady, downloadVoice)
             }
             if (compact) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                TransportControls(audio, playback, available, voiceReady, downloadVoice, record)
+                TransportControls(audio, playback, available, voiceReady, downloadVoice)
             }
             }
             }
@@ -1256,7 +1256,7 @@ private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoord
 }
 
 @Composable
-private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit, record: () -> Unit) {
+private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit) {
     val view = LocalView.current
     IconButton(onClick = { haptic(view); playback.skip(-1) }, enabled = available && voiceReady && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipPrevious, "Previous passage") }
     FilledIconButton(onClick = { haptic(view, true); if (!voiceReady && audio.noteId == null) downloadVoice() else playback.toggle() }, enabled = available, modifier = Modifier.size(52.dp)) {
@@ -1264,7 +1264,6 @@ private fun TransportControls(audio: PlaybackSnapshot, playback: PlaybackCoordin
         else Icon(if (audio.playing) Icons.Default.Pause else Icons.Default.PlayArrow, if (audio.playing) "Pause" else "Play")
                 }
     IconButton(onClick = { haptic(view); playback.skip(1) }, enabled = available && voiceReady && audio.noteId == null && !audio.preparing) { Icon(Icons.Default.SkipNext, "Next passage") }
-    IconButton(onClick = record, enabled = available && audio.noteId == null && audio.durationMillis > 0 && !audio.preparing) { Icon(Icons.Default.Mic, "Pause and record a thought") }
 }
 
 @Composable

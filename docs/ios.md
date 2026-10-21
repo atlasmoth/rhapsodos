@@ -120,7 +120,7 @@ The frozen anchor belongs to the pause action, not ASR completion. If the person
 
 ### Native audio behavior
 
-Match the Android dock arrangement: original cover and document title, visible playback-speed button, output-volume button and Previous → Play/Pause → Next → Record controls above the progress slider. Compact layouts center transport in a second row, retaining identity, speed and volume above it. The whole-file percentage sits immediately to the slider's right. Speed changes use the existing serialized native audio owner and retain the listening source position; the button remains available without opening Settings. See [design.md](design.md) for the common presentation contract.
+Match the Android dock arrangement: original cover and document title, visible playback-speed button, output-volume button and Previous → Play/Pause → Next controls above the progress slider. Compact layouts center transport in a second row, retaining identity, speed and volume above it. The whole-file percentage sits immediately to the slider's right. Speed changes use the existing serialized native audio owner and retain the listening source position; the button remains available without opening Settings. See [design.md](design.md) for the common presentation contract.
 
 The dock presents a public `MPVolumeView` through SwiftUI, preserving the native slider and route-dependent behavior without inspecting private subviews. It adjusts the current output for downloaded narration and recorded-note playback. Simulator builds can verify presentation but need a physical device to qualify output adjustment, routes and VoiceOver. [MPVolumeView](https://developer.apple.com/documentation/mediaplayer/mpvolumeview)
 

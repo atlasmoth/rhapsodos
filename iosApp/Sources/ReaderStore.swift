@@ -579,10 +579,9 @@ final class ReaderStore: ObservableObject {
         feedback.play(.selection)
     }
 
-    @discardableResult func beginNote(expected: PDFHighlightAnchor? = nil) -> Bool {
+    @discardableResult func beginNote(expected: PDFHighlightAnchor) -> Bool {
         guard canBeginNote, let repository, let files, let bookAnchor = currentHighlightAnchor,
-              let passage = preparedPassage(at: expected ?? bookAnchor) else { return false }
-        let target = expected ?? bookAnchor
+              let passage = preparedPassage(at: expected) else { return false }
         busy = true
         models?.cancelRuntimeChecks()
         let worker = transcriptionTask
@@ -593,7 +592,7 @@ final class ReaderStore: ObservableObject {
         let stoppedTransport = audio.transportRevision
         noteTask = Task { [weak self] in
             guard let self else { return }
-            await self.startNoteCapture(anchor: target, bookAnchor: bookAnchor, stoppedTransport: stoppedTransport,
+            await self.startNoteCapture(anchor: expected, bookAnchor: bookAnchor, stoppedTransport: stoppedTransport,
                 passage: passage, preparation: preparation, worker: worker, geometryWorker: geometryWorker, repository: repository, files: files)
             self.noteTask = nil
         }

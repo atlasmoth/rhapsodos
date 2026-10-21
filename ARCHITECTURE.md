@@ -138,7 +138,7 @@ sequenceDiagram
     participant D as Durable repository
     participant R as Recorder
     participant J as ASR job
-    U->>A: Double-tap source passage or record current narration
+    U->>A: Double-tap source passage or use its accessible record action
     A->>A: Pause book and freeze chosen source attachment
     A->>D: Persist anchored draft
     A->>R: Switch session and begin capture

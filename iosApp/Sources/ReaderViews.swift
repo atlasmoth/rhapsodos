@@ -427,7 +427,6 @@ private struct PlaybackDock: View {
                         .foregroundStyle(Palette.onAccent).background(Palette.accent, in: Circle())
                 }.accessibilityLabel(audio.playing ? "Pause narration" : "Play narration")
                 Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Next passage").disabled(audio.replayingNote != nil)
-                Button { store.beginNote() } label: { Image(systemName: "mic").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Pause and record a thought").disabled(!store.canBeginNote)
             }.foregroundStyle(Palette.accent)
     }
 }
