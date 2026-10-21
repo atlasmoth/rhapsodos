@@ -117,17 +117,6 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         } catch is CancellationError { }
         catch { catalogMessage = error is ModelCatalogFailure ? error.localizedDescription : ModelCatalogFailure.transport.localizedDescription }
     }
-    func state(_ pack: ModelPack, active selected: Bool) -> String {
-        guard let install = installs.first(where: { $0.packId == pack.id }) else { return "Download" }
-        switch install.status {
-        case "ready": return !pack.eligible ? "Unavailable" : ready(capability: pack.capability, id: pack.id) == nil ? "Checking" : selected ? "Active" : "Ready"
-        case "verifying": return "Checking"
-        case "downloading": return "Downloading"
-        case "paused": return "Paused"
-        case "failed": return "Failed"
-        default: return "Download"
-        }
-    }
     func ready(capability: String, id: String? = nil) -> (ModelPack, URL)? {
         for pack in catalog where pack.capability == capability && pack.eligible && (id == nil || pack.id == id) {
             if qualified.contains(pack.id), let installation = installs.first(where: { $0.packId == pack.id && $0.status == "ready" && !$0.installedPath.isEmpty }),
@@ -575,141 +564,173 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
-struct TranscriptionChoices: View {
-    @EnvironmentObject private var store: ReaderStore
-    var body: some View {
-        Picker("Transcription", selection: Binding(get: { store.selectedTranscription }, set: { value in
-            Task { await store.selectTranscription(value) }
-        })) {
-            Text("Off").tag("off")
-            if let models = store.models {
-                if store.selectedTranscription != "off", models.ready(capability: "asr", id: store.selectedTranscription) == nil {
-                    Text("Unavailable downloaded transcription").tag(store.selectedTranscription).disabled(true)
-                }
-                ForEach(models.catalog.filter { $0.capability == "asr" && models.ready(capability: "asr", id: $0.id) != nil }) { pack in
-                    Text(pack.name).tag(pack.id)
-                }
-            }
-        }.pickerStyle(.menu).frame(minHeight: 44)
-    }
-}
-
-struct ModelGallery: View {
+struct SpeechSetupSheet: View {
+    let capability: SpeechCapability?
     @ObservedObject var models: ModelPacks
     @EnvironmentObject private var store: ReaderStore
-    @EnvironmentObject private var audio: AudioCoordinator
     @Environment(\.dismiss) private var dismiss
     @State private var detent: PresentationDetent = .large
+    @State private var catalogDetails = false
 
-    private var transportUnavailable: Bool {
-        store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending || models.refreshingCatalog
-    }
-    private var changingVoiceUnavailable: Bool { transportUnavailable || audio.replayingNote != nil }
     var body: some View {
         VStack(spacing: 0) {
-            ReaderSheetHeader(title: "Offline voices & transcription") { dismiss() }
+            ReaderSheetHeader(title: capability?.title ?? "Voices and transcription") { store.feedback.play(.selection); dismiss() }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
-                    Text("Downloads contain public model files. Your documents, recordings and words stay on your device.")
-                    ReaderSheetCard(title: "Catalogue") {
-                        if let status = models.catalogStatus, status.acceptedAt > 0 {
-                            Text("Catalogue revision \(status.revision)").font(.subheadline)
-                            Text("Updated \(Date(timeIntervalSince1970: Double(status.acceptedAt) / 1000).formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(Palette.muted)
-                        } else { Text("Bundled catalogue").font(.subheadline) }
-                        if models.liveCatalogConfigured {
-                            Button("Refresh catalogue", systemImage: "arrow.clockwise") { Task { await models.refreshCatalog() } }
-                                .frame(minHeight: 44).disabled(!models.canRefreshCatalog)
-                            if models.refreshingCatalog { ProgressView("Refreshing catalogue…") }
-                        } else {
-                            Text("Live catalogue updates are not configured yet.").font(.caption).foregroundStyle(Palette.muted)
-                        }
-                        if let message = models.catalogMessage { Text(message).font(.caption).foregroundStyle(Palette.muted) }
-                    }
                     if models.loading { ProgressView("Checking available downloads…") }
-                    else if models.hasUnsupportedDownloads {
-                        ReaderSheetCard(title: "Unused downloads") {
-                            Text("Remove speech downloads that this version no longer uses. Your documents and recordings are kept.")
-                            Button("Retry cleanup") { Task { await models.removeUnsupportedDownloads() } }
-                                .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayPlaying || models.cleaningUnsupported)
+                    ForEach(SpeechCapability.allCases.filter { capability == nil || $0 == capability }) { section in
+                        if capability == nil { Text(section.title).font(.headline).accessibilityAddTraits(.isHeader) }
+                        ForEach(models.catalog.filter { $0.capability == section.rawValue }) { pack in
+                            SpeechPackCard(pack: pack, models: models)
                         }
                     }
-                    Text("Narration").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
-                    ForEach(models.catalog.filter { $0.capability == "tts" }) { pack in packCard(pack) }
-                    Text("Voice-note transcription").font(BrandFont.display(24, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
-                    ReaderSheetCard(title: "Transcription") {
-                        TranscriptionChoices().disabled(transportUnavailable)
-                        Text("Choose a checked downloaded pack or Off. Recordings are saved independently.").font(.subheadline).foregroundStyle(Palette.muted)
+                    if models.liveCatalogConfigured {
+                        DisclosureGroup("Catalogue", isExpanded: $catalogDetails) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                if let status = models.catalogStatus, status.acceptedAt > 0 {
+                                    Text("Revision \(status.revision)").font(.caption)
+                                }
+                                Button("Refresh catalogue", systemImage: "arrow.clockwise") { store.feedback.play(.selection); Task { await models.refreshCatalog() } }
+                                    .frame(minHeight: 44).disabled(!models.canRefreshCatalog)
+                                if models.refreshingCatalog { ProgressView("Refreshing…") }
+                                if let message = models.catalogMessage { Text(message).font(.caption).foregroundStyle(Palette.muted) }
+                            }.padding(.top, 12)
+                        }.padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
                     }
-                    ForEach(models.catalog.filter { $0.capability == "asr" }) { pack in packCard(pack) }
-                }.padding(.horizontal, 24).padding(.vertical, 16).frame(maxWidth: 640).frame(maxWidth: .infinity)
+                    if models.hasUnsupportedDownloads {
+                        Button("Retry removing unused downloads") { store.feedback.play(.selection); Task { await models.removeUnsupportedDownloads() } }
+                            .frame(minHeight: 44).disabled(models.cleaningUnsupported || store.busy)
+                    }
+                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
             }
         }.background(Palette.paper).foregroundStyle(Palette.ink)
             .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
-            .alert("Model pack", isPresented: Binding(get: { models.message != nil }, set: { if !$0 { models.message = nil } })) {
+            .onChange(of: catalogDetails) { _, _ in store.feedback.play(.selection) }
+            .alert("Speech download", isPresented: Binding(get: { models.message != nil }, set: { if !$0 { models.message = nil } })) {
                 Button("OK") { models.message = nil }
             } message: { Text(models.message ?? "") }
     }
+}
 
-    private func packCard(_ pack: ModelPack) -> some View {
-        let install = models.installs.first { $0.packId == pack.id }
-        let status = install?.status ?? "notInstalled"
-        let ready = status == "ready" && models.ready(capability: pack.capability, id: pack.id) != nil
-        let selected = pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : store.selectedTranscription == pack.id
-        return ReaderSheetCard(title: pack.name) {
-            Text(models.state(pack, active: selected)).font(.headline).foregroundStyle(Palette.accent)
-            Text(pack.description)
-            Text("\(size(pack.totalBytes)) · \(pack.languageTags.map { Locale.current.localizedString(forIdentifier: $0) ?? $0 }.joined(separator: ", "))")
-                .font(.caption).foregroundStyle(Palette.muted)
-            Text("Requires iOS \(pack.minimumOS)+, \(size(Int64(pack.minimumMemoryMB) * 1_048_576)) device memory and \(size(pack.requiredStorageBytes)) free storage.")
-                .font(.caption).foregroundStyle(pack.eligible ? Palette.muted : .red)
-            if let install, ["downloading", "verifying", "paused"].contains(status) {
+private struct SpeechPackCard: View {
+    let pack: ModelPack
+    @ObservedObject var models: ModelPacks
+    @EnvironmentObject private var store: ReaderStore
+    @EnvironmentObject private var audio: AudioCoordinator
+    @State private var details = false
+    private var install: ModelInstall? { models.installs.first { $0.packId == pack.id } }
+    private var pending: SpeechSetupIntent? { store.speechSetup.pending.values.first { $0.packId == pack.id } }
+    private var ready: Bool { models.ready(capability: pack.capability, id: pack.id) != nil }
+    private var selected: Bool { store.speechPackSelected(pack) }
+    private var paused: Bool { pending?.paused == true || install?.status == "paused" }
+    private var working: Bool { !paused && install?.status != "failed" && (pending != nil || ["downloading", "verifying"].contains(install?.status ?? "") || install?.status == "ready" && !ready) }
+    private var checkingExisting: Bool { !paused && install?.status == "ready" && !ready && pending == nil && (pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : store.selectedTranscription == pack.id) }
+    private var actionTitle: String {
+        if paused { return "Resume" }
+        if checkingExisting { return "Checking…" }
+        if working && pending != nil { return "Pause" }
+        if selected { return pack.capability == "tts" ? "Selected" : "On" }
+        if install?.status == "failed" { return "Retry" }
+        if ready { return pack.capability == "tts" ? "Use voice" : "Enable" }
+        return pack.capability == "tts" ? "Download & use" : "Download & enable"
+    }
+    private var actionDisabled: Bool {
+        selected && pending == nil && !paused || checkingExisting || !pack.eligible || models.loading || models.refreshingCatalog
+    }
+    private var removalUnavailable: Bool {
+        store.busy || store.loading || store.preparingDocument || audio.playing || audio.replayingNote != nil
+            || audio.recording || audio.capturePending || store.captureDraft != nil || models.loading || models.refreshingCatalog
+    }
+    var body: some View {
+        ReaderSheetCard(title: pack.speechName) {
+            Text("\(pack.speechLanguages) · \(size(pack.totalBytes))").font(.subheadline).foregroundStyle(Palette.muted)
+            if !pack.eligible {
+                Text("Unavailable on this device").font(.subheadline).foregroundStyle(Palette.muted)
+            } else if paused || working && !checkingExisting || install?.status == "failed" {
+                Text(store.speechPackStatus(pack)).font(.subheadline).foregroundStyle(Palette.accent)
+            }
+            if let install, ["downloading", "paused"].contains(install.status) {
                 ProgressView(value: Double(install.bytesDownloaded), total: Double(max(1, install.totalBytes)))
-                Text(status == "verifying" ? "Files downloaded. Checking waits until playback and recording are idle." : "\(size(install.bytesDownloaded)) of \(size(pack.totalBytes)) downloaded")
-                    .font(.caption)
-            }
+                Text("\(size(install.bytesDownloaded)) of \(size(pack.totalBytes))").font(.caption).foregroundStyle(Palette.muted)
+            } else if working && !ready { ProgressView().accessibilityLabel("Checking speech download") }
             if let install, !install.error.isEmpty { Text(install.error).font(.caption).foregroundStyle(.red) }
-            if ready {
-                Text("Checked on this device. Longer-session performance varies.").font(.caption).foregroundStyle(Palette.muted)
-                if let check = models.checks[pack.id] {
-                    Text("Last compatibility check: \(check.completedAt.formatted(date: .omitted, time: .shortened)) · \(check.seconds.formatted(.number.precision(.fractionLength(1)))) s").font(.caption).foregroundStyle(Palette.muted)
-                }
-                Button("Check on this device", systemImage: "checkmark.shield") { Task { await models.checkOnDevice(pack) } }
-                    .frame(minHeight: 44).disabled(!models.canCheck(pack))
-                if pack.capability == "tts" {
-                    Picker("Voice", selection: Binding(get: {
-                        DownloadedVoice(audio.selectedVoice)?.packId == pack.id ? audio.selectedVoice : DownloadedVoice(packId: pack.id, voiceId: DownloadedVoice.voices(for: pack).first?.0 ?? "").identifier
-                    }, set: { value in Task { await audio.changeVoice(value) } })) {
-                        ForEach(DownloadedVoice.voices(for: pack), id: \.0) { voice in
-                            Text(voice.1).tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
-                        }
-                    }.pickerStyle(.menu).frame(minHeight: 44).disabled(changingVoiceUnavailable)
-                    Button(selected ? "Active" : "Use this voice") {
-                        Task { await audio.changeVoice(DownloadedVoice(packId: pack.id, voiceId: DownloadedVoice.voices(for: pack).first?.0 ?? "").identifier) }
-                    }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(changingVoiceUnavailable || selected)
-                } else {
-                    Button(selected ? "Active" : "Use for voice notes") { Task { await store.selectTranscription(pack.id) } }
-                        .frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(transportUnavailable || selected)
-                }
-            } else if status == "ready" {
-                if pack.eligible {
-                    ProgressView("Checking installed files on this device…")
-                    Text("Checks wait until playback and recording are idle.").font(.caption).foregroundStyle(Palette.muted)
-                } else {
-                    Text("This installed pack is unavailable on this device. Its downloaded files and your selected choice are retained.")
+            Button {
+                store.feedback.play(.selection)
+                if working && !paused && pending != nil { store.pauseSpeechSetup(pack) }
+                else { store.startSpeechSetup(pack) }
+            } label: {
+                Text(actionTitle).font(.headline).foregroundStyle(actionDisabled ? Palette.muted : Palette.onAccent)
+                    .multilineTextAlignment(.center).frame(maxWidth: .infinity, minHeight: 44)
+            }.buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                .disabled(actionDisabled)
+            DisclosureGroup("Details", isExpanded: $details) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("\(pack.runtime) · \(pack.version)").font(.caption)
+                    Text("Requires iOS \(pack.minimumOS)+, \(size(Int64(pack.minimumMemoryMB) * 1_048_576)) device memory and \(size(pack.requiredStorageBytes)) free storage.")
                         .font(.caption).foregroundStyle(Palette.muted)
-                }
-            } else if ["downloading", "verifying"].contains(status) {
-                Button("Pause download") { models.pause(pack) }.frame(minHeight: 44).buttonStyle(.bordered)
-            } else {
-                Button(status == "paused" ? "Resume download" : status == "failed" ? "Retry download" : "Download") {
-                    Task { await models.download(pack) }
-                }.frame(minHeight: 44).buttonStyle(.borderedProminent).disabled(!pack.eligible || models.loading || models.refreshingCatalog)
-            }
-            if let install, !["downloading", "verifying"].contains(install.status) {
-                Button("Remove downloaded files", role: .destructive) { Task { await store.removePack(pack) } }
-                    .frame(minHeight: 44).disabled(transportUnavailable || audio.playing || audio.replayingNote != nil || models.loading)
-            }
-        }
+                    if let check = models.checks[pack.id] {
+                        Text("Last check: \(check.completedAt.formatted(date: .omitted, time: .shortened)) · \(check.seconds.formatted(.number.precision(.fractionLength(1)))) s").font(.caption).foregroundStyle(Palette.muted)
+                    }
+                    if install?.status == "ready" {
+                        Button("Check on this device", systemImage: "checkmark.shield") { store.feedback.play(.selection); Task { await models.checkOnDevice(pack) } }
+                            .frame(minHeight: 44).disabled(!models.canCheck(pack))
+                    }
+                    if install != nil {
+                        Button("Remove downloaded files", role: .destructive) { store.feedback.play(.selection); Task { await store.removePack(pack) } }
+                            .frame(minHeight: 44).disabled(removalUnavailable)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 12)
+            }.padding(.top, 4)
+        }.onChange(of: details) { _, _ in store.feedback.play(.selection) }
     }
     private func size(_ bytes: Int64) -> String { ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) }
+}
+
+extension ModelPack {
+    var speechName: String { name.components(separatedBy: " • ").first ?? name }
+    var speechLanguages: String {
+        languageTags.map { Locale.current.localizedString(forLanguageCode: String($0.split(separator: "-").first ?? Substring($0))) ?? $0 }.joined(separator: ", ")
+    }
+}
+
+extension ReaderStore {
+    func speechPackSelected(_ pack: ModelPack) -> Bool {
+        guard models?.ready(capability: pack.capability, id: pack.id) != nil else { return false }
+        return pack.capability == "tts" ? DownloadedVoice(audio.selectedVoice)?.packId == pack.id : selectedTranscription == pack.id
+    }
+
+    func speechPackStatus(_ pack: ModelPack) -> String {
+        let intent = speechSetup.pending.values.first { $0.packId == pack.id }
+        let status = models?.installs.first { $0.packId == pack.id }?.status
+        if intent?.paused == true || status == "paused" { return "Paused" }
+        if status == "failed" { return "Try again" }
+        if status == "downloading" { return "Downloading…" }
+        if models?.ready(capability: pack.capability, id: pack.id) != nil {
+            if intent != nil {
+                if audio.recording || audio.capturePending || captureDraft != nil { return "Finish recording to continue" }
+                if audio.replayingNote != nil { return "Ready — waiting for note playback to finish" }
+                if busy || preparingDocument { return "Ready — waiting for your current task" }
+                return "Finishing setup…"
+            }
+            return speechPackSelected(pack) ? (pack.capability == "tts" ? "Selected" : "On") : "Ready"
+        }
+        if status == "ready" || status == "verifying" {
+            if audio.playing || audio.replayPlaying { return "Waiting for playback to pause" }
+            if audio.recording || audio.capturePending || captureDraft != nil { return "Finish recording to continue" }
+            return "Checking…"
+        }
+        return intent != nil ? "Starting download…" : "Not downloaded"
+    }
+
+    func speechSummary(_ capability: SpeechCapability) -> String {
+        if let intent = speechSetup.pending[capability], let pack = models?.catalog.first(where: { $0.id == intent.packId }) {
+            return speechPackStatus(pack)
+        }
+        if capability == .transcription { return transcriptionRequested ? "On" : "Off" }
+        if let choice = DownloadedVoice(audio.selectedVoice), let pack = models?.catalog.first(where: { $0.id == choice.packId }) {
+            if speechPackSelected(pack) { return "\(pack.speechName) · \(pack.speechLanguages)" }
+            return speechPackStatus(pack)
+        }
+        return "Not downloaded"
+    }
 }

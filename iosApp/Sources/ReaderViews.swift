@@ -46,8 +46,8 @@ struct ReaderRoot: View {
             }
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
-        .sheet(isPresented: $store.modelGalleryPresented) {
-            if let models = store.models { ModelGallery(models: models) }
+        .sheet(item: $store.speechSetupSheet) { capability in
+            if let models = store.models { SpeechSetupSheet(capability: capability, models: models) }
         }
         .sheet(isPresented: $tools) { ReaderTools() }
         .sheet(item: $searchScope) { scope in ReaderSearchSheet(documentId: scope.documentId) }
@@ -496,13 +496,24 @@ private struct SystemOutputVolume: UIViewRepresentable {
 struct ReaderSheetHeader: View {
     let title: String
     let onDone: () -> Void
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var body: some View {
-        HStack(spacing: 16) {
-            Text(title).font(BrandFont.display(25, relativeTo: .title2)).accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-            Button("Done", action: onDone).frame(minWidth: 44, minHeight: 44)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) {
+                    heading
+                    HStack { Spacer(minLength: 0); done }
+                }
+            } else {
+                HStack(spacing: 16) { heading; Spacer(minLength: 0); done }
+            }
         }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8).foregroundStyle(Palette.ink)
     }
+    private var heading: some View {
+        Text(title).font(BrandFont.display(25, relativeTo: .title2)).fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
+    }
+    private var done: some View { Button("Done", action: onDone).frame(minWidth: 44, minHeight: 44) }
 }
 
 struct ReaderSheetCard<Content: View>: View {
@@ -523,6 +534,7 @@ private struct VoiceSettings: View {
     @EnvironmentObject private var store: ReaderStore
     @State private var restorePicker = false
     @State private var exportTask: Task<Void, Never>?
+    @State private var setup: SpeechCapability?
     @State private var gallery = false
     @State private var detent: PresentationDetent = .large
     @AppStorage("appearance") private var appearance = "system"
@@ -536,28 +548,33 @@ private struct VoiceSettings: View {
             ReaderSheetHeader(title: "Settings") { dismiss() }.disabled(store.busy)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    ReaderSheetCard(title: "Voices") {
-                        Picker("Voice", selection: Binding(get: { audio.selectedVoice }, set: { value in Task { await audio.changeVoice(value) } })) {
-                            Text("Choose a downloaded voice").tag("").disabled(true)
-                            if let choice = DownloadedVoice(audio.selectedVoice), store.models?.ready(capability: "tts", id: choice.packId) == nil {
-                                Text("Unavailable downloaded voice").tag(audio.selectedVoice).disabled(true)
+                    Button("Download voices and transcription", systemImage: "arrow.down.circle") { store.feedback.play(.selection); gallery = true }
+                        .frame(minHeight: 44).disabled(store.models == nil)
+                    Button { store.feedback.play(.selection); setup = .narration } label: {
+                        HStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Reading voice").font(.headline)
+                                Text(store.speechSummary(.narration)).font(.subheadline).foregroundStyle(Palette.muted)
                             }
-                            if let models = store.models {
-                                ForEach(models.catalog.filter { $0.capability == "tts" && models.ready(capability: "tts", id: $0.id) != nil }) { pack in
-                                    ForEach(DownloadedVoice.voices(for: pack), id: \.0) { voice in
-                                        Text("\(pack.name) · \(voice.1)").tag(DownloadedVoice(packId: pack.id, voiceId: voice.0).identifier)
-                                    }
-                                }
-                            }
-                        }.pickerStyle(.menu).frame(minHeight: 44).disabled(transportUnavailable || audio.replayingNote != nil)
-                        Button("Download voices and transcription", systemImage: "arrow.down.circle") { gallery = true }
-                            .frame(minHeight: 44).disabled(store.models == nil || transportUnavailable)
-                        Text("Download a voice, wait for its device check, then select it to listen offline.").font(.caption).foregroundStyle(Palette.muted)
-                    }
-                    ReaderSheetCard(title: "Voice-note transcription") {
-                        TranscriptionChoices().disabled(transportUnavailable || store.models?.refreshingCatalog == true)
-                        Text("Recordings are saved before transcription. Off keeps your recordings available for later.").font(.caption).foregroundStyle(Palette.muted)
-                    }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.muted)
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
+                            .background(Palette.soft, in: RoundedRectangle(cornerRadius: 20)).contentShape(Rectangle())
+                    }.buttonStyle(.plain).disabled(store.models == nil)
+                    HStack(spacing: 16) {
+                        Button { store.feedback.play(.selection); setup = .transcription } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Transcribe voice notes").font(.headline)
+                                Text(store.speechSummary(.transcription)).font(.subheadline).foregroundStyle(Palette.muted)
+                            }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                        Toggle("Transcribe voice notes", isOn: Binding(get: { store.transcriptionRequested }, set: { enabled in
+                            store.feedback.play(.selection)
+                            if !enabled { Task { await store.selectTranscription("off") } }
+                            else if let pack = store.models?.ready(capability: "asr")?.0 { store.startSpeechSetup(pack) }
+                            else { setup = .transcription }
+                        })).labelsHidden().fixedSize().accessibilityValue(store.speechSummary(.transcription))
+                    }.padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20)).disabled(store.models == nil)
                     ReaderSheetCard(title: "Playback speed") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], spacing: 8) {
                             ForEach(speeds, id: \.self) { multiplier in
@@ -600,7 +617,10 @@ private struct VoiceSettings: View {
         }.foregroundStyle(Palette.ink).background(Palette.paper)
             .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
             .sheet(isPresented: $gallery) {
-                if let models = store.models { ModelGallery(models: models) }
+                if let models = store.models { SpeechSetupSheet(capability: nil, models: models) }
+            }
+            .sheet(item: $setup) { capability in
+                if let models = store.models { SpeechSetupSheet(capability: capability, models: models) }
             }
             .sheet(item: Binding(get: { store.preparedArchive }, set: { if $0 == nil { store.finishArchiveExport() } })) { archive in
                 ArchiveExportPicker(url: archive.url) { saved in store.finishArchiveExport(archive.id, saved: saved) }
@@ -710,7 +730,7 @@ private struct NotesPanel: View {
                                     Menu {
                                         Button("Edit transcript") { text = note.transcript; editing = note }
                                         Button("Delete note", systemImage: "trash", role: .destructive) { deleting = note }
-                                        if !(note.recordingPath ?? "").isEmpty { Button("Retry on-device transcription") { store.retry(note) } }
+                                        if !(note.recordingPath ?? "").isEmpty { Button("Transcribe saved recording") { store.retry(note) } }
                                     } label: { Image(systemName: "ellipsis") }.accessibilityLabel("Note actions")
                                 }
                             }.font(.subheadline).disabled(store.busy)

@@ -19,7 +19,7 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var models: ModelPacks?
     @Published private(set) var preparation = "Opening your library"
     @Published private(set) var preparedArchive: PreparedDocumentArchive?
-    @Published var modelGalleryPresented = false
+    @Published var speechSetupSheet: SpeechCapability?
     @Published var errorMessage: String?
     @Published var captureDraft: VoiceNote?
     @Published var captureMessage = ""
@@ -67,7 +67,7 @@ final class ReaderStore: ObservableObject {
                   let (pack, _) = self?.models?.ready(capability: "tts", id: choice.packId) else { return false }
             return DownloadedVoice.voices(for: pack).contains { $0.0 == choice.voiceId }
         }
-        audio.onVoiceUnavailable = { [weak self] in self?.modelGalleryPresented = true }
+        audio.onVoiceUnavailable = { [weak self] in self?.speechSetupSheet = .narration }
         audio.onProgress = { [weak self] cursor in self?.saveProgress(cursor) }
         audio.renderVoice = { [weak self] passage, voice, pace in
             guard let self, let files = self.files, let choice = DownloadedVoice(voice),
@@ -812,9 +812,15 @@ final class ReaderStore: ObservableObject {
 
     func removePack(_ pack: ModelPack) async {
         speechSetup.cancel(packId: pack.id)
-        guard !busy, !audio.playing, !audio.replayPlaying, !audio.recording, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
+        guard !busy, !audio.playing, !audio.replayPlaying, !audio.recording, !audio.capturePending, captureDraft == nil, !preparingDocument, let models else { errorMessage = "Pause playback and finish your current operation before removing a pack."; return }
         busy = true
         defer { busy = false; serviceTranscriptions() }
+        if selectedTranscription == pack.id {
+            transcriptionSelectionID = UUID()
+            selectedTranscription = "off"
+            UserDefaults.standard.set("off", forKey: "transcriptionModel")
+        }
+        if DownloadedVoice(audio.selectedVoice)?.packId == pack.id { await audio.changeVoice("", resumePlayback: false) }
         let worker = transcriptionTask
         worker?.cancel()
         await worker?.value
@@ -921,7 +927,13 @@ final class ReaderStore: ObservableObject {
         }
     }
 
-    func retry(_ note: VoiceNote) { enqueue(note.id) }
+    func retry(_ note: VoiceNote) {
+        guard selectedTranscription != "off", models?.ready(capability: "asr", id: selectedTranscription) != nil else {
+            speechSetupSheet = .transcription
+            return
+        }
+        enqueue(note.id)
+    }
 
     private func enqueue(_ id: String) {
         guard !transcriptionQueue.contains(id), activeTranscription != id else { return }
