@@ -246,8 +246,6 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         let transfer = Transfer(packId: pack.id, generation: generation, fileIndex: 0)
         let task = beginOperation(transfer) {
             guard pack.eligible else { throw PackFailure.incompatible }
-            let free = try self.files.staging.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
-            guard free > pack.requiredStorageBytes else { throw PackFailure.space }
             let existing = self.installs.first { $0.packId == pack.id }
             _ = try await self.repository.beginInstall(id: pack.id, generation: generation)
             try Task.checkCancellation()
@@ -260,6 +258,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                     if FileManager.default.fileExists(atPath: oldResume.path) { try FileManager.default.moveItem(at: oldResume, to: nextResume) }
                 }
             }
+            let free = try self.files.staging.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
+            guard free > pack.requiredStorageBytes else { throw PackFailure.space }
             try await self.proceed(pack, generation: generation)
         }
         await task.value
