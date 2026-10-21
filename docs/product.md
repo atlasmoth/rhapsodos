@@ -37,7 +37,7 @@ Use the system file picker. Prefer a dependable local copy for the initial imple
 
 Preparation is progressive. Prioritize the first/current passage and nearby content. A full document scan must not block the first useful listen when the start is ready. Show uncertainty or preparation failure in context, with access to the original page.
 
-The first-run model choice offers Phonon with its size, device requirements and offline use. Future voices must earn their additional complexity through a measured advantage. Listening requires the downloaded voice; there is no system speech option. Import, PDF viewing and durable note capture remain usable before download. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
+The first-run voice choice offers Phonon with its language and download size. Download & use checks and selects it automatically; technical requirements remain in Details. Future voices must earn their additional complexity through a measured advantage. Listening requires the downloaded voice; there is no system speech option. Import, PDF viewing and durable note capture remain usable before download. Voices are selected for document narration without a separate sample-playback action. A gallery of technical model names is not the first screen.
 
 ### Listening
 
@@ -69,6 +69,8 @@ Settings → Documents provides Export document archive above Restore a document
 4. Save finalizes durable audio. **Save and resume** returns to listening without waiting for ASR.
 5. The note shows a truthful state such as saved/transcribing, waiting for resources or transcription failed. Its recording and attachment remain usable.
 6. The listener can edit the transcript or retry ASR. Machine retries cannot overwrite their edits.
+
+Settings exposes a single **Transcribe voice notes** switch, off on a fresh installation. Enabling it offers Download & enable when needed, then validates and activates the selected local model. Switching off cancels pending activation and preserves recordings and downloaded files.
 
 Here, converting a voice note to text means **transcription**. Language translation is optional later and preserves the original. Capture does not require network or ASR availability. Typed notes are a useful accessible alternative, including after microphone permission is denied.
 
