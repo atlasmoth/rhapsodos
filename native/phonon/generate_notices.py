@@ -120,7 +120,7 @@ def main():
     html.feed(stdlib)
     stdtext = re.sub(r'\n{4,}', '\n\n\n', ''.join(html.parts)).strip()
     sections.extend(['=' * 72, 'Rust 1.99.1 standard library and compiler-builtins', stdtext, ''])
-    (here / 'THIRD_PARTY_NOTICES.txt').write_text('\n'.join(sections))
+    (here / 'THIRD_PARTY_NOTICES.txt').write_text('\n'.join(sections).replace('\r\n', '\n').replace('\r', '\n'))
     (here / 'dependency-licenses.json').write_text(json.dumps({
         'cargoLockSHA256': digest((here / 'Cargo.lock').read_bytes()),
         'rustStandardLibraryNoticeSHA256': digest(stdlib.encode()),
