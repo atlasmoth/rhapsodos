@@ -2,7 +2,7 @@
 
 Status: native implementation and integration qualification, 21 October 2026. The user-approved deployment floor is iOS 18; newer APIs and device capabilities remain gated. [Development](development.md) records executed evidence. Physical-device speech and performance qualification remains open.
 
-The `0.01` app uses PDFKit/Vision progressive preparation, focused phone navigation, iPad split navigation and an inspector, downloaded narration and encrypted recording chunks. Its curated downloads provide Whisper tiny English transcription and Phonon CoreML narration on eligible devices. Native background URLSession transfers verify artifacts and runtime readiness before activation. The attachment reports passage precision with native audio offset; word-aligned timing is not advertised.
+The `0.01` app uses PDFKit/Vision progressive preparation, focused phone navigation, iPad split navigation and an inspector, downloaded narration and encrypted recording chunks. Its curated downloads provide Whisper Base English transcription and Phonon CoreML narration on eligible devices. Native background URLSession transfers verify artifacts and runtime readiness before activation. The attachment reports passage precision with native audio offset; word-aligned timing is not advertised.
 
 Owned locators are relative to the app's data root so container relocation remains safe. Automatic backup is disabled; the recording key is non-synchronizing and device-bound. Settings exports the selected document as a portable ZIP archive through the native Files save picker. Protected transient staging contains the original PDF and decrypted portable WAVs only for archive creation; picker completion or cancellation removes the prepared archive. Restore verifies their PDF, notes and PCM16 WAV envelope, then seals audio with the receiving device's key. Portable recordings use mono/stereo PCM16 WAV at 8–192 kHz, with a 30-minute maximum per note and a 600 MiB total asset limit shared with Android. There is no remote key recovery. Vault checks reject truncated committed audio. An interrupted draft can explicitly recover its authenticated prefix into a verified durable asset before canonical commit; its original remains owned recovery data until deliberate note/document deletion. Recovered notes use the same strict playback and ASR paths as complete recordings.
 
@@ -178,9 +178,9 @@ The current app processes content locally. Explicit model downloads fetch public
 | Capability | iOS 18 baseline | Qualification rule |
 | --- | --- | --- |
 | Narration | Verified, selected downloaded voice | Confirm model readiness, language and playback behavior |
-| Voice-note transcription | Downloaded Whisper tiny.en CoreML pack, or Off | Validate model OS/runtime support and actual offline operation |
+| Voice-note transcription | Downloaded Whisper Base English CoreML pack, or Off | Validate model OS/runtime support and actual offline operation |
 | OCR | Vision page-level recognition | Measure layout/reading-order quality and memory use |
-| Device readiness | Phonon requires iOS 18 and a 3 GB memory eligibility floor | This guard does not establish sustained physical-device qualification |
+| Device readiness | Phonon and Whisper Base require iOS 18 and a 3 GB memory eligibility floor | This guard does not establish sustained physical-device qualification |
 | Local language model | Optional later feature | Never required for opening, listening or saving a note |
 
 Microphone permission is required for recording. Speech-recognition permission is not requested: saved notes use the downloaded Whisper adapter, and unavailable transcription leaves their durable audio pending.
@@ -198,6 +198,14 @@ Settings exposes Reading voice and a Transcribe voice notes switch. Focused shee
 Each signed catalog entry needs model/voice identity and version, exact runtime and minimum OS, tokenizer/frontend version, required shared base assets, language coverage, sample rate, license, download/installed/temporary storage estimates, tested peak memory, thermal behavior and sustained performance measurements. Define cancellation, integrity verification, atomic activation and rollback. Downloads can use native background URLSession transfers; download success is distinct from a usable compiled model. [Background downloads](https://developer.apple.com/documentation/foundation/downloading-files-from-websites), [CoreML download and compilation](https://developer.apple.com/documentation/coreml/downloading-and-compiling-a-model-on-the-user-s-device)
 
 Keep the working pack until its replacement passes validation. Exclude reproducible model weights and generated caches from backups. Deleting a pack must not delete notes or recordings. Shared base assets need reference tracking so choosing several voices does not multiply the same download unnecessarily.
+
+### Saved-note transcription
+
+Whisper Base English uses WhisperKit 0.18.0 with a pinned 149,150,649-byte CoreML/tokenizer download and a provisional 3 GB eligibility guard. The [recorded-note comparison](evaluations/note-asr-evaluation.md) selected the same model family on Android. The native adapters differ; no recording leaves the device.
+
+Saved audio is read and resampled incrementally into contiguous windows of at most 30 seconds, splitting near a quiet interval when one exists. Short tails are retained and no audio is discarded by the boundary detector. Any read, inference or cancellation failure prevents a partial transcript commit; retries start again from the durable recording. Cancelling joins decoding before unload or removal. Exact-silence windows need no inference; model readiness still executes a real decode.
+
+WhisperKit 0.18.0 leaves its no-speech probability unset. A small public-protocol decoder wrapper computes it from unsuppressed start-token logits, using the pinned English tokenizer’s verified `<|nocaptions|>` token. Segments above 0.6 are omitted. The measured quiet-speech panel is retained without an amplitude cutoff. This check reduces tested silence/noise false positives; it is not a universal hallucination guarantee.
 
 ### Older-device policy
 

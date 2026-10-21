@@ -12,9 +12,17 @@ actor CoreMLSpeech {
         guard !working else { throw TranscriptionFailure.busy }
         working = true
         defer { working = false }
+        try Task.checkCancellation()
         let recognizer = try await load(at: folder)
-        do { let _: [TranscriptionResult] = try await recognizer.transcribe(audioArray: [Float](repeating: 0, count: 16_000), decodeOptions: options); await clear() }
-        catch { await clear(); throw error }
+        let cancellation = SpeechCancellation()
+        do {
+            let _: [TranscriptionResult] = try await withTaskCancellationHandler(operation: {
+                try await recognizer.transcribe(audioArray: [Float](repeating: 0, count: 16_000), decodeOptions: options,
+                    callback: { _ in !cancellation.cancelled })
+            }, onCancel: { cancellation.cancel() })
+            await clear()
+            try Task.checkCancellation()
+        } catch { await clear(); throw error }
     }
 
     func transcribe(_ audio: URL, using folder: URL) async throws -> String {
@@ -22,19 +30,26 @@ actor CoreMLSpeech {
         working = true
         defer { working = false }
         try Task.checkCancellation()
+        let source = try SavedAudioChunks(audio)
         let recognizer = try await load(at: folder)
         let cancellation = SpeechCancellation()
-        let results: [TranscriptionResult]
+        var text: [String] = []
         do {
-            results = try await withTaskCancellationHandler(operation: {
-                try await recognizer.transcribe(audioPath: audio.path, decodeOptions: options, callback: { _ in !cancellation.cancelled })
+            try await withTaskCancellationHandler(operation: {
+                while let samples = try source.next() {
+                    try Task.checkCancellation()
+                    if samples.allSatisfy({ $0 == 0 }) { continue }
+                    let results: [TranscriptionResult] = try await recognizer.transcribe(audioArray: samples, decodeOptions: options, callback: { _ in !cancellation.cancelled })
+                    try Task.checkCancellation()
+                    text.append(contentsOf: results.flatMap(\.segments).filter { $0.noSpeechProb <= 0.6 }.map(\.text))
+                }
             }, onCancel: { cancellation.cancel() })
             await clear()
             try Task.checkCancellation()
         } catch { await clear(); throw error }
-        let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw TranscriptionFailure.empty }
-        return text
+        let result = text.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !result.isEmpty else { throw TranscriptionFailure.empty }
+        return result
     }
 
     func unload() async { guard !working else { return }; await clear() }
@@ -47,16 +62,16 @@ actor CoreMLSpeech {
 
     private var options: DecodingOptions {
         DecodingOptions(verbose: false, task: .transcribe, language: "en", temperature: 0,
-            temperatureFallbackCount: 1, usePrefillPrompt: true, usePrefillCache: false,
-            skipSpecialTokens: true, withoutTimestamps: true, wordTimestamps: false,
-            concurrentWorkerCount: 1, chunkingStrategy: .vad)
+            temperatureFallbackCount: 0, usePrefillPrompt: true, usePrefillCache: false,
+            skipSpecialTokens: true, withoutTimestamps: true, wordTimestamps: false, windowClipTime: 0,
+            suppressBlank: true, noSpeechThreshold: nil, concurrentWorkerCount: 1, chunkingStrategy: nil)
     }
 
     private func load(at folder: URL) async throws -> OfflineWhisper {
         if loadedPath == folder, let recognizer { return recognizer }
         await clear()
-        let config = WhisperKitConfig(model: "tiny.en", modelFolder: folder.path, tokenizerFolder: folder,
-            computeOptions: ModelComputeOptions(), verbose: false, prewarm: false, load: false, download: false)
+        let config = WhisperKitConfig(model: "base.en", modelFolder: folder.path, tokenizerFolder: folder,
+            computeOptions: ModelComputeOptions(), textDecoder: NoSpeechTextDecoder(), verbose: false, prewarm: false, load: false, download: false)
         let result = try await OfflineWhisper(config)
         try await result.loadModels()
         recognizer = result
@@ -83,12 +98,12 @@ private final class LocalWhisperTokenizer: WhisperTokenizer {
 
     init(_ base: any Tokenizer) throws {
         func token(_ value: String) throws -> Int {
-            guard let id = base.convertTokenToId(value) else { throw TranscriptionFailure.unavailable }
+            guard let id = base.convertTokenToId(value), base.convertIdToToken(id) == value else { throw TranscriptionFailure.unavailable }
             return id
         }
         self.base = base
         specialTokens = try SpecialTokens(endToken: token("<|endoftext|>"), englishToken: token("<|en|>"),
-            noSpeechToken: token("<|nospeech|>"), noTimestampsToken: token("<|notimestamps|>"),
+            noSpeechToken: token("<|nocaptions|>"), noTimestampsToken: token("<|notimestamps|>"),
             specialTokenBegin: token("<|endoftext|>"), startOfPreviousToken: token("<|startofprev|>"),
             startOfTranscriptToken: token("<|startoftranscript|>"), timeTokenBegin: token("<|0.00|>"),
             transcribeToken: token("<|transcribe|>"), translateToken: token("<|translate|>"),

@@ -215,7 +215,7 @@ final class ReaderStore: ObservableObject {
                 if let worker = self.transcriptionTask { worker.cancel(); await worker.value }
                 try Task.checkCancellation()
                 switch pack.adapter {
-                case "whisper-tiny-en-coreml": await self.phononPacks.unload(); try await self.speechPacks.validateASR(at: folder)
+                case "whisper-base-en-coreml": await self.phononPacks.unload(); try await self.speechPacks.validateASR(at: folder)
                 case "phonon-english-coreml": await self.speechPacks.unload(); try await self.phononPacks.validate(pack: pack, at: folder)
                 default: throw PackFailure.incompatible
                 }
@@ -974,7 +974,7 @@ final class ReaderStore: ObservableObject {
                 try Task.checkCancellation()
                 await phononPacks.unload()
                 let text: String
-                if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-tiny-en-coreml" {
+                if let (pack, folder) = models?.ready(capability: "asr", id: choice), pack.adapter == "whisper-base-en-coreml" {
                     text = try await speechPacks.transcribe(output, using: folder)
                 } else { throw TranscriptionFailure.unavailable }
                 try Task.checkCancellation()
