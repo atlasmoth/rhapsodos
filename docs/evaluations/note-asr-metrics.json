@@ -804,6 +804,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 60.63178808500379,
           "audio_seconds": 813.0149375
         },
@@ -818,6 +819,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.612044331996003,
           "audio_seconds": 80.0
         },
@@ -832,6 +834,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 25.149980251015222,
           "audio_seconds": 326.97
         },
@@ -846,6 +849,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 5.71414008300053,
           "audio_seconds": 74.0349375
         },
@@ -860,6 +864,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 15.527098626000225,
           "audio_seconds": 209.18
         },
@@ -874,6 +879,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 0,
           "seconds": 0.23351699900376843,
           "audio_seconds": 51.0
         },
@@ -888,6 +894,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.776688126992667,
           "audio_seconds": 61.415
         },
@@ -902,6 +909,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.851836665999144,
           "audio_seconds": 61.415
         },
@@ -916,6 +924,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 0,
           "seconds": 0.23483645899250405,
           "audio_seconds": 51.0
         }
@@ -957,6 +966,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 47.32702633496956,
           "audio_seconds": 813.0149375
         },
@@ -971,6 +981,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.040178040988394,
           "audio_seconds": 80.0
         },
@@ -985,6 +996,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 18.710882957981084,
           "audio_seconds": 326.97
         },
@@ -999,6 +1011,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 3.6683169600146357,
           "audio_seconds": 74.0349375
         },
@@ -1013,6 +1026,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 14.045559916994534,
           "audio_seconds": 209.18
         },
@@ -1027,6 +1041,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 0,
           "seconds": 0.9414430840042769,
           "audio_seconds": 51.0
         },
@@ -1041,6 +1056,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 3.4645831659872783,
           "audio_seconds": 61.415
         },
@@ -1055,6 +1071,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 3.3975052930036327,
           "audio_seconds": 61.415
         },
@@ -1069,6 +1086,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": 2,
+          "false_positive_raw_clips": 2,
           "seconds": 3.8340794159958023,
           "audio_seconds": 51.0
         }
@@ -1110,6 +1128,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 28.834841838033753,
           "audio_seconds": 813.0149375
         },
@@ -1124,6 +1143,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.252286709008331,
           "audio_seconds": 80.0
         },
@@ -1138,6 +1158,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 11.745761502017558,
           "audio_seconds": 326.97
         },
@@ -1152,6 +1173,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.9611567920073867,
           "audio_seconds": 74.0349375
         },
@@ -1166,6 +1188,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 7.476081168992096,
           "audio_seconds": 209.18
         },
@@ -1180,6 +1203,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 0,
           "seconds": 0.23465620699425926,
           "audio_seconds": 51.0
         },
@@ -1194,6 +1218,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.2342027080012485,
           "audio_seconds": 61.415
         },
@@ -1208,6 +1233,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.1653529580071336,
           "audio_seconds": 61.415
         },
@@ -1222,6 +1248,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 0,
           "seconds": 0.2352057070020237,
           "audio_seconds": 51.0
         }
@@ -1263,6 +1290,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 26.633985625005153,
           "audio_seconds": 813.0149375
         },
@@ -1277,6 +1305,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.520934002001013,
           "audio_seconds": 80.0
         },
@@ -1291,6 +1320,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 8.82284620498831,
           "audio_seconds": 326.97
         },
@@ -1305,6 +1335,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.024841501013725,
           "audio_seconds": 74.0349375
         },
@@ -1319,6 +1350,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 8.938382792017364,
           "audio_seconds": 209.18
         },
@@ -1333,6 +1365,7 @@
           "empty_outputs": 3,
           "errors": 0,
           "false_positive_clips": 1,
+          "false_positive_raw_clips": 1,
           "seconds": 0.4223659170020255,
           "audio_seconds": 51.0
         },
@@ -1347,6 +1380,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.154632167003001,
           "audio_seconds": 61.415
         },
@@ -1361,6 +1395,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.1723489579817397,
           "audio_seconds": 61.415
         },
@@ -1375,6 +1410,7 @@
           "empty_outputs": 3,
           "errors": 0,
           "false_positive_clips": 1,
+          "false_positive_raw_clips": 1,
           "seconds": 0.4533172080045915,
           "audio_seconds": 51.0
         }
@@ -1416,6 +1452,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 25.089638332057802,
           "audio_seconds": 813.0149375
         },
@@ -1430,6 +1467,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.5262003340176307,
           "audio_seconds": 80.0
         },
@@ -1444,6 +1482,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 8.840400124026928,
           "audio_seconds": 326.97
         },
@@ -1458,6 +1497,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.441098875016905,
           "audio_seconds": 74.0349375
         },
@@ -1472,6 +1512,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 5.380392915998527,
           "audio_seconds": 209.18
         },
@@ -1486,6 +1527,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": 4,
+          "false_positive_raw_clips": 4,
           "seconds": 0.6198152080032742,
           "audio_seconds": 51.0
         },
@@ -1500,6 +1542,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 1.950282457000867,
           "audio_seconds": 61.415
         },
@@ -1514,6 +1557,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 1.951263625996944,
           "audio_seconds": 61.415
         },
@@ -1528,6 +1572,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": 4,
+          "false_positive_raw_clips": 4,
           "seconds": 0.532072000009066,
           "audio_seconds": 51.0
         }
@@ -1573,6 +1618,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 53.98842333300854,
           "audio_seconds": 813.0149375
         },
@@ -1587,6 +1633,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 5.796910374992876,
           "audio_seconds": 80.0
         },
@@ -1601,6 +1648,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 18.485799083005986,
           "audio_seconds": 326.97
         },
@@ -1615,6 +1663,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 10.041126875003101,
           "audio_seconds": 74.0349375
         },
@@ -1629,6 +1678,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 10.787264750004397,
           "audio_seconds": 209.18
         },
@@ -1643,6 +1693,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": 4,
+          "false_positive_raw_clips": 4,
           "seconds": 1.5157954600072117,
           "audio_seconds": 51.0
         },
@@ -1657,6 +1708,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.619919417003985,
           "audio_seconds": 61.415
         },
@@ -1671,6 +1723,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 4.257402832998196,
           "audio_seconds": 61.415
         },
@@ -1685,6 +1738,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": 4,
+          "false_positive_raw_clips": 4,
           "seconds": 1.5301131250016624,
           "audio_seconds": 51.0
         }
@@ -1730,6 +1784,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 16.803480499002035,
           "audio_seconds": 813.0149375
         },
@@ -1744,6 +1799,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 1.6422562079969794,
           "audio_seconds": 80.0
         },
@@ -1758,6 +1814,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 6.566707459001918,
           "audio_seconds": 326.97
         },
@@ -1772,6 +1829,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 2.4580775010035723,
           "audio_seconds": 74.0349375
         },
@@ -1786,6 +1844,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 3.496253875004186,
           "audio_seconds": 209.18
         },
@@ -1800,6 +1859,7 @@
           "empty_outputs": 4,
           "errors": 0,
           "false_positive_clips": 0,
+          "false_positive_raw_clips": 4,
           "seconds": 0.602942040997732,
           "audio_seconds": 51.0
         },
@@ -1814,6 +1874,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 1.3049966230028076,
           "audio_seconds": 61.415
         },
@@ -1828,6 +1889,7 @@
           "empty_outputs": 0,
           "errors": 0,
           "false_positive_clips": null,
+          "false_positive_raw_clips": null,
           "seconds": 1.3351888329925714,
           "audio_seconds": 61.415
         },
@@ -1842,6 +1904,7 @@
           "empty_outputs": 2,
           "errors": 0,
           "false_positive_clips": 2,
+          "false_positive_raw_clips": 4,
           "seconds": 0.29175708499678876,
           "audio_seconds": 51.0
         }
@@ -2150,5 +2213,6 @@
         "total_bytes": 970930930
       }
     }
-  }
+  },
+  "blank_output_scoring": "Both normalized-word false_positive_clips and raw-nonempty false_positive_raw_clips are retained. Raw output includes punctuation and parenthesized annotations stripped by WER normalization; speech WER/CER is unchanged."
 }

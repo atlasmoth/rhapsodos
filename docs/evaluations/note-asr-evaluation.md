@@ -44,15 +44,15 @@ Moonshine Small is competitive on clean speech and constructed long notes. Its d
 
 ## Silence and noise: pipeline diagnostics
 
-| Model/path | Digital silence: false-positive clips / 4; emitted words | Noise-only: false-positive clips / 4; emitted words |
+| Model/path | Digital silence: raw nonempty clips / 4; normalized words | Noise-only: raw nonempty clips / 4; normalized words |
 |---|---:|---:|
-| Whisper Tiny.en FP32 | 2/4; 2 | 0/4; 0 |
+| Whisper Tiny.en FP32 | 4/4; 2 | 4/4; 0 |
 | Whisper Base.en FP32 | 4/4; 4 | 4/4; 25 |
 | Whisper Small.en FP32 | 4/4; 4 | 4/4; 4 |
 | Moonshine Tiny 34M streaming | 0/4; 0 | 0/4; 0 |
 | Moonshine Small 123M streaming | 0/4; 0 | 0/4; 0 |
 
-Moonshine streaming's default VAD rejects all eight blank probes. The Whisper reference deliberately supplies the waveform without a separate VAD and does not set the standard no-speech/log-probability thresholds; its false positives are **ungated baseline behavior**, not an approved product pipeline. A shipping Whisper adapter needs actual no-speech handling checked against silence *and* these quiet clips, so suppressing hallucinations does not discard legitimate notes. Recording durability must remain independent of ASR success.
+Blank-output safety counts raw nonempty text, separately from normalized word counts. The scoring normalizer removes parenthesized annotations and punctuation; that is appropriate for WER but must not hide descriptions or punctuation-only output in no-speech checks. In particular, host Whisper Tiny emits raw punctuation on six blank probes and a word on two: eight nonempty raw outputs, two normalized-word false positives. Speech WER/CER is unchanged. Moonshine streaming's default VAD rejects all eight blank probes. The Whisper reference deliberately supplies the waveform without a separate VAD and does not set the standard no-speech/log-probability thresholds; its false positives are **ungated baseline behavior**, not an approved product pipeline. A shipping Whisper adapter needs actual no-speech handling checked against silence *and* these quiet clips, so suppressing hallucinations does not discard legitimate notes. Recording durability must remain independent of ASR success.
 
 ## Host performance: descriptive, not cross-engine mobile rankings
 
