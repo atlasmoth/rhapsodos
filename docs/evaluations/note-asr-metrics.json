@@ -1,0 +1,2154 @@
+{
+  "date": "2026-10-21",
+  "scope": "host CPU comparison; native qualification pending; diagnostic unbounded Moonshine separate",
+  "environment": {
+    "system": "macOS-27.0.1-arm64-arm-64bit",
+    "cpu": "Apple M4 Pro",
+    "ram_bytes": 51539607552,
+    "versions": {
+      "torch": "2.13.0",
+      "transformers": "5.14.1",
+      "moonshine-voice": "0.1.5",
+      "soundfile": "0.14.0",
+      "jiwer": "4.0.0",
+      "numpy": "2.5.1",
+      "scipy": "1.18.0"
+    }
+  },
+  "corpus": {
+    "seed": 20261021,
+    "corpus_archive_sha256": "39fde525e59672dc6d1551919b1478f724438a95aa55f874b576be21967e6c23",
+    "num_clips": 74,
+    "num_librispeech_speakers": 40,
+    "speech_duration_s": 813.0149375,
+    "manifest_sha256": "877951b09711fb5ac35c2a9255cf03b433315e0da910f3556f20f35ce2422004",
+    "fleurs_revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+    "fleurs_config": "en_us",
+    "fleurs_split": "validation",
+    "selection": "Seeded shuffled LibriSpeech duration2-6s20 and12-25s20, distinct speakers; first10FLEURS validation rows. Original gain.6originals x2 white-noise SNRs;4long concatenations of3clips.",
+    "clips": [
+      {
+        "id": "ls-6930-76324-0001",
+        "subset": "librispeech_short",
+        "duration_s": 3.2,
+        "samples": 51200,
+        "sha256": "eefb6e09630915d2d0e8ed41b8f4386de0912e6d7b51b188b90e69d2edf7febf",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "6930",
+        "source_sha256": "3c2d7791724330d1d1333b3c95d86d726b63a73a5a1b81bc898efe443b2393f6"
+      },
+      {
+        "id": "ls-61-70968-0055",
+        "subset": "librispeech_short",
+        "duration_s": 3.965,
+        "samples": 63440,
+        "sha256": "b9734d146511c648889a14fa1ddd092974fb33c472c5dd15eee5cc979130915a",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "61",
+        "source_sha256": "1e169517449ee2c17ad17dfef0696ca1948fe216c0d46e85fe90d653739948ec"
+      },
+      {
+        "id": "ls-7021-85628-0014",
+        "subset": "librispeech_short",
+        "duration_s": 2.295,
+        "samples": 36720,
+        "sha256": "f6ddfc9f10195bfe9e276cab31a3de007b99f7ed6d4b5dd3ed0655d30bdecad2",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "7021",
+        "source_sha256": "07090ff5fc921b1ab474984e45785a01664aa8c9013d935d173e6cd2448b6a7b"
+      },
+      {
+        "id": "ls-2094-142345-0016",
+        "subset": "librispeech_short",
+        "duration_s": 2.26,
+        "samples": 36160,
+        "sha256": "8b6c3bb0a1a1f0b641bbef77d5bdab1cea6f2d0131957fb3722cf7b2fe192960",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "2094",
+        "source_sha256": "7870dbbf03dfa3cca6a0a699ce46e41b04beeebceae1c93e2be58d1dc49639ef"
+      },
+      {
+        "id": "ls-5142-33396-0005",
+        "subset": "librispeech_short",
+        "duration_s": 2.225,
+        "samples": 35600,
+        "sha256": "a343530805c5d94c657ea2c46b87425a343ce78bec2f56f1d7361a1892773842",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "5142",
+        "source_sha256": "98feef26fcc761515ffeed15ebfaecd3cd481232082d8a158d131aa0cef7c9c8"
+      },
+      {
+        "id": "ls-7176-88083-0015",
+        "subset": "librispeech_short",
+        "duration_s": 2.335,
+        "samples": 37360,
+        "sha256": "e4e87a144f27080e57a68031ece8acd6c4e72efea5dbdfdab9ba645c864db5fa",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "7176",
+        "source_sha256": "26811227b803fd74bfc07c31ab6b7e2d7c1b1c2036d027d8eecd25f6b891d25e"
+      },
+      {
+        "id": "ls-3729-6852-0031",
+        "subset": "librispeech_short",
+        "duration_s": 4.4,
+        "samples": 70400,
+        "sha256": "fe71a069125ddc02035fa05c49056babce2812995a45bc592938fa3a8807d5dc",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "3729",
+        "source_sha256": "7a09c8ea3eb565cce3190ede95c5d85c0cad911b0836155fa5828733392e42be"
+      },
+      {
+        "id": "ls-1580-141083-0049",
+        "subset": "librispeech_short",
+        "duration_s": 3.8450625,
+        "samples": 61521,
+        "sha256": "e4f2e12cc97882492f26cb3c0efc83f24ff4b45a3e80b401a5addb9014ecd66e",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1580",
+        "source_sha256": "25aace5fb29cb3434e8e97a851ec71254ce2f2ab6fa71291350e3bfe7034e9a8"
+      },
+      {
+        "id": "ls-237-134500-0028",
+        "subset": "librispeech_short",
+        "duration_s": 4.5249375,
+        "samples": 72399,
+        "sha256": "e9d60ed7cf424226eff3101e43fb126a209561c6d202b7c4d588c883fad378a6",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "237",
+        "source_sha256": "3b88a61b9dcc3dcfe29020a1fc106915dab1fb4032a2b6fe0b4be6790fb8fe0b"
+      },
+      {
+        "id": "ls-1320-122617-0027",
+        "subset": "librispeech_short",
+        "duration_s": 5.6899375,
+        "samples": 91039,
+        "sha256": "f13188f0dc7fd1ba814a0e9423e1b086be1bcadf67d4927f9fd0fd45e92d2ef3",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1320",
+        "source_sha256": "22c2c92f1ccaa4194a16382e196de9996b7495feacab6a43fcbf02a40b0e4fdc"
+      },
+      {
+        "id": "ls-4446-2275-0035",
+        "subset": "librispeech_short",
+        "duration_s": 4.075,
+        "samples": 65200,
+        "sha256": "57e9d3d58effe1ca9fd3e5a13b3f56cd234ee9dfe3bb60701cc98e4f2ab211ef",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "4446",
+        "source_sha256": "1d19b53e261541c11ee082f26975c7379333ffb4c70b08a026f04ddaea299e1c"
+      },
+      {
+        "id": "ls-5105-28241-0003",
+        "subset": "librispeech_short",
+        "duration_s": 3.98,
+        "samples": 63680,
+        "sha256": "2bbcbe9985a37bfcb5cd8c07b563d73d864b94a2cddcc4c25f85a77cbc4e4343",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "5105",
+        "source_sha256": "5bd328b5c55618d8c8610f82e9d81501b96aba8813d880ba384a2d1eb367c5c6"
+      },
+      {
+        "id": "ls-8463-287645-0012",
+        "subset": "librispeech_short",
+        "duration_s": 5.425,
+        "samples": 86800,
+        "sha256": "a280b3bedb7d8af6462b9e779a8083b9a1acc2c68c989b56043b092d15cd821c",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "8463",
+        "source_sha256": "a71fc41710cdcfe60e9379a4d0d97a4a3b5671de27540c2b8afeceb862f6fa3a"
+      },
+      {
+        "id": "ls-4970-29095-0005",
+        "subset": "librispeech_short",
+        "duration_s": 4.65,
+        "samples": 74400,
+        "sha256": "5e25e8e797105bb76c0f84611db3130f646ae7375cf2f05351c088771600fd46",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "4970",
+        "source_sha256": "57fca4e6855df26e3622369cc9a0464f1ec3e48bb5ca8e03b83378fbd29fde17"
+      },
+      {
+        "id": "ls-4992-41806-0005",
+        "subset": "librispeech_short",
+        "duration_s": 3.73,
+        "samples": 59680,
+        "sha256": "5c98d3f0f271476225a4aaa7316b2434687cd4522b63b01a871026074c6c35fc",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "4992",
+        "source_sha256": "0b58fad8e1d4a5a5eabf288e78d2a890ebd8d1998a34ace816693370b28ae52e"
+      },
+      {
+        "id": "ls-8455-210777-0020",
+        "subset": "librispeech_short",
+        "duration_s": 3.155,
+        "samples": 50480,
+        "sha256": "6f24940f66a9da95b2a724e2f2fc496483189304be3bcc08f07d6c84d49539b0",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "8455",
+        "source_sha256": "02236ecd1be6de19202a31bf6c02c554ab97ed593d60aa62ed060eeebaa544de"
+      },
+      {
+        "id": "ls-1089-134686-0007",
+        "subset": "librispeech_short",
+        "duration_s": 4.275,
+        "samples": 68400,
+        "sha256": "2cff67acc90735509fb83be543636b224e12711f24dcea765077ae4bbe455a48",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1089",
+        "source_sha256": "c310a0558d2a9f3698a25675ce61c6ba1de232f2acb35ee8d096e504d0fe4299"
+      },
+      {
+        "id": "ls-1995-1826-0010",
+        "subset": "librispeech_short",
+        "duration_s": 2.445,
+        "samples": 39120,
+        "sha256": "53196d2b3b50539abd177ce2ac89a4d26260fa02de9561acbaf1278537f04050",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1995",
+        "source_sha256": "9bf28f854203b8209aeac34b85b7f5604aafb93865778a9eb86b10129216bb9f"
+      },
+      {
+        "id": "ls-260-123440-0017",
+        "subset": "librispeech_short",
+        "duration_s": 3.07,
+        "samples": 49120,
+        "sha256": "44011535d23882913f6ffb7917c0ad99896ece78c536dd8a3ef13937e29d1d7f",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "260",
+        "source_sha256": "b7388d520ed799794e54169d524ef60bf0c0566f46cd6a2b3694ebc25c0fb9ce"
+      },
+      {
+        "id": "ls-908-31957-0005",
+        "subset": "librispeech_short",
+        "duration_s": 4.49,
+        "samples": 71840,
+        "sha256": "170ca1d60874486c59a565a4aea6147c0b1707965fb1f79ad03938d46fba1e1d",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "908",
+        "source_sha256": "d87bf4e35fc678fc230e0766bf5de79466307111cc8df49f745cdc1988a11b39"
+      },
+      {
+        "id": "ls-2961-960-0008",
+        "subset": "librispeech_long",
+        "duration_s": 15.455,
+        "samples": 247280,
+        "sha256": "575094a6efcf3dceef23d8f4abbfc5ff410eb1229aef392fb16ad89b83f6baca",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "2961",
+        "source_sha256": "60940ec45a27c9baa37d5d1c58ff0fc2b694f0c03cc76911d82299516cfad24e"
+      },
+      {
+        "id": "ls-7729-102255-0032",
+        "subset": "librispeech_long",
+        "duration_s": 20.28,
+        "samples": 324480,
+        "sha256": "93f09f1d991d0948d303ad18b29ab103457860309df95d6d6548259665e8cf99",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "7729",
+        "source_sha256": "09c76526b67e14805c5ded5796d01649f93829cfbe19ad16d9d31a167339299e"
+      },
+      {
+        "id": "ls-1284-1180-0030",
+        "subset": "librispeech_long",
+        "duration_s": 16.22,
+        "samples": 259520,
+        "sha256": "4a730abe99db417f8de93078298f598515bdf4fc3403b75befd79d46c664d64b",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1284",
+        "source_sha256": "e6fbfcfdc0082e860452906d6ddbf26aa2fc2ae7dad91cb387cd997af7f6bb40"
+      },
+      {
+        "id": "ls-1188-133604-0009",
+        "subset": "librispeech_long",
+        "duration_s": 23.06,
+        "samples": 368960,
+        "sha256": "92d39666b7c6343fc7db5faec865d6cdc360e02799bcdbf95599bf014d2a6cf9",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1188",
+        "source_sha256": "f5bd36156c4be312917bb118ead088ba2782a545ffbe5c6a925e6522583cba06"
+      },
+      {
+        "id": "ls-4507-16021-0023",
+        "subset": "librispeech_long",
+        "duration_s": 12.07,
+        "samples": 193120,
+        "sha256": "6f9a28bb154d85df25c52d708a964997baa2a37ea7525e0baecb06e16ff07e4d",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "4507",
+        "source_sha256": "8c8f57eb20855a12adbda65cb91fbbce94121fcfbcb33c73c7f13e45bf4edb69"
+      },
+      {
+        "id": "ls-1221-135767-0022",
+        "subset": "librispeech_long",
+        "duration_s": 14.395,
+        "samples": 230320,
+        "sha256": "f4aa932e3cb72ee1b704f2db5676caee1dc2192d7fc3e778430a37d314cb72af",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "1221",
+        "source_sha256": "605e4a0996766b31d74e9d07af1c4d5105c5ec715e1784dc1c159c7ac05cd494"
+      },
+      {
+        "id": "ls-3575-170457-0043",
+        "subset": "librispeech_long",
+        "duration_s": 19.0,
+        "samples": 304000,
+        "sha256": "da4d969bf3e4767b490b51b5782bf423b7adb424d44b921c40e167d3e4514004",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "3575",
+        "source_sha256": "db270e76e622aa113fed47e148d249e3a96fb25578ecde46e345244673ed04bb"
+      },
+      {
+        "id": "ls-8224-274381-0008",
+        "subset": "librispeech_long",
+        "duration_s": 20.98,
+        "samples": 335680,
+        "sha256": "66e538841163f59aba98529723e73a0aae9d363f4bef03e23a66f7b834322c4f",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "8224",
+        "source_sha256": "24259edfce3ef4cb128d74314ba5a9913e2e4c40730739b03aa0a6b1532faca7"
+      },
+      {
+        "id": "ls-4077-13751-0005",
+        "subset": "librispeech_long",
+        "duration_s": 19.61,
+        "samples": 313760,
+        "sha256": "f73805206bb289b3ea6f0203ee3734b3d04071a74ee903aafd292f736667551f",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "4077",
+        "source_sha256": "075530d2e6997005be783073f61914785492b5fd5a5aef67211e65d77890333d"
+      },
+      {
+        "id": "ls-3570-5694-0009",
+        "subset": "librispeech_long",
+        "duration_s": 12.605,
+        "samples": 201680,
+        "sha256": "95a5a63733d5a3506635ff8ebd238f8517cf1141d8dd542d6a7bb7663ebd51c8",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "3570",
+        "source_sha256": "c5e62ac37b8ca9b52f384b0c61bd803f97e79f55d47c4709fbe435a290f23e18"
+      },
+      {
+        "id": "ls-121-123859-0000",
+        "subset": "librispeech_long",
+        "duration_s": 17.39,
+        "samples": 278240,
+        "sha256": "da4567d436f82f5d8f2c6117e405af4e6c0f71b74af3f00f671400e7776818a0",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "121",
+        "source_sha256": "bd507b31ede22afb0a49e9386ce62c3168cf6b2d93e88b6b548ff109d9d070b0"
+      },
+      {
+        "id": "ls-6829-68771-0000",
+        "subset": "librispeech_long",
+        "duration_s": 13.315,
+        "samples": 213040,
+        "sha256": "616e0aa8823c11b3933c8ac5806212dd5bbef9526d1fa60a1e1c0731d9f03622",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "6829",
+        "source_sha256": "d6698654fba12e6dccd51aed13cc3848970118cdef794fb1f2ac26ceb6a20481"
+      },
+      {
+        "id": "ls-8555-284447-0010",
+        "subset": "librispeech_long",
+        "duration_s": 12.93,
+        "samples": 206880,
+        "sha256": "03f17b923e5cc4c4198dfbcc4501baa87c56eea761fbd05e636bdfb43a9092f0",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "8555",
+        "source_sha256": "865194881ebce32f755f2f38aca4648408309fc0deba29a07a913385aa4dfdb1"
+      },
+      {
+        "id": "ls-2300-131720-0031",
+        "subset": "librispeech_long",
+        "duration_s": 16.585,
+        "samples": 265360,
+        "sha256": "e93c6c35966e1a891dd2c3c7361fdb1953c50b9a238313dd81da9aa55a813b5e",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "2300",
+        "source_sha256": "7ce8d0cb9ac789a980c896a4fef422aeab72548a92c783dd5f6231bc88c36bc5"
+      },
+      {
+        "id": "ls-5639-40744-0000",
+        "subset": "librispeech_long",
+        "duration_s": 15.77,
+        "samples": 252320,
+        "sha256": "8069fd8ee2a120f435d682a8e27a9435fa6b80122b5d8843779178d19a3c1c2a",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "5639",
+        "source_sha256": "5f25c4ad283ffb96549c83498dd4255ec20fd1470c7e4041d5c5b3ac86e62606"
+      },
+      {
+        "id": "ls-8230-279154-0040",
+        "subset": "librispeech_long",
+        "duration_s": 16.695,
+        "samples": 267120,
+        "sha256": "19af5578f4036e9ad7c2dea6d790542024e6e34e55cfb14e59046964d924739a",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "8230",
+        "source_sha256": "1e2cc291cc0a851d479c5723dd572c62c064f2e9d8bfab3ea4636e366f1e5dca"
+      },
+      {
+        "id": "ls-672-122797-0064",
+        "subset": "librispeech_long",
+        "duration_s": 15.27,
+        "samples": 244320,
+        "sha256": "ca45ffc58823ea6f85e12a06cbaf565268ff57bc6ea00c764d5e308ae9c07ee4",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "672",
+        "source_sha256": "9c864053d816e2506b88afc8c282df4932b3a5287359fdb802d3f0cca84a9600"
+      },
+      {
+        "id": "ls-7127-75946-0028",
+        "subset": "librispeech_long",
+        "duration_s": 16.075,
+        "samples": 257200,
+        "sha256": "94898a4159da916065ae71a6496913a4c268c159371a41d583db51c358c464e2",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "7127",
+        "source_sha256": "7f1940649f181b2bd35e1ac524efc707d4dce5ea105f756554bb174d08bf3b97"
+      },
+      {
+        "id": "ls-5683-32879-0017",
+        "subset": "librispeech_long",
+        "duration_s": 14.59,
+        "samples": 233440,
+        "sha256": "93c45ae2db130be432629fc34cd319f9d015aefcd598181984bd13edffca0979",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "5683",
+        "source_sha256": "080d203ada25b5d494ed5556475f252fbe4fc876cf76d328a38b0b3f67b6eab7"
+      },
+      {
+        "id": "ls-2830-3979-0007",
+        "subset": "librispeech_long",
+        "duration_s": 14.675,
+        "samples": 234800,
+        "sha256": "fa06093f22e560be2314f155ced27728939333cd7e9c04eb281e9e77b9f49eaa",
+        "source": "OpenSLR SLR12 test-clean CC-BY4.0",
+        "speaker": "2830",
+        "source_sha256": "af8ea2de095dde54cde454877b332b092ee99d901c3678c301ecad2de5f0dad9"
+      },
+      {
+        "id": "fleurs-0",
+        "subset": "fleurs",
+        "duration_s": 6.54,
+        "samples": 104640,
+        "sha256": "c4120b0b7d6729f4e66e63c96f1c847d425762ca4f69807febe8477e62e68fbd",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 0,
+        "original_id": 1548,
+        "source_sha256": "048169439c0328b758349af74aeb54a82a7a476e309709eb791dced06db25d48",
+        "gender": 0
+      },
+      {
+        "id": "fleurs-1",
+        "subset": "fleurs",
+        "duration_s": 16.38,
+        "samples": 262080,
+        "sha256": "2f4509716928e9220a78a32860b79b2981f946dd51c3030e38bf4ccd8b2a4ced",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 1,
+        "original_id": 1620,
+        "source_sha256": "5fefdcd12d4c136762cc7841b084126fc60c6d6410f983cc9f82b6cfc45737a2",
+        "gender": 1
+      },
+      {
+        "id": "fleurs-2",
+        "subset": "fleurs",
+        "duration_s": 7.92,
+        "samples": 126720,
+        "sha256": "12669b3d0de83ba0d9b27da321633a0e73e21944f2c80f35466f51db60d4c7a5",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 2,
+        "original_id": 1510,
+        "source_sha256": "e5664ae10a6273fbe0009068e512f4c416cccbeff19d3d2d11e5fb8d72d03fb7",
+        "gender": 0
+      },
+      {
+        "id": "fleurs-3",
+        "subset": "fleurs",
+        "duration_s": 4.14,
+        "samples": 66240,
+        "sha256": "73d521d3d6fde8c88691c6ccfa9650fdec03e5ff70e1ab1b5fa2b5d8eab7685d",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 3,
+        "original_id": 1578,
+        "source_sha256": "7172cc6e8a7b006a8175c57df13bb69db0c6249dc09d7b015c98722d5af9734c",
+        "gender": 1
+      },
+      {
+        "id": "fleurs-4",
+        "subset": "fleurs",
+        "duration_s": 4.92,
+        "samples": 78720,
+        "sha256": "00e4d691df954427e17b3607560c542d7bfc599e8c5371f3ddf6caff5f77eafc",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 4,
+        "original_id": 1652,
+        "source_sha256": "a7bd6d6d116c534c0d18bfe6eacd83a5616e3024f64c68b878fd6334755e245a",
+        "gender": 1
+      },
+      {
+        "id": "fleurs-5",
+        "subset": "fleurs",
+        "duration_s": 4.44,
+        "samples": 71040,
+        "sha256": "9c7735d47d12d43f2fe91f334add33b5cc8e201152dde7396dffbfcd72dd2f3e",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 5,
+        "original_id": 1531,
+        "source_sha256": "0e442fc0aa37a2f0b0a1847bcab7b0cb1ac0d4e9daf600422583da65ae5e474e",
+        "gender": 1
+      },
+      {
+        "id": "fleurs-6",
+        "subset": "fleurs",
+        "duration_s": 6.84,
+        "samples": 109440,
+        "sha256": "604acbc2d096ab14aa8df804ba7f7823f3d090540020ed8d17391f4a3d1a47f6",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 6,
+        "original_id": 1528,
+        "source_sha256": "d03181782ddc8d02a19653dd605fe416db520db60325888e908974df034bd3f5",
+        "gender": 0
+      },
+      {
+        "id": "fleurs-7",
+        "subset": "fleurs",
+        "duration_s": 10.02,
+        "samples": 160320,
+        "sha256": "d736aa4815a6de4ecc1f2864c4e6f9c67906b8eb37e8df103a4107d95d257377",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 7,
+        "original_id": 1595,
+        "source_sha256": "39097469197371ff2e4eb4450f3b7b86b65e79b3962c5e8c4eadc77786f4204d",
+        "gender": 1
+      },
+      {
+        "id": "fleurs-8",
+        "subset": "fleurs",
+        "duration_s": 9.32,
+        "samples": 149120,
+        "sha256": "52e332133d15fd0bea0486a377cbc90d76a5282cd6d5af13988b71dc697ff7f1",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 8,
+        "original_id": 1559,
+        "source_sha256": "97c91f17d0fac2f617510489c1f149371234a16990c1e0b8945ea91611a74c4c",
+        "gender": 0
+      },
+      {
+        "id": "fleurs-9",
+        "subset": "fleurs",
+        "duration_s": 9.48,
+        "samples": 151680,
+        "sha256": "ee614facbea4eebff65773e50bf687fea79e4384c8821b406eee6e9d671c0cdb",
+        "source": "google/fleurs en_us validation CC-BY4.0",
+        "row_index": 9,
+        "original_id": 1633,
+        "source_sha256": "d77ccca833f1077b3d0394a701e9cc0be11d5f73b36e60d6449ae1f426c194b9",
+        "gender": 1
+      },
+      {
+        "id": "ls-6930-76324-0001-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 3.2,
+        "samples": 51200,
+        "sha256": "938e4ec6f1e79a2ea643342961cbaef8b26c1b3a0de7a91c5e9e70864d99ae8e",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-6930-76324-0001",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-6930-76324-0001-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 3.2,
+        "samples": 51200,
+        "sha256": "445d4b5a96a3d95cd7be4223ceb6f008dfcfb4e38057195999300ddaad4049f2",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-6930-76324-0001",
+        "snr_db": 20
+      },
+      {
+        "id": "ls-61-70968-0055-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 3.965,
+        "samples": 63440,
+        "sha256": "5f426ea7394764dfd32d79c3020744ee70868e73782ef9756d96da2081f84690",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-61-70968-0055",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-61-70968-0055-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 3.965,
+        "samples": 63440,
+        "sha256": "c22ffaf176e3aad8d04e63a8441a7ce424a4446d2ade413305c22e9c6376cd8f",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-61-70968-0055",
+        "snr_db": 20
+      },
+      {
+        "id": "ls-7021-85628-0014-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 2.295,
+        "samples": 36720,
+        "sha256": "7f6cc771f1c4605dd5290fabe0e5699909ec0b535eea55b29e6401d0d4c9d761",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-7021-85628-0014",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-7021-85628-0014-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 2.295,
+        "samples": 36720,
+        "sha256": "192b1098c0122cba2016329172803b5c8765de705bebeba65e6300b788c99949",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-7021-85628-0014",
+        "snr_db": 20
+      },
+      {
+        "id": "ls-2961-960-0008-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 15.455,
+        "samples": 247280,
+        "sha256": "d88c67719ce41851be6a1ee6a84904d9b549ea8a8c5ea96adaee3b590f8f2cdb",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-2961-960-0008",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-2961-960-0008-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 15.455,
+        "samples": 247280,
+        "sha256": "a9a091ca46f44c2c63e19a1939cc6f60d5dd9b01bc655a29221cb5055e214ff0",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-2961-960-0008",
+        "snr_db": 20
+      },
+      {
+        "id": "ls-7729-102255-0032-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 20.28,
+        "samples": 324480,
+        "sha256": "d7c8091595a2996ae843ce3b693592d697a084acaa9984b66b46c194f0323a0b",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-7729-102255-0032",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-7729-102255-0032-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 20.28,
+        "samples": 324480,
+        "sha256": "618be8aa6b4b0684b2e6d54658e98cc62c637c2ad92f2b8b25d133cb3c56aa34",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-7729-102255-0032",
+        "snr_db": 20
+      },
+      {
+        "id": "ls-1284-1180-0030-snr10",
+        "subset": "noise_snr10",
+        "duration_s": 16.22,
+        "samples": 259520,
+        "sha256": "455af1ce897bdef72fd3cd712a1086f80a7f2ee67dfd95353b836131cdfcdaf8",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-1284-1180-0030",
+        "snr_db": 10
+      },
+      {
+        "id": "ls-1284-1180-0030-snr20",
+        "subset": "noise_snr20",
+        "duration_s": 16.22,
+        "samples": 259520,
+        "sha256": "d1b13d560dc725be91838acff826c437000add4299ce2a356f147457d7da9be2",
+        "source": "Deterministic white Gaussian perturbation",
+        "parent": "ls-1284-1180-0030",
+        "snr_db": 20
+      },
+      {
+        "id": "long-note-0",
+        "subset": "long_note",
+        "duration_s": 53.155,
+        "samples": 850480,
+        "sha256": "8dcd96ba0490298efa3c23ce2a9c1c361bb18113403f20479de17848a65c0075",
+        "source": "Three human clips concatenated with0.4s silence",
+        "parents": [
+          "ls-2961-960-0008",
+          "ls-7729-102255-0032",
+          "ls-1284-1180-0030"
+        ]
+      },
+      {
+        "id": "long-note-1",
+        "subset": "long_note",
+        "duration_s": 50.725,
+        "samples": 811600,
+        "sha256": "fc63ed70bcb09a1698674ba19d7fad26af58dde5d47cc98ec2ac408979f0a33a",
+        "source": "Three human clips concatenated with0.4s silence",
+        "parents": [
+          "ls-1188-133604-0009",
+          "ls-4507-16021-0023",
+          "ls-1221-135767-0022"
+        ]
+      },
+      {
+        "id": "long-note-2",
+        "subset": "long_note",
+        "duration_s": 60.79,
+        "samples": 972640,
+        "sha256": "498168f7628fd41f7fc12993a62abd38c8e2ba934b07b118b741e76677492cd4",
+        "source": "Three human clips concatenated with0.4s silence",
+        "parents": [
+          "ls-3575-170457-0043",
+          "ls-8224-274381-0008",
+          "ls-4077-13751-0005"
+        ]
+      },
+      {
+        "id": "long-note-3",
+        "subset": "long_note",
+        "duration_s": 44.51,
+        "samples": 712160,
+        "sha256": "9a013a114489662a723d1f30c474e827d1f5637f8d8644aadc440ca7ee94d428",
+        "source": "Three human clips concatenated with0.4s silence",
+        "parents": [
+          "ls-3570-5694-0009",
+          "ls-121-123859-0000",
+          "ls-6829-68771-0000"
+        ]
+      },
+      {
+        "id": "silence-1",
+        "subset": "silence",
+        "duration_s": 1.0,
+        "samples": 16000,
+        "sha256": "643f8a8dc8bd9c19225afffad2becfec5426180b3749cb208abdf1a6c8354efc",
+        "source": "Generated digital silence"
+      },
+      {
+        "id": "noise-only-1",
+        "subset": "noise_only",
+        "duration_s": 1.0,
+        "samples": 16000,
+        "sha256": "cf223ab6123dea13ccc3cf8055266aad883271ae8da7959d7eae4bb7ed3cc810",
+        "source": "Generated white Gaussian noise -40dBFS RMS"
+      },
+      {
+        "id": "silence-5",
+        "subset": "silence",
+        "duration_s": 5.0,
+        "samples": 80000,
+        "sha256": "262d1f34f300560a4c82ba8127ddea9e1d72946f187fdbd3e8f70ee096077aec",
+        "source": "Generated digital silence"
+      },
+      {
+        "id": "noise-only-5",
+        "subset": "noise_only",
+        "duration_s": 5.0,
+        "samples": 80000,
+        "sha256": "2bdd5628feed23eb45c8b4ca04be26ffecce39e3954822e819d3b317353a5b03",
+        "source": "Generated white Gaussian noise -40dBFS RMS"
+      },
+      {
+        "id": "silence-15",
+        "subset": "silence",
+        "duration_s": 15.0,
+        "samples": 240000,
+        "sha256": "c24d031b5eff73ec71b1b583253424c05bab14cfcc9fb9c6ca117d026304b6fd",
+        "source": "Generated digital silence"
+      },
+      {
+        "id": "noise-only-15",
+        "subset": "noise_only",
+        "duration_s": 15.0,
+        "samples": 240000,
+        "sha256": "d0f29055a04d9915b63414dca4a42116cc2806b95798f33a7d0199653a3bf459",
+        "source": "Generated white Gaussian noise -40dBFS RMS"
+      },
+      {
+        "id": "silence-30",
+        "subset": "silence",
+        "duration_s": 30.0,
+        "samples": 480000,
+        "sha256": "40abc924dc63f75aafb2400bb99fd66741e22eb9ff2450973a18db53a06286ac",
+        "source": "Generated digital silence"
+      },
+      {
+        "id": "noise-only-30",
+        "subset": "noise_only",
+        "duration_s": 30.0,
+        "samples": 480000,
+        "sha256": "484f5322a1bbe6cc7d035b00e53f41867412be9d3fae6a251fbe966918098ab6",
+        "source": "Generated white Gaussian noise -40dBFS RMS"
+      }
+    ]
+  },
+  "models": {
+    "moonshine-small-stream": {
+      "load_seconds": 0.4040097079996485,
+      "first_inference_seconds": 0.2843864999958896,
+      "warm_speech_median_rtf": 0.07467183593689697,
+      "peak_rss_bytes": 973651968,
+      "load_baseline_rss_bytes": 89063424,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 62,
+          "deletions": 40,
+          "insertions": 17,
+          "wer": 0.0576271186440678,
+          "cer": 0.034571175950486296,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 60.63178808500379,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 17,
+          "deletions": 34,
+          "insertions": 4,
+          "wer": 0.3125,
+          "cer": 0.23018867924528302,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.612044331996003,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 18,
+          "deletions": 2,
+          "insertions": 4,
+          "wer": 0.028846153846153848,
+          "cer": 0.010936132983377077,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 25.149980251015222,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.015706806282722512,
+          "cer": 0.007172131147540984,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 5.71414008300053,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 11,
+          "deletions": 2,
+          "insertions": 8,
+          "wer": 0.039923954372623575,
+          "cer": 0.016483516483516484,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 15.527098626000225,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.23351699900376843,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 10,
+          "deletions": 2,
+          "insertions": 1,
+          "wer": 0.07647058823529412,
+          "cer": 0.03910614525139665,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.776688126992667,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.01764705882352941,
+          "cer": 0.00782122905027933,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.851836665999144,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.23483645899250405,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 38,
+        "deletions": 36,
+        "insertions": 8,
+        "char_substitutions": 39,
+        "char_deletions": 224,
+        "char_insertions": 38,
+        "wer": 0.06839032527105922,
+        "n": 50
+      },
+      "configuration": {
+        "return_audio_data": false,
+        "decode_incomplete_lines": false
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "880839004da59dbfcb85c8d680d8766c156918e2ce0be60be1c607791220a156"
+    },
+    "moonshine-small": {
+      "load_seconds": 0.08879270799661754,
+      "first_inference_seconds": 0.16727029199682875,
+      "warm_speech_median_rtf": 0.052307656249013235,
+      "peak_rss_bytes": 4002988032,
+      "load_baseline_rss_bytes": 89997312,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 54,
+          "deletions": 140,
+          "insertions": 10,
+          "wer": 0.09878934624697337,
+          "cer": 0.07851458885941645,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 47.32702633496956,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 10,
+          "deletions": 2,
+          "insertions": 2,
+          "wer": 0.07954545454545454,
+          "cer": 0.03490566037735849,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.040178040988394,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 14,
+          "deletions": 2,
+          "insertions": 2,
+          "wer": 0.021634615384615384,
+          "cer": 0.00699912510936133,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 18.710882957981084,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 7,
+          "deletions": 1,
+          "insertions": 3,
+          "wer": 0.05759162303664921,
+          "cer": 0.03483606557377049,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 3.6683169600146357,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 9,
+          "deletions": 134,
+          "insertions": 2,
+          "wer": 0.27566539923954375,
+          "cer": 0.25721153846153844,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 14.045559916994534,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.9414430840042769,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 10,
+          "deletions": 1,
+          "insertions": 1,
+          "wer": 0.07058823529411765,
+          "cer": 0.03128491620111732,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 3.4645831659872783,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.023529411764705882,
+          "cer": 0.008938547486033519,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 3.3975052930036327,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 111,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": 2,
+          "seconds": 3.8340794159958023,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 31,
+        "deletions": 5,
+        "insertions": 7,
+        "char_substitutions": 34,
+        "char_deletions": 41,
+        "char_insertions": 28,
+        "wer": 0.03586321934945788,
+        "n": 50
+      },
+      "configuration": {
+        "vad_threshold": 0.0,
+        "vad_max_segment_duration": 100000.0
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "8008d4e15854d4ac1146191cedb301764a5701a198b08eb2fad88916e7e3f9ab"
+    },
+    "moonshine-tiny-stream": {
+      "load_seconds": 0.055876165999507066,
+      "first_inference_seconds": 0.12703558299836004,
+      "warm_speech_median_rtf": 0.034759739687615365,
+      "peak_rss_bytes": 530169856,
+      "load_baseline_rss_bytes": 92536832,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 107,
+          "deletions": 43,
+          "insertions": 37,
+          "wer": 0.09055690072639225,
+          "cer": 0.05137046861184792,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 28.834841838033753,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 24,
+          "deletions": 36,
+          "insertions": 8,
+          "wer": 0.38636363636363635,
+          "cer": 0.25943396226415094,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.252286709008331,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 35,
+          "deletions": 3,
+          "insertions": 15,
+          "wer": 0.06370192307692307,
+          "cer": 0.031496062992125984,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 11.745761502017558,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 2,
+          "wer": 0.02617801047120419,
+          "cer": 0.009221311475409836,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.9611567920073867,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 19,
+          "deletions": 2,
+          "insertions": 9,
+          "wer": 0.057034220532319393,
+          "cer": 0.02403846153846154,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 7.476081168992096,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.23465620699425926,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 22,
+          "deletions": 2,
+          "insertions": 3,
+          "wer": 0.1588235294117647,
+          "cer": 0.08379888268156424,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.2342027080012485,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.023529411764705882,
+          "cer": 0.008938547486033519,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.1653529580071336,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.2352057070020237,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 62,
+        "deletions": 39,
+        "insertions": 25,
+        "char_substitutions": 79,
+        "char_deletions": 252,
+        "char_insertions": 97,
+        "wer": 0.10508757297748124,
+        "n": 50
+      },
+      "configuration": {
+        "return_audio_data": false,
+        "decode_incomplete_lines": false
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "12d4703491236547119ef9c8982106cc2a9d49ba0456bc6ecdf187b6c862d661"
+    },
+    "moonshine-tiny": {
+      "load_seconds": 0.22530379200179596,
+      "first_inference_seconds": 0.13009787500050152,
+      "warm_speech_median_rtf": 0.028021677559767172,
+      "peak_rss_bytes": 2476720128,
+      "load_baseline_rss_bytes": 90914816,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 159,
+          "deletions": 67,
+          "insertions": 31,
+          "wer": 0.12445520581113802,
+          "cer": 0.0808134394341291,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 26.633985625005153,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 25,
+          "deletions": 2,
+          "insertions": 6,
+          "wer": 0.1875,
+          "cer": 0.07075471698113207,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.520934002001013,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 22,
+          "deletions": 3,
+          "insertions": 7,
+          "wer": 0.038461538461538464,
+          "cer": 0.014435695538057743,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 8.82284620498831,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 8,
+          "deletions": 1,
+          "insertions": 2,
+          "wer": 0.05759162303664921,
+          "cer": 0.02663934426229508,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.024841501013725,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 78,
+          "deletions": 59,
+          "insertions": 12,
+          "wer": 0.2832699619771863,
+          "cer": 0.23179945054945056,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 8.938382792017364,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 2,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 3,
+          "errors": 0,
+          "false_positive_clips": 1,
+          "seconds": 0.4223659170020255,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 16,
+          "deletions": 2,
+          "insertions": 3,
+          "wer": 0.12352941176470589,
+          "cer": 0.05921787709497207,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.154632167003001,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 10,
+          "deletions": 0,
+          "insertions": 1,
+          "wer": 0.06470588235294118,
+          "cer": 0.021229050279329607,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.1723489579817397,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 1,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 3,
+          "errors": 0,
+          "false_positive_clips": 1,
+          "seconds": 0.4533172080045915,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 55,
+        "deletions": 6,
+        "insertions": 15,
+        "char_substitutions": 76,
+        "char_deletions": 51,
+        "char_insertions": 40,
+        "wer": 0.0633861551292744,
+        "n": 50
+      },
+      "configuration": {
+        "vad_threshold": 0.0,
+        "vad_max_segment_duration": 100000.0
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "e1a915dab9a46db030643705d4fb502bb2b7c2c449ca125c93ce3c9394bb6ab4"
+    },
+    "whisper-base.en": {
+      "load_seconds": 2.124078000000736,
+      "first_inference_seconds": 0.672132583000348,
+      "warm_speech_median_rtf": 0.03206124124534195,
+      "peak_rss_bytes": 1053245440,
+      "load_baseline_rss_bytes": 85164032,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 54,
+          "deletions": 9,
+          "insertions": 10,
+          "wer": 0.035351089588377724,
+          "cer": 0.016180371352785147,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 25.089638332057802,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 17,
+          "deletions": 2,
+          "insertions": 2,
+          "wer": 0.11931818181818182,
+          "cer": 0.057547169811320756,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.5262003340176307,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 16,
+          "deletions": 2,
+          "insertions": 3,
+          "wer": 0.025240384615384616,
+          "cer": 0.010279965004374452,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 8.840400124026928,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.015706806282722512,
+          "cer": 0.007172131147540984,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.441098875016905,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 12,
+          "deletions": 5,
+          "insertions": 5,
+          "wer": 0.04182509505703422,
+          "cer": 0.018543956043956044,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 5.380392915998527,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 25,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": 4,
+          "seconds": 0.6198152080032742,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 5,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.029411764705882353,
+          "cer": 0.013407821229050279,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 1.950282457000867,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.0058823529411764705,
+          "cer": 0.0022346368715083797,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 1.951263625996944,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 4,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": 4,
+          "seconds": 0.532072000009066,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 36,
+        "deletions": 4,
+        "insertions": 5,
+        "char_substitutions": 52,
+        "char_deletions": 38,
+        "char_insertions": 25,
+        "wer": 0.03753127606338615,
+        "n": 50
+      },
+      "configuration": {
+        "return_timestamps": true,
+        "do_sample": false,
+        "num_beams": 1,
+        "condition_on_prev_tokens": false,
+        "temperature": 0.0,
+        "max_new_tokens": 440
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "66f7c67daef7d201b78798e142a81407d1c9243c7db0a2470057eb9e63a586ca"
+    },
+    "whisper-small.en": {
+      "load_seconds": 1.5537470420022146,
+      "first_inference_seconds": 1.0156851659994572,
+      "warm_speech_median_rtf": 0.07092275449097228,
+      "peak_rss_bytes": 2053505024,
+      "load_baseline_rss_bytes": 91553792,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 36,
+          "deletions": 9,
+          "insertions": 7,
+          "wer": 0.025181598062953996,
+          "cer": 0.010610079575596816,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 53.98842333300854,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 11,
+          "deletions": 2,
+          "insertions": 1,
+          "wer": 0.07954545454545454,
+          "cer": 0.02547169811320755,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 5.796910374992876,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 10,
+          "deletions": 2,
+          "insertions": 1,
+          "wer": 0.015625,
+          "cer": 0.005468066491688539,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 18.485799083005986,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 2,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.010471204188481676,
+          "cer": 0.004098360655737705,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 10.041126875003101,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 7,
+          "deletions": 5,
+          "insertions": 4,
+          "wer": 0.030418250950570342,
+          "cer": 0.016483516483516484,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 10.787264750004397,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 4,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": 4,
+          "seconds": 1.5157954600072117,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 1,
+          "wer": 0.029411764705882353,
+          "cer": 0.013407821229050279,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.619919417003985,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 2,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.011764705882352941,
+          "cer": 0.004469273743016759,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 4.257402832998196,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 4,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": 4,
+          "seconds": 1.5301131250016624,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 23,
+        "deletions": 4,
+        "insertions": 2,
+        "char_substitutions": 16,
+        "char_deletions": 31,
+        "char_insertions": 9,
+        "wer": 0.02418682235195997,
+        "n": 50
+      },
+      "configuration": {
+        "return_timestamps": true,
+        "do_sample": false,
+        "num_beams": 1,
+        "condition_on_prev_tokens": false,
+        "temperature": 0.0,
+        "max_new_tokens": 440
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "6275e6f22c9e8113445b974bc83f7e715af74f239fd3f701ffa97ea448169b0b"
+    },
+    "whisper-tiny.en": {
+      "load_seconds": 1.5488856669981033,
+      "first_inference_seconds": 0.11361125000257744,
+      "warm_speech_median_rtf": 0.023355045191120128,
+      "peak_rss_bytes": 901447680,
+      "load_baseline_rss_bytes": 88670208,
+      "groups": {
+        "all_speech": {
+          "n": 66,
+          "reference_words": 2065,
+          "substitutions": 91,
+          "deletions": 10,
+          "insertions": 17,
+          "wer": 0.05714285714285714,
+          "cer": 0.022900088417329798,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 16.803480499002035,
+          "audio_seconds": 813.0149375
+        },
+        "fleurs": {
+          "n": 10,
+          "reference_words": 176,
+          "substitutions": 20,
+          "deletions": 1,
+          "insertions": 9,
+          "wer": 0.17045454545454544,
+          "cer": 0.057547169811320756,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 1.6422562079969794,
+          "audio_seconds": 80.0
+        },
+        "librispeech_long": {
+          "n": 20,
+          "reference_words": 832,
+          "substitutions": 22,
+          "deletions": 2,
+          "insertions": 3,
+          "wer": 0.03245192307692308,
+          "cer": 0.012248468941382326,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 6.566707459001918,
+          "audio_seconds": 326.97
+        },
+        "librispeech_short": {
+          "n": 20,
+          "reference_words": 191,
+          "substitutions": 14,
+          "deletions": 1,
+          "insertions": 1,
+          "wer": 0.08376963350785341,
+          "cer": 0.03278688524590164,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 2.4580775010035723,
+          "audio_seconds": 74.0349375
+        },
+        "long_note": {
+          "n": 4,
+          "reference_words": 526,
+          "substitutions": 19,
+          "deletions": 2,
+          "insertions": 4,
+          "wer": 0.04752851711026616,
+          "cer": 0.021291208791208792,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 3.496253875004186,
+          "audio_seconds": 209.18
+        },
+        "noise_only": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 4,
+          "errors": 0,
+          "false_positive_clips": 0,
+          "seconds": 0.602942040997732,
+          "audio_seconds": 51.0
+        },
+        "noise_snr10": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 12,
+          "deletions": 4,
+          "insertions": 0,
+          "wer": 0.09411764705882353,
+          "cer": 0.04357541899441341,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 1.3049966230028076,
+          "audio_seconds": 61.415
+        },
+        "noise_snr20": {
+          "n": 6,
+          "reference_words": 170,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 0,
+          "wer": 0.023529411764705882,
+          "cer": 0.01005586592178771,
+          "empty_outputs": 0,
+          "errors": 0,
+          "false_positive_clips": null,
+          "seconds": 1.3351888329925714,
+          "audio_seconds": 61.415
+        },
+        "silence": {
+          "n": 4,
+          "reference_words": 0,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 2,
+          "wer": null,
+          "cer": null,
+          "empty_outputs": 2,
+          "errors": 0,
+          "false_positive_clips": 2,
+          "seconds": 0.29175708499678876,
+          "audio_seconds": 51.0
+        }
+      },
+      "unique_originals": {
+        "reference_words": 1199,
+        "reference_chars": 6608,
+        "substitutions": 56,
+        "deletions": 4,
+        "insertions": 13,
+        "char_substitutions": 71,
+        "char_deletions": 52,
+        "char_insertions": 26,
+        "wer": 0.060884070058381985,
+        "n": 50
+      },
+      "configuration": {
+        "return_timestamps": true,
+        "do_sample": false,
+        "num_beams": 1,
+        "condition_on_prev_tokens": false,
+        "temperature": 0.0,
+        "max_new_tokens": 440
+      },
+      "normalizer_sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+      "result_sha256": "87655e2a91365d465bfc3b6105b1090c037b45a98219cd6e30f2723d3d27571f"
+    }
+  },
+  "artifacts": {
+    "moonshine-artifacts.json": {
+      "TINY_STREAMING": {
+        "arch": 2,
+        "files": [
+          {
+            "name": "adapter.ort",
+            "bytes": 1319664,
+            "sha256": "22ecc949e146c49667fda28d102d4e30749a107dc88a396292aa8f277ef1347c"
+          },
+          {
+            "name": "cross_kv.ort",
+            "bytes": 1287544,
+            "sha256": "143a36667b8d05fd9d04e8c337b7ee121f37ef299aea6b3d82bdb3d3401950b4"
+          },
+          {
+            "name": "decoder_kv.ort",
+            "bytes": 32583720,
+            "sha256": "8852553f312adb6c9aa4d17418015049b30f412209ee569d336548c0044627de"
+          },
+          {
+            "name": "encoder.ort",
+            "bytes": 7675440,
+            "sha256": "a8414e1a5dedf9f2093d7680601dd8a9b0433e7020260eafe0e370ead91134ca"
+          },
+          {
+            "name": "frontend.model.ort",
+            "bytes": 23344,
+            "sha256": "5121b561417b638afce0c6c31b760e37c93cf97f80d9b0031aad1fe7b6f25d61"
+          },
+          {
+            "name": "frontend.weights.ort",
+            "bytes": 2093464,
+            "sha256": "217da24ac6f522ebf02da8ef288e77d1ac68d50d4a6821433182e4fbf4204bbd"
+          },
+          {
+            "name": "streaming_config.json",
+            "bytes": 509,
+            "sha256": "74fe5ddebd63b17caf59e8a3b18c17547ff7bce1642050edbb1c3962674f8950"
+          },
+          {
+            "name": "tokenizer.bin",
+            "bytes": 249974,
+            "sha256": "6884b35fd6377d4c4d32336a0bc152f36b64d1e45b6503683cdc238250a8472d"
+          }
+        ],
+        "total_bytes": 45233659
+      },
+      "SMALL_STREAMING": {
+        "arch": 4,
+        "files": [
+          {
+            "name": "adapter.ort",
+            "bytes": 2870368,
+            "sha256": "c665f742364febad597cc9ac1e0b341ffbee0e24a1466e2f3bde95e6e4771762"
+          },
+          {
+            "name": "cross_kv.ort",
+            "bytes": 5356536,
+            "sha256": "e2d3417144e9514055ebfefe8dcc4c0a55a55adcb8530435844c75c53e352bf6"
+          },
+          {
+            "name": "decoder_kv.ort",
+            "bytes": 81878600,
+            "sha256": "1a05465b1dd955858dfcbee039c0020fb5dd982b0f5094c34e61735d518d771b"
+          },
+          {
+            "name": "encoder.ort",
+            "bytes": 44148576,
+            "sha256": "2d4d973e91e8aca08c51e7e7efa28a46ab265b63d809d5294d18b86bcd85b993"
+          },
+          {
+            "name": "frontend.model.ort",
+            "bytes": 26944,
+            "sha256": "09b1210ae30dc5f0f3e45f0ebab914c254741323114f53fbbe5ae62cca35058f"
+          },
+          {
+            "name": "frontend.weights.ort",
+            "bytes": 7769464,
+            "sha256": "7ef97521bd4bad3928f5bb6808586f4fcc6e92bd5990394112eed7d4052ec338"
+          },
+          {
+            "name": "streaming_config.json",
+            "bytes": 512,
+            "sha256": "26f02b6afb22d60871a5efd85c3d38e569cc0ddb6c5eb6e93d3260152ae8a47a"
+          },
+          {
+            "name": "tokenizer.bin",
+            "bytes": 249974,
+            "sha256": "6884b35fd6377d4c4d32336a0bc152f36b64d1e45b6503683cdc238250a8472d"
+          }
+        ],
+        "total_bytes": 142300974
+      }
+    },
+    "whisper-artifacts.json": {
+      "tiny.en": {
+        "revision": "87c7102498dcde7456f24cfd30239ca606ed9063",
+        "files": [
+          {
+            "name": "added_tokens.json",
+            "bytes": 34604,
+            "sha256": "560be47bea388757f8d4cc185c5d82067426cbb6361e38016dd90ddc01ab203a"
+          },
+          {
+            "name": "config.json",
+            "bytes": 1937,
+            "sha256": "b5366317df280f79e6cc366f259f379674f81a8721d458acf2e00680ccb10b1d"
+          },
+          {
+            "name": "generation_config.json",
+            "bytes": 1621,
+            "sha256": "38744c19d5cede6ff4dab5079c6d6ddc02ca726960bbef208fb602ad5a030eab"
+          },
+          {
+            "name": "merges.txt",
+            "bytes": 456318,
+            "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+          },
+          {
+            "name": "model.safetensors",
+            "bytes": 151060136,
+            "sha256": "db59695928ded6043adaef491a53ef4e12da9611184d77c53baa691a60b958ad"
+          },
+          {
+            "name": "normalizer.json",
+            "bytes": 52666,
+            "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd"
+          },
+          {
+            "name": "preprocessor_config.json",
+            "bytes": 184990,
+            "sha256": "9b5cd03a36fbb8a627c64d98a5b5b126ead95a77720723944487311f0110b666"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "bytes": 1830,
+            "sha256": "014f8f802366ed818919550be0ad9e35907327cb9e142e8aaa102420f460bda8"
+          },
+          {
+            "name": "tokenizer.json",
+            "bytes": 2405679,
+            "sha256": "5eb60cec1e77aeeb6869a2bb5a8e01a84c3fe5d072d75369343021fe6f5310d0"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "bytes": 805,
+            "sha256": "14f84bdf4b9ecdbd4738ddc81c17a1baedfc02bb93c6e049c951e15a1b40b70d"
+          },
+          {
+            "name": "vocab.json",
+            "bytes": 798156,
+            "sha256": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+          }
+        ],
+        "total_bytes": 154998742
+      },
+      "base.en": {
+        "revision": "911407f4214e0e1d82085af863093ec0b66f9cd6",
+        "files": [
+          {
+            "name": "added_tokens.json",
+            "bytes": 34604,
+            "sha256": "560be47bea388757f8d4cc185c5d82067426cbb6361e38016dd90ddc01ab203a"
+          },
+          {
+            "name": "config.json",
+            "bytes": 1937,
+            "sha256": "160c1df40a60d4ef5a6014d536fd845c33aabfd1f318458ac7f87cfe91ebbe76"
+          },
+          {
+            "name": "generation_config.json",
+            "bytes": 1531,
+            "sha256": "c5750f05d94777579e00ce26ef65e5d87c108439f90e3ac519df2587b9d5d41f"
+          },
+          {
+            "name": "merges.txt",
+            "bytes": 456318,
+            "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+          },
+          {
+            "name": "model.safetensors",
+            "bytes": 290401888,
+            "sha256": "d4dd5542fd6a1d35639e21384238f3bfe6c557c849d392b5905d33ee29e71db5"
+          },
+          {
+            "name": "normalizer.json",
+            "bytes": 52666,
+            "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd"
+          },
+          {
+            "name": "preprocessor_config.json",
+            "bytes": 184990,
+            "sha256": "9b5cd03a36fbb8a627c64d98a5b5b126ead95a77720723944487311f0110b666"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "bytes": 1830,
+            "sha256": "014f8f802366ed818919550be0ad9e35907327cb9e142e8aaa102420f460bda8"
+          },
+          {
+            "name": "tokenizer.json",
+            "bytes": 2405679,
+            "sha256": "5eb60cec1e77aeeb6869a2bb5a8e01a84c3fe5d072d75369343021fe6f5310d0"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "bytes": 805,
+            "sha256": "14f84bdf4b9ecdbd4738ddc81c17a1baedfc02bb93c6e049c951e15a1b40b70d"
+          },
+          {
+            "name": "vocab.json",
+            "bytes": 798156,
+            "sha256": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+          }
+        ],
+        "total_bytes": 294340404
+      },
+      "small.en": {
+        "revision": "e8727524f962ee844a7319d92be39ac1bd25655a",
+        "files": [
+          {
+            "name": "added_tokens.json",
+            "bytes": 34604,
+            "sha256": "560be47bea388757f8d4cc185c5d82067426cbb6361e38016dd90ddc01ab203a"
+          },
+          {
+            "name": "config.json",
+            "bytes": 1943,
+            "sha256": "3441094addfb2a31ef62ea117e95bd6e437bbad8e93d3697fe420a4a6d3603a5"
+          },
+          {
+            "name": "generation_config.json",
+            "bytes": 1931,
+            "sha256": "aad4e18c0fb1d063c5b38b4080cec3c4c8cdfff95e1de4797013470654a5a72a"
+          },
+          {
+            "name": "merges.txt",
+            "bytes": 456318,
+            "sha256": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5"
+          },
+          {
+            "name": "model.safetensors",
+            "bytes": 966992008,
+            "sha256": "6014ac49b506df900f66f4aca6b0801eed7245594ace97bcaf73e0ae5b863066"
+          },
+          {
+            "name": "normalizer.json",
+            "bytes": 52666,
+            "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd"
+          },
+          {
+            "name": "preprocessor_config.json",
+            "bytes": 184990,
+            "sha256": "9b5cd03a36fbb8a627c64d98a5b5b126ead95a77720723944487311f0110b666"
+          },
+          {
+            "name": "special_tokens_map.json",
+            "bytes": 1830,
+            "sha256": "014f8f802366ed818919550be0ad9e35907327cb9e142e8aaa102420f460bda8"
+          },
+          {
+            "name": "tokenizer.json",
+            "bytes": 2405679,
+            "sha256": "5eb60cec1e77aeeb6869a2bb5a8e01a84c3fe5d072d75369343021fe6f5310d0"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "bytes": 805,
+            "sha256": "14f84bdf4b9ecdbd4738ddc81c17a1baedfc02bb93c6e049c951e15a1b40b70d"
+          },
+          {
+            "name": "vocab.json",
+            "bytes": 798156,
+            "sha256": "3ba3c3109ff33976c4bd966589c11ee14fcaa1f4c9e5e154c2ed7f99d80709e7"
+          }
+        ],
+        "total_bytes": 970930930
+      }
+    }
+  }
+}

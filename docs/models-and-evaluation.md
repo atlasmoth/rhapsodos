@@ -86,6 +86,8 @@ The implemented adapters provide native CPU execution on Android and CoreML exec
 
 ## Local recorded-note ASR candidates
 
+The [21 October matched-recording comparison](evaluations/note-asr-evaluation.md) evaluates current Moonshine Tiny/Small against Whisper Tiny/Base/Small. Whisper Base and Small lead this sample; the shipping choice awaits native saved-file qualification. The current catalogue is listed above.
+
 Use a small downloadable tier first. Larger models are optional upgrades, never prerequisites for recording and retaining a note. Benchmark file-based accuracy on the intended recordings rather than prioritizing live command endpoint latency.
 
 | Candidate | Verified path | Evaluation decision |
