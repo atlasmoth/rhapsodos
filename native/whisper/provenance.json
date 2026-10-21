@@ -1,0 +1,222 @@
+{
+  "runtime": "whisper.cpp",
+  "version": "1.9.5",
+  "revision": "d1be6fde11ac6e0407606b4e42fe72d34add8037",
+  "sourceArchive": {
+    "url": "https://codeload.github.com/ggml-org/whisper.cpp/tar.gz/d1be6fde11ac6e0407606b4e42fe72d34add8037",
+    "sha256": "645445da884df6dbd52b30f82d7be7c01d1767c938714e477e786b88d529e9f4"
+  },
+  "toolchain": {
+    "androidNDK": "27.1.12297006",
+    "cmake": "3.22.1-g37088a8",
+    "ninja": "1.10.2"
+  },
+  "targets": {
+    "arm64-v8a": {
+      "minimumAPI": 28,
+      "cpu": "generic"
+    },
+    "x86_64": {
+      "minimumAPI": 28,
+      "cpu": "x86-64 baseline"
+    }
+  },
+  "configuration": {
+    "backend": "CPU",
+    "openMP": false,
+    "nativeCPUFlags": false,
+    "optionalAccelerators": false,
+    "modelDownloadsInRuntime": false
+  },
+  "inputs": [
+    {
+      "path": "native/whisper/LICENSE",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d"
+    },
+    {
+      "path": "native/whisper/LLVM-NOTICE.txt",
+      "bytes": 130424,
+      "sha256": "f96f763beb66a7ba7a667647fc64c0226ace875e590c831fdd9579ec1c1d91e1"
+    },
+    {
+      "path": "native/whisper/README.md",
+      "bytes": 2813,
+      "sha256": "b727b1797dabccccff2cd006d08cbbba8aa2cdc6f8fb23d404fc4cae6a743adc"
+    },
+    {
+      "path": "native/whisper/THIRD_PARTY_NOTICES.txt",
+      "bytes": 131668,
+      "sha256": "7c4a05c5691899190d225110dd83f34e43ebe43727c5e9a65c6b8226ffa6dda8"
+    },
+    {
+      "path": "native/whisper/build.sh",
+      "bytes": 2916,
+      "sha256": "19fa2b454b7ca6aee920a448ee75fd18b127c2a294a5d9e7d177aff192d52cf4"
+    },
+    {
+      "path": "native/whisper/include/ggml-alloc.h",
+      "bytes": 3689,
+      "sha256": "d114067f9099c4a0e2bbc0625c676d4894d9cf0ea27168ee072c7de0e71bb51d"
+    },
+    {
+      "path": "native/whisper/include/ggml-backend.h",
+      "bytes": 25776,
+      "sha256": "5791edae1fb7622027621d15bc7a160198bd3b75ed8f96d06cb7b85e2b873756"
+    },
+    {
+      "path": "native/whisper/include/ggml-cpu.h",
+      "bytes": 7753,
+      "sha256": "316279e004cdeb8e6ef78599acb602bf79a8abdf897fed9fd1914808c1518c6e"
+    },
+    {
+      "path": "native/whisper/include/ggml.h",
+      "bytes": 116144,
+      "sha256": "12ee71f99db7db9b353bc02b1fbb57c344ee17c01ac5fb7952b41a637a747ea9"
+    },
+    {
+      "path": "native/whisper/include/whisper.h",
+      "bytes": 37439,
+      "sha256": "a7d19f7feb5be52426628ff07e0602de28a30dc4312d0d0603e1e536753f76dd"
+    },
+    {
+      "path": "native/whisper/license-sources.json",
+      "bytes": 743,
+      "sha256": "86d1828890177789ddc9a57211b391a78eb323d6785e7063e83bed4952368639"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "androidApp/src/main/jniLibs/arm64-v8a/libwhisper.so",
+      "bytes": 1063744,
+      "sha256": "527b0cb274df8e46d3afd0821924b14b0691077b69e139be9288c8826bed831c",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml.so",
+        "libggml-cpu.so",
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/arm64-v8a/libggml.so",
+      "bytes": 126528,
+      "sha256": "3c566de13760d4ca152c6144593c7b3a0e340d30a38a4780ccf4b3afe1aab438",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml-cpu.so",
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/arm64-v8a/libggml-base.so",
+      "bytes": 1187408,
+      "sha256": "fe09f3d7527562dd61d493eb2c7165269f15abf9785fde9cab542a8b71efa3bc",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/arm64-v8a/libggml-cpu.so",
+      "bytes": 860208,
+      "sha256": "7ec1fb58e89988679760051f47bea8580cab54222cff80d5dbd3437efc35317f",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/x86_64/libwhisper.so",
+      "bytes": 1084896,
+      "sha256": "1c661090825bcc3789502afacd23d44d79eff8b4140807e2a64940da9c1c7767",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml.so",
+        "libggml-cpu.so",
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/x86_64/libggml.so",
+      "bytes": 124208,
+      "sha256": "5f37b75365fa94bac8c699b841fe4b6b62e38318bc97496cb8129c0f9f0ef4e7",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml-cpu.so",
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/x86_64/libggml-base.so",
+      "bytes": 1166488,
+      "sha256": "1d356169d40e661c483d48dc32999e9396aa809623e3cb68b8b7caec12bc9663",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    },
+    {
+      "path": "androidApp/src/main/jniLibs/x86_64/libggml-cpu.so",
+      "bytes": 1070768,
+      "sha256": "80e2641dee0108e2b33c7753121120093e1ba46f0d6af98bafdd21d0b3f06d09",
+      "elfLoadAlignment": [
+        16384,
+        16384,
+        16384
+      ],
+      "dependencies": [
+        "libggml-base.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ]
+    }
+  ]
+}
