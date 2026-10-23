@@ -3,12 +3,17 @@ package com.osuji.ereaderapp.ui
 import android.os.Build
 import android.view.HapticFeedbackConstants
 import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -32,6 +37,13 @@ val MonoFont = FontFamily(Font(R.font.space_mono))
 @Composable
 fun ReaderTheme(appearance: String = "system", content: @Composable () -> Unit) {
     val dark = when (appearance) { "dark" -> true; "light" -> false; else -> androidx.compose.foundation.isSystemInDarkTheme() }
+    val activity = LocalActivity.current as? ComponentActivity
+    DisposableEffect(activity, dark) {
+        val style = if (dark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+        activity?.enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+        onDispose {}
+    }
     val colors = if (dark) darkColorScheme(
         primary = Color(0xFFFFB58B), onPrimary = Color(0xFF4F2008), primaryContainer = Color(0xFF693116), onPrimaryContainer = Color(0xFFFFE3CC),
         secondary = Color(0xFFE3BCA0), onSecondary = Color(0xFF402B1B), secondaryContainer = Color(0xFF4D3323), onSecondaryContainer = Color(0xFFFFE3CC),

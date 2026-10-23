@@ -14,10 +14,35 @@ struct EReaderApp: App {
                 .environmentObject(store.feedback)
                 .tint(Palette.accent)
                 .font(BrandFont.body())
-                .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
+                .background { WindowAppearance(appearance: appearance).frame(width: 0, height: 0) }
                 .overlay { LaunchIdentity().environmentObject(store.feedback) }
                 .onChange(of: scenePhase) { _, phase in store.sceneChanged(phase) }
                 .onOpenURL { url in if url.isFileURL { Task { if url.pathExtension.lowercased() == "rhapsodos" { await store.restoreArchive(url) } else { await store.importPDF(url) } } } }
+        }
+    }
+}
+
+struct WindowAppearance: UIViewRepresentable {
+    let appearance: String
+
+    func makeUIView(context: Context) -> AppearanceView { AppearanceView() }
+
+    func updateUIView(_ view: AppearanceView, context: Context) {
+        view.style = appearance == "dark" ? .dark : appearance == "light" ? .light : .unspecified
+        view.applyStyle()
+    }
+
+    final class AppearanceView: UIView {
+        var style: UIUserInterfaceStyle = .unspecified
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            applyStyle()
+        }
+
+        func applyStyle() {
+            guard let window, window.overrideUserInterfaceStyle != style else { return }
+            window.overrideUserInterfaceStyle = style
         }
     }
 }

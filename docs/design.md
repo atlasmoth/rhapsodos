@@ -20,6 +20,8 @@ The user requires world-class UI craft from the first implementation: rich inten
 
 Use a coherent, quiet visual system: warm neutral interface surfaces, comfortable interface typography, strong controls and one controlled accent for playback/current passage. Covers can contribute secondary color without compromising interface contrast. Offer system, light and dark app appearance. PDF page colours, typography, text and artwork retain their original appearance in every theme; app typography and palette do not restyle the source document.
 
+Appearance changes update the visible reader, open sheets and system controls together, including when returning to System mode. Keep their existing presentation identity, scroll position, search text, note drafts and audio session; a theme change must not dismiss or rebuild the reading flow. iOS applies the preference to the reader's own window so presented content inherits it. Android derives system-bar appearance from the same resolved theme as Compose.
+
 The main screen should communicate **listen, follow, remember**. A large cover or waveform can establish identity, but should not displace the passage and recording action. The source text is the useful visual accompaniment to audio.
 
 The original PDF is the main reader and remains a faithful zoomable canvas. There is no separate "Listen and follow" or reflow pane. Use source geometry for a calm active highlight and note markers; never redraw the document into an invented layout and present it as the original. Double-tapping prepared source text pauses narration and opens audio-note capture attached to that passage. Single taps never record, and there is no write-note menu action. Keep blank space and browsing gestures free of recording actions.
