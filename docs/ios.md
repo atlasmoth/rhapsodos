@@ -136,6 +136,8 @@ The primary interaction can expose “Pause and record note” as one action. Sa
 
 Narration executes downloaded models only. The native audio player owns playback time; full-passage highlights avoid presenting fabricated word timing. There is no system speech route or speech-range callback clock.
 
+Without a loaded narration player, retain the frozen integer millisecond offset and source fraction. Pausing, opening a note, changing voice/speed or flushing progress must not replace that offset with zero. Restored and regenerated audio resolves the source fraction against its own duration; only an explicit timestamp seek uses a pending audio offset. Completion retains the finished duration and fraction after the player is released, and note replay keeps its separate clock.
+
 For custom generated audio, cache segment files with durations and alignment metadata. Derive source position from the native playback clock and the segment's validated alignment. If a model cannot supply dependable word timing, use sentence or passage highlighting and seek boundaries. Do not present fabricated word precision. Preserve source mapping whenever normalization changes the spoken string.
 
 Maintain a small look-ahead buffer and bounded audio cache. Cache keys include source/normalization versions, voice and model version, language and synthesis parameters that affect audio. Playback-speed changes applied by the player should be distinguished from synthesis-speed changes that require different audio.

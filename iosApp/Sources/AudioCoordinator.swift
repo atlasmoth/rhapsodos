@@ -47,8 +47,9 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     private var voiceChangeID: UUID?
     private var paceChange: PaceChange?
     private var playbackTimer: Timer?
-    private var pendingOffset = 0.0
+    private var pendingOffsetMillis: Int64 = 0
     private var pendingFraction = 0.0
+    private var pendingOffsetSeek = false
     private var lastProgressTime = 0.0
     private var positionAvailable = false
     private var documentComplete = true
@@ -97,6 +98,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
             Task { @MainActor in
                 guard let self else { return }
                 self.pause()
+                self.unloadNarration()
                 self.stopReplay()
                 self.onCaptureInterrupted?(nil)
             }
@@ -123,8 +125,9 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         self.passages = passages
         self.title = title
         self.index = min(max(0, index), max(0, passages.count - 1))
-        pendingOffset = Double(max(0, offsetMillis)) / 1000
+        pendingOffsetMillis = max(0, offsetMillis)
         pendingFraction = passageFraction.isFinite ? min(1, max(0, passageFraction)) : 0
+        elapsed = Double(pendingOffsetMillis) / 1000
         positionAvailable = !passages.isEmpty
         documentComplete = complete
         updateNowPlaying()
@@ -142,7 +145,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         if currentFraction >= 1 {
             guard index + 1 < passages.count || documentComplete else { onError?("The next passage is still being prepared."); return }
             index = index + 1 < passages.count ? index + 1 : 0
-            pendingOffset = 0; pendingFraction = 0
+            pendingOffsetMillis = 0; pendingFraction = 0; pendingOffsetSeek = false
             narrationPlayer = nil
             positionAvailable = true
         }
@@ -152,6 +155,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio)
             try session.setActive(true)
+            if let narrationPlayer, narrationPlayer.currentTime < elapsed { unloadNarration() }
             if let narrationPlayer {
                 guard narrationPlayer.play() else { throw VaultFailure.noAudio }
                 playing = true; reportPosition(); startPlaybackClock(); preloadNextPassage(); updateNowPlaying(); return
@@ -167,13 +171,16 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
                     try Task.checkCancellation()
                     guard let self, self.narrationGeneration == generation, self.playing, !self.capturePending else { return }
                     let player = try AVAudioPlayer(contentsOf: rendered.url)
+                    guard player.duration.isFinite, player.duration > 0 else { throw VaultFailure.noAudio }
                     player.enableRate = true
                     player.rate = rendered.playbackRate
                     player.delegate = self
-                    let restoredTime = self.pendingOffset > 0 ? self.pendingOffset : self.pendingFraction * player.duration
-                    player.currentTime = min(restoredTime, max(0, player.duration - 0.05)); self.pendingOffset = 0
+                    // Persisted audio offsets cannot identify the same source position in regenerated audio.
+                    let restoredTime = self.pendingOffsetSeek ? Double(self.pendingOffsetMillis) / 1000 : self.pendingFraction * player.duration
+                    player.currentTime = min(restoredTime, player.duration.nextDown)
                     guard player.play() else { throw VaultFailure.noAudio }
                     self.narrationPlayer = player; self.duration = player.duration; self.elapsed = player.currentTime
+                    self.pendingOffsetSeek = false
                     self.generating = false; self.reportPosition(); self.startPlaybackClock(); self.preloadNextPassage(); self.updateNowPlaying()
                 } catch is CancellationError {
                 } catch {
@@ -190,11 +197,17 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         pauseReplay()
         preloadTask?.cancel()
         narrationTask?.cancel(); narrationTask = nil; narrationGeneration = nil; generating = false
-        if let narrationPlayer { narrationPlayer.pause(); elapsed = narrationPlayer.currentTime }
+        if let narrationPlayer {
+            narrationPlayer.pause()
+            elapsed = narrationTime ?? elapsed
+            pendingOffsetMillis = Int64(elapsed * 1000)
+            pendingFraction = currentFraction
+            pendingOffsetSeek = false
+        }
         reportPosition()
         playbackTimer?.invalidate(); playbackTimer = nil
         if restart {
-            narrationPlayer?.stop(); narrationPlayer = nil; duration = 0; elapsed = 0; pendingOffset = 0; pendingFraction = 0
+            narrationPlayer?.stop(); narrationPlayer = nil; duration = 0; elapsed = 0; pendingOffsetMillis = 0; pendingFraction = 0; pendingOffsetSeek = false
             positionAvailable = false
         }
         playing = false
@@ -224,13 +237,11 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         guard (id.isEmpty || DownloadedVoice(id) != nil), !recording, !capturePending, ifStillValid() else { return false }
         let operation = UUID(); voiceChangeID = operation
         let resume = resumePlayback && playing
-        let fraction = currentFraction
         let passageId = current?.id
         let tasks = [narrationTask, preloadTask].compactMap { $0 } + (paceChange?.tasks ?? [])
-        pause(restart: true)
+        pause()
+        unloadNarration()
         let transport = transportRevision
-        pendingFraction = fraction
-        positionAvailable = current != nil
         for task in tasks { await task.value }
         guard voiceChangeID == operation, transportRevision == transport, current?.id == passageId,
               !recording, !capturePending, ifStillValid() else { return false }
@@ -247,13 +258,14 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
             intent.documentId == current?.documentId && intent.passageId == current?.id && intent.transport == transportRevision ? intent : nil
         }
         let resume = prior?.resume ?? playing
-        let fraction = prior?.fraction ?? currentFraction
         let documentId = current?.documentId
         let passageId = current?.id
         playbackSpeed = min(2, max(0.75, value))
         UserDefaults.standard.set(playbackSpeed, forKey: "playbackSpeed")
         let tasks = (prior?.tasks ?? []) + [narrationTask, preloadTask].compactMap { $0 }
-        pause(restart: true)
+        pause()
+        let fraction = prior?.fraction ?? currentFraction
+        unloadNarration()
         let stoppedTransport = transportRevision
         pendingFraction = fraction
         positionAvailable = current != nil
@@ -267,6 +279,14 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         pendingFraction = fraction
         positionAvailable = current != nil
         if resume { play() }
+    }
+
+    private func unloadNarration() {
+        narrationPlayer?.stop()
+        narrationPlayer = nil
+        duration = 0
+        elapsed = Double(pendingOffsetMillis) / 1000
+        updateNowPlaying()
     }
 
     @discardableResult func pauseAndJoinGeneration(restart: Bool = false) async -> UUID {
@@ -300,10 +320,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     func reserveCapture() -> CapturePreparation {
         capturePending = true
         let tasks = [narrationTask, preloadTask].compactMap { $0 } + (paceChange?.tasks ?? [])
-        let fraction = currentFraction
-        pause(restart: narrationPlayer == nil)
-        pendingFraction = fraction
-        positionAvailable = true
+        pause()
         stopReplay()
         return CapturePreparation(tasks: tasks, offsetMillis: offsetMillis)
     }
@@ -416,28 +433,41 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
             guard let self else { return }
             if self.narrationPlayer === player {
                 self.playbackTimer?.invalidate(); self.playbackTimer = nil
-                if flag, self.playing { self.pendingFraction = 1; self.emitProgress(completed: true) }
-                else { self.pendingFraction = self.currentFraction; self.reportPosition() }
-                self.narrationPlayer = nil; self.duration = 0; self.elapsed = 0
+                if self.capturePending { self.unloadNarration(); self.reportPosition(); return }
+                if flag {
+                    self.pendingOffsetMillis = Int64(player.duration * 1000); self.pendingFraction = 1
+                } else {
+                    let stoppedTime = min(player.duration, max(player.currentTime, self.elapsed))
+                    self.pendingOffsetMillis = Int64(stoppedTime * 1000)
+                    if player.duration > 0 { self.pendingFraction = min(1, max(0, stoppedTime / player.duration)) }
+                }
+                self.pendingOffsetSeek = false
+                self.unloadNarration()
+                self.reportPosition()
                 guard flag, self.playing else { self.playing = false; self.updateNowPlaying(); return }
-                if self.index + 1 < self.passages.count { self.index += 1; self.pendingFraction = 0; self.pendingOffset = 0; self.play() }
+                if self.index + 1 < self.passages.count { self.index += 1; self.pendingFraction = 0; self.pendingOffsetMillis = 0; self.elapsed = 0; self.play() }
                 else { self.playing = false; self.updateNowPlaying() }
             } else if self.notePlayer === player { self.stopReplay() }
         }
     }
 
-    var offsetMillis: Int64 { narrationPlayer.map { Int64($0.currentTime * 1000) } ?? 0 }
+    private var narrationTime: Double? {
+        guard let player = narrationPlayer else { return nil }
+        // AVAudioPlayer can reset its clock before the completion or interruption callback arrives.
+        return min(player.duration, max(player.currentTime, elapsed))
+    }
+    var offsetMillis: Int64 { narrationTime.map { Int64($0 * 1000) } ?? pendingOffsetMillis }
     var currentFraction: Double {
-        if let player = narrationPlayer, player.duration > 0 { return min(0.999999, max(0, player.currentTime / player.duration)) }
+        if let player = narrationPlayer, let time = narrationTime, player.duration > 0 { return min(1, max(0, time / player.duration)) }
         return pendingFraction
     }
     func reportPosition() { emitProgress() }
-    private func emitProgress(throttled: Bool = false, completed: Bool = false) {
+    private func emitProgress(throttled: Bool = false) {
         guard positionAvailable, let current else { return }
         let time = ProcessInfo.processInfo.systemUptime
         guard !throttled || time - lastProgressTime >= 1 else { return }
         lastProgressTime = time
-        let fraction = completed ? 1 : currentFraction
+        let fraction = currentFraction
         onProgress?(ListeningCursor(documentId: current.documentId, passageId: current.id, offsetMillis: offsetMillis,
             passageFraction: fraction, sourcePosition: Double(current.sourceStart) + Double(current.sourceEnd - current.sourceStart) * fraction))
     }
@@ -445,7 +475,12 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         guard !recording, !capturePending, DownloadedVoice(selectedVoice) != nil else { return }
         transportRevision = UUID()
         if let player = narrationPlayer { player.currentTime = min(max(0, Double(offsetMillis) / 1000), player.duration); elapsed = player.currentTime; reportPosition(); updateNowPlaying() }
-        else { pendingOffset = Double(max(0, offsetMillis)) / 1000 }
+        else {
+            pendingOffsetMillis = max(0, offsetMillis)
+            pendingOffsetSeek = true
+            elapsed = Double(pendingOffsetMillis) / 1000
+            reportPosition()
+        }
     }
     private func startPlaybackClock() {
         playbackTimer?.invalidate()
@@ -453,7 +488,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self, let player = self.narrationPlayer, self.playing else { return }
-                self.elapsed = player.currentTime; ticks += 1
+                self.elapsed = self.narrationTime ?? player.currentTime; ticks += 1
                 if ticks % 4 == 0 { self.reportPosition(); self.updateNowPlaying() }
             }
         }
