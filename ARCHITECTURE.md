@@ -99,7 +99,7 @@ Native PDF surfaces preserve the source page's colours, typography, text and art
 | SourceAnchor | Document/revision/graph IDs, block ID, source range, page geometry, quote and context fallback |
 | NarrationEdition | Document revision, normalization versions, provider/model/voice snapshot and synthesis settings |
 | NarrationSegment | Spoken text/range, source mappings, audio manifest, duration and alignment precision/version |
-| PlaybackCursor | Source anchor plus narration edition, segment, native audio offset and measured passage fraction; save time and local session identity |
+| PlaybackCursor | Persisted document/passage identity, native audio offset and measured passage fraction; native session separately tracks its prepared audio |
 | Note | Stable ID, chosen frozen source attachment and supplemental passage audio offset, capture status, recording manifest, timestamps and optional user text |
 | TranscriptRevision | Machine output, language/provider provenance, user-edited text and edit revision; original recording retained |
 | Job | Stable ID, task, input revision/hash, selected model, checkpoints, attempts, output manifest and cancel/generation state |
@@ -122,6 +122,8 @@ Native player presentations share the arrangement in [docs/design.md](docs/desig
 Maintain segment audio together with source-to-spoken mappings and alignment metadata. An alignment track declares **word, sentence or passage precision**. If a voice only supports sentence alignment, use that honest precision. Do not spread word timings uniformly over a segment and claim accuracy.
 
 Generated narration uses native media time as its clock. Qualify any model alignment track before presenting word timing; the current Phonon adapter provides passage-level highlighting. Only one native transport is active at a time. It maps measured media position through the narration edition to source progress. Playback speed must not rely on a separate wall-clock estimate. System speech execution and speech-range clocks are removed.
+
+An unloaded, buffering or unrelated player is not a reading clock. Preserve the frozen cursor through those states and through capture or note replay. The current persistence contract does not identify the audio edition, so restored/generated narration resolves the saved source fraction against its own duration instead of reusing an old edition's timestamp. Native measured time becomes authoritative when matching prepared narration advances; repeated pauses must not shift the source position.
 
 Cache keys include document/graph and normalization revisions, model/voice version, language and audio-affecting synthesis settings. Changing playback speed at transport level normally does not require regeneration. A voice change creates a new edition and maps the current source point into it; do not mix incompatible segment/alignment files.
 

@@ -69,11 +69,12 @@ class PlaybackCoordinator(
     private var epoch = 0L
     private var transportEpoch = 0L
     private var sourceSeekRequest = 0L
-    private var resumeOffset = 0L
     private var pendingCursor: PlaybackSnapshot? = null
+    private var resolvedCursor: PlaybackSnapshot? = null
     private val progressWrites = Mutex()
     private val voiceSelection = Mutex()
     private var playingNote: VoiceNote? = null
+    private var noteReadingCursor: PlaybackSnapshot? = null
     private var captureReservation: CaptureReservation? = null
     private var desiredPlaying = false
     private var restartAfterCapture = false
@@ -85,6 +86,7 @@ class PlaybackCoordinator(
         if (!playerReady.isCompleted) playerReady.complete(transport)
         transport.addListener(object : Player.Listener {
             override fun onEvents(player: Player, events: Player.Events) {
+                if (this@PlaybackCoordinator.player !== player) return
                 if (player.playWhenReady && !canStartPlayback()) player.pause()
                 publish()
                 if (player.playbackState == Player.STATE_ENDED && transportEpoch == epoch && state.value.noteId == null &&
@@ -98,6 +100,10 @@ class PlaybackCoordinator(
                 }
             }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                if (player !== transport || transportEpoch != epoch) return
+                transportEpoch = -1
+                desiredPlaying = false
+                generation?.cancel()
                 mutableState.value = mutableState.value.copy(playing = false, preparing = false, error = "Audio playback was interrupted. You can prepare this passage again.")
             }
         })
@@ -116,9 +122,13 @@ class PlaybackCoordinator(
     }
 
     fun detach() {
+        desiredPlaying = false
+        player?.pause()
         publish()
         val snapshot = state.value
         scope.launch { persistSnapshot(snapshot) }
+        if (!capturing) epoch++
+        transportEpoch = -1
         generation?.cancel()
         monitoring?.cancel()
         player = null
@@ -133,9 +143,10 @@ class PlaybackCoordinator(
             return
         }
         if (document.passages.isEmpty()) {
+            desiredPlaying = false
+            player?.pause()
             publish()
             val previous = state.value
-            player?.pause()
             val currentEpoch = ++epoch
             generation?.cancel()
             mutableState.value = state.value.copy(playing = false, preparing = true)
@@ -152,11 +163,15 @@ class PlaybackCoordinator(
     fun listen(document: ReaderContents, passageIndex: Int = 0, offsetMillis: Long = 0, startPlaying: Boolean = true, passageFraction: Double = 0.0, saveTarget: Boolean = false): CompletableDeferred<Boolean> {
         val accepted = CompletableDeferred<Boolean>()
         if (capturing || document.passages.isEmpty()) { accepted.complete(false); return accepted }
+        desiredPlaying = false
+        player?.pause()
         publish()
         val previous = state.value
         val previousContents = contents
         val previousPending = pendingCursor
+        val previousResolved = resolvedCursor
         val previousNote = playingNote
+        val previousNoteReading = noteReadingCursor
         val previousTransportReady = transportEpoch == epoch
         val navigationRequest = sourceSeekRequest
         var targetAccepted = false
@@ -165,14 +180,14 @@ class PlaybackCoordinator(
         val priorTarget = if (previous.documentId == document.document.id && previous.noteId == null) previous
         else PlaybackSnapshot(documentId = document.document.id, passageId = savedTarget?.passageId ?: document.passages.first().id,
             positionMillis = savedTarget?.offsetMillis ?: 0, passageFraction = savedTarget?.passageFraction ?: 0.0)
-        player?.pause()
         val start = passageIndex.coerceIn(document.passages.indices)
         desiredPlaying = startPlaying
         playingNote = null
+        noteReadingCursor = null
         val currentEpoch = ++epoch
         generation?.cancel()
         contents = document
-        resumeOffset = offsetMillis
+        resolvedCursor = null
         mutableState.value = PlaybackSnapshot(document.document.id, document.document.title, document.passages[start].id, document.passages[start].pageIndex, positionMillis = offsetMillis, preparing = true, speed = mutableState.value.speed, passageFraction = passageFraction.coerceIn(0.0, 1.0), sourceRevision = document.document.sourceRevision, sourceProgress = sourceProgress(document, document.passages[start].id, passageFraction))
         pendingCursor = state.value
         val target = state.value
@@ -180,7 +195,9 @@ class PlaybackCoordinator(
             if (currentEpoch != epoch || !saveTarget || targetAccepted || navigationRequest != sourceSeekRequest || capturing) return
             contents = previousContents
             pendingCursor = previousPending
+            resolvedCursor = previousResolved
             playingNote = previousNote
+            noteReadingCursor = previousNoteReading
             if (previousTransportReady) transportEpoch = currentEpoch
             desiredPlaying = false
             mutableState.value = previous.copy(playing = false, preparing = false)
@@ -228,9 +245,8 @@ class PlaybackCoordinator(
                     if (nextIndex == start) transportEpoch = currentEpoch
                     transport.addMediaItem(item(latest, passage, audio))
                     if (nextIndex == start) {
-                        transport.seekTo(0, resumeOffset)
+                        transport.seekTo(0, 0)
                         transport.prepare()
-                        if (!capturing && desiredPlaying) transport.play()
                     }
                     publish()
                     nextIndex++
@@ -279,7 +295,9 @@ class PlaybackCoordinator(
         synthesizer.releasePins()
         contents = null
         playingNote = null
+        noteReadingCursor = null
         pendingCursor = null
+        resolvedCursor = null
         mutableState.value = PlaybackSnapshot(speed = state.value.speed)
     }
 
@@ -304,14 +322,14 @@ class PlaybackCoordinator(
 
     fun toggle() {
         if (capturing) return
-        val transport = player ?: return
-        if (!transport.isPlaying && !canStartPlayback()) return
+        val transport = player
+        if (transport?.isPlaying != true && !canStartPlayback()) return
         publish()
-        if (!transport.isPlaying && completedReading(state.value)) {
+        if (transport?.isPlaying != true && completedReading(state.value)) {
             contents?.let { listen(it) }
             return
         }
-        if (!transport.isPlaying && state.value.noteId == null && state.value.passageFraction == 1.0) {
+        if (transport?.isPlaying != true && state.value.noteId == null && state.value.passageFraction == 1.0) {
             val document = contents
             val index = document?.passages?.indexOfFirst { it.id == state.value.passageId } ?: -1
             if (document != null && index in 0 until document.passages.lastIndex) {
@@ -319,16 +337,18 @@ class PlaybackCoordinator(
                 return
             }
         }
-        if (transportEpoch != epoch) {
+        if (transport == null || transportEpoch != epoch) {
             desiredPlaying = true
             if (generation?.isActive != true) contents?.let { document ->
                 val current = state.value
                 val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
-                listen(document, index, current.positionMillis, true, current.passageFraction)
+                val note = playingNote
+                if (note != null) playSavedNote(note, current.positionMillis, true, document)
+                else listen(document, index, current.positionMillis, true, current.passageFraction)
             }
             return
         }
-        if (transport.isPlaying || transport.playWhenReady) { desiredPlaying = false; transport.pause(); scope.launch { persist() } }
+        if (transport.isPlaying || transport.playWhenReady || desiredPlaying) { desiredPlaying = false; transport.pause(); scope.launch { persist() } }
         else {
             if (transport.playbackState == Player.STATE_ENDED) {
                 val document = contents
@@ -346,7 +366,7 @@ class PlaybackCoordinator(
                 transport.seekTo(0)
             }
             desiredPlaying = true
-            transport.play()
+            if (pendingCursor == null) transport.play()
         }
         publish()
     }
@@ -369,7 +389,14 @@ class PlaybackCoordinator(
         if (desiredPlaying || player?.playWhenReady == true || state.value.playing) pause()
     }
 
-    fun resume() { if (!capturing) { desiredPlaying = true; if (transportEpoch == epoch) player?.play() } }
+    fun resume() {
+        if (capturing || !canStartPlayback()) return
+        desiredPlaying = true
+        publish()
+        if (player != null && transportEpoch == epoch) {
+            if (pendingCursor == null) player?.play()
+        } else if (generation?.isActive != true) toggle()
+    }
 
     fun beginCapture(expected: PreparedCaptureTarget? = null): CaptureReservation? {
         if (expected != null && capturing) return null
@@ -429,7 +456,7 @@ class PlaybackCoordinator(
             val current = state.value
             val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
             listen(document, index, current.positionMillis, false, current.passageFraction)
-        } else if (reservation != null && transportEpoch == epoch) {
+        } else if (reservation != null && transportEpoch == epoch && pendingCursor == null) {
             val index = (0 until (player?.mediaItemCount ?: 0)).firstOrNull { player?.getMediaItemAt(it)?.mediaId == reservation.reading.passageId }
             if (index != null) player?.seekTo(index, reservation.reading.positionMillis)
             publish()
@@ -446,11 +473,12 @@ class PlaybackCoordinator(
     suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String? = null, activationToken: String? = null): Unit = voiceSelection.withLock {
         check(!capturing) { "Finish recording to continue" }
         check(activationToken == null || models.activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
+        desiredPlaying = false
+        player?.pause()
         publish()
         val current = state.value
         val document = contents
         val note = playingNote
-        player?.pause()
         val currentEpoch = ++epoch
         generation?.cancelAndJoin()
         check(!capturing && epoch == currentEpoch) { "Listening changed while selecting a voice. Try again." }
@@ -464,7 +492,7 @@ class PlaybackCoordinator(
         else if (note != null) playSavedNote(note, current.positionMillis, false, document)
         else {
             val index = document.passages.indexOfFirst { it.id == current.passageId }.coerceAtLeast(0)
-            listen(document, index, 0, false, current.passageFraction)
+            listen(document, index, current.positionMillis, false, current.passageFraction)
         }
     }
 
@@ -484,13 +512,20 @@ class PlaybackCoordinator(
 
     private fun playSavedNote(note: VoiceNote, offsetMillis: Long, startPlaying: Boolean, savedDocument: ReaderContents? = null) {
         if (capturing) return
+        desiredPlaying = false
+        player?.pause()
         publish()
         val previous = state.value
-        player?.pause()
+        noteReadingCursor = when {
+            previous.documentId != note.documentId -> null
+            previous.noteId == null -> previous
+            else -> noteReadingCursor
+        }
         val currentEpoch = ++epoch
         generation?.cancel()
         playingNote = note
         pendingCursor = null
+        resolvedCursor = null
         desiredPlaying = startPlaying
         mutableState.value = PlaybackSnapshot(note.documentId, savedDocument?.document?.title ?: state.value.title, note.passageId, note.pageIndex, positionMillis = offsetMillis, preparing = true, voice = "Your recorded thought", noteId = note.id,
             sourceRevision = savedDocument?.document?.sourceRevision ?: previous.sourceRevision, sourceProgress = previous.sourceProgress.takeIf { previous.documentId == note.documentId })
@@ -525,8 +560,12 @@ class PlaybackCoordinator(
     fun returnToReading() {
         val note = playingNote ?: return
         val document = contents ?: return
-        val index = document.passages.indexOfFirst { it.id == note.passageId }.coerceAtLeast(0)
-        listen(document, index, note.offsetMillis)
+        if (document.document.id != note.documentId) return
+        val frozen = noteReadingCursor?.takeIf { it.documentId == note.documentId }
+        val saved = store.snapshot.value.positions.firstOrNull { it.documentId == note.documentId }
+        val index = document.passages.indexOfFirst { it.id == (frozen?.passageId ?: saved?.passageId) }.coerceAtLeast(0)
+        listen(document, index, frozen?.positionMillis ?: saved?.offsetMillis ?: 0,
+            passageFraction = frozen?.passageFraction ?: saved?.passageFraction ?: 0.0, saveTarget = true)
     }
 
     fun seek(positionMillis: Long) {
@@ -534,9 +573,13 @@ class PlaybackCoordinator(
         val transport = player ?: return
         sourceSeekRequest++
         val position = positionMillis.coerceAtLeast(0)
-        if (state.value.noteId == null && position < transport.duration) {
+        resolvedCursor = null
+        val current = state.value
+        if (current.noteId == null && transport.duration > 0 && transport.currentMediaItem?.mediaId == current.passageId) {
             pendingCursor = null
-            mutableState.value = state.value.copy(passageFraction = 0.0)
+            val fraction = (position.toDouble() / transport.duration).coerceIn(0.0, 1.0)
+            mutableState.value = current.copy(positionMillis = position.coerceAtMost(transport.duration), passageFraction = fraction,
+                sourceProgress = sourceProgress(contents, current.passageId, fraction))
         }
         transport.seekTo(position)
         publish()
@@ -644,16 +687,23 @@ class PlaybackCoordinator(
             else -> passage != null
         }
         val duration = transport.duration.takeIf { it > 0 } ?: 0
+        val clockReady = currentMedia && duration > 0 && transport.playbackState in setOf(Player.STATE_READY, Player.STATE_ENDED)
         val pending = pendingCursor
-        if (currentMedia && current.noteId == null && pending != null && pending.passageId == passage?.id && duration > 0 &&
-            transport.playbackState in setOf(Player.STATE_READY, Player.STATE_ENDED)) {
+        val resolvedPending = clockReady && current.noteId == null && pending != null && pending.passageId == passage?.id
+        if (resolvedPending) {
             pendingCursor = null
-            val position = if (pending.positionMillis == 0L || pending.passageFraction == 1.0) (duration * pending.passageFraction).toLong() else pending.positionMillis
-            transport.seekTo(position.coerceIn(0, duration))
+            // A restored audio offset belongs to its old rendition; only source progress survives regeneration.
+            val position = (duration * pending!!.passageFraction).toLong().coerceIn(0, duration)
+            resolvedCursor = pending.copy(positionMillis = position, durationMillis = duration)
+            transport.seekTo(position)
         }
+        val resolved = resolvedCursor?.takeIf { it.passageId == passage?.id && it.durationMillis == duration &&
+            (it.positionMillis == transport.currentPosition || it.passageFraction == 1.0 && transport.currentPosition >= duration - 1) }
+        if (resolved == null) resolvedCursor = null
         val fraction = when {
-            !currentMedia || current.noteId != null -> current.passageFraction
+            !clockReady || current.noteId != null -> current.passageFraction
             pendingCursor?.passageId == passage?.id -> pendingCursor!!.passageFraction
+            resolved != null -> resolved.passageFraction
             transport.playbackState == Player.STATE_ENDED && duration > 0 -> 1.0
             // Media3 clamps a paused end seek one millisecond before the duration.
             duration > 0 && current.passageId == passage?.id && current.passageFraction == 1.0 && !transport.isPlaying && transport.currentPosition >= duration - 1 -> 1.0
@@ -662,17 +712,18 @@ class PlaybackCoordinator(
             else -> 0.0
         }
         mutableState.value = mutableState.value.copy(
-            passageId = if (currentMedia && current.noteId == null) passage?.id ?: current.passageId else current.passageId,
-            pageIndex = if (currentMedia && current.noteId == null) passage?.pageIndex ?: current.pageIndex else current.pageIndex,
-            positionMillis = if (currentMedia) transport.currentPosition.coerceAtLeast(0) else current.positionMillis,
-            durationMillis = if (currentMedia) duration else current.durationMillis,
+            passageId = if (clockReady && current.noteId == null) passage?.id ?: current.passageId else current.passageId,
+            pageIndex = if (clockReady && current.noteId == null) passage?.pageIndex ?: current.pageIndex else current.pageIndex,
+            positionMillis = if (clockReady && pendingCursor == null) transport.currentPosition.coerceAtLeast(0) else current.positionMillis,
+            durationMillis = if (clockReady) duration else current.durationMillis,
             passageFraction = fraction,
             sourceRevision = contents?.document?.sourceRevision ?: current.sourceRevision,
-            sourceProgress = if (current.noteId != null) current.sourceProgress else sourceProgress(contents, if (currentMedia) passage?.id else current.passageId, fraction),
+            sourceProgress = if (current.noteId != null) current.sourceProgress else sourceProgress(contents, if (clockReady) passage?.id else current.passageId, fraction),
             playing = currentMedia && transport.isPlaying,
             preparing = if (currentMedia) transport.playbackState == Player.STATE_BUFFERING ||
                 (transport.playbackState == Player.STATE_ENDED && contents?.document?.extractionStatus == "preparing" && desiredPlaying && generation?.isActive == true) else generation?.isActive == true,
             voice = if (playingNote != null) "Your recorded thought" else synthesizer.voiceLabel,
         )
+        if (resolvedPending && desiredPlaying && !capturing) transport.play()
     }
 }
