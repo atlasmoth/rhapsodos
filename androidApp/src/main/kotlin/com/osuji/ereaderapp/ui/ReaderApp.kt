@@ -151,6 +151,7 @@ fun ReaderApp() {
     val sceneStrategy = rememberListDetailSceneStrategy<NavKey>(shouldHandleSinglePaneLayout = true, directive = directive, paneExpansionState = paneExpansion)
     var libraryHidden by rememberSaveable { mutableStateOf(false) }
     val libraryDrawer = rememberDrawerState(DrawerValue.Closed)
+    val readerCanRevealLibrary = if (wideLibrary) libraryHidden else libraryDrawer.isClosed && libraryDrawer.targetValue == DrawerValue.Closed
     val selectedDocumentId = (backStack.lastOrNull() as? DocumentKey)?.id
     LaunchedEffect(wideLibrary, libraryHidden, layoutDirection) {
         if (libraryHidden && wideLibrary) paneExpansion.setFirstPaneProportion(if (layoutDirection == LayoutDirection.Ltr) 0f else 1f) else paneExpansion.clear()
@@ -359,8 +360,7 @@ fun ReaderApp() {
                             }
                             entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
                                 DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio,
-                                    sidebarVisible = wideLibrary && !libraryHidden,
-                                    toggleSidebar = { if (wideLibrary && !libraryHidden) hideLibrary() else showLibrary() },
+                                    showLibrary = if (readerCanRevealLibrary) ::showLibrary else null,
                                     record = { recordThought(it) })
                             }
                         },
@@ -678,7 +678,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, sidebarVisible: Boolean, toggleSidebar: () -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -719,7 +719,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     }
     if (contents == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            IconButton(onClick = toggleSidebar, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) { Icon(Icons.Outlined.ViewSidebar, if (sidebarVisible) "Hide library" else "Show library") }
+            if (showLibrary != null) IconButton(onClick = showLibrary, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) { Icon(Icons.Outlined.ViewSidebar, "Show library") }
             if (error == null) CircularProgressIndicator() else Text(error!!)
         }
         return
@@ -747,7 +747,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 22.dp)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = toggleSidebar) { Icon(Icons.Outlined.ViewSidebar, if (sidebarVisible) "Hide library" else "Show library") }
+                    if (showLibrary != null) IconButton(onClick = showLibrary) { Icon(Icons.Outlined.ViewSidebar, "Show library") }
                     Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
