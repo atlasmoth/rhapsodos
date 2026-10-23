@@ -103,7 +103,8 @@ data class ModelPack(
     val licenseUrl: String,
     val description: String,
     val files: List<ModelFile>,
-    val totalBytes: Long = files.sumOf { it.bytes },
+    val archive: ModelFile? = null,
+    val totalBytes: Long = archive?.bytes ?: files.sumOf { it.bytes },
     val adapter: String = id,
     val voices: List<ModelVoice> = emptyList(),
 )
@@ -174,5 +175,6 @@ class ContentEgressPolicy {
     fun permitsDocumentUpload(): Boolean = false
     fun permitsRecordingUpload(): Boolean = false
     fun permitsModelDownload(packId: String, url: String): Boolean =
-        ModelCatalog.packs.any { pack -> pack.id == packId && pack.files.any { it.url == url } }
+        ModelCatalog.packs.any { pack -> pack.id == packId &&
+            (pack.archive?.let { it.url == url } ?: pack.files.any { it.url == url }) }
 }

@@ -122,9 +122,12 @@ def check_assets(root):
             raise ValueError("Duplicate or invalid model pack ID")
         ids.add(pack["id"])
         paths = set()
-        if pack["totalBytes"] != sum(asset["bytes"] for asset in pack["files"]):
+        archive = pack.get("archive")
+        if pack["totalBytes"] != (archive["bytes"] if archive else sum(asset["bytes"] for asset in pack["files"])):
             raise ValueError("Model pack byte total differs from assets")
-        for asset in pack["files"]:
+        if archive and (not archive["path"].endswith(".zip") or "/" in archive["path"]):
+            raise ValueError("Invalid model archive filename")
+        for asset in pack["files"] + ([archive] if archive else []):
             path = Path(asset["path"])
             if path.is_absolute() or ".." in path.parts or asset["path"] in paths or asset["bytes"] <= 0:
                 raise ValueError("Unsafe or invalid model asset")
