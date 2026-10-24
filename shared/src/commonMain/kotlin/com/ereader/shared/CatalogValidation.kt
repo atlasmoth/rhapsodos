@@ -17,7 +17,7 @@ internal object CatalogValidation {
         }
         require(update.packs.size in 1..64 && update.packs.map { it.id }.toSet().size == update.packs.size) { "Invalid catalogue entries" }
         update.packs.forEach { supplied ->
-            val profile = ModelCatalog.packs.firstOrNull { it.id == supplied.adapter } ?: error("This app cannot run the catalogue's model adapter")
+            val profile = ModelCatalog.packs.firstOrNull { it.adapter == supplied.adapter } ?: error("This app cannot run the catalogue's model adapter")
             require(supplied.voices.size <= profile.voices.size && supplied.voices.map { it.id }.toSet().size == supplied.voices.size &&
                 supplied.voices.all { it in profile.voices }) { "Unsupported model voice" }
             val pack = PhononCatalog.resolve(supplied)

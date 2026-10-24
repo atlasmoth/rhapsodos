@@ -4,6 +4,7 @@ import base64
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import time
@@ -98,6 +99,61 @@ def configure(args):
     print("Configured public catalogue trust. Rebuild and review before distributing the apps.")
 
 
+def bundle(args):
+    manifest = ROOT / "docs/model-catalog.json"
+    source = ROOT / "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt"
+    current = json.loads(manifest.read_text())
+    packs = json.loads(args.catalog.read_text())
+    profiles = {pack.get("adapter", pack["id"]): pack for pack in current}
+    if not isinstance(packs, list) or len(packs) != len(profiles):
+        raise ValueError("Supply one reviewed edition for each current speech adapter")
+    if len({pack["id"] for pack in packs}) != len(packs) or {pack.get("adapter", pack["id"]) for pack in packs} != set(profiles):
+        raise ValueError("Model identities or adapters are duplicated or missing")
+    pinned = re.compile(r"https://huggingface\.co/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/resolve/[a-f0-9]{40}/[A-Za-z0-9_./-]+")
+    for pack in packs:
+        profile = profiles[pack.get("adapter", pack["id"])]
+        for key in ("name", "capability", "platform", "runtime", "languageTags", "minimumOS", "minimumMemoryMB", "license", "licenseUrl", "description", "voices"):
+            if pack.get(key) != profile.get(key):
+                raise ValueError("Bundling archives must preserve the reviewed model profile")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,95}", pack["id"]) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}", pack["version"]):
+            raise ValueError("Invalid edition identity")
+        if pack["id"] == profile["id"] and pack != profile:
+            raise ValueError("A changed model edition needs a new identity")
+        expected = {item["path"]: item for item in profile["files"]}
+        if len(pack["files"]) != len(expected) or {item["path"] for item in pack["files"]} != set(expected):
+            raise ValueError("Archive payload paths differ from the reviewed adapter")
+        for item in pack["files"]:
+            original = expected[item["path"]]
+            if item["bytes"] != original["bytes"] or item["sha256"] != original["sha256"]:
+                raise ValueError("Archive packaging must preserve every reviewed payload digest")
+            if item["url"] != original["url"] and not pinned.fullmatch(item["url"]):
+                raise ValueError("Use a commit-pinned Hugging Face asset URL")
+        archive = pack.get("archive")
+        if archive:
+            if (pack.get("adapter") == "phonon-english-coreml" or not re.fullmatch(r"[A-Za-z0-9_.-]+\.zip", archive["path"])
+                    or not pinned.fullmatch(archive["url"]) or not re.fullmatch(r"[a-f0-9]{64}", archive["sha256"])
+                    or not 0 < archive["bytes"] <= 1_073_741_824):
+                raise ValueError("Invalid archive descriptor")
+        if pack["totalBytes"] != (archive["bytes"] if archive else sum(item["bytes"] for item in pack["files"])):
+            raise ValueError("Download size does not match the transport")
+        for item in pack["files"] + ([archive] if archive else []):
+            if any(part in (".", "..") for part in urlsplit(item["url"]).path.split("/")):
+                raise ValueError("Unsafe asset URL")
+    encoded = json.dumps(packs, indent=2, ensure_ascii=True)
+    if "$" in encoded:
+        raise ValueError("Unexpected interpolation character in catalogue")
+    kotlin = 'package com.ereader.shared\n\nimport kotlinx.serialization.json.Json\n\ninternal object ModelCatalog {\n    val packs: List<ModelPack> = Json.decodeFromString("""\n' + encoded + '\n""")\n}\n'
+    old_manifest, old_source = manifest.read_bytes(), source.read_bytes()
+    try:
+        manifest.write_text(encoded + "\n")
+        source.write_text(kotlin)
+    except OSError:
+        manifest.write_bytes(old_manifest)
+        source.write_bytes(old_source)
+        raise
+    print("Updated the bundled manifest and shared catalogue. Review, validate and rebuild both apps before release.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sign and configure Rhapsodos model catalogue releases")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -118,6 +174,9 @@ def main():
     configuration.add_argument("--url", required=True)
     configuration.add_argument("--public-key", type=Path, required=True)
     configuration.set_defaults(run=configure)
+    bundled = commands.add_parser("bundle")
+    bundled.add_argument("--catalog", type=Path, required=True)
+    bundled.set_defaults(run=bundle)
     args = parser.parse_args()
     try:
         args.run(args)

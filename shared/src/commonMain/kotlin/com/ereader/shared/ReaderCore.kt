@@ -386,7 +386,7 @@ class ReaderCore internal constructor(driver: SqlDriver) {
     }
 
     private fun catalogPacks(): List<ModelPack> = queries.currentModelCatalog().executeAsOneOrNull()?.let {
-        val supportedAdapters = ModelCatalog.packs.map { pack -> pack.id }.toSet()
+        val supportedAdapters = ModelCatalog.packs.map { pack -> pack.adapter }.toSet()
         val cached = json.decodeFromString<List<ModelPack>>(it.packs_json).filter { pack -> pack.adapter in supportedAdapters }
         (ModelCatalog.packs + cached).associateBy { pack -> pack.id }.values.map(PhononCatalog::resolve)
     } ?: ModelCatalog.packs

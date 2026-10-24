@@ -6,7 +6,7 @@ internal object PhononCatalog {
     private const val expandedVersion = "0.4.0-eos1-52433c46975b-voices-da6c9ec"
 
     fun resolve(pack: ModelPack): ModelPack {
-        val profile = ModelCatalog.packs.firstOrNull { it.id == pack.adapter } ?: return pack
+        val profile = ModelCatalog.packs.firstOrNull { it.adapter == pack.adapter } ?: return pack
         return if (isDefaultOnlyAndroid(pack, profile)) {
             profile.copy(name = pack.name, description = pack.description)
         } else {
@@ -15,7 +15,7 @@ internal object PhononCatalog {
     }
 
     fun supportsInstalledUpgrade(pack: ModelPack, installedPath: String): Boolean {
-        val profile = ModelCatalog.packs.firstOrNull { it.id == androidId } ?: return false
+        val profile = ModelCatalog.packs.firstOrNull { it.adapter == androidId } ?: return false
         return profile.version == expandedVersion &&
             installedPath == "Models/$androidId/$defaultOnlyVersion" &&
             pack.copy(name = profile.name, description = profile.description) == profile
