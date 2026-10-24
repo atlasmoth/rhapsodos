@@ -482,7 +482,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         guard installs.contains(where: { $0.packId == pack.id && $0.generation == generation && $0.status == "ready" }) else { throw CancellationError() }
         qualified.insert(pack.id); onReady?(pack)
         if let versions = try? FileManager.default.contentsOfDirectory(at: target.deletingLastPathComponent(), includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey]) {
-            for previous in versions where previous != target {
+            // Enumeration can resolve /var to /private/var; sibling names preserve the active directory's identity.
+            for previous in versions where previous.lastPathComponent != target.lastPathComponent {
                 let values = try? previous.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
                 if values?.isDirectory == true && values?.isSymbolicLink != true { try? FileManager.default.removeItem(at: previous) }
             }
