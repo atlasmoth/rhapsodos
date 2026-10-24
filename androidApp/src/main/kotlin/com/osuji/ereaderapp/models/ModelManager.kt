@@ -127,7 +127,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { false }
                 } else false
-                if (verified) { validated += install.packId; pruneVoiceVersions(pack!!) }
+                if (verified) { validated += install.packId; pruneVoiceVersions(pack!!); clearArchiveTransfer(pack) }
                 else if (retainedVoices.containsKey(install.packId) && install.status == "ready" && install.installedPath == "Models/${pack!!.id}/${pack.version}") store.invalidateModel(install.packId, install.generation, "Some voice files need to be downloaded again.")
                 else if (!retainedVoices.containsKey(install.packId) && install.packId !in state.value.unavailable) store.invalidateModel(install.packId, install.generation, "Installed files failed their check. Download this pack again.")
                 mutableState.update { it.copy(checking = it.checking - install.packId) }
@@ -137,7 +137,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 val recovered = if (pack != null && install.status == "verifying" && runtimeCompatibility(pack) == null) withContext(Dispatchers.IO) {
                     val directory = owned("Models/${pack.id}/${pack.version}")
                     if (directory.isDirectory && pack.files.all { File(directory, it.path).length() == it.bytes && digest(File(directory, it.path)) == it.sha256 }) {
-                        try { beforeVerification?.invoke(); validateRuntime(pack, directory); store.activateModel(pack.id, install.generation, "Models/${pack.id}/${pack.version}", pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) }); validated += pack.id; true }
+                        try { beforeVerification?.invoke(); validateRuntime(pack, directory); store.activateModel(pack.id, install.generation, "Models/${pack.id}/${pack.version}", pack.files.map { VerifiedPackFile(it.path, it.sha256, it.bytes) }); validated += pack.id; clearArchiveTransfer(pack); true }
                         catch (cancelled: CancellationException) { throw cancelled }
                         catch (_: Exception) { false }
                     } else false
@@ -244,7 +244,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 validated -= packId
                 retainedVoices.remove(packId)
                 withContext(Dispatchers.IO) {
-                    listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
+                    listOf(owned("Models/$packId"), owned("Models/.staging/$packId"), owned("Models/.transfers/$packId")).forEach { directory ->
                         check(!directory.exists() || directory.deleteRecursively())
                         if (directory.parentFile!!.isDirectory) syncDirectory(directory.parentFile!!, context.filesDir)
                     }
@@ -257,7 +257,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     fun compatibility(pack: ModelPack): String? {
         runtimeCompatibility(pack)?.let { return it }
-        if (StatFs(context.filesDir.absolutePath).availableBytes < pack.totalBytes + 32L * 1024 * 1024) return "Free more storage before downloading"
+        val retainedTransfer = pack.archive?.let { transferFile(pack).length().coerceAtMost(it.bytes) } ?: 0L
+        val staged = stagedFileBytes(owned("Models/.staging/${pack.id}/${pack.version}"), pack)
+        if (StatFs(context.filesDir.absolutePath).availableBytes < storageBytes(pack) - retainedTransfer - staged) return "Free more storage before downloading"
         return null
     }
 
@@ -279,7 +281,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return directory?.takeIf { it.isDirectory }
     }
 
-    fun downloadBytes(pack: ModelPack): Long = if (retainedVoices.containsKey(pack.id)) pack.files.filter { it.path.startsWith("voices/") }.sumOf { it.bytes } else pack.totalBytes
+    fun downloadBytes(pack: ModelPack): Long = if (pack.archive == null && retainedVoices.containsKey(pack.id)) pack.files.filter { it.path.startsWith("voices/") }.sumOf { it.bytes } else pack.totalBytes
+
+    fun storageBytes(pack: ModelPack): Long = pack.files.sumOf { it.bytes } + (pack.archive?.bytes ?: 0L) + 32L * 1024 * 1024
 
     fun selectedVoicePack(): ModelPack {
         check(state.value.selectedVoice.isNotBlank()) { "Download and select Phonon in Settings to start listening." }
@@ -382,23 +386,49 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             val staging = owned("Models/.staging/${pack.id}/${pack.version}")
             try {
                 store.beginModelInstall(pack.id, generation)
-                check(staging.mkdirs() || staging.isDirectory)
-                var previousBytes = 0L
-                for (entry in pack.files) {
-                    val target = assetFile(staging, entry.path)
-                    check(target.parentFile!!.mkdirs() || target.parentFile!!.isDirectory)
-                    if (!matches(staging, entry) && reuse != null && matches(reuse, entry)) {
-                        assetFile(reuse, entry.path).inputStream().use { input ->
-                            java.io.FileOutputStream(target).use { output -> input.copyTo(output); output.fd.sync() }
+                if (pack.archive != null) {
+                    val archive = pack.archive
+                    val transfer = transferFile(pack)
+                    check(transfer.parentFile!!.mkdirs() || transfer.parentFile!!.isDirectory)
+                    if (transfer.length() != archive.bytes || digest(transfer) != archive.sha256) {
+                        stream(archive.url, transfer, archive.bytes) { count -> update(pack.id, generation, "downloading", count) }
+                    }
+                    if (transfer.length() != archive.bytes || digest(transfer) != archive.sha256) {
+                        check(transfer.delete())
+                        error("Downloaded archive failed its integrity check. Retry to download it again.")
+                    }
+                    syncDirectory(transfer.parentFile!!, context.filesDir)
+                    update(pack.id, generation, "verifying", pack.totalBytes)
+                    extractModelArchive(transfer, pack.files, staging)
+                    pack.files.map { assetFile(staging, it.path).parentFile!! }.distinct().forEach { syncDirectory(it, context.filesDir) }
+                } else {
+                    check(staging.mkdirs() || staging.isDirectory)
+                    var previousBytes = 0L
+                    for (entry in pack.files) {
+                        val target = assetFile(staging, entry.path)
+                        check(target.parentFile!!.mkdirs() || target.parentFile!!.isDirectory)
+                        if (!matches(staging, entry) && reuse != null && matches(reuse, entry)) {
+                            assetFile(reuse, entry.path).inputStream().use { input ->
+                                java.io.FileOutputStream(target).use { output ->
+                                    val buffer = ByteArray(64 * 1024)
+                                    while (true) {
+                                        coroutineContext.ensureActive()
+                                        val count = input.read(buffer)
+                                        if (count < 0) break
+                                        output.write(buffer, 0, count)
+                                    }
+                                    output.fd.sync()
+                                }
+                            }
                         }
+                        if (!matches(staging, entry)) {
+                            stream(entry.url, target, entry.bytes) { count -> update(pack.id, generation, "downloading", previousBytes + count) }
+                        }
+                        require(target.length() == entry.bytes && digest(target) == entry.sha256) { "Downloaded file failed its integrity check. Retry to download it again." }
+                        syncDirectory(target.parentFile!!, context.filesDir)
+                        previousBytes += entry.bytes
+                        update(pack.id, generation, "downloading", previousBytes)
                     }
-                    if (!matches(staging, entry)) {
-                        stream(entry.url, target, entry.bytes) { count -> update(pack.id, generation, "downloading", previousBytes + count) }
-                    }
-                    require(target.length() == entry.bytes && digest(target) == entry.sha256) { "Downloaded file failed its integrity check. Retry to download it again." }
-                    syncDirectory(target.parentFile!!, context.filesDir)
-                    previousBytes += entry.bytes
-                    update(pack.id, generation, "downloading", previousBytes)
                 }
                 update(pack.id, generation, "verifying", pack.totalBytes)
                 beforeVerification?.invoke()
@@ -422,6 +452,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                 }
                 refresh()
                 retainedVoices.remove(pack.id)
+                clearArchiveTransfer(pack)
                 ready.emit(pack.id)
                 withContext(Dispatchers.Main.immediate) { resumePendingActivation() }
             } catch (cancelled: CancellationException) {
@@ -467,7 +498,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             validated -= packId
             retainedVoices.remove(packId)
             withContext(Dispatchers.IO) {
-                listOf(owned("Models/$packId"), owned("Models/.staging/$packId")).forEach { directory ->
+                listOf(owned("Models/$packId"), owned("Models/.staging/$packId"), owned("Models/.transfers/$packId")).forEach { directory ->
                     check(!directory.exists() || directory.deleteRecursively()) { "Downloaded files could not be removed. Free storage and retry removal." }
                     if (directory.parentFile!!.isDirectory) syncDirectory(directory.parentFile!!, context.filesDir)
                 }
@@ -495,7 +526,18 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         refresh()
     }
     private suspend fun refresh() { val inventory = store.modelInstalls(); mutableState.update { it.copy(installs = inventory) } }
-    private fun stagedBytes(directory: File, pack: ModelPack) = pack.files.sumOf { File(directory, it.path).length().coerceAtMost(it.bytes) }
+    private fun stagedBytes(directory: File, pack: ModelPack) = pack.archive?.let { transferFile(pack).length().coerceAtMost(it.bytes) } ?: stagedFileBytes(directory, pack)
+    private fun stagedFileBytes(directory: File, pack: ModelPack) = pack.files.sumOf { assetFile(directory, it.path).length().coerceAtMost(it.bytes) }
+    private fun transferFile(pack: ModelPack) = owned("Models/.transfers/${pack.id}/${pack.version}/archive.zip")
+    private suspend fun clearArchiveTransfer(pack: ModelPack) {
+        if (pack.archive == null) return
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val transfer = transferFile(pack)
+                if (transfer.exists() && transfer.delete()) syncDirectory(transfer.parentFile!!, context.filesDir)
+            }
+        }
+    }
     private fun owned(path: String): File {
         val root = context.filesDir.canonicalFile
         val file = File(root, path).canonicalFile
@@ -527,12 +569,12 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         return result
     }
 
-    private fun matches(directory: File, entry: PackFile): Boolean = assetFile(directory, entry.path).let { it.length() == entry.bytes && digest(it) == entry.sha256 }
+    private suspend fun matches(directory: File, entry: PackFile): Boolean = assetFile(directory, entry.path).let { it.length() == entry.bytes && digest(it) == entry.sha256 }
 
-    private fun digest(file: File): String {
+    private suspend fun digest(file: File): String {
         if (!file.isFile) return ""
         val hash = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input -> val buffer = ByteArray(64 * 1024); while (true) { val count = input.read(buffer); if (count < 0) break; hash.update(buffer, 0, count) } }
+        file.inputStream().use { input -> val buffer = ByteArray(64 * 1024); while (true) { coroutineContext.ensureActive(); val count = input.read(buffer); if (count < 0) break; hash.update(buffer, 0, count) } }
         return hash.digest().joinToString("") { "%02x".format(it) }
     }
 

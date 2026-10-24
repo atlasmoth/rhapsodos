@@ -149,7 +149,7 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
                 Text(pack.description, style = MaterialTheme.typography.bodySmall)
                 Text("${pack.runtime} · ${pack.version}", style = MaterialTheme.typography.bodySmall)
                 val memory = if (pack.minimumMemoryMB % 1024 == 0) "${pack.minimumMemoryMB / 1024} GB" else "${pack.minimumMemoryMB} MB"
-                val storage = (pack.totalBytes + 32L * 1024 * 1024 + 999_999) / 1_000_000
+                val storage = (models.storageBytes(pack) + 999_999) / 1_000_000
                 Text("Android ${if (pack.minimumOS == 28) "9+" else "API ${pack.minimumOS}+"} · $memory RAM · $storage MB free storage", style = MaterialTheme.typography.bodySmall)
                 state.checks[pack.id]?.let { Text(String.format(locale, "Device check passed in %.1f s", it / 1000.0), style = MaterialTheme.typography.bodySmall) }
                 if (install != null && !removing && !checking && status != "downloading") TextButton(onClick = { models.remove(pack.id); haptic(view) }, enabled = !capturing && !state.changingTranscription) { Text("Remove downloaded files") }

@@ -43,7 +43,7 @@ import kotlinx.serialization.json.Json
 @Serializable data class ModelPack(
     val id: String, val name: String, val capability: String, val platform: String, val runtime: String, val version: String,
     val languageTags: List<String>, val minimumOS: Int, val minimumMemoryMB: Int, val license: String, val licenseUrl: String,
-    val description: String, val files: List<PackFile>, val totalBytes: Long, val adapter: String = id, val voices: List<ModelVoice> = emptyList(),
+    val description: String, val files: List<PackFile>, val totalBytes: Long, val adapter: String = id, val voices: List<ModelVoice> = emptyList(), val archive: PackFile? = null,
 )
 @Serializable data class ModelCatalogStatus(val revision: Long = 0, val acceptedAt: Long = 0, val source: String = "bundled")
 @Serializable data class ModelInstall(val packId: String, val generation: String, val status: String, val bytesDownloaded: Long, val totalBytes: Long, val installedPath: String = "", val error: String = "", val updatedAt: Long)
