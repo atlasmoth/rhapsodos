@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import SharedCore
 import SwiftUI
 import Darwin
 
@@ -84,8 +85,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         configuration.isDiscretionary = false
         configuration.waitsForConnectivity = true
         configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
         configuration.urlCredentialStorage = nil
         configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: configuration, delegate: self, delegateQueue: .main)
     }()
     var backgroundCompletion: (() -> Void)?
@@ -405,7 +408,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 try Task.checkCancellation()
                 try? FileManager.default.removeItem(at: file)
                 let transfer = Transfer(packId: pack.id, generation: generation, fileIndex: index)
-                guard let url = URL(string: asset.url), url.scheme == "https", Self.allowed(url) else { throw PackFailure.transport }
+                guard ModelDownloadUrl.shared.isAllowed(url: asset.url),
+                      let url = URL(string: asset.url, encodingInvalidCharacters: false) else { throw PackFailure.transport }
                 let task: URLSessionDownloadTask
                 if let data = resumeData(transfer) { task = session.downloadTask(withResumeData: data) }
                 else { var request = URLRequest(url: url); request.httpMethod = "GET"; task = session.downloadTask(with: request) }
@@ -494,11 +498,14 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         let descriptor = open(url.path, O_RDONLY); guard descriptor >= 0 else { throw PackFailure.path }; defer { close(descriptor) }; guard fsync(descriptor) == 0 else { throw PackFailure.transport }
     }
     nonisolated private static func allowed(_ url: URL) -> Bool {
-        guard url.scheme == "https", url.user == nil, url.password == nil, url.port == nil || url.port == 443, let host = url.host else { return false }
-        return host == "huggingface.co" || host == "cdn-lfs.huggingface.co" || host == "cdn-lfs-us-1.hf.co" || host == "cdn-lfs-eu-1.hf.co" || host == "us.aws.cdn.hf.co" || host == "cas-bridge.xethub.hf.co" || host == "cas-server.xethub.hf.co" || host == "github.com" || host == "release-assets.githubusercontent.com" || host == "raw.githubusercontent.com"
+        ModelDownloadUrl.shared.isAllowed(url: url.absoluteString)
     }
     private func decode(_ description: String?) -> Transfer? { description.flatMap { try? JSONDecoder().decode(Transfer.self, from: Data($0.utf8)) } }
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(request.url.flatMap { Self.allowed($0) ? request : nil }) }
+    nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge,
+                               completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        completionHandler(challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust ? .performDefaultHandling : .cancelAuthenticationChallenge, nil)
+    }
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         let retained = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         do { try FileManager.default.moveItem(at: location, to: retained) }

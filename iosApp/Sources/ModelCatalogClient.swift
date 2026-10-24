@@ -48,7 +48,8 @@ enum ModelCatalogClient {
 
     static func fetch(_ endpoint: String = ModelCatalogSource.shared.httpsUrl,
                       publicKeyX963: String = ModelCatalogSource.shared.publicKeyX963) async throws -> String {
-        guard let url = URL(string: endpoint), valid(url), !publicKeyX963.isEmpty else { throw ModelCatalogFailure.configuration }
+        guard ModelDownloadUrl.shared.isAllowed(url: endpoint),
+              let url = URL(string: endpoint, encodingInvalidCharacters: false), !publicKeyX963.isEmpty else { throw ModelCatalogFailure.configuration }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieStorage = nil
         configuration.httpShouldSetCookies = false
@@ -57,7 +58,7 @@ enum ModelCatalogClient {
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.timeoutIntervalForRequest = 20
         configuration.timeoutIntervalForResource = 30
-        let delegate = CatalogueRedirects(host: url.host!)
+        let delegate = CatalogueRedirects()
         let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         var request = URLRequest(url: url)
@@ -65,7 +66,7 @@ enum ModelCatalogClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         let (bytes, response) = try await session.bytes(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200,
-              let finalURL = response.url, valid(finalURL), finalURL.host == url.host else { throw ModelCatalogFailure.transport }
+              let finalURL = response.url, valid(finalURL) else { throw ModelCatalogFailure.transport }
         guard response.expectedContentLength <= maximumEnvelopeBytes else { throw ModelCatalogFailure.size }
         var envelope = Data()
         for try await byte in bytes {
@@ -77,18 +78,17 @@ enum ModelCatalogClient {
     }
 
     static func valid(_ url: URL) -> Bool {
-        url.scheme == "https" && url.host != nil && url.user == nil && url.password == nil
-            && (url.port == nil || url.port == 443) && url.fragment == nil
+        ModelDownloadUrl.shared.isAllowed(url: url.absoluteString)
     }
 }
 
 private final class CatalogueRedirects: NSObject, URLSessionTaskDelegate {
-    let host: String
-    init(host: String) { self.host = host }
+    private var redirects = 0
     func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
                     completionHandler: @escaping (URLRequest?) -> Void) {
-        guard let url = request.url, ModelCatalogClient.valid(url), url.host == host else { completionHandler(nil); return }
+        guard redirects < 5, let url = request.url, ModelCatalogClient.valid(url) else { completionHandler(nil); return }
+        redirects += 1
         var clean = URLRequest(url: url)
         clean.httpMethod = "GET"
         clean.setValue("application/json", forHTTPHeaderField: "Accept")
