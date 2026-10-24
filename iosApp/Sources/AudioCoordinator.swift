@@ -53,6 +53,14 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     private var lastProgressTime = 0.0
     private var positionAvailable = false
     private var documentComplete = true
+    private var interruptedPlayback: InterruptedPlayback?
+
+    private struct InterruptedPlayback {
+        let transport: UUID
+        let documentId: String?
+        let passageId: String?
+        let noteId: String?
+    }
 
     private struct PaceChange {
         let id: UUID
@@ -78,10 +86,14 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification,
             object: nil, queue: .main) { [weak self] notification in
             let type = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            let options = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
             Task { @MainActor in
-                guard let self, type == AVAudioSession.InterruptionType.began.rawValue else { return }
-                self.pause()
-                if self.recording { self.onCaptureInterrupted?(nil) }
+                guard let self, let type = type.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) else { return }
+                switch type {
+                case .began: self.beginInterruption()
+                case .ended: self.endInterruption(shouldResume: AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume))
+                @unknown default: break
+                }
             }
         })
         observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification,
@@ -119,6 +131,32 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         remoteTargets.forEach { $0.0.removeTarget($0.1) }
     }
 
+    private func beginInterruption() {
+        guard interruptedPlayback == nil else { return }
+        let resume = playing || replayPlaying
+        let noteId = replayPlaying ? replayingNote : nil
+        pause()
+        if resume, !recording, !capturePending {
+            interruptedPlayback = InterruptedPlayback(transport: transportRevision,
+                documentId: current?.documentId, passageId: current?.id, noteId: noteId)
+        }
+        if recording { onCaptureInterrupted?(nil) }
+    }
+
+    private func endInterruption(shouldResume: Bool) {
+        let interrupted = interruptedPlayback
+        interruptedPlayback = nil
+        guard shouldResume, let interrupted, interrupted.transport == transportRevision,
+              interrupted.documentId == current?.documentId, interrupted.passageId == current?.id,
+              !recording, !capturePending else { return }
+        if let noteId = interrupted.noteId {
+            guard replayingNote == noteId, replayPaused else { return }
+            do { try resumeReplay() } catch { onError?(error.localizedDescription) }
+        } else if replayingNote == nil {
+            play()
+        }
+    }
+
     func load(_ passages: [Passage], title: String, at index: Int, offsetMillis: Int64 = 0, passageFraction: Double = 0, complete: Bool = true) {
         pause(restart: true)
         stopReplay()
@@ -134,6 +172,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
 
     func play() {
+        interruptedPlayback = nil
         guard !recording, !capturePending, current != nil else { return }
         guard DownloadedVoice(selectedVoice) != nil, canUseVoice?(selectedVoice) == true else {
             pause()
@@ -193,6 +232,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
 
     func pause(restart: Bool = false) {
+        interruptedPlayback = nil
         transportRevision = UUID()
         pauseReplay()
         preloadTask?.cancel()
@@ -407,6 +447,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
     var replayPlaying: Bool { replayingNote != nil && !replayPaused }
     var replayOffsetMillis: Int64 { notePlayer.map { Int64($0.currentTime * 1000) } ?? 0 }
     func pauseReplay() {
+        interruptedPlayback = nil
         guard let notePlayer else { return }
         notePlayer.pause()
         replayPaused = true
@@ -420,6 +461,7 @@ final class AudioCoordinator: NSObject, ObservableObject, AVAudioPlayerDelegate 
         replayPaused = false
     }
     func stopReplay() {
+        interruptedPlayback = nil
         notePlayer?.stop()
         notePlayer = nil
         replayingNote = nil
