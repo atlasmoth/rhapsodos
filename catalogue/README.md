@@ -2,7 +2,7 @@
 
 The existing [catalogue.json](catalogue.json) is a signed revision-6 envelope for four speech packs and their 66 upstream assets. It can be hosted unchanged, but it does not point to the newly prepared four-archive release.
 
-For the four ZIPs, follow [the archive release workflow](../docs/model-archives.md). [archives.json](archives.json) records their sizes and SHA-256 digests. Once the files have an actual Hugging Face repository and immutable commit, bind those addresses, review the resulting pack list and sign a new catalogue revision. Do not edit URLs inside the existing signed envelope. The private signing key must never be uploaded.
+For the four ZIPs, follow [the archive release workflow](../docs/model-archives.md). [archives.json](archives.json) records their sizes and SHA-256 digests. Once the files have actual HTTPS addresses on your chosen host, bind those addresses with a fresh edition suffix, review the resulting pack list and sign a new catalogue revision. R2, Hugging Face, S3 and custom servers use the same verification contract. Use versioned or content-addressed paths and retain each release. Do not edit URLs inside the existing signed envelope. The private signing key must never be uploaded.
 
 - Revision: **6**
 - Published: **21 October 2026, 07:17:48 WAT**
@@ -11,7 +11,7 @@ For the four ZIPs, follow [the archive release workflow](../docs/model-archives.
 
 [catalog-public-x963.txt](catalog-public-x963.txt) is the matching public verification key for app configuration. The private signing key is stored outside this repository at `~/.config/rhapsodos/catalog-signing/catalog-private.pem`, with owner-only permissions. Keep a secure backup for future catalogue updates; never upload that private key.
 
-After upload, configure the raw GitHub HTTPS URL and this public key with the existing [release tooling](../docs/model-manager.md#release-setup), then rebuild both apps with permanent-catalogue support. Their current URL and public key configuration remain empty.
+After upload, configure the catalogue's HTTPS URL and this public key with the existing [release tooling](../docs/model-manager.md#release-setup), then rebuild both apps. Their current URL and public key configuration remain empty. Once configured, signed updates can change model hosting through new editions without rebuilding either app.
 
 Phonon is the only narration family. Whisper Base English provides downloaded voice-note transcription on both platforms, using native CPU Q8 on Android and CoreML on iOS. Moonshine and Whisper Tiny transcription profiles are retired alongside Kitten and Kokoro narration; older cached catalogues cannot restore them. Existing notes and recordings remain intact. Retired transcription selections become off; the replacement requires an explicit Download & enable.
 
