@@ -602,6 +602,14 @@ private fun LibraryPane(
         item {
             Text("On your shelf", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         }
+        if (documents.isEmpty()) item {
+            TextButton(onClick = import, enabled = !importing && !audio.capturing, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Icon(Icons.Outlined.Add, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Import a PDF")
+                Spacer(Modifier.weight(1f))
+            }
+        }
         items(documents, key = { it.id }) { document ->
             Surface(onClick = { open(document.id) }, shape = RoundedCornerShape(24.dp), color = if (audio.documentId == document.id) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
