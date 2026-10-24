@@ -10,6 +10,7 @@ import struct
 import subprocess
 import sys
 import zipfile
+from model_https import https_url
 
 
 IGNORED = {".git", ".gradle", ".kotlin", ".idea", ".swiftpm", "build", "DerivedData", "Pods", "node_modules", ".venv", "__pycache__"}
@@ -113,7 +114,7 @@ def require_metadata(label, actual, expected):
 def check_assets(root):
     packs = json.loads((root / "docs/model-catalog.json").read_text())
     source = (root / "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt").read_text()
-    embedded = json.loads(source.split('"""', 2)[1])
+    embedded = json.loads(source.split('"""', 2)[1].replace("${'$'}", "$"))
     if embedded != packs:
         raise ValueError("Shared model catalog differs from its reviewable manifest")
     ids = set()
@@ -132,8 +133,9 @@ def check_assets(root):
             if path.is_absolute() or ".." in path.parts or asset["path"] in paths or asset["bytes"] <= 0:
                 raise ValueError("Unsafe or invalid model asset")
             paths.add(asset["path"])
-            if not re.fullmatch(r"[0-9a-f]{64}", asset["sha256"]) or not asset["url"].startswith("https://"):
+            if not re.fullmatch(r"[0-9a-f]{64}", asset["sha256"]):
                 raise ValueError("Model asset is missing a pinned checksum or HTTPS URL")
+            https_url(asset["url"])
     fonts = json.loads((root / "docs/font-manifest.json").read_text())
     names = {"inter": ("inter.ttf", "Inter.ttf"), "spacegrotesk": ("space_grotesk.ttf", "SpaceGrotesk.ttf"), "spacemono": ("space_mono.ttf", "SpaceMono.ttf")}
     for font in fonts:

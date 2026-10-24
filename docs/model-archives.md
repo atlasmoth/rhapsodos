@@ -31,16 +31,22 @@ The prepared release is recorded in [archives.json](../catalogue/archives.json):
 
 ## Bind after upload
 
-Once the user supplies the actual public Hugging Face repository and immutable commit after upload:
+Upload the same four ZIPs to any HTTPS host, including Cloudflare R2, Hugging Face, S3 or your own server. The signed catalogue and exact SHA-256 digests establish trust independently of the storage provider. Use durable versioned or content-addressed paths so older editions remain downloadable. No provider SDK, embedded credential or domain allowlist is needed. The server must permit unauthenticated HTTPS GET requests; byte-range support makes interrupted downloads efficient.
+
+Once the actual hosted addresses are available, bind a common directory:
 
 ```sh
 conda run -n dl python tools/model-archives.py bind \
   --directory /Users/atlasmoth/Downloads/Rhapsodos-HuggingFace \
-  --repo OWNER/REPOSITORY \
-  --revision FULL_40_CHARACTER_COMMIT_SHA \
+  --base-url https://models.example.com/releases/2026-10-24 \
+  --edition archive1 \
   --output /absolute/release/archive-packs.json
 ```
 
-The uppercase values above are command placeholders, never shipping URLs. `bind` verifies the local release again and emits a reviewed pack-list candidate with pinned HTTPS resolve URLs, archive hashes and new immutable edition IDs. Generic archive packs retain the installed file descriptors in `files` and declare one `archive` descriptor. `totalBytes` is the download size; expected installed payload size remains the sum of `files[].bytes`. The official iOS Phonon pack retains its existing one-ZIP shape. All four editions explicitly select their existing compiled adapter.
+The example domain is a placeholder, never a shipping address. `--base-url` appends each archive filename to the supplied directory and preserves any query. For different directories or signed query parameters, replace `--base-url` with `--urls /absolute/release/urls.json`. That file must be a JSON object mapping exactly the four archive filenames in the table above to their full HTTPS URLs. Expiring URLs require a new catalogue edition before they expire; permanent public download addresses are simpler.
 
-Review and sign that pack list through [model-catalog.py](../tools/model-catalog.py), increasing the catalogue revision. The signing key stays outside the repository and upload folder. After checking the hosted files, `model-catalog.py bundle --catalog /absolute/release/archive-packs.json` updates both the reviewable bundled manifest and its shared Kotlin representation. It requires the same reviewed payload hashes and explicit adapter IDs. Validate and rebuild both apps for discovery on a fresh install, or publish the signed catalogue through an already configured refresh address. Confirm all four pinned URLs and a complete fresh download before distributing that release. Until the actual hosted addresses are bound, current upstream catalogue downloads continue working.
+`--edition` is required and contains up to 32 lowercase letters, digits or hyphens, starting with a letter or digit. Use a fresh suffix whenever URLs or other edition data change. `bind` verifies the local release again and emits a reviewed pack-list candidate with the supplied HTTPS URLs, archive hashes and immutable edition IDs. Generic archive packs retain the installed file descriptors in `files` and declare one `archive` descriptor. `totalBytes` is the download size; expected installed payload size remains the sum of `files[].bytes`. The official iOS Phonon pack retains its existing one-ZIP shape. All four editions explicitly select their existing compiled adapter.
+
+All source, model, archive and catalogue addresses require HTTPS. Release tooling validates every redirect before requesting its target; native apps apply the shared URL policy with the [platform transfer rules](model-manager.md). Different HTTPS hosts and ports, IPv6, encoded paths and queries are supported. Credentials, fragments, whitespace, control characters, malformed escapes and invalid hosts or ports are rejected. International domain names use their ASCII/punycode form. URL query parameters are part of the public catalogue; do not put private credentials in them. The packager verifies downloaded bytes even when redirects are used.
+
+Review and sign that pack list through [model-catalog.py](../tools/model-catalog.py), increasing the catalogue revision. The signing key stays outside the repository and upload folder. After checking the hosted files, `model-catalog.py bundle --catalog /absolute/release/archive-packs.json` updates both the reviewable bundled manifest and its shared Kotlin representation. It requires the same reviewed payload hashes and explicit adapter IDs, and rejects changes that reuse an existing edition ID. Validate and rebuild both apps for discovery on a fresh install, or publish the signed catalogue through an already configured refresh address. A configured app can change storage hosts through a signed catalogue update without rebuilding. Confirm all four hosted URLs and a complete fresh download before distributing that release. Until actual hosted addresses are bound, current upstream catalogue downloads continue working.

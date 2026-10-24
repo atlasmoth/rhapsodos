@@ -12,6 +12,7 @@ import struct
 import urllib.parse
 import urllib.request
 import zipfile
+from model_https import HTTPSRedirectHandler, https_url, request_url
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,10 +63,7 @@ def validate_catalog(packs):
         for item in pack["files"]:
             if not re.fullmatch(r"[0-9a-f]{64}", item["sha256"]) or not 0 < item["bytes"] < 2**31:
                 raise ValueError("Invalid expected asset size or digest")
-            url = urllib.parse.urlsplit(item["url"])
-            if (url.scheme != "https" or url.hostname not in ("huggingface.co", "github.com")
-                    or url.username or url.password or url.fragment or url.port not in (None, 443)):
-                raise ValueError("Source must use a public upstream HTTPS URL")
+            https_url(item["url"])
     return packs
 
 
@@ -79,11 +77,11 @@ def download(item, cache, reuse):
             shutil.copyfile(candidate, target)
             return target
     partial = target.with_suffix(".partial")
-    request = urllib.request.Request(item["url"], headers={"User-Agent": "Rhapsodos-Model-Packager/1"})
+    request = urllib.request.Request(request_url(item["url"]), headers={"User-Agent": "Rhapsodos-Model-Packager/1"})
+    opener = urllib.request.build_opener(HTTPSRedirectHandler())
     try:
-        with urllib.request.urlopen(request, timeout=120) as response, partial.open("wb") as output:
-            if urllib.parse.urlsplit(response.url).scheme != "https":
-                raise ValueError("Upstream redirected away from HTTPS")
+        with opener.open(request, timeout=120) as response, partial.open("wb") as output:
+            https_url(response.url)
             count = 0
             while block := response.read(CHUNK):
                 count += len(block)
@@ -280,26 +278,37 @@ Sources: [Gradium Phonon 31M English](https://huggingface.co/gradium/phonon-31m-
 
 ## Publication handoff
 
-Nothing has been uploaded by the packaging tool. After the redistribution gate is resolved, upload the four ZIPs and these documentation/checksum files to a public, ungated Hugging Face model repository. Obtain the resulting full 40-character commit SHA. In the Rhapsodos checkout run `tools/model-archives.py bind --directory /absolute/path/to/this/folder --repo OWNER/REPO --revision FULL_COMMIT_SHA --output /absolute/path/to/packs.json` using the project's conda `dl` Python. This generates real immutable resolve URLs and new edition IDs, without credentials or placeholder live endpoints. Sign the resulting pack list with `tools/model-catalog.py sign --catalog /absolute/path/to/packs.json` and the existing release signing key, advancing the catalogue revision. Review/apply the bound manifest to the bundled catalogue and rebuild the apps for fresh-install discovery, or publish the signed catalogue at the configured refresh address. Keep the private key outside this folder and outside Hugging Face.
+Nothing has been uploaded by the packaging tool. After the redistribution gate is resolved, upload the four ZIPs and these documentation/checksum files to your chosen HTTPS host. Use versioned or content-addressed paths and keep each release available. In the Rhapsodos checkout run `tools/model-archives.py bind --directory /absolute/path/to/this/folder --base-url HTTPS_RELEASE_DIRECTORY --edition archive1 --output /absolute/path/to/packs.json` using the project's conda `dl` Python. Alternatively, `--urls /absolute/path/to/urls.json` accepts a JSON object mapping the four archive filenames to exact HTTPS URLs. Use a fresh edition suffix whenever URLs or other edition data change. The catalogue's SHA-256 digests pin the downloaded bytes independently of the host. Sign the resulting pack list with `tools/model-catalog.py sign --catalog /absolute/path/to/packs.json` and the existing release signing key, advancing the catalogue revision. Review/apply the bound manifest to the bundled catalogue and rebuild the apps for fresh-install discovery, or publish the signed catalogue at the configured refresh address. Keep the private key outside this folder and away from all upload destinations.
 
 Compatibility checks establish that the app can open a pack. They do not establish sustained quality, performance, battery life or physical-device qualification.
 """
 
 
 def bind(args):
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", args.repo):
-        raise ValueError("Use a Hugging Face OWNER/REPO identifier")
-    if not re.fullmatch(r"[0-9a-f]{40}", args.revision):
-        raise ValueError("Use the full immutable Hugging Face commit SHA")
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,31}", args.edition):
+        raise ValueError("Use a lowercase edition suffix of at most 32 letters, digits or hyphens")
+    if args.base_url is not None:
+        base = https_url(args.base_url)
+        urls = {filename: urllib.parse.urlunsplit((base.scheme, base.netloc,
+                base.path.rstrip("/") + "/" + urllib.parse.quote(filename), base.query, ""))
+                for filename in ARCHIVES.values()}
+    else:
+        urls = json.loads(args.urls.read_text())
+        if not isinstance(urls, dict) or set(urls) != set(ARCHIVES.values()):
+            raise ValueError("Map exactly the four archive filenames to HTTPS URLs")
+    for url in urls.values():
+        https_url(url)
     release = read_release(args.directory)
     packs = []
     for item in release["packs"]:
         pack = copy.deepcopy(item["source"])
         pack["adapter"] = pack["id"]
-        pack["id"] += "-archive1"
-        pack["version"] += "-archive1"
+        pack["id"] += "-" + args.edition
+        pack["version"] += "-" + args.edition
+        if len(pack["id"]) > 96 or len(pack["version"]) > 96:
+            raise ValueError("The edition suffix makes a model identity too long")
         descriptor = copy.deepcopy(item["archive"])
-        descriptor["url"] = f"https://huggingface.co/{args.repo}/resolve/{args.revision}/{descriptor['path']}"
+        descriptor["url"] = urls[descriptor["path"]]
         if item["upstreamArchive"]:
             pack["files"] = [descriptor]
         else:
@@ -324,8 +333,10 @@ def main():
     check.set_defaults(run=lambda args: (read_release(args.directory), print("Verified all four archives and expected payloads")))
     publication = commands.add_parser("bind")
     publication.add_argument("--directory", type=Path, required=True)
-    publication.add_argument("--repo", required=True)
-    publication.add_argument("--revision", required=True)
+    addresses = publication.add_mutually_exclusive_group(required=True)
+    addresses.add_argument("--base-url", help="HTTPS directory containing all four archives")
+    addresses.add_argument("--urls", type=Path, help="JSON object mapping archive filenames to exact HTTPS URLs")
+    publication.add_argument("--edition", required=True, help="Fresh immutable edition suffix, such as archive1")
     publication.add_argument("--output", type=Path, required=True)
     publication.set_defaults(run=bind)
     args = parser.parse_args()

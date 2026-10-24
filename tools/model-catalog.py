@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 import time
-from urllib.parse import urlsplit
+from model_https import https_url
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +47,8 @@ def sign(args):
         raise ValueError("Supply a nonempty pack list and a positive revision")
     for pack in packs:
         pack.setdefault("adapter", pack["id"])
+        for item in pack["files"] + ([pack["archive"]] if pack.get("archive") else []):
+            https_url(item["url"])
     now = int(time.time() * 1000)
     payload = json.dumps({"formatVersion": 1, "revision": args.revision, "publishedAt": now,
                           "packs": packs},
@@ -83,9 +85,7 @@ def verify(args):
 
 
 def configure(args):
-    url = urlsplit(args.url)
-    if url.scheme != "https" or not url.hostname or url.username or url.password or url.fragment or url.port not in (None, 443):
-        raise ValueError("Use a public HTTPS catalogue address without credentials")
+    https_url(args.url)
     key = base64.b64decode(args.public_key.read_text().strip(), validate=True)
     if len(key) != 65 or key[0] != 4:
         raise ValueError("Use the uncompressed P-256 public key")
@@ -107,7 +107,7 @@ def bundle(args):
     source_text = source.read_text()
     retained_match = re.search(r'val retainedPacks: List<ModelPack> = Json.decodeFromString\("""\s*(.*?)\s*"""\)', source_text, re.S)
     if retained_match:
-        retained = json.loads(retained_match.group(1))
+        retained = json.loads(retained_match.group(1).replace("${'$'}", "$"))
     elif "val retainedPacks: List<ModelPack> = emptyList()" in source_text:
         retained = []
     else:
@@ -118,7 +118,6 @@ def bundle(args):
         raise ValueError("Supply one reviewed edition for each current speech adapter")
     if len({pack["id"] for pack in packs}) != len(packs) or {pack.get("adapter", pack["id"]) for pack in packs} != set(profiles):
         raise ValueError("Model identities or adapters are duplicated or missing")
-    pinned = re.compile(r"https://huggingface\.co/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/resolve/[a-f0-9]{40}/[A-Za-z0-9_./-]+")
     for pack in packs:
         profile = profiles[pack.get("adapter", pack["id"])]
         for key in ("name", "capability", "platform", "runtime", "languageTags", "minimumOS", "minimumMemoryMB", "license", "licenseUrl", "description", "voices"):
@@ -135,29 +134,24 @@ def bundle(args):
             original = expected[item["path"]]
             if item["bytes"] != original["bytes"] or item["sha256"] != original["sha256"]:
                 raise ValueError("Archive packaging must preserve every reviewed payload digest")
-            if item["url"] != original["url"] and not pinned.fullmatch(item["url"]):
-                raise ValueError("Use a commit-pinned Hugging Face asset URL")
+            https_url(item["url"])
         archive = pack.get("archive")
         if archive:
             if (pack.get("adapter") == "phonon-english-coreml" or not re.fullmatch(r"[A-Za-z0-9_.-]+\.zip", archive["path"])
-                    or not pinned.fullmatch(archive["url"]) or not re.fullmatch(r"[a-f0-9]{64}", archive["sha256"])
+                    or not re.fullmatch(r"[a-f0-9]{64}", archive["sha256"])
                     or not 0 < archive["bytes"] <= 1_073_741_824):
                 raise ValueError("Invalid archive descriptor")
+            https_url(archive["url"])
         if pack["totalBytes"] != (archive["bytes"] if archive else sum(item["bytes"] for item in pack["files"])):
             raise ValueError("Download size does not match the transport")
-        for item in pack["files"] + ([archive] if archive else []):
-            if any(part in (".", "..") for part in urlsplit(item["url"]).path.split("/")):
-                raise ValueError("Unsafe asset URL")
     encoded = json.dumps(packs, indent=2, ensure_ascii=True)
     incoming_ids = {pack["id"] for pack in packs}
     retained = [pack for pack in previous_editions.values()
                 if pack["id"] not in incoming_ids and pack.get("adapter", pack["id"]) in profiles]
     retained_encoded = json.dumps(retained, indent=2, ensure_ascii=True)
-    if "$" in encoded or "$" in retained_encoded:
-        raise ValueError("Unexpected interpolation character in catalogue")
-    retained_source = ('Json.decodeFromString("""\n' + retained_encoded + '\n""")') if retained else "emptyList()"
+    retained_source = ('Json.decodeFromString("""\n' + retained_encoded.replace("$", "${'$'}") + '\n""")') if retained else "emptyList()"
     kotlin = ('package com.ereader.shared\n\nimport kotlinx.serialization.json.Json\n\ninternal object ModelCatalog {\n'
-              '    val packs: List<ModelPack> = Json.decodeFromString("""\n' + encoded + '\n""")\n'
+              '    val packs: List<ModelPack> = Json.decodeFromString("""\n' + encoded.replace("$", "${'$'}") + '\n""")\n'
               '    val retainedPacks: List<ModelPack> = ' + retained_source + '\n}\n')
     old_manifest, old_source = manifest.read_bytes(), source.read_bytes()
     try:
