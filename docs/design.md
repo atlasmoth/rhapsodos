@@ -21,7 +21,7 @@ Use primary for controls and text; decorative ember is not a general text colour
 ## Library and reader
 
 - Place exactly three icon-only tonal buttons beneath the logo/name: **Search → Import → Settings**. Give each an accessible name. The file list follows directly, without slogans or a privacy/footer section.
-- Use the original first PDF page as each cover, with a neutral fallback. Each file shows its own progress and opens at its saved listening position.
+- Use the original first PDF page as each cover, with a neutral fallback. Each file shows its own progress and opens at its saved listening position. Android omits the document count and empty-library promotional card; the Import icon remains available.
 - The reader is the original PDF with a separate, legible narration highlight. Do not add a reflow pane, PDF page/zoom/fit controls, passage counts or routine voice-status labels.
 - The document header contains **Contents → Search → Notes**, without repeating the document title. Notes opens a side panel or sheet without changing playback. Search has its own sheet; library search spans files, while in-file search stays within that document. Selecting a result moves to its source position and remains paused.
 - Double-tapping a prepared passage pauses narration and opens voice-note capture at a frozen source attachment. A different passage attaches at offset zero without seeking the book. Save/resume retains the listening cursor. Single taps, blank space and browsing gestures never record. Provide an equivalent accessible action on the PDF surface.

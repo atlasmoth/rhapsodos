@@ -599,21 +599,7 @@ private fun LibraryPane(
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("On your shelf", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-                Spacer(Modifier.weight(1f))
-                Text("${documents.size} ${if (documents.size == 1) "document" else "documents"}", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        if (documents.isEmpty()) item {
-            Surface(shape = RoundedCornerShape(26.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
-                Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(Icons.Default.AutoStories, null, Modifier.size(34.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text("Your library starts with one PDF", style = MaterialTheme.typography.titleMedium)
-                    Text("A book, an essay, a paper you have been meaning to get to.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = import, enabled = !importing) { Text("Choose your first document") }
-                }
-            }
+            Text("On your shelf", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         }
         items(documents, key = { it.id }) { document ->
             Surface(onClick = { open(document.id) }, shape = RoundedCornerShape(24.dp), color = if (audio.documentId == document.id) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
