@@ -1,6 +1,6 @@
-# Uploadable model catalogue
+# Model catalogue release
 
-Upload [catalogue.json](catalogue.json) unchanged beside the four ZIPs, using the object name `catalogue.json`. The intended stable address is `https://files.ctclctr.com/catalogue.json`. Serve it publicly over HTTPS as `application/json`, preferably with `Cache-Control: no-cache` so launch requests can see later revisions. The signed JSON is the only additional file required by the apps.
+The owner uploaded [catalogue.json](catalogue.json) beside the four ZIPs. The live HTTPS response matches this signed revision exactly and is served as `application/json`. Keep its address stable for future signed updates; the apps receive it through build-time configuration rather than a tracked endpoint constant. The signed JSON is the only additional file required by the apps.
 
 - Revision: **7**
 - Published: **24 October 2026, 02:04:14 WAT**
@@ -13,17 +13,12 @@ All four URLs at `https://files.ctclctr.com/<archive filename>` were downloaded 
 
 [catalog-public-x963.txt](catalog-public-x963.txt) is the existing public verification key for app configuration. The private signing key remains outside this repository at `~/.config/rhapsodos/catalog-signing/catalog-private.pem`, with owner-only permissions. Keep a secure backup; never upload the private key. The existing key was reused, and OpenSSL verified this signature.
 
-## Connect the apps after catalogue upload
+## App configuration
 
-Confirm that the hosted JSON matches this file, then run with the project's conda `dl` Python:
+`RHAPSODOS_CATALOG_URL` in the build environment overrides the ignored root `.env` setting. The existing `configure` command can write that local setting after validating the address and pinned public key; see [release setup](../docs/model-manager.md#release-setup). `.env.example` contains a blank setting. The public key stays tracked, and Gradle generates the shared configuration consumed by Android and iOS. Neither the URL nor the public key is a secret in the built app.
 
-```sh
-python tools/model-catalog.py configure \
-  --url https://files.ctclctr.com/catalogue.json \
-  --public-key catalogue/catalog-public-x963.txt
-python tools/model-catalog.py bundle --catalog catalogue/archive-packs.json
-```
+The reviewed [archive-packs.json](archive-packs.json) is now bundled for fresh offline discovery. Existing installed/in-flight editions retain their exact descriptors. The separate [source-packs.json](source-packs.json) preserves upstream inputs for reproducing the archives. Catalogue updates never select a new voice or download replacements automatically.
 
-Use the actual uploaded address if different. Configuration and bundling have not yet been applied. Both apps still have an unset remote source and their current upstream bundled entries. Bundle this same pack list with the initial endpoint configuration so fresh installs show the hosted editions, while existing installed/in-flight editions retain their descriptors. Then rebuild and verify both apps against the live catalogue, including download, restart and offline recovery. Existing signed cached catalogues do not automatically select a new voice or download a replacement.
+Rebuild both apps after changing the catalogue address or pinned key. Compatible model URLs can change through a higher signed catalogue revision at the existing address without rebuilding. Native verification evidence and limits are recorded in [development.md](../docs/development.md).
 
 For future compatible releases, prepare a new reviewed pack list and sign it with the existing private key and a higher catalogue revision. Do not edit the signed envelope by hand. See [the archive release workflow](../docs/model-archives.md) and [model manager](../docs/model-manager.md) for the full contract. Catalogue publication and app/device qualification remain separate from these archive-host and signature checks.

@@ -1,11 +1,11 @@
 [
   {
-    "id": "android-whisper-base-en",
+    "id": "android-whisper-base-en-hosted1",
     "name": "English transcription",
     "capability": "asr",
     "platform": "android",
     "runtime": "whisper-cpu-q8",
-    "version": "1.9.5-5359861c739e-q8",
+    "version": "1.9.5-5359861c739e-q8-hosted1",
     "languageTags": [
       "en"
     ],
@@ -22,15 +22,22 @@
         "bytes": 81781811
       }
     ],
-    "totalBytes": 81781811
+    "totalBytes": 81781951,
+    "adapter": "android-whisper-base-en",
+    "archive": {
+      "path": "whisper-base-en-android.zip",
+      "sha256": "a3e85237863b4f4e9dcf28ecbeab14c4c88e89e871326879fcfbe6e884e8e644",
+      "bytes": 81781951,
+      "url": "https://files.ctclctr.com/whisper-base-en-android.zip"
+    }
   },
   {
-    "id": "whisper-base-en-coreml",
+    "id": "whisper-base-en-coreml-hosted1",
     "name": "English transcription",
     "capability": "asr",
     "platform": "ios",
     "runtime": "whisperkit",
-    "version": "0f63a780-tokenizer911407",
+    "version": "0f63a780-tokenizer911407-hosted1",
     "languageTags": [
       "en"
     ],
@@ -179,15 +186,22 @@
         "bytes": 34604
       }
     ],
-    "totalBytes": 149150649
+    "totalBytes": 149153911,
+    "adapter": "whisper-base-en-coreml",
+    "archive": {
+      "path": "whisper-base-en-coreml.zip",
+      "sha256": "8b779da1480333e6595014858c6db8b4ccf447cbfea3366e1ae129bf489a1605",
+      "bytes": 149153911,
+      "url": "https://files.ctclctr.com/whisper-base-en-coreml.zip"
+    }
   },
   {
-    "id": "android-phonon-english",
+    "id": "android-phonon-english-hosted1",
     "name": "Phonon \u2022 English voice",
     "capability": "tts",
     "platform": "android",
     "runtime": "phonon-cpu-q8",
-    "version": "0.4.0-eos1-52433c46975b-voices-da6c9ec",
+    "version": "0.4.0-eos1-52433c46975b-voices-da6c9ec-hosted1",
     "languageTags": [
       "en"
     ],
@@ -444,7 +458,7 @@
         "bytes": 256136
       }
     ],
-    "totalBytes": 74526338,
+    "totalBytes": 74531696,
     "voices": [
       {
         "id": "default",
@@ -674,15 +688,22 @@
         "languageTag": "en",
         "category": "character"
       }
-    ]
+    ],
+    "adapter": "android-phonon-english",
+    "archive": {
+      "path": "phonon-31m-en-android.zip",
+      "sha256": "7202361fcd73e82df7e2829b0aab437e24f05db50c03af20aba75d0e68debf24",
+      "bytes": 74531696,
+      "url": "https://files.ctclctr.com/phonon-31m-en-android.zip"
+    }
   },
   {
-    "id": "phonon-english-coreml",
+    "id": "phonon-english-coreml-hosted1",
     "name": "Phonon \u2022 English voice",
     "capability": "tts",
     "platform": "ios",
     "runtime": "phonon-coreml",
-    "version": "0.4.0-eos1",
+    "version": "0.4.0-eos1-hosted1",
     "languageTags": [
       "en"
     ],
@@ -694,9 +715,9 @@
     "files": [
       {
         "path": "phonon-31m-en-coreml.zip",
-        "url": "https://github.com/gradium-ai/xn-ptts/releases/download/v0.4.0/phonon-31m-en-coreml.zip",
         "sha256": "10f3a99fd39256db44f826267ef21d78cca959b16c0554926344c09fde27b436",
-        "bytes": 137096081
+        "bytes": 137096081,
+        "url": "https://files.ctclctr.com/phonon-31m-en-coreml.zip"
       }
     ],
     "totalBytes": 137096081,
@@ -929,6 +950,7 @@
         "languageTag": "en",
         "category": "character"
       }
-    ]
+    ],
+    "adapter": "phonon-english-coreml"
   }
 ]

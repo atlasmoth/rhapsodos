@@ -323,7 +323,7 @@ def main():
     parser = argparse.ArgumentParser(description="Package and verify the four Rhapsodos model archives")
     commands = parser.add_subparsers(dest="command", required=True)
     package = commands.add_parser("build")
-    package.add_argument("--catalog", type=Path, default=ROOT / "docs/model-catalog.json")
+    package.add_argument("--catalog", type=Path, default=ROOT / "catalogue/source-packs.json")
     package.add_argument("--output", type=Path, required=True)
     package.add_argument("--cache", type=Path, required=True)
     package.add_argument("--reuse-root", type=Path, action="append", default=[])
