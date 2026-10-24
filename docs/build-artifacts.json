@@ -6699,5 +6699,207 @@
       "iOS background URLSession redirects are OS-managed; application checks initial/final URLs while ATS requires secure transport. Intermediate background redirect URLs cannot be individually preflighted.",
       "iOS external checks replace background sessions and OS lifecycle with fixtures; no new physical-device, background-daemon or speech-inference qualification."
     ]
+  },
+  "automatic_catalogue_refresh_verification": {
+    "recorded_on": "2026-10-24",
+    "implementation_commits": {
+      "android": "8d63a706677fbd311fcf12ed85f0a4be9c93ef74",
+      "ios": "46111684fc92d0d3bc46bbbc1f87fd71b8a0542e"
+    },
+    "behavior": "One configured signed catalogue request per process launch runs independently of local startup. Cached discovery remains usable; verified payloads apply automatically when idle. Network/validation failures preserve cache silently. No manual Refresh, automatic model download or automatic selection change.",
+    "sources_sha256": {
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ReaderApplication.kt": "d23c7560816a61e3b6ac7cb7d83ff1d8310aac2b274d4ab0fbf890141fb8be6e",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/audio/TranscriptionCoordinator.kt": "fa6a27110d2c2b69ab582d9efdedd51a8a06e5237b5123503c35104a48a85b76",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/data/ReaderStore.kt": "c1b02481392502b84912b3d0d0a63bcb87b7f499061788f32be101972d79bd4f",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt": "9f037d1ac7df4ff399a348044c6dad4e37267ad721294468c2aa3203dd7adbcd",
+      "androidApp/src/main/kotlin/com/osuji/ereaderapp/ui/ReaderTools.kt": "146d50eb9102bcc1da300799ebc74c00f157f744335f501643f3bdae97e6992d",
+      "iosApp/Sources/ModelCatalogClient.swift": "dc6a581450287f9f23fad753e4d3c46ab60ddbafe9baa33199eed8a2f50e136f",
+      "iosApp/Sources/ModelPacks.swift": "01e5f3f83459b3b1abce44aae6d5a445d9a9de428649ceadca2b52f4911b35a2",
+      "iosApp/Sources/ReaderStore.swift": "22d61298c01393cc53532d83b89ddeafc930497a73978c163809b99201e8c21e",
+      "iosApp/Sources/SharedRepository.swift": "131d81275467e6b30ad9d3b9655c37d05ddf02e1b042d20c5b2a34eefef6ffe0",
+      "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalogSource.kt": "2d203905f0bfce84dce70d176ba30eb3e1a5fef9649812f778b56a221715feb2"
+    },
+    "checks": {
+      "android": {
+        "passed": 41,
+        "environment": "Android API 37 ARM64 emulator, isolated package",
+        "scope": "Production ModelManager source renamed to StartupModelManager with unique state/intent names and external mutable QA catalogue source; lifecycle and installation logic unchanged. Blank source scenario uses production APK ModelManager directly. Production ReaderStore, shared core, Android SQLDelight and crypto are unchanged.",
+        "fixtures": "Ktor MockEngine transport, real generated P-256 signatures, actual ReaderStore/SQLDelight; speech validation stubbed."
+      },
+      "ios": {
+        "passed": 17,
+        "environment": "External Apple ARM64 coordinator harness",
+        "scope": "Production ModelPacks and ModelCatalogClient with real signature verification; URLProtocol, repository persistence and app-state fixtures. ReaderStore and actual shared repository compile in both native app builds; shared SQL behavior is exercised separately."
+      },
+      "shared_cache": {
+        "passed": 39,
+        "scope": "Current ReaderCore, generated SQLDelight and disk-backed SQLite JDBC; platform lock/time adapters substituted. Close/reopen recovers exact payload, discovery and installs; rejected updates preserve cache."
+      },
+      "builds": {
+        "android_debug": "passed",
+        "android_lint": {
+          "errors": 0,
+          "existing_warnings": 11
+        },
+        "ios_simulator_debug": "passed",
+        "ios_device_unsigned_release": "passed",
+        "shared_frameworks": "Existing matching simulator Debug and device Release frameworks reused; shared source unchanged in this task."
+      }
+    },
+    "artifacts": [
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "bytes": 154167208,
+        "sha256": "8976cc32c7263a9ee9cda2c09fd1e7caa7a127866f61d5313af6052883e19494"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader",
+        "bytes": 40496,
+        "sha256": "c70451a960ea811f0005031931bdf51ea5e94c79a7d1a2023320d9b440bc7521"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader.debug.dylib",
+        "bytes": 45638400,
+        "sha256": "aa095fa5939da89986c1d9b78a30874707cade77bc4dead3715feaf9cfc40f58"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Release-iphoneos/EReader.app/EReader",
+        "bytes": 23177880,
+        "sha256": "c96c3cb8a0940e60ee0fbd0304c56f15cfc919a2a79dc2413f8fd9fdd3d5cacb"
+      }
+    ],
+    "policy": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "ios_release": {
+        "android_artifact": "not_requested",
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "evidence": [
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-android-qa/results.json",
+        "bytes": 4675,
+        "sha256": "83913b0583fb501d82c7cf98f19baa5e06ca9988478c9eb1840442ec53f1067a"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-android-qa/sources.json",
+        "bytes": 1040,
+        "sha256": "0d1dca9944f3e277c7a5bfc83e3e4a4767d6f7ced3788a41aa3b59b9655d9122"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-android-qa/run.log",
+        "bytes": 2415,
+        "sha256": "45cc7a6d110af76cf97bfafdaa04c919a97640e772961e424c2649c9ac6c3322"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-startup-catalog-qa/results.json",
+        "bytes": 1174,
+        "sha256": "78fbea2f8553343fd0b7071dd70d54c004c8e2d82609deb6b62d6e3ee87b0b4c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-startup-catalog-qa/evidence.json",
+        "bytes": 798,
+        "sha256": "b61a37fd9347048ff79dac8136c7e0e216a200ffbbc9f62ecb86d7c3839f7b52"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-startup-catalog-qa/README.md",
+        "bytes": 2306,
+        "sha256": "2648faeef14a2f436f7a5deeed4bd2211dd0d3df7049eb15e36b1f22132d459c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-startup-catalog-qa/run.log",
+        "bytes": 1933,
+        "sha256": "7d64a8f76f03052ad586a9eebaa28cf2e87f640fb9b04a0b7406be08003404f3"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-cache-qa/results.json",
+        "bytes": 2427,
+        "sha256": "1946673741bdb1bde635a46a5595de50b5f147b267a9d949a67235d791f8bd31"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-cache-qa/source-hashes.json",
+        "bytes": 4031,
+        "sha256": "597ea93203b20ac27aa45d05de9f1443f5b339a50f360db27bd5641816e5854f"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-cache-qa/README.md",
+        "bytes": 1257,
+        "sha256": "d8a68f3156dc025a46fc2fee78219849c82fe2329c12943e8cfe5e6021830894"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-android-final.log",
+        "bytes": 8887,
+        "sha256": "b92c583bc6643f7ed62e67c675eec5ea0a8c7411fcbbe9ec67824dd329268d00"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-ios-debug-final.log",
+        "bytes": 67026,
+        "sha256": "0edb2e21524aab7e58b0beb392f20e22e1a26016a82733290229e587cc9cba7d"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-ios-release-final.log",
+        "bytes": 95661,
+        "sha256": "a07fd23306fed5f245bec84992bb0515cfd60873d3f05cced159365fd4baca7a"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-policy-debug.json",
+        "bytes": 682,
+        "sha256": "b8a08678a7e07fd5075fdd5ac248b0cd80763c7847391e24afb4b63222aec6f0"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-auto-catalog-policy-release.json",
+        "bytes": 404,
+        "sha256": "88fbc8a549cbe6b54ca2edd086b3ba890c84cc3f27e95d621fd1b8209ccedb7f"
+      }
+    ],
+    "cleanup": "Android QA package uninstalled and task-owned emulator stopped. Temporary harness sources remain outside the repository; no unit-test sources added.",
+    "hosting": "Production HTTPS URL and public key remain blank. No upload, endpoint configuration, publishing or push performed.",
+    "limitations": [
+      "Controlled transport does not qualify a live hosted catalogue.",
+      "No physical-device, iOS background-daemon or speech-inference qualification performed in this task."
+    ]
   }
 }
