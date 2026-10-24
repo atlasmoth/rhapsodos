@@ -47,6 +47,8 @@ iOS recordings use authenticated encrypted chunks and a non-synchronizing, devic
 
 Use JDK 17, Android SDK and Xcode. Pins live in `gradle/libs.versions.toml` and the Swift package lockfile. Configure the SDK through an untracked `local.properties` or environment setting. Keep signing material and machine paths out of source.
 
+Set `RHAPSODOS_CATALOG_URL` in the build environment or the ignored root `.env` file. Environment values take precedence, including an explicit empty value to disable remote refresh. With neither set, the apps use bundled discovery. `.env.example` documents the setting without a deployment address. The shared Gradle build generates `ModelCatalogSource` for both platforms from this URL and the pinned public key in `catalogue/catalog-public-x963.txt`; generated source stays under `shared/build/`. Normal Xcode builds use the same generator. Changes to the URL or public key invalidate the generated output. The URL and public key are embedded public app metadata, not secrets; private signing keys never enter this configuration.
+
 ```sh
 ./gradlew :androidApp:assembleDebug :androidApp:lintDebug
 ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64

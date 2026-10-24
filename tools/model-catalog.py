@@ -89,14 +89,36 @@ def configure(args):
     key = base64.b64decode(args.public_key.read_text().strip(), validate=True)
     if len(key) != 65 or key[0] != 4:
         raise ValueError("Use the uncompressed P-256 public key")
-    encoded = base64.b64encode(key).decode("ascii")
-    def kotlin_string(value):
-        return json.dumps(value).replace("$", "\\$")
-    path = ROOT / "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalogSource.kt"
-    path.write_text("package com.ereader.shared\n\nobject ModelCatalogSource {\n"
-                    f"    const val httpsUrl: String = {kotlin_string(args.url)}\n"
-                    f"    const val publicKeyX963: String = {kotlin_string(encoded)}\n" + "}\n")
-    print("Configured public catalogue trust. Rebuild and review before distributing the apps.")
+    pinned = base64.b64decode((ROOT / "catalogue/catalog-public-x963.txt").read_text().strip(), validate=True)
+    if key != pinned:
+        raise ValueError("The supplied public key differs from the pinned catalogue key")
+    path = ROOT / ".env"
+    original = path.read_bytes().decode("utf-8") if path.exists() else ""
+    assignment = "RHAPSODOS_CATALOG_URL=" + args.url + "\n"
+    lines, replaced = [], False
+    for line in original.splitlines(keepends=True):
+        if re.match(r"^\s*(?:export\s+)?RHAPSODOS_CATALOG_URL\s*=", line):
+            if not replaced:
+                lines.append(assignment)
+                replaced = True
+        else:
+            lines.append(line)
+    if not replaced:
+        if lines and not lines[-1].endswith(("\n", "\r")):
+            lines.append("\n")
+        lines.append(assignment)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=ROOT, prefix=".rhapsodos-catalog-", delete=False) as output:
+            temporary = Path(output.name)
+            output.write("".join(lines))
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    print("Configured the ignored local catalogue URL. The environment can override it; rebuild both apps to apply it.")
 
 
 def bundle(args):
