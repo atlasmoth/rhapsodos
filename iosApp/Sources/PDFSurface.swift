@@ -560,11 +560,11 @@ struct PDFSurface: UIViewRepresentable {
                 hitRects += rectangles
             }
             if requestedBaseRange != nil && requestedSourceText.utf16.elementsEqual((page.string ?? "").utf16) {
-                paintSelection(requestedBaseRange, alpha: 0.18)
-                if requestedRange != requestedBaseRange { paintSelection(requestedRange, alpha: 0.32) }
+                paintSelection(requestedBaseRange, alpha: 0.12)
+                if requestedRange != requestedBaseRange { paintSelection(requestedRange, alpha: 0.18) }
             } else {
-                paintRegions(requestedBaseRegions, alpha: 0.18)
-                if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.32) }
+                paintRegions(requestedBaseRegions, alpha: 0.12)
+                if requestedRegions != requestedBaseRegions { paintRegions(requestedRegions, alpha: 0.18) }
             }
             if requestedFollow, self.page != requestedPage {
                 resetPassageTouch()

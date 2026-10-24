@@ -52,6 +52,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.asImageBitmap
@@ -940,8 +941,8 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, v
     val displayRegions = if (preparedPage?.geometrySpace == "cropTopLeftV1" && geometry != null) preparedPage.regions.map { PdfPageCoordinates.displayed(it, geometry!!.rotation) } else emptyList()
     val regions = if (active != null) displayRegions.filter { it.start < active.pageEnd && it.end > active.pageStart } else emptyList()
     val accent = Color(0xFF9F3800)
-    val highlight = accent.copy(alpha = 0.18f)
-    val outline = accent.copy(alpha = 0.85f)
+    val highlight = accent.copy(alpha = 0.12f)
+    val outline = accent.copy(alpha = 0.28f)
     Column(modifier.fillMaxWidth()) {
         geometryError?.let { unavailable ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -953,7 +954,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, v
             Text(error!!, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
             TextButton(onClick = { renderAttempt++ }) { Text("Retry page") }
         }
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(paper), contentAlignment = Alignment.Center) {
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clipToBounds().background(paper), contentAlignment = Alignment.Center) {
             val image = bitmap
             val widthPixels = constraints.maxWidth.toFloat()
             val heightPixels = constraints.maxHeight.toFloat()
@@ -1026,7 +1027,7 @@ private fun OriginalPage(contents: ReaderContents, page: Int, pdf: PdfAdapter, v
                     regions.forEach { region ->
                         val rect = drawnPlacement.rectangle(region)
                         drawRect(highlight, rect.topLeft, rect.size)
-                        drawRect(outline, rect.topLeft, rect.size, style = Stroke(1.dp.toPx()))
+                        drawRect(outline, rect.topLeft, rect.size, style = Stroke(0.5.dp.toPx()))
                     }
                     interaction.drawn = DrawnPdfPassages(document.id, document.sourceRevision, page, drawnPlacement, displayRegions, contents.passages.filter { it.pageIndex == page })
                 }
