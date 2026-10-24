@@ -5,7 +5,6 @@ internal object CatalogValidation {
     private val version = Regex("[A-Za-z0-9][A-Za-z0-9_.-]{0,95}")
     private val assetComponent = Regex("[A-Za-z0-9_.-]+(?: [A-Za-z0-9_.-]+)*")
     private val hash = Regex("[a-f0-9]{64}")
-    private val download = Regex("https://(?:huggingface\\.co/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/resolve|raw\\.githubusercontent\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/[a-f0-9]{40}/[A-Za-z0-9_./-]+")
 
     fun validate(update: ModelCatalogUpdate, current: List<ModelPack>, now: Long) {
         require(update.formatVersion == 1 && update.revision > 0) { "Unsupported catalogue format" }
@@ -30,18 +29,13 @@ internal object CatalogValidation {
                 pack.languageTags.all { it in profile.languageTags }) { "Unsupported model language" }
             require(pack.files.size == profile.files.size && pack.files.map { it.path }.toSet() == profile.files.map { it.path }.toSet() &&
                 pack.files.map { it.path.lowercase() }.toSet().size == pack.files.size) { "Model files do not match this app's adapter" }
-            pack.files.forEach { file ->
-                val compiledAsset = file in profile.files || ModelCatalog.retainedPacks.any {
-                    it.adapter == pack.adapter && file in it.files
-                }
-                validateAsset(file, compiledAsset)
-            }
+            pack.files.forEach(::validateAsset)
             pack.archive?.let { archive ->
                 require(pack.adapter != "phonon-english-coreml" && archive.path.endsWith(".zip") &&
                     '/' !in archive.path && pack.files.none { it.path.substringBefore('/').equals(archive.path, ignoreCase = true) }) {
                     "Invalid model archive layout"
                 }
-                validateAsset(archive, profile.archive == archive)
+                validateAsset(archive)
             }
             require(pack.files.sumOf { it.bytes } <= 2_147_483_648L &&
                 pack.totalBytes == (pack.archive?.bytes ?: pack.files.sumOf { it.bytes })) { "Invalid model storage size" }
@@ -51,11 +45,11 @@ internal object CatalogValidation {
         }
     }
 
-    private fun validateAsset(file: ModelFile, compiledAsset: Boolean) {
+    private fun validateAsset(file: ModelFile) {
         val components = file.path.split('/')
         require(file.path.length in 1..240 && components.size <= 8 &&
             components.all { assetComponent.matches(it) && it != "." && it != ".." } &&
-            hash.matches(file.sha256) && file.bytes in 1..1_073_741_824L && (download.matches(file.url) || compiledAsset) &&
-            file.url.substringAfter("https://").split('/').none { it == "." || it == ".." }) { "Invalid pinned model asset" }
+            hash.matches(file.sha256) && file.bytes in 1..1_073_741_824L &&
+            ModelDownloadUrl.isAllowed(file.url)) { "Invalid verified model asset" }
     }
 }

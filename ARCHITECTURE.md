@@ -171,6 +171,8 @@ A signed catalog identifies the task, exact artifact version, platform, minimum 
 
 Installation progresses through availability, download, verification, optional compilation, compatibility check and atomic activation. Resume partial downloads only after validating remote version/length. Validate hashes, archive paths and disk headroom. Keep a previously working artifact until its replacement is ready, and recover interrupted installs. Deleting a pack removes its regenerable resources; it never deletes voice notes.
 
+Model hosting is provider-independent. Bundled or authenticated catalogue entries can identify any valid HTTPS asset address, including R2, S3, Hugging Face or a custom server. Expected sizes and SHA-256 digests pin the bytes; a provider's hostname or commit-shaped URL is not the trust boundary. New hosting addresses use new immutable edition IDs, without changing the compiled adapter. The shared URL policy excludes credentials, fragments and malformed addresses, while native networking preserves platform TLS trust and HTTPS-only transport.
+
 Curate artifacts first. Arbitrary model import is a later advanced capability with explicit supported formats and validation. An upstream ONNX model is not automatically a LiteRT or CoreML artifact.
 
 ### Capability tiers
