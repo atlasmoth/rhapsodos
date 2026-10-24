@@ -133,7 +133,7 @@ enum PhononAssets {
                 count += 1; guard count <= 4096 else { return false }
                 let values = try url.resourceValues(forKeys: [.isSymbolicLinkKey, .isRegularFileKey, .isDirectoryKey])
                 guard values.isSymbolicLink != true else { return false }
-                let relative = String(url.path.dropFirst(folder.path.count + 1))
+                let relative = try relativePath(of: url, in: folder)
                 if values.isDirectory == true {
                     guard paths.contains(where: { $0.hasPrefix(relative + "/") }) || compiled.contains(where: { relative == $0 || relative.hasPrefix($0 + "/") }) else { return false }
                 } else {
@@ -171,7 +171,7 @@ enum PhononAssets {
                 guard values.isSymbolicLink != true else { throw PackFailure.integrity }
                 if values.isDirectory == true { continue }
                 guard values.isRegularFile == true else { throw PackFailure.integrity }
-                let item = try inventoryFile(url, path: String(url.path.dropFirst(folder.path.count + 1)))
+                let item = try inventoryFile(url, path: relativePath(of: url, in: folder))
                 total += item.size
                 guard total <= 240_000_000 else { throw PackFailure.integrity }
                 result.append(item)
@@ -179,6 +179,13 @@ enum PhononAssets {
             guard result.contains(where: { $0.path.hasPrefix(name + "/") }) else { throw PackFailure.integrity }
         }
         return result.sorted { $0.path < $1.path }
+    }
+
+    private static func relativePath(of url: URL, in folder: URL) throws -> String {
+        let prefix = folder.standardizedFileURL.resolvingSymlinksInPath().path + "/"
+        let path = url.standardizedFileURL.resolvingSymlinksInPath().path
+        guard path.hasPrefix(prefix) else { throw PackFailure.integrity }
+        return String(path.dropFirst(prefix.count))
     }
 
     private static func inventoryFile(_ url: URL, path: String) throws -> Asset {
