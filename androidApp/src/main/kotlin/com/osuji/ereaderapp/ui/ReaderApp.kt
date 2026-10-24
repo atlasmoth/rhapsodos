@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -72,6 +73,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -310,8 +312,13 @@ fun ReaderApp() {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                if (audio.documentId != null) ListeningDock(audio, library.documents.firstOrNull { it.id == audio.documentId }, pdf, playback,
-                    available = !playback.capturing && !exporting && exportDocumentId == null,
+                val dockDocument = library.documents.firstOrNull { it.id == audio.documentId }
+                    ?: library.documents.firstOrNull { it.id == selectedDocumentId }
+                if (dockDocument != null) ListeningDock(
+                    audio = audio.takeIf { it.documentId == dockDocument.id }
+                        ?: PlaybackSnapshot(documentId = dockDocument.id, title = dockDocument.title),
+                    document = dockDocument, pdf = pdf, playback = playback,
+                    available = audio.documentId == dockDocument.id && !playback.capturing && !exporting && exportDocumentId == null,
                     voiceReady = models.installed(modelState.selectedVoice) != null,
                     downloadVoice = { returnToSettings = false; speechSetup = "tts" })
             },
@@ -748,7 +755,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
             Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 22.dp)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (showLibrary != null) IconButton(onClick = showLibrary) { Icon(Icons.Outlined.ViewSidebar, "Show library") }
-                    Text(contents.document.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Spacer(Modifier.weight(1f))
                     if (contents.passages.isNotEmpty() && audio.documentId != id) FilledTonalIconButton(onClick = {
                         val saved = store.snapshot.value.positions.firstOrNull { it.documentId == id }
                         val index = contents.passages.indexOfFirst { it.id == saved?.passageId }.coerceAtLeast(0)
@@ -1160,21 +1167,30 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit) {
     val view = LocalView.current
+    var showDetails by rememberSaveable(document.id) { mutableStateOf(false) }
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
             if (audio.error != null) Text(audio.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             if (!voiceReady && audio.noteId == null) TextButton(onClick = downloadVoice, enabled = available) { Text("Choose reading voice") }
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val compact = maxWidth < 600.dp
+            val compact = maxWidth < 600.dp || LocalDensity.current.fontScale >= 1.3f
             Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                PdfCover(document, pdf, Modifier.size(36.dp, 46.dp))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(audio.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    Modifier.weight(1f).heightIn(min = 48.dp).clip(MaterialTheme.shapes.medium)
+                        .clickable(role = Role.Button, onClickLabel = "Show document details") { showDetails = true; haptic(view) }
+                        .semantics(mergeDescendants = true) {}.padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PdfCover(document, pdf, Modifier.size(36.dp, 46.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(document.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(Icons.Default.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
                 MediaVolumeControl()
@@ -1189,6 +1205,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument?, p
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
         }
     }
+    if (showDetails) DocumentDetailsSheet(document) { showDetails = false }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
