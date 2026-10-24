@@ -176,9 +176,7 @@ struct ReaderRoot: View {
                     .accessibilityLabel("Show library")
                     .accessibilityHint("Reveals the library without changing narration")
             }
-            Text(documentTitle).font(.headline).foregroundStyle(Palette.ink).lineLimit(1)
-                .frame(maxWidth: .infinity)
-                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 0)
             if store.document != nil {
                 Button { tools = true } label: { Image(systemName: "list.bullet.rectangle").frame(width: 44, height: 44) }
                     .accessibilityLabel("Document contents")
@@ -193,8 +191,6 @@ struct ReaderRoot: View {
         .padding(.horizontal, 8)
         .background(.bar)
     }
-
-    private var documentTitle: String { store.document?.document.title ?? "Rhapsodos" }
 
     private var libraryVisible: Bool {
         if usesPhoneNavigation { return phoneLibrary || (store.document == nil && !store.loading) }
@@ -341,6 +337,7 @@ private struct PlaybackDock: View {
     @EnvironmentObject private var audio: AudioCoordinator
     @State private var seekPreview: Double?
     @State private var volumePresented = false
+    @State private var detailsPresented = false
     var body: some View {
         VStack(spacing: 14) {
             if store.preparingDocument { ProgressView(store.preparation, value: store.preparationProgress).font(.caption2) }
@@ -353,6 +350,7 @@ private struct PlaybackDock: View {
             documentProgress
         }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
             .onChange(of: store.canSeekDocument) { _, enabled in if !enabled { seekPreview = nil } }
+            .sheet(isPresented: $detailsPresented) { DocumentDetailsSheet(document: document) }
     }
 
     @ViewBuilder private var documentProgress: some View {
@@ -414,13 +412,23 @@ private struct PlaybackDock: View {
     }
 
     private var bookIdentity: some View {
-        HStack(spacing: 12) {
-            BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath)).frame(width: 36, height: 46)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(document.title).font(BrandFont.body(15, relativeTo: .subheadline).weight(.semibold)).lineLimit(2)
-                if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
+        Button {
+            store.feedback.play(.selection)
+            detailsPresented = true
+        } label: {
+            HStack(spacing: 12) {
+                BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath)).frame(width: 36, height: 46)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(document.title).font(BrandFont.body(15, relativeTo: .subheadline).weight(.semibold)).lineLimit(2)
+                    if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Palette.muted)
             }
-        }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).multilineTextAlignment(.leading)
+            .accessibilityLabel("Document details")
+            .accessibilityValue(document.title)
+            .accessibilityHint("Shows the full title, page count, and file size")
     }
 
     private var controls: some View {
@@ -432,6 +440,42 @@ private struct PlaybackDock: View {
                 }.accessibilityLabel(audio.playing ? "Pause narration" : "Play narration")
                 Button { store.skip(1) } label: { Image(systemName: "forward.end.fill").font(.title3).frame(width: 48, height: 48) }.accessibilityLabel("Next passage").disabled(audio.replayingNote != nil)
             }.foregroundStyle(Palette.accent)
+    }
+}
+
+private struct DocumentDetailsSheet: View {
+    let document: LibraryDocument
+    @EnvironmentObject private var store: ReaderStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var fileSize = "Loading…"
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ReaderSheetHeader(title: "Document details") { dismiss() }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(document.title).font(BrandFont.display(23, relativeTo: .title2))
+                        .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                    VStack(spacing: 16) {
+                        LabeledContent("Pages", value: document.pageCount > 0 ? document.pageCount.formatted() : "Unavailable")
+                        Divider()
+                        LabeledContent("File size", value: fileSize)
+                    }.padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
+                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }.foregroundStyle(Palette.ink).background(Palette.paper)
+            .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+            .task(id: [document.id, document.filePath, document.sourceRevision]) {
+                fileSize = "Loading…"
+                let url = store.files?.ownedURL(document.filePath)
+                let bytes = await Task.detached(priority: .utility) { () -> Int? in
+                    guard let url, let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
+                          values.isRegularFile == true else { return nil }
+                    return values.fileSize
+                }.value
+                guard !Task.isCancelled else { return }
+                fileSize = bytes.map { ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file) } ?? "Unavailable"
+            }
     }
 }
 
