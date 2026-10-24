@@ -6,7 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.media.session.MediaSessionManager
+import android.view.KeyEvent
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
@@ -54,6 +57,17 @@ class ListeningService : MediaSessionService() {
             override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult =
                 if (controller.isTrusted || controller.packageName == packageName) super.onConnect(session, controller)
                 else MediaSession.ConnectionResult.reject()
+
+            override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
+                val event = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java) ?: return false
+                if (event.keyCode != KeyEvent.KEYCODE_MEDIA_PAUSE) return false
+                val trusted = controllerInfo.isTrusted || controllerInfo.packageName == packageName ||
+                    getSystemService(MediaSessionManager::class.java).isTrustedForMediaControl(
+                        MediaSessionManager.RemoteUserInfo(controllerInfo.packageName, -1, controllerInfo.uid))
+                if (!trusted) return false
+                if (event.action == KeyEvent.ACTION_DOWN) coordinator.pause()
+                return event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP
+            }
         }).build()
         val focus = ListeningAudioFocus(this, player, coordinator::audioFocusChanged)
         audioFocus = focus
