@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.math.BigInteger
 import java.net.URI
 import java.security.KeyFactory
+import java.security.interfaces.ECPublicKey
+import java.security.spec.ECFieldFp
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
@@ -13,7 +16,7 @@ plugins {
 
 abstract class GenerateModelCatalogSource : DefaultTask() {
     @get:Input abstract val catalogueUrl: Property<String>
-    @get:InputFile @get:PathSensitive(PathSensitivity.NONE) abstract val publicKey: RegularFileProperty
+    @get:Input abstract val publicKey: Property<String>
     @get:OutputDirectory abstract val outputDirectory: DirectoryProperty
 
     @TaskAction
@@ -44,11 +47,27 @@ abstract class GenerateModelCatalogSource : DefaultTask() {
                 "RHAPSODOS_CATALOG_URL has an invalid port"
             }
         }
-        val encodedKey = publicKey.get().asFile.readText().trim()
-        val key = Base64.getDecoder().decode(encodedKey)
-        require(key.size == 65 && key[0] == 4.toByte()) { "Catalogue public key must be uncompressed P-256" }
-        val prefix = "3059301306072a8648ce3d020106082a8648ce3d030107034200".chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-        KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(prefix + key))
+        val encodedKey = publicKey.get().trim()
+        require(url.isEmpty() || encodedKey.isNotEmpty()) {
+            "Set RHAPSODOS_CATALOG_PUBLIC_KEY when RHAPSODOS_CATALOG_URL is configured"
+        }
+        if (encodedKey.isNotEmpty()) {
+            val key = requireNotNull(runCatching { Base64.getDecoder().decode(encodedKey) }.getOrNull()) {
+                "RHAPSODOS_CATALOG_PUBLIC_KEY must be Base64 uncompressed P-256"
+            }
+            require(key.size == 65 && key[0] == 4.toByte()) { "Catalogue public key must be uncompressed P-256" }
+            val prefix = "3059301306072a8648ce3d020106082a8648ce3d030107034200".chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+            val decoded = KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(prefix + key)) as ECPublicKey
+            val curve = decoded.params.curve
+            val modulus = (curve.field as ECFieldFp).p
+            val x = decoded.w.affineX
+            val y = decoded.w.affineY
+            require(x >= BigInteger.ZERO && x < modulus && y >= BigInteger.ZERO && y < modulus &&
+                y.modPow(BigInteger.TWO, modulus) ==
+                (x.modPow(BigInteger.valueOf(3), modulus) + curve.a * x + curve.b).mod(modulus)) {
+                "RHAPSODOS_CATALOG_PUBLIC_KEY must be a point on P-256"
+            }
+        }
         val target = outputDirectory.file("com/ereader/shared/ModelCatalogSource.kt").get().asFile
         target.parentFile.mkdirs()
         target.writeText("package com.ereader.shared\n\nobject ModelCatalogSource {\n" +
@@ -71,18 +90,19 @@ abstract class GenerateModelCatalogSource : DefaultTask() {
     }
 }
 
-val localCatalogueUrl = providers.fileContents(rootProject.layout.projectDirectory.file(".env")).asText.orElse("").map { text ->
-    val values = text.lineSequence().mapNotNull { line ->
-        Regex("^\\s*(?:export\\s+)?RHAPSODOS_CATALOG_URL\\s*=\\s*(.*?)\\s*$").matchEntire(line)?.groupValues?.get(1)
-    }.toList()
-    require(values.size <= 1) { "Keep one RHAPSODOS_CATALOG_URL assignment in .env" }
-    values.singleOrNull()?.let { value ->
-        if (value.length >= 2 && value.first() in listOf('\'', '"') && value.last() == value.first()) value.substring(1, value.lastIndex) else value
-    }.orEmpty()
-}
+fun localCatalogueSetting(name: String) =
+    providers.fileContents(rootProject.layout.projectDirectory.file(".env")).asText.orElse("").map { text ->
+        val values = text.lineSequence().mapNotNull { line ->
+            Regex("^\\s*(?:export\\s+)?${Regex.escape(name)}\\s*=\\s*(.*?)\\s*$").matchEntire(line)?.groupValues?.get(1)
+        }.toList()
+        require(values.size <= 1) { "Keep one $name assignment in .env" }
+        values.singleOrNull()?.let { value ->
+            if (value.length >= 2 && value.first() in listOf('\'', '"') && value.last() == value.first()) value.substring(1, value.lastIndex) else value
+        }.orEmpty()
+    }
 val generateModelCatalogSource = tasks.register<GenerateModelCatalogSource>("generateModelCatalogSource") {
-    catalogueUrl.set(providers.environmentVariable("RHAPSODOS_CATALOG_URL").orElse(localCatalogueUrl))
-    publicKey.set(rootProject.layout.projectDirectory.file("catalogue/catalog-public-x963.txt"))
+    catalogueUrl.set(providers.environmentVariable("RHAPSODOS_CATALOG_URL").orElse(localCatalogueSetting("RHAPSODOS_CATALOG_URL")))
+    publicKey.set(providers.environmentVariable("RHAPSODOS_CATALOG_PUBLIC_KEY").orElse(localCatalogueSetting("RHAPSODOS_CATALOG_PUBLIC_KEY")))
     outputDirectory.set(layout.buildDirectory.dir("generated/modelCatalog/commonMain"))
 }
 

@@ -14,6 +14,8 @@ Android debug/release APKs and its app bundle build successfully; iOS simulator 
 
 The documentation records the implementation, product decisions and remaining qualification. Check current primary documentation before changing dependency versions, model artifacts, licenses or prices.
 
+Cloning the project does not configure a remote catalogue or inherit its publisher's trust key. Follow [release setup](docs/model-manager.md#release-setup) to generate your own signing keypair, sign a catalogue and configure its HTTPS URL and public key for both apps. Without configuration, bundled model discovery remains available.
+
 ## Documentation
 
 | Document | Purpose |

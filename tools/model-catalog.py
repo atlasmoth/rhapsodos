@@ -89,24 +89,27 @@ def configure(args):
     key = base64.b64decode(args.public_key.read_text().strip(), validate=True)
     if len(key) != 65 or key[0] != 4:
         raise ValueError("Use the uncompressed P-256 public key")
-    pinned = base64.b64decode((ROOT / "catalogue/catalog-public-x963.txt").read_text().strip(), validate=True)
-    if key != pinned:
-        raise ValueError("The supplied public key differs from the pinned catalogue key")
+    der = bytes.fromhex("3059301306072a8648ce3d020106082a8648ce3d030107034200") + key
+    openssl("pkey", "-pubin", "-inform", "DER", "-pubcheck", "-noout", data=der)
     path = ROOT / ".env"
     original = path.read_bytes().decode("utf-8") if path.exists() else ""
-    assignment = "RHAPSODOS_CATALOG_URL=" + args.url + "\n"
-    lines, replaced = [], False
+    settings = {"RHAPSODOS_CATALOG_URL": args.url,
+                "RHAPSODOS_CATALOG_PUBLIC_KEY": base64.b64encode(key).decode("ascii")}
+    lines, replaced = [], set()
     for line in original.splitlines(keepends=True):
-        if re.match(r"^\s*(?:export\s+)?RHAPSODOS_CATALOG_URL\s*=", line):
-            if not replaced:
-                lines.append(assignment)
-                replaced = True
+        match = re.match(r"^\s*(?:export\s+)?(RHAPSODOS_CATALOG_URL|RHAPSODOS_CATALOG_PUBLIC_KEY)\s*=", line)
+        if match:
+            name = match[1]
+            if name not in replaced:
+                lines.append(name + "=" + settings[name] + "\n")
+                replaced.add(name)
         else:
             lines.append(line)
-    if not replaced:
-        if lines and not lines[-1].endswith(("\n", "\r")):
-            lines.append("\n")
-        lines.append(assignment)
+    for name, value in settings.items():
+        if name not in replaced:
+            if lines and not lines[-1].endswith(("\n", "\r")):
+                lines.append("\n")
+            lines.append(name + "=" + value + "\n")
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=ROOT, prefix=".rhapsodos-catalog-", delete=False) as output:
@@ -118,7 +121,7 @@ def configure(args):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
-    print("Configured the ignored local catalogue URL. The environment can override it; rebuild both apps to apply it.")
+    print("Configured the ignored local catalogue URL and public key. The environment can override them; rebuild both apps to apply them.")
 
 
 def bundle(args):
