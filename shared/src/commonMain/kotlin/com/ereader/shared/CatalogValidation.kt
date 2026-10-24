@@ -31,7 +31,10 @@ internal object CatalogValidation {
             require(pack.files.size == profile.files.size && pack.files.map { it.path }.toSet() == profile.files.map { it.path }.toSet() &&
                 pack.files.map { it.path.lowercase() }.toSet().size == pack.files.size) { "Model files do not match this app's adapter" }
             pack.files.forEach { file ->
-                validateAsset(file, profile.files.any { it == file })
+                val compiledAsset = file in profile.files || ModelCatalog.retainedPacks.any {
+                    it.adapter == pack.adapter && file in it.files
+                }
+                validateAsset(file, compiledAsset)
             }
             pack.archive?.let { archive ->
                 require(pack.adapter != "phonon-english-coreml" && archive.path.endsWith(".zip") &&

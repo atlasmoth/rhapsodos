@@ -385,11 +385,21 @@ class ReaderCore internal constructor(driver: SqlDriver) {
         true
     }
 
-    private fun catalogPacks(): List<ModelPack> = queries.currentModelCatalog().executeAsOneOrNull()?.let {
+    private fun catalogPacks(): List<ModelPack> {
         val supportedAdapters = ModelCatalog.packs.map { pack -> pack.adapter }.toSet()
-        val cached = json.decodeFromString<List<ModelPack>>(it.packs_json).filter { pack -> pack.adapter in supportedAdapters }
-        (ModelCatalog.packs + cached).associateBy { pack -> pack.id }.values.map(PhononCatalog::resolve)
-    } ?: ModelCatalog.packs
+        val installedIds = queries.allModelInstalls().executeAsList().map { it.pack_id }.toSet()
+        val retainedIds = ModelCatalog.retainedPacks.map { it.id }.toSet()
+        val retained = ModelCatalog.retainedPacks.filter { it.id in installedIds && it.adapter in supportedAdapters }
+        val cached = queries.currentModelCatalog().executeAsOneOrNull()?.let {
+            val advertisedIds = if (retainedIds.isEmpty()) emptySet() else
+                json.decodeFromString<ModelCatalogUpdate>(it.payload_json).packs.map { pack -> pack.id }.toSet()
+            json.decodeFromString<List<ModelPack>>(it.packs_json).filter { pack ->
+                pack.adapter in supportedAdapters &&
+                    (pack.id !in retainedIds || pack.id in installedIds || pack.id in advertisedIds)
+            }
+        }.orEmpty()
+        return (ModelCatalog.packs + retained + cached).associateBy { pack -> pack.id }.values.map(PhononCatalog::resolve)
+    }
 
     @Throws(Exception::class)
     fun modelInstallsJson(): String = lock.withLock { json.encodeToString(queries.allModelInstalls().executeAsList().map { it.toDomain() }) }

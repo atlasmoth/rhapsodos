@@ -3,6 +3,7 @@ package com.ereader.shared
 import kotlinx.serialization.json.Json
 
 internal object ModelCatalog {
+    val retainedPacks: List<ModelPack> = emptyList()
     val packs: List<ModelPack> = Json.decodeFromString("""
 [
   {

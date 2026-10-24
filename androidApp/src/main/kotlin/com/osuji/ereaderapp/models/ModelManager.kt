@@ -507,6 +507,8 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             if (state.value.selectedVoice == packId) clearVoiceSelection()
             if (state.value.selectedTranscription == packId) selectTranscription("off")
             refresh()
+            val catalog = store.modelCatalog()
+            mutableState.update { it.copy(catalog = catalog) }
         } catch (failure: Exception) {
             withContext(kotlinx.coroutines.NonCancellable) {
                 validated -= packId

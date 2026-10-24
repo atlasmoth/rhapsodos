@@ -104,6 +104,15 @@ def bundle(args):
     source = ROOT / "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt"
     current = json.loads(manifest.read_text())
     packs = json.loads(args.catalog.read_text())
+    source_text = source.read_text()
+    retained_match = re.search(r'val retainedPacks: List<ModelPack> = Json.decodeFromString\("""\s*(.*?)\s*"""\)', source_text, re.S)
+    if retained_match:
+        retained = json.loads(retained_match.group(1))
+    elif "val retainedPacks: List<ModelPack> = emptyList()" in source_text:
+        retained = []
+    else:
+        raise ValueError("Cannot read retained installed-edition descriptors")
+    previous_editions = {pack["id"]: pack for pack in retained + current}
     profiles = {pack.get("adapter", pack["id"]): pack for pack in current}
     if not isinstance(packs, list) or len(packs) != len(profiles):
         raise ValueError("Supply one reviewed edition for each current speech adapter")
@@ -117,7 +126,7 @@ def bundle(args):
                 raise ValueError("Bundling archives must preserve the reviewed model profile")
         if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,95}", pack["id"]) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}", pack["version"]):
             raise ValueError("Invalid edition identity")
-        if pack["id"] == profile["id"] and pack != profile:
+        if pack["id"] in previous_editions and pack != previous_editions[pack["id"]]:
             raise ValueError("A changed model edition needs a new identity")
         expected = {item["path"]: item for item in profile["files"]}
         if len(pack["files"]) != len(expected) or {item["path"] for item in pack["files"]} != set(expected):
@@ -140,9 +149,16 @@ def bundle(args):
             if any(part in (".", "..") for part in urlsplit(item["url"]).path.split("/")):
                 raise ValueError("Unsafe asset URL")
     encoded = json.dumps(packs, indent=2, ensure_ascii=True)
-    if "$" in encoded:
+    incoming_ids = {pack["id"] for pack in packs}
+    retained = [pack for pack in previous_editions.values()
+                if pack["id"] not in incoming_ids and pack.get("adapter", pack["id"]) in profiles]
+    retained_encoded = json.dumps(retained, indent=2, ensure_ascii=True)
+    if "$" in encoded or "$" in retained_encoded:
         raise ValueError("Unexpected interpolation character in catalogue")
-    kotlin = 'package com.ereader.shared\n\nimport kotlinx.serialization.json.Json\n\ninternal object ModelCatalog {\n    val packs: List<ModelPack> = Json.decodeFromString("""\n' + encoded + '\n""")\n}\n'
+    retained_source = ('Json.decodeFromString("""\n' + retained_encoded + '\n""")') if retained else "emptyList()"
+    kotlin = ('package com.ereader.shared\n\nimport kotlinx.serialization.json.Json\n\ninternal object ModelCatalog {\n'
+              '    val packs: List<ModelPack> = Json.decodeFromString("""\n' + encoded + '\n""")\n'
+              '    val retainedPacks: List<ModelPack> = ' + retained_source + '\n}\n')
     old_manifest, old_source = manifest.read_bytes(), source.read_bytes()
     try:
         manifest.write_text(encoded + "\n")
