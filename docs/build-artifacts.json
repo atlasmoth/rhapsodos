@@ -6901,5 +6901,319 @@
       "Controlled transport does not qualify a live hosted catalogue.",
       "No physical-device, iOS background-daemon or speech-inference qualification performed in this task."
     ]
+  },
+  "hosted_catalogue_connection_verification": {
+    "recorded_on": "2026-10-24",
+    "implementation_commits": [
+      "71c3f97f29ca00ce436833f684cbddfb8e5abe3e",
+      "1a5bdc85771f08977680a66f3d73fb9b8668b748"
+    ],
+    "source_sha256": {
+      "shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt": "e76b31fe8b7af5c1eee68489b974df7d97a4ae8abf956ef4ba91069d355d082f",
+      "docs/model-catalog.json": "21a51da5d9ff51195c05f7553908599f04fbc7a389ee6efdaa5eca900e7eac6f",
+      "catalogue/source-packs.json": "c4a66c15c2e85f8aaaf19de93a06f5e7c19ffde8679a5314d8c2fffd1b4849f9",
+      "shared/build.gradle.kts": "ff31047d992e9f7793f26d4b8af4a093989d397da72d515578db6a245cdacfdf",
+      "tools/model-catalog.py": "a2c9a10c0b33c4f21941d4d5830937fd3fb39e8916e471073d1f05fcb93da520",
+      ".env.example": "2e4c0bf6cfa6810a3e091577f3919a4e114f61836532999193a5b1f3b5e00cc8",
+      ".gitignore": "35aac66df81a9b75650580aab6d8b513981f65d6a053983b30598511c98421b1",
+      "tools/model-archives.py": "25edd35aacf29f4a1bc7fdb4f3f003a60d3d8a6b1062befba2f11b305f78c886",
+      "catalogue/archive-packs.json": "20084f002cac1994c2e4debbdec9b0ac23792c1b481dcaffbd6db1d843f1e496",
+      "catalogue/catalogue.json": "bc481add32a9a94725c09fc768fd4521b5171fbf53ca0e42896169926e4b4fc7",
+      "catalogue/catalog-public-x963.txt": "59016ccdac95b3cf2aaae123403447f42f445e497ae096f9fac3ce5172eb1862",
+      "shared/build/generated/modelCatalog/commonMain/com/ereader/shared/ModelCatalogSource.kt": "a83cb602f006e38b5528a7a4db4edf48828e222274c18b7611b49325c5285290"
+    },
+    "configuration": {
+      "variable": "RHAPSODOS_CATALOG_URL",
+      "precedence": "Environment, including explicit empty, overrides ignored root .env. Empty disables remote refresh without disabling bundled discovery.",
+      "generation": "One Gradle-generated shared source consumed by Android and normal Xcode builds; URL/key declared as task inputs.",
+      "trust": "Public verification key remains pinned in catalogue/catalog-public-x963.txt; configure cannot rotate trust.",
+      "local_setting": "Configured in ignored .env; blank .env.example is tracked. URL and public key are public application metadata, not secrets."
+    },
+    "live_catalogue": {
+      "revision": 7,
+      "expiration": "permanent",
+      "envelope_sha256": "bc481add32a9a94725c09fc768fd4521b5171fbf53ca0e42896169926e4b4fc7",
+      "payload_sha256": "62ada4259a0a4d8fbbeaf935705aaccbd70d16b16aaccbff4b6534afc4a94c40",
+      "result": "Actual HTTPS response matches the existing signed revision-7 envelope byte for byte; both native apps authenticated and cached it automatically.",
+      "discovery": "Four hosted editions total, two per platform. Existing installed/unfinished editions retain exact descriptors. Source archive inputs remain separately pinned."
+    },
+    "verification": {
+      "build_configuration": {
+        "passed": 38,
+        "scope": "21 Gradle generation/input/precedence checks, 16 atomic local configuration checks and one actual Kotlin compiler literal round-trip."
+      },
+      "shared_catalogue": {
+        "passed": 37,
+        "scope": "34 production ReaderCore/generated SQLDelight/disk SQLite checks plus three source-provenance checks; fresh discovery, live acceptance, older installations, rollback/repeat and offline reopen."
+      },
+      "android": {
+        "environment": "Fresh task-owned API 37 ARM64 emulator; 16 KiB pages.",
+        "actual_app": "Automatic signed refresh, two model cards, actual UI downloads through foreground service, extraction/runtime validation, activation and offline process restart passed.",
+        "component_checks": {
+          "online": 16,
+          "offline": 13
+        },
+        "component_scope": "Unchanged production DEX/native runtimes, real HTTPS and canonical SQLite. Only component service-start hook is inert; separate actual-app run exercises the real service.",
+        "offline": "Owned emulator network disabled. Reopened revision 7, retained both selections, generated fresh uncached narration and transcribed a durable synthetic source-linked note exactly. Only catalogue request attempted; no model/content requests.",
+        "cleanup": {
+          "emulator_network_restored": true,
+          "isolated_qa_package_removed": true,
+          "owned_emulator_stopped": true,
+          "existing_user_avds_untouched": true
+        }
+      },
+      "ios": {
+        "environment": "Fresh task-owned iOS 27 simulator; normal Gradle-integrated Xcode Debug and unsigned device Release builds.",
+        "actual_app": "Automatic signed refresh, two model cards, real background URLSession downloads, Phonon pause/resume, extraction/runtime validation, activation and three PDF passages played.",
+        "verified_installed_payload_files": 24,
+        "offline": "Unchanged Debug app used external simulator-only URLSession fault injection. Real startup request returned -1009; cached revision/payload/acceptance time and choices unchanged. No redownload. Cleared narration caches regenerated and played all three passages; Whisper passed fresh local readiness.",
+        "offline_asr_exact_passages": 3,
+        "asr_scope": "Separate native simulator harness with identical production adapters and built WhisperKit objects transcribed three actual Phonon-generated WAVs under scoped offline sessions.",
+        "cleanup": "Fault injection removed, companion harness uninstalled and normal app relaunched. Isolated QA simulator remains running; existing simulators and data untouched."
+      },
+      "builds": {
+        "android": "Debug APK, lint, unsigned Release APK and Release AAB passed.",
+        "ios": "Simulator Debug and unsigned device Release passed with normal Xcode/Gradle integration.",
+        "lint": {
+          "errors": 0,
+          "existing_warnings": 11
+        },
+        "android_debug_policy": {
+          "android_artifact": {
+            "application_id": "com.osuji.ereaderapp",
+            "arm64_native_16k_alignment": {
+              "libraries": 12,
+              "status": "passed"
+            },
+            "build": "1",
+            "display_name": "Rhapsodos",
+            "internet_permission": true,
+            "min_sdk": "28",
+            "target_sdk": "37",
+            "version": "0.01"
+          },
+          "device_qualification": "not_run",
+          "ios_artifact": "not_requested",
+          "pinned_assets": {
+            "bundled_ocr_models": 1,
+            "font_families": 3,
+            "model_packs": 4,
+            "status": "passed"
+          },
+          "unit_source_policy": "passed"
+        },
+        "android_release_policy": {
+          "android_artifact": {
+            "application_id": "com.osuji.ereaderapp",
+            "arm64_native_16k_alignment": {
+              "libraries": 12,
+              "status": "passed"
+            },
+            "build": "1",
+            "display_name": "Rhapsodos",
+            "internet_permission": true,
+            "min_sdk": "28",
+            "target_sdk": "37",
+            "version": "0.01"
+          },
+          "device_qualification": "not_run",
+          "ios_artifact": "not_requested",
+          "pinned_assets": {
+            "bundled_ocr_models": 1,
+            "font_families": 3,
+            "model_packs": 4,
+            "status": "passed"
+          },
+          "unit_source_policy": "passed"
+        },
+        "ios_debug_policy": {
+          "android_artifact": "not_requested",
+          "device_qualification": "not_run",
+          "ios_artifact": {
+            "application_id": "com.osuji.ereaderapp",
+            "build": "1",
+            "display_name": "Rhapsodos",
+            "min_ios": "18.0",
+            "version": "0.01"
+          },
+          "pinned_assets": {
+            "bundled_ocr_models": 1,
+            "font_families": 3,
+            "model_packs": 4,
+            "status": "passed"
+          },
+          "unit_source_policy": "passed"
+        },
+        "ios_release_policy": {
+          "android_artifact": "not_requested",
+          "device_qualification": "not_run",
+          "ios_artifact": {
+            "application_id": "com.osuji.ereaderapp",
+            "build": "1",
+            "display_name": "Rhapsodos",
+            "min_ios": "18.0",
+            "version": "0.01"
+          },
+          "pinned_assets": {
+            "bundled_ocr_models": 1,
+            "font_families": 3,
+            "model_packs": 4,
+            "status": "passed"
+          },
+          "unit_source_policy": "passed"
+        }
+      }
+    },
+    "artifacts": [
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "bytes": 154167208,
+        "sha256": "0fce29b1afe610e235e84543808cedca888deb693ad9322e8ad83b41194784bd"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk",
+        "bytes": 130526336,
+        "sha256": "514b988beba4f06541d4ad2c6a95fa64385261e392f7834e6a6eb5c37bd8b627"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/bundle/release/androidApp-release.aab",
+        "bytes": 56101360,
+        "sha256": "46cc2f5360584c4e9e48f61d3b1f8a1ab8f08e2e2b6c4bc8e836253b51ebe7fb"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader",
+        "bytes": 40496,
+        "sha256": "c0a3d132781d084b246899957726e82f61e3fe1df91713800c1ae232b2c3874f"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader.debug.dylib",
+        "bytes": 45722000,
+        "sha256": "9acc45f527ecb579cec184d0df71010ed1e967b62d9d032cb384476a5032f758"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Release-iphoneos/EReader.app/EReader",
+        "bytes": 23243616,
+        "sha256": "705ab93482d3881efe9df006939167dd730cb25873067d17ffd53b29013c326e"
+      }
+    ],
+    "external_evidence": [
+      {
+        "path": "/private/tmp/rhapsodos-live-catalogue.json",
+        "bytes": 36758,
+        "sha256": "bc481add32a9a94725c09fc768fd4521b5171fbf53ca0e42896169926e4b4fc7"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-catalogue-headers.txt",
+        "bytes": 632,
+        "sha256": "bd5147d06c1a28609237920337c5ac19be41a95e6041a06beab0e4a994342f87"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-catalog-build-config-qa/README.md",
+        "bytes": 1623,
+        "sha256": "af641746d81a4300ab3e657fa127d5f641fcd3b4e8554f2fe48f3ef664bb6c10"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-catalog-build-config-qa/generation-results.json",
+        "bytes": 1174,
+        "sha256": "3424fb0abb108e59231213cf20bb4c408781ad976c3425c29d8da470765a5412"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-catalog-build-config-qa/configure-results.json",
+        "bytes": 886,
+        "sha256": "cf440ba01faf532c7c003145c5daa38e60dc0ec5fe33a9ec2d7eaffe628df412"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-catalog-build-config-qa/literal-results.json",
+        "bytes": 164,
+        "sha256": "4d17b5a0409dfb65961109a4efd02514b127b5a02495235a95ee26ef11e7f63d"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-bundled-catalog-qa/README.md",
+        "bytes": 1988,
+        "sha256": "1d45bcf01df43831840a6873e2d2fdf27a4358be596a5e3c21e6d40977a8f95a"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-bundled-catalog-qa/evidence.json",
+        "bytes": 1025,
+        "sha256": "84e228f45cfbd427aa2e6da7e413a10aae157c9905a962dfe20c056159c9c0c0"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-bundled-catalog-qa/results.json",
+        "bytes": 2622,
+        "sha256": "2e2e6b6b176e3e8db358037f429a3ab6060c93bbfc444a668a35a4858203e3cd"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-bundled-catalog-qa/provenance-results.json",
+        "bytes": 434,
+        "sha256": "63cab9e40efaf222804fe9abfe12ef974558eb83f776c8dc6f42bd9ab310e5d6"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-bundled-catalog-qa/source-hashes.json",
+        "bytes": 3888,
+        "sha256": "ee448b8627bfd0abeb558c5c121a84d1952e230c1fb38aa8e9a3ffae1220170e"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-live-android-qa/results.json",
+        "bytes": 6854,
+        "sha256": "b67fe46eb57d85ad00178bc196a1cce9158e4b152c720f971a974703f470681e"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/results.json",
+        "bytes": 4015,
+        "sha256": "efdf64e26cc348aac55e855c69730ed68516c869deeffd837228910147c5815d"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/README.md",
+        "bytes": 4223,
+        "sha256": "5e8fe677798bb6c9893b29470759b7de28cdde924fb05b44694d065171de5e94"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/debug-build.log",
+        "bytes": 482530,
+        "sha256": "ef279fbc3330020edfb8c7043b9df51c76cca7f421e33cc53d95f3f53301a34c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/release-build.log",
+        "bytes": 346969,
+        "sha256": "5674b37a43b0c16e0d46e3a2d9b00c6c3fb9327f3f8631646211ddc369071498"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-connected-build.log",
+        "bytes": 7138,
+        "sha256": "9af52729539c0c44d0fb91fa65b3bf1e9589931199d4e6f89edac069779ed5ae"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-connected-android-release.log",
+        "bytes": 12391,
+        "sha256": "088f4d3444c98417a78b06863a73d74cd79a5b96943e6ed5d99b62270cb5a27c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-connected-android-debug-policy.json",
+        "bytes": 550,
+        "sha256": "f88ad5c0c2c60b40c2fcc685c59c6c228b2a33a8b2eac71e28f54994ab7af7de"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-connected-android-release-policy.json",
+        "bytes": 550,
+        "sha256": "f88ad5c0c2c60b40c2fcc685c59c6c228b2a33a8b2eac71e28f54994ab7af7de"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/debug-policy.json",
+        "bytes": 404,
+        "sha256": "88fbc8a549cbe6b54ca2edd086b3ba890c84cc3f27e95d621fd1b8209ccedb7f"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-hosted-ios-qa/release-policy.json",
+        "bytes": 404,
+        "sha256": "88fbc8a549cbe6b54ca2edd086b3ba890c84cc3f27e95d621fd1b8209ccedb7f"
+      }
+    ],
+    "limitations": [
+      "Emulator/simulator evidence does not qualify physical-device performance, power/thermal endurance, microphone capture or audio routes.",
+      "Android offline speech generated WAVs without speaker playback and used a synthetic saved note. iOS meaningful offline ASR used a native adapter harness rather than live microphone/note capture.",
+      "iOS offline injection covers foreground/default/ephemeral URLSession configurations, not disabled radios or background daemon networking. Both packs had completed before that launch.",
+      "Release artifacts require owner distribution signing. AAB was built and hashed; this run directly inspected APK and iOS app metadata.",
+      "No unit-test sources committed, assets uploaded, catalogue revision changed, repository pushed or release published in this task."
+    ]
   }
 }
