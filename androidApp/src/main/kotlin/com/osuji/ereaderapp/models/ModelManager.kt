@@ -10,6 +10,7 @@ import com.osuji.ereaderapp.data.ModelPack
 import com.osuji.ereaderapp.data.PackFile
 import com.osuji.ereaderapp.data.ModelCatalogStatus
 import com.ereader.shared.ModelCatalogSource
+import com.ereader.shared.ModelDownloadUrl
 import com.osuji.ereaderapp.data.ReaderStore
 import com.osuji.ereaderapp.data.VerifiedPackFile
 import com.osuji.ereaderapp.data.syncDirectory
@@ -603,7 +604,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         if (offset == 0L) RandomAccessFile(destination, "rw").use { it.setLength(0) }
         var url = source
         repeat(8) {
-            require(allowed(url)) { "The model download redirected outside its approved hosts." }
+            require(ModelDownloadUrl.isAllowed(url)) { "The model download requires a valid HTTPS address without credentials or a fragment." }
             var redirect: String? = null
             var restart = false
             client.prepareGet(url) { if (offset > 0) header(HttpHeaders.Range, "bytes=$offset-") }.execute { response ->
@@ -644,11 +645,5 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             if (redirect == null && !restart) return
         }
         error("The model download redirected too many times.")
-    }
-
-    private fun allowed(url: String): Boolean {
-        val uri = URI(url)
-        val host = uri.host ?: return false
-        return uri.scheme == "https" && uri.userInfo == null && (uri.port == -1 || uri.port == 443) && (host in setOf("huggingface.co", "raw.githubusercontent.com", "cdn-lfs.huggingface.co") || host.endsWith(".hf.co"))
     }
 }

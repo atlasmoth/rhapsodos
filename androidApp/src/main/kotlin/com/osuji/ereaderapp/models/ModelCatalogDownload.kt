@@ -1,5 +1,6 @@
 package com.osuji.ereaderapp.models
 
+import com.ereader.shared.ModelDownloadUrl
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.prepareGet
@@ -15,12 +16,10 @@ import java.net.URI
 import kotlin.coroutines.coroutineContext
 
 internal suspend fun downloadModelCatalog(client: HttpClient, source: String, publicKey: String): String = withContext(Dispatchers.IO) {
-    val origin = URI(source)
-    require(origin.scheme == "https" && origin.host != null && origin.userInfo == null && origin.fragment == null && (origin.port == -1 || origin.port == 443)) { "The catalogue address is invalid." }
     var url = source
     repeat(4) {
+        require(ModelDownloadUrl.isAllowed(url)) { "The catalogue requires a valid HTTPS address without credentials or a fragment." }
         val uri = URI(url)
-        require(uri.scheme == "https" && uri.host.equals(origin.host, ignoreCase = true) && uri.userInfo == null && uri.fragment == null && (uri.port == -1 || uri.port == 443)) { "The catalogue redirected outside its approved host." }
         var redirect: String? = null
         var payload: String? = null
         client.prepareGet(url) {
