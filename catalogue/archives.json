@@ -1,0 +1,38 @@
+{
+  "formatVersion": 1,
+  "sourceCatalogSHA256": "c4a66c15c2e85f8aaaf19de93a06f5e7c19ffde8679a5314d8c2fffd1b4849f9",
+  "archives": [
+    {
+      "sourcePackId": "android-whisper-base-en",
+      "path": "whisper-base-en-android.zip",
+      "sha256": "a3e85237863b4f4e9dcf28ecbeab14c4c88e89e871326879fcfbe6e884e8e644",
+      "bytes": 81781951,
+      "payloadFiles": 1,
+      "unchangedUpstreamArchive": false
+    },
+    {
+      "sourcePackId": "whisper-base-en-coreml",
+      "path": "whisper-base-en-coreml.zip",
+      "sha256": "8b779da1480333e6595014858c6db8b4ccf447cbfea3366e1ae129bf489a1605",
+      "bytes": 149153911,
+      "payloadFiles": 23,
+      "unchangedUpstreamArchive": false
+    },
+    {
+      "sourcePackId": "android-phonon-english",
+      "path": "phonon-31m-en-android.zip",
+      "sha256": "7202361fcd73e82df7e2829b0aab437e24f05db50c03af20aba75d0e68debf24",
+      "bytes": 74531696,
+      "payloadFiles": 41,
+      "unchangedUpstreamArchive": false
+    },
+    {
+      "sourcePackId": "phonon-english-coreml",
+      "path": "phonon-31m-en-coreml.zip",
+      "sha256": "10f3a99fd39256db44f826267ef21d78cca959b16c0554926344c09fde27b436",
+      "bytes": 137096081,
+      "payloadFiles": 1,
+      "unchangedUpstreamArchive": true
+    }
+  ]
+}
