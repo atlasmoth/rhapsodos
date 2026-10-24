@@ -2,14 +2,8 @@ import CryptoKit
 import Foundation
 import SharedCore
 
-struct ModelCatalogStatus: Codable {
-    let revision: Int64
-    let acceptedAt: Int64
-    let source: String
-}
-
 enum ModelCatalogFailure: LocalizedError {
-    case configuration, transport, size, signature, payload, busy
+    case configuration, transport, size, signature, payload
     var errorDescription: String? {
         switch self {
         case .configuration: "Live catalogue updates have not been configured. The bundled catalogue remains available."
@@ -17,7 +11,6 @@ enum ModelCatalogFailure: LocalizedError {
         case .size: "The catalogue exceeds the supported size. The existing catalogue remains available."
         case .signature: "The catalogue could not be authenticated. The existing catalogue remains available."
         case .payload: "The catalogue is invalid or older than the installed catalogue."
-        case .busy: "Pause playback and wait for downloads and checks to finish before refreshing."
         }
     }
 }

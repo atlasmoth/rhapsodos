@@ -190,7 +190,6 @@ actor SharedRepository {
     }
     func invalidateModel(id: String, generation: String, error: String) throws { _ = try core.invalidateModel(packId: id, generation: generation, error: error) }
     func catalog() throws -> [ModelPack] { try decode(core.modelCatalogJson(platform: "ios")) }
-    func catalogStatus() throws -> ModelCatalogStatus { try decode(core.modelCatalogStatusJson()) }
     func acceptCatalog(_ payload: String) throws -> Bool { try core.acceptModelCatalogJson(payloadJson: payload) }
     func installs() throws -> [ModelInstall] { try decode(core.modelInstallsJson()) }
     func beginInstall(id: String, generation: String) throws -> ModelInstall { try decode(core.beginModelInstall(packId: id, generation: generation)) }

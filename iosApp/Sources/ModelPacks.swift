@@ -59,9 +59,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published private(set) var loading = true
     @Published private(set) var cleaningUnsupported = false
     @Published private(set) var validationActive = false
-    @Published private(set) var refreshingCatalog = false
-    @Published private(set) var catalogStatus: ModelCatalogStatus?
-    @Published private(set) var catalogMessage: String?
+    @Published private(set) var applyingCatalog = false
     @Published private(set) var checks: [String: ModelReadinessCheck] = [:]
     var onReady: ((ModelPack) -> Void)?
     private let repository: SharedRepository
@@ -79,6 +77,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     private var validationTasks: [String: Task<Void, Error>] = [:]
     private var progressUpdate: [String: Date] = [:]
     private var backgroundEventsFinished = false
+    private var catalogRefreshStarted = false
+    private var pendingCatalog: String?
     private lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.background(withIdentifier: "com.osuji.ereaderapp.models.v1")
         configuration.sessionSendsLaunchEvents = true
@@ -100,34 +100,37 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         backgroundCompletion = ModelBackgroundBridge.pendingCompletion
         ModelBackgroundBridge.pendingCompletion = nil
         Task { await reconnect() }
+        Task { await refreshCatalogOnLaunch() }
     }
 
     func refresh() async throws {
         catalog = try await repository.catalog(); installs = try await repository.installs()
-        catalogStatus = try await repository.catalogStatus()
     }
-    var liveCatalogConfigured: Bool { ModelCatalogClient.configured }
     private var catalogRefreshSafe: Bool {
-        !loading && !validationActive && active.isEmpty && operations.isEmpty && removing.isEmpty && isIdle()
+        !loading && !validationActive && !cleaningUnsupported && active.isEmpty && operations.isEmpty && removing.isEmpty && isIdle()
     }
-    var canRefreshCatalog: Bool { liveCatalogConfigured && !refreshingCatalog && catalogRefreshSafe }
-    func refreshCatalog() async {
-        guard liveCatalogConfigured else { catalogMessage = ModelCatalogFailure.configuration.localizedDescription; return }
-        guard canRefreshCatalog else { catalogMessage = ModelCatalogFailure.busy.localizedDescription; return }
-        refreshingCatalog = true
-        catalogMessage = nil
-        defer { refreshingCatalog = false }
+    private func refreshCatalogOnLaunch() async {
+        guard !catalogRefreshStarted else { return }
+        catalogRefreshStarted = true
+        guard ModelCatalogClient.configured else { return }
         do {
             let payload = try await ModelCatalogClient.fetch()
             try Task.checkCancellation()
-            guard catalogRefreshSafe else { throw ModelCatalogFailure.busy }
-            let changed: Bool
-            do { changed = try await repository.acceptCatalog(payload) }
-            catch { throw ModelCatalogFailure.payload }
-            try await refresh()
-            catalogMessage = changed ? "Catalogue updated. Existing downloads and choices are preserved." : "Catalogue is up to date."
-        } catch is CancellationError { }
-        catch { catalogMessage = error is ModelCatalogFailure ? error.localizedDescription : ModelCatalogFailure.transport.localizedDescription }
+            pendingCatalog = payload
+            servicePendingCatalog()
+        } catch { }
+    }
+    func servicePendingCatalog() {
+        guard !applyingCatalog, catalogRefreshSafe, let payload = pendingCatalog else { return }
+        pendingCatalog = nil
+        applyingCatalog = true
+        Task {
+            defer { applyingCatalog = false; servicePendingCatalog() }
+            guard catalogRefreshSafe else { pendingCatalog = payload; return }
+            do {
+                if try await repository.acceptCatalog(payload) { try await refresh() }
+            } catch { }
+        }
     }
     func ready(capability: String, id: String? = nil) -> (ModelPack, URL)? {
         for pack in catalog where pack.capability == capability && pack.eligible && (id == nil || pack.id == id) {
@@ -137,7 +140,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         return nil
     }
     private func reconnect() async {
-        defer { loading = false }
+        defer { loading = false; servicePendingCatalog() }
         do {
             try await refresh()
             let tasks = await session.allTasks
@@ -158,10 +161,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     var hasUnsupportedDownloads: Bool { installs.contains { item in !catalog.contains { $0.id == item.packId && $0.supported } } }
 
     func removeUnsupportedDownloads() async {
-        guard !refreshingCatalog, !cleaningUnsupported, isIdle() else { return }
+        guard !applyingCatalog, !cleaningUnsupported, isIdle() else { return }
         cleaningUnsupported = true
         message = nil
-        defer { cleaningUnsupported = false }
+        defer { cleaningUnsupported = false; servicePendingCatalog() }
         let unsupported = installs.filter { item in !catalog.contains { $0.id == item.packId && $0.supported } }
         for item in unsupported {
             do { try await remove(packId: item.packId) }
@@ -181,12 +184,13 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         for validation in validations { _ = try? await validation.value }
     }
     func recheckReadyPacks() async {
-        guard !refreshingCatalog, installs.contains(where: { item in
+        guard !applyingCatalog, installs.contains(where: { item in
             item.status == "ready" && !qualified.contains(item.packId) && readyChecks[item.packId] == nil
                 && catalog.contains(where: { $0.id == item.packId && $0.eligible })
         }) else { return }
         do { try await refresh() } catch { message = error.localizedDescription; return }
         for item in installs where item.status == "ready" && !qualified.contains(item.packId) {
+            guard !applyingCatalog else { return }
             guard readyChecks[item.packId] == nil, !removing.contains(item.packId), operations[item.packId] == nil else { continue }
             let task = Task { await self.checkReady(item) }
             readyChecks[item.packId] = task
@@ -215,7 +219,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             message = "The installed \(pack.name) pack could not be verified. Retry to repair it, or remove it."
         }
     }
-    private func updateValidationState() { validationActive = !finalizing.isEmpty || !readyChecks.isEmpty }
+    private func updateValidationState() {
+        validationActive = !finalizing.isEmpty || !readyChecks.isEmpty
+        servicePendingCatalog()
+    }
     private func runtimeCheck(_ pack: ModelPack, folder: URL) async throws {
         try Task.checkCancellation()
         checks.removeValue(forKey: pack.id)
@@ -232,7 +239,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         return try await withTaskCancellationHandler(operation: { try await task.value }, onCancel: { task.cancel() })
     }
     func download(_ pack: ModelPack) async {
-        guard !refreshingCatalog, active[pack.id] == nil, operations[pack.id] == nil, !finalizing.contains(pack.id), !removing.contains(pack.id), readyChecks[pack.id] == nil else { return }
+        guard !applyingCatalog, active[pack.id] == nil, operations[pack.id] == nil, !finalizing.contains(pack.id), !removing.contains(pack.id), readyChecks[pack.id] == nil else { return }
         let generation = UUID().uuidString
         let transfer = Transfer(packId: pack.id, generation: generation, fileIndex: 0)
         let task = beginOperation(transfer) {
@@ -276,6 +283,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             defer {
                 if self.operations[transfer.packId]?.generation == transfer.generation { self.operations.removeValue(forKey: transfer.packId) }
                 self.finishBackgroundEventsIfIdle()
+                self.servicePendingCatalog()
             }
             do { try Task.checkCancellation(); try await body() }
             catch { await self.failed(transfer, error) }
@@ -291,6 +299,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         task.cancel { [weak self] data in
             Task { @MainActor in
                 guard let self else { return }
+                defer { self.servicePendingCatalog() }
                 try? await self.refresh()
                 guard !self.removing.contains(pack.id), self.installs.contains(where: { $0.packId == pack.id && $0.generation == transfer.generation }) else { return }
                 if let data { try? data.write(to: self.resumeURL(transfer), options: .atomic) }
@@ -302,11 +311,11 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     func remove(_ pack: ModelPack) async throws { try await remove(packId: pack.id) }
 
     private func remove(packId: String) async throws {
-        guard !refreshingCatalog, !removing.contains(packId) else { throw PackFailure.transport }
+        guard !applyingCatalog, !removing.contains(packId) else { throw PackFailure.transport }
         removing.insert(packId)
         qualified.remove(packId)
         checks.removeValue(forKey: packId)
-        defer { removing.remove(packId) }
+        defer { removing.remove(packId); servicePendingCatalog() }
         active.removeValue(forKey: packId)?.cancel()
         jobs.removeValue(forKey: packId)
         let operation = operations[packId]?.task
@@ -620,7 +629,6 @@ struct SpeechSetupSheet: View {
     @EnvironmentObject private var store: ReaderStore
     @Environment(\.dismiss) private var dismiss
     @State private var detent: PresentationDetent = .large
-    @State private var catalogDetails = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -638,19 +646,6 @@ struct SpeechSetupSheet: View {
                             }
                         }
                     }
-                    if models.liveCatalogConfigured {
-                        DisclosureGroup("Catalogue", isExpanded: $catalogDetails) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                if let status = models.catalogStatus, status.acceptedAt > 0 {
-                                    Text("Revision \(status.revision)").font(.caption)
-                                }
-                                Button("Refresh catalogue", systemImage: "arrow.clockwise") { store.feedback.play(.selection); Task { await models.refreshCatalog() } }
-                                    .frame(minHeight: 44).disabled(!models.canRefreshCatalog)
-                                if models.refreshingCatalog { ProgressView("Refreshing…") }
-                                if let message = models.catalogMessage { Text(message).font(.caption).foregroundStyle(Palette.muted) }
-                            }.padding(.top, 12)
-                        }.padding(18).background(Palette.soft, in: RoundedRectangle(cornerRadius: 20))
-                    }
                     if models.hasUnsupportedDownloads {
                         Button("Retry removing unused downloads") { store.feedback.play(.selection); Task { await models.removeUnsupportedDownloads() } }
                             .frame(minHeight: 44).disabled(models.cleaningUnsupported || store.busy)
@@ -659,7 +654,6 @@ struct SpeechSetupSheet: View {
             }
         }.background(Palette.paper).foregroundStyle(Palette.ink)
             .presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
-            .onChange(of: catalogDetails) { _, _ in store.feedback.play(.selection) }
             .alert("Speech download", isPresented: Binding(get: { models.message != nil }, set: { if !$0 { models.message = nil } })) {
                 Button("OK") { models.message = nil }
             } message: { Text(models.message ?? "") }
@@ -689,11 +683,11 @@ private struct SpeechPackCard: View {
         return pack.capability == "tts" ? "Download & use" : "Download & enable"
     }
     private var actionDisabled: Bool {
-        selected && pending == nil && !paused || checkingExisting || !pack.eligible || models.loading || models.refreshingCatalog
+        selected && pending == nil && !paused || checkingExisting || !pack.eligible || models.loading || models.applyingCatalog
     }
     private var removalUnavailable: Bool {
         store.busy || store.loading || store.preparingDocument || audio.playing || audio.replayingNote != nil
-            || audio.recording || audio.capturePending || store.captureDraft != nil || models.loading || models.refreshingCatalog
+            || audio.recording || audio.capturePending || store.captureDraft != nil || models.loading || models.applyingCatalog
     }
     var body: some View {
         ReaderSheetCard(title: pack.speechName) {
@@ -798,7 +792,7 @@ private struct NarrationVoices: View {
                         if selecting && pending?.paused != true { ProgressView().accessibilityHidden(true) }
                         else if selected { Image(systemName: "checkmark").font(.body.weight(.semibold)).foregroundStyle(Palette.accent).accessibilityHidden(true) }
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(18).contentShape(Rectangle())
-                }.buttonStyle(.plain).disabled(models.loading || models.refreshingCatalog)
+                }.buttonStyle(.plain).disabled(models.loading || models.applyingCatalog)
                     .accessibilityLabel("\(voice.name), \(voice.localizedLanguage)")
                     .accessibilityValue(selecting ? (pending?.paused == true ? "Paused" : "Selecting") : (selected ? "Selected" : ""))
                     .accessibilityAddTraits(selected ? .isSelected : [])
