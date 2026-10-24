@@ -56,7 +56,7 @@ fun SpeechSetupSheet(capability: String, dismiss: () -> Unit) {
                     for (pack in state.catalog.filter { it.capability == category }) {
                         item(key = pack.id) { SpeechPackCard(pack, state, models, audio.playing || audio.capturing || audio.preparing, audio.capturing) }
                         if (pack.capability == "tts" && models.complete(pack.id) && pack.voices.isNotEmpty()) item(key = "${pack.id}-voices") {
-                            val enabled = pack.id !in state.removing && pack.id !in state.checking && !state.initializing && !state.refreshing
+                            val enabled = pack.id !in state.removing && pack.id !in state.checking && !state.initializing && !state.applyingCatalog
                             if (capability == "all") CollapsedVoiceChoices(pack, state, models, enabled)
                             else VoiceChoices(pack, state, models, enabled)
                         }
@@ -137,7 +137,7 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
             if (pack.capability != "tts" || !available || pack.voices.isEmpty()) Button(onClick = {
                 if (status in setOf("downloading", "verifying") && pending != null) models.pause(pack.id) else models.setup(pack.id, pending?.voiceId ?: state.voiceId.takeIf { state.selectedVoice == pack.id } ?: "default")
                 haptic(view)
-            }, enabled = !removing && !activating && !state.initializing && !state.refreshing && (!checking || status == "verifying") && (!active || pending?.paused == true) && (reason == null || status in setOf("downloading", "verifying")), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            }, enabled = !removing && !activating && !state.initializing && !state.applyingCatalog && (!checking || status == "verifying") && (!active || pending?.paused == true) && (reason == null || status in setOf("downloading", "verifying")), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(label)
             }
             TextButton(onClick = { details = !details; haptic(view) }, modifier = Modifier.heightIn(min = 48.dp).semantics { stateDescription = if (details) "Expanded" else "Collapsed" }) {
@@ -152,11 +152,7 @@ private fun SpeechPackCard(pack: ModelPack, state: ModelState, models: ModelMana
                 val storage = (models.storageBytes(pack) + 999_999) / 1_000_000
                 Text("Android ${if (pack.minimumOS == 28) "9+" else "API ${pack.minimumOS}+"} · $memory RAM · $storage MB free storage", style = MaterialTheme.typography.bodySmall)
                 state.checks[pack.id]?.let { Text(String.format(locale, "Device check passed in %.1f s", it / 1000.0), style = MaterialTheme.typography.bodySmall) }
-                if (install != null && !removing && !checking && status != "downloading") TextButton(onClick = { models.remove(pack.id); haptic(view) }, enabled = !capturing && !state.changingTranscription) { Text("Remove downloaded files") }
-                if (models.catalogRefreshConfigured) {
-                    TextButton(onClick = { models.refreshCatalog(); haptic(view) }, enabled = !state.refreshing && !state.initializing) { Text(if (state.refreshing) "Refreshing catalogue…" else "Refresh catalogue") }
-                    state.catalogMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                }
+                if (install != null && !removing && !checking && status != "downloading") TextButton(onClick = { models.remove(pack.id); haptic(view) }, enabled = !capturing && !state.changingTranscription && !state.applyingCatalog) { Text("Remove downloaded files") }
             }
         }
     }

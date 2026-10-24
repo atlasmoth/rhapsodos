@@ -14,6 +14,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -25,8 +27,8 @@ class TranscriptionCoordinator(private val context: Context, private val store: 
     private val generations = mutableMapOf<String, Long>()
     private val queue = Mutex()
     private var memoryPaused = false
-    @Volatile var hasActiveInference: Boolean = false
-        private set
+    private val mutableInferenceActive = MutableStateFlow(false)
+    val inferenceActive = mutableInferenceActive.asStateFlow()
 
     fun initialize() {
         scope.launch { models.readyEvents.collect { if (it == models.state.value.selectedTranscription) processPending() } }
@@ -63,9 +65,9 @@ class TranscriptionCoordinator(private val context: Context, private val store: 
                         try {
                             val transcript = coroutineScope {
                                 val inference = async {
-                                    hasActiveInference = true
+                                    mutableInferenceActive.value = true
                                     try { models.runtime.transcribe(directory, audio, adapter) }
-                                    finally { hasActiveInference = false }
+                                    finally { mutableInferenceActive.value = false }
                                 }
                                 val interruption = launch {
                                     playback.state.first { it.playing || it.capturing || it.preparing }

@@ -86,7 +86,12 @@ class ReaderApplication : Application() {
         }
         koin.get<ModelManager>().catalogueWorkloadIdle = {
             val audio = koin.get<PlaybackCoordinator>().state.value
-            foreground.value && !audio.playing && !audio.capturing && !audio.preparing && !koin.get<TranscriptionCoordinator>().hasActiveInference
+            foreground.value && !audio.playing && !audio.capturing && !audio.preparing && !koin.get<TranscriptionCoordinator>().inferenceActive.value
+        }
+        applicationScope.launch {
+            combine(foreground, koin.get<PlaybackCoordinator>().state, koin.get<TranscriptionCoordinator>().inferenceActive) { visible, audio, inference ->
+                visible && !audio.playing && !audio.capturing && !audio.preparing && !inference
+            }.collect { koin.get<ModelManager>().catalogueWorkloadChanged() }
         }
         koin.get<ModelManager>().beforeVerification = {
             combine(foreground, koin.get<PlaybackCoordinator>().state) { visible, audio -> visible && !audio.playing && !audio.capturing && !audio.preparing }.first { it }

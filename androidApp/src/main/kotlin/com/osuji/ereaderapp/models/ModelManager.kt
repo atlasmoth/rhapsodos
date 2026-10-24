@@ -8,7 +8,6 @@ import android.os.StatFs
 import com.osuji.ereaderapp.data.ModelInstall
 import com.osuji.ereaderapp.data.ModelPack
 import com.osuji.ereaderapp.data.PackFile
-import com.osuji.ereaderapp.data.ModelCatalogStatus
 import com.ereader.shared.ModelCatalogSource
 import com.ereader.shared.ModelDownloadUrl
 import com.osuji.ereaderapp.data.ReaderStore
@@ -34,6 +33,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
@@ -57,8 +57,7 @@ data class ModelState(
     val catalog: List<ModelPack> = emptyList(), val installs: List<ModelInstall> = emptyList(),
     val selectedVoice: String = "", val voiceId: String = "default", val selectedTranscription: String = "off",
     val checking: Set<String> = emptySet(), val removing: Set<String> = emptySet(), val error: String? = null,
-    val catalogStatus: ModelCatalogStatus = ModelCatalogStatus(), val refreshing: Boolean = false,
-    val catalogMessage: String? = null, val changingTranscription: Boolean = false, val initializing: Boolean = true,
+    val changingTranscription: Boolean = false, val initializing: Boolean = true, val applyingCatalog: Boolean = false,
     val checks: Map<String, Long> = emptyMap(),
     val unavailable: Map<String, String> = emptyMap(),
     val pendingActivation: Map<String, SpeechActivationIntent> = emptyMap(),
@@ -82,7 +81,9 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     var voiceActivationBlock: () -> String? = { "Open Rhapsodos to finish setup." }
     var activateVoice: (suspend (String, String, String) -> Unit)? = null
     var catalogueWorkloadIdle: () -> Boolean = { false }
-    val catalogRefreshConfigured: Boolean get() = ModelCatalogSource.httpsUrl.isNotBlank() && ModelCatalogSource.publicKeyX963.isNotBlank()
+    private var initializationJob: Job? = null
+    private var catalogApplicationJob: Job? = null
+    private var pendingCatalogPayload: String? = null
     private val jobs = ConcurrentHashMap<String, Job>()
     private val validated = ConcurrentHashMap.newKeySet<String>()
     private val retainedVoices = ConcurrentHashMap<String, File>()
@@ -96,7 +97,25 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         install(HttpTimeout) { connectTimeoutMillis = 30_000; socketTimeoutMillis = 45_000; requestTimeoutMillis = 600_000 }
     }
 
-    fun initialize() = scope.launch {
+    @Synchronized
+    fun initialize(): Job {
+        initializationJob?.let { return it }
+        val initialization = scope.launch(start = CoroutineStart.LAZY) { loadInstalledPacks() }
+        initializationJob = initialization
+        scope.launch(Dispatchers.Main.immediate) { state.collect { applyPendingCatalog() } }
+        scope.launch(Dispatchers.Main.immediate) {
+            if (ModelCatalogSource.httpsUrl.isBlank() || ModelCatalogSource.publicKeyX963.isBlank()) return@launch
+            try {
+                pendingCatalogPayload = downloadModelCatalog(client, ModelCatalogSource.httpsUrl, ModelCatalogSource.publicKeyX963)
+                applyPendingCatalog()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { }
+        }
+        initialization.start()
+        return initialization
+    }
+
+    private suspend fun loadInstalledPacks() {
         try {
             val catalog = store.modelCatalog()
             mutableState.update { it.copy(catalog = catalog) }
@@ -105,8 +124,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
             removeRetiredPacks(catalog)
             if (catalog.none { it.id == state.value.selectedVoice && it.capability == "tts" && it.adapter == "android-phonon-english" }) clearVoiceSelection()
             val installs = store.modelInstalls()
-            val catalogStatus = store.modelCatalogStatus()
-            mutableState.update { it.copy(catalog = catalog, installs = installs, catalogStatus = catalogStatus, checking = installs.filter { record -> record.status == "ready" || record.installedPath.isNotBlank() }.map { record -> record.packId }.toSet()) }
+            mutableState.update { it.copy(catalog = catalog, installs = installs, checking = installs.filter { record -> record.status == "ready" || record.installedPath.isNotBlank() }.map { record -> record.packId }.toSet()) }
             installs.filter { it.status == "ready" || it.installedPath.isNotBlank() }.forEach { install ->
                 val pack = catalog.firstOrNull { it.id == install.packId }
                 val verified = if (pack != null) withContext(Dispatchers.IO) {
@@ -157,7 +175,8 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     fun setup(packId: String, voiceId: String = "default") = scope.launch(Dispatchers.Main.immediate) {
-        if (state.value.initializing || state.value.refreshing || packId in state.value.removing) return@launch
+        state.first { !it.applyingCatalog }
+        if (state.value.initializing || packId in state.value.removing) return@launch
         val pack = state.value.catalog.firstOrNull { it.id == packId } ?: return@launch
         val generation = downloadGenerations[packId] ?: state.value.installs.firstOrNull { it.packId == packId && it.status == "ready" }?.generation
         try {
@@ -199,7 +218,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
 
     fun resumePendingActivation() {
-        if (state.value.initializing || state.value.refreshing) return
+        if (state.value.initializing || state.value.applyingCatalog) return
         for ((capability, intent) in state.value.pendingActivation) {
             if (activationJobs[capability]?.isActive == true || intent.paused) continue
             val install = state.value.installs.firstOrNull { it.packId == intent.packId && it.status == "ready" && it.generation == intent.generation }
@@ -306,6 +325,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     suspend fun selectTranscription(packId: String, activationToken: String? = null) {
         withContext(Dispatchers.Main.immediate) {
+            state.first { !it.applyingCatalog }
             if (activationToken == null) cancelActivation("asr")
             transcriptionSelection.withLock {
                 fun requested() = activationToken == null || activationIsCurrent("asr", activationToken)
@@ -331,26 +351,37 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
         }
     }
 
-    fun refreshCatalog() = scope.launch(Dispatchers.Main.immediate) {
-        if (state.value.refreshing) return@launch
-        if (!catalogRefreshConfigured) { mutableState.update { it.copy(catalogMessage = "This app includes a bundled catalogue. Live catalogue updates are not configured yet.") }; return@launch }
-        if (!canRefreshCatalog()) { mutableState.update { it.copy(catalogMessage = "Pause listening and wait for downloads and checks to finish before refreshing.") }; return@launch }
-        mutableState.update { it.copy(refreshing = true, catalogMessage = null) }
-        try {
-            val payload = downloadModelCatalog(client, ModelCatalogSource.httpsUrl, ModelCatalogSource.publicKeyX963)
-            check(canRefreshCatalog()) { "Refresh stopped because listening, a download or a check started. Try again when idle." }
-            val accepted = store.acceptModelCatalog(payload, ::canRefreshCatalog)
-            val catalog = store.modelCatalog()
-            val status = store.modelCatalogStatus()
-            mutableState.update { it.copy(catalog = catalog, catalogStatus = status, catalogMessage = if (accepted) "Model catalogue updated." else "Your model catalogue is up to date.") }
-        } catch (cancelled: CancellationException) { throw cancelled }
-        catch (failure: Exception) { mutableState.update { it.copy(catalogMessage = failure.message ?: "The catalogue could not be refreshed. Your downloads are unchanged.") } }
-        finally { mutableState.update { it.copy(refreshing = false) } }
+    fun catalogueWorkloadChanged() {
+        scope.launch(Dispatchers.Main.immediate) { applyPendingCatalog() }
     }
 
-    private fun canRefreshCatalog(): Boolean = jobs.isEmpty() && state.value.checking.isEmpty() && state.value.removing.isEmpty() && !state.value.initializing && !state.value.changingTranscription && state.value.installs.none { it.status in setOf("downloading", "verifying") } && catalogueWorkloadIdle()
+    private fun applyPendingCatalog() {
+        val payload = pendingCatalogPayload ?: return
+        if (catalogApplicationJob != null || !canApplyCatalog()) return
+        val task = scope.launch(Dispatchers.Main.immediate, start = CoroutineStart.LAZY) {
+            mutableState.update { it.copy(applyingCatalog = true) }
+            try {
+                if (store.acceptModelCatalog(payload, ::canApplyCatalog) == null) return@launch
+                pendingCatalogPayload = null
+                val catalog = store.modelCatalog()
+                mutableState.update { it.copy(catalog = catalog) }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { pendingCatalogPayload = null }
+            finally {
+                catalogApplicationJob = null
+                mutableState.update { it.copy(applyingCatalog = false) }
+                resumePendingActivation()
+                if (pendingCatalogPayload != null && canApplyCatalog()) applyPendingCatalog()
+            }
+        }
+        catalogApplicationJob = task
+        task.start()
+    }
+
+    private fun canApplyCatalog(): Boolean = jobs.isEmpty() && state.value.checking.isEmpty() && state.value.removing.isEmpty() && state.value.activating.isEmpty() && !state.value.initializing && !state.value.changingTranscription && state.value.installs.none { it.status in setOf("downloading", "verifying") } && catalogueWorkloadIdle()
 
     fun selectVoice(packId: String, voiceId: String? = null, activationToken: String? = null) {
+        check(!state.value.applyingCatalog) { "The available voices are updating. Try again." }
         if (activationToken == null) cancelActivation("tts")
         else check(activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
         require(packId !in state.value.removing) { "Wait for this download to finish being removed." }
@@ -370,7 +401,8 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
 
     fun download(packId: String) {
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { scope.launch(Dispatchers.Main.immediate) { download(packId) }; return }
-        if (state.value.initializing || state.value.refreshing || packId in state.value.removing) return
+        if (state.value.applyingCatalog) { scope.launch { state.first { !it.applyingCatalog }; download(packId) }; return }
+        if (state.value.initializing || packId in state.value.removing) return
         jobs[packId]?.let { previous ->
             if (!previous.isActive) scope.launch { previous.join(); download(packId) }
             return
@@ -468,6 +500,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
                     jobs.remove(pack.id, completed)
                     if (downloadGenerations[pack.id] == generation) downloadGenerations.remove(pack.id)
                     if (jobs.isEmpty()) downloadService?.finishIfIdle()
+                    applyPendingCatalog()
                 }
             }
         }
@@ -485,6 +518,7 @@ class ModelManager(private val context: Context, private val store: ReaderStore,
     }
     fun pauseAll() { jobs.keys.toList().forEach(::pause) }
     fun remove(packId: String) = scope.launch(Dispatchers.Main.immediate) {
+        state.first { !it.applyingCatalog }
         try { state.value.pendingActivation.filterValues { it.packId == packId }.keys.forEach(::cancelActivation) }
         catch (failure: Exception) { reportError(failure.message ?: "Removal could not be saved. Try again."); return@launch }
         if (packId in state.value.removing) return@launch
