@@ -1,84 +1,56 @@
 # Model manager
 
-Rhapsodos manages curated, compatible speech packs. Both apps place **Download voices and transcription** in its own tonal card with a trailing chevron above two concise Settings entries: **Reading voice** and **Transcribe voice notes**. The whole card opens a combined **Voices and transcription** manager using the same compact cards and setup flow as the focused sheets. Reading voice shows the current choice or download state and opens its focused sheet. Transcribe voice notes is a switch; enabling it offers the required download when no verified transcription pack is available. Fresh installations start with transcription off. Recording, saving and replaying notes never require this switch or a speech model.
+Settings → **Download voices and transcription** opens the shared download flow. **Download & use** installs, checks and selects Phonon for narration; **Download & enable** does the same for Whisper Base English transcription. Checks are automatic. Failed operations offer Retry; paused downloads offer Resume. Technical details and removal stay in Details.
 
-Each focused sheet shows the voice or transcription name, language, download size and one contextual primary action. **Download & use** selects a narration voice after download and validation; **Download & enable** does the same for transcription. Verified narration packs expose named voice rows; verified transcription uses **Enable**. Pause, resume, retry, checking and selected/on states remain visible when relevant. Do not duplicate voice pickers, model-selection chips or instructions in Settings and the sheet. Keep requirements, runtime information, check history and removal behind **Details**. Checks run automatically after download and when installed packs are reconciled; do not expose a manual check action. Show **Retry** after a failed download or check, and **Resume** for a paused transfer. Hide unconfigured catalogue controls and avoid routine privacy or qualification paragraphs in the main flow.
-
-One Phonon pack contains the default speaker and 37 named English voices. Its ready-state picker shows Narrators and a collapsed Characters section, with each row's name, language/accent and selected checkmark. Settings reflects the chosen name. The combined manager puts the same picker behind an initially collapsed Choose a voice disclosure so transcription remains easy to reach; speaker rows do not become separate model cards. Only verified, installed profiles can be selected. Selection uses the existing persisted activation intent, so a newer choice supersedes an earlier pending choice and capture can defer activation safely. Changing voices keeps the source position and leaves narration paused.
-
-The initial action authorizes the complete download, integrity check, runtime check and activation sequence. Transfer completion alone never permits activation. Persist one pending choice per capability outside the sheet lifecycle; dismissal or restart must not lose it. New choices replace old pending choices. Turning transcription off or removing its pack cancels pending activation before suspending work. Pausing a transfer retains the choice for an explicit resume. Failed validation never selects a pack; retry continues through verification. Downloads started without activation intent do not create one. Existing selections remain until a replacement passes and commits through the native selection path.
-
-Activation rechecks the current intent and capture state after asynchronous boundaries. Capture and durable document work take priority; deferred setup reports a short waiting state and continues when safe. Narration activation preserves the frozen listening cursor and does not start paused playback. Transcription changes cancel and join previous inference; stale results cannot overwrite notes or edits. Off preserves recordings, queued notes and downloaded assets.
-
-Device requirements and compatibility results remain available in Details. A successful local check only establishes that the adapter executes its public sanity input on that device; it does not establish listening quality, sustained speed, peak memory, battery usage or fleet qualification. Checking and optional work yield to narration and capture.
+Phonon's 38 English voices share one model download per platform. Changing an installed voice downloads nothing and preserves the listening position. Transcription is optional: recording, saving and replaying a note never require a speech model. Neither capability falls back to system speech or remote processing.
 
 ## Catalogue updates
 
-Each app launch starts one automatic signed-catalogue fetch when the release has a configured HTTPS source and public key. The canonical cached copy, or bundled catalogue on a fresh installation, remains available immediately; startup and local actions never await this network request. A verified response waits for local initialization and an idle moment before guarded acceptance, without asking the listener to pause. Offline, timeout, signature, adapter and rollback failures quietly preserve the saved catalogue and installed packs; the next app launch tries again. There is no manual Refresh control or routine refresh banner. New catalogues are permanent and require no scheduled renewal. No document, recording, transcript or provider credential is part of this request.
+With a configured HTTPS catalogue and public key, both apps refresh once on launch without blocking startup. The cached catalogue, or bundled defaults on a fresh installation, is immediately usable. Signature, compatibility, network or rollback failures leave the saved catalogue and installed packs available. There is no Refresh button.
 
-The native client verifies ECDSA P-256/SHA-256 before handing the exact UTF-8 payload to the shared core. Public keys use the 65-byte uncompressed X9.63 form; signatures use DER. The envelope has exactly `payload` and `signature`, both Base64. Limit the envelope to 3 MiB and the decoded payload to 2 MiB. Catalogue and model URLs can use any HTTPS host, including cross-host redirects; there is no provider allowlist. The shared URL policy rejects credentials, fragments and malformed addresses while permitting valid ports, encoded paths and queries. Catalogue sessions disable cookies, credential storage and caches. Android validates each redirect before requesting it. iOS foreground catalogue redirects do likewise; background model transfers validate their initial and final URLs while ATS and URLSession own transport security and intermediate redirects. [Android Signature](https://developer.android.com/reference/java/security/Signature), [Apple P-256 public key](https://developer.apple.com/documentation/cryptokit/p256/signing/publickey/init(x963representation:))
+Catalogues are signed with ECDSA P-256/SHA-256 and have no expiry or renewal requirement. Changed contents require a higher revision; exact repeats are accepted, while altered contents at the same revision and older revisions are rejected. A fresh installation has no remembered remote revision, so signatures establish the publisher's identity rather than proving a response is its newest release.
 
-The payload is:
-
-```json
-{
-  "formatVersion": 1,
-  "revision": 4,
-  "publishedAt": 1791417600000,
-  "packs": []
-}
-```
-
-The example date is illustrative; publication tooling generates the current publication time and requires a nonempty list. Revisions increase monotonically. Exact repeats are idempotent; a reused revision with altered contents is rejected. Publication permits five minutes of clock skew and cannot precede the last accepted publication. Omitted or null `expiresAt` means permanent. An explicitly supplied expiry still requires an unexpired interval of at most 90 days, allowing existing signed payloads to retain their stated meaning. Cached entries and downloaded models never stop working because of a catalogue date.
-
-Signatures establish authenticity, not that a catalogue is the newest available. A permanent, correctly signed older catalogue remains acceptable to a fresh installation with no remembered revision; an existing installation rejects revisions below its last accepted revision. This is the deliberate tradeoff for eliminating renewal. Permanent validity does not guarantee that upstream model files remain hosted forever.
-
-`ModelPack.adapter` identifies one of the four compiled speech profiles. It defaults to the bundled pack ID. New editions use new pack IDs and retain the profile's runtime, platform, task, language, required file paths and conservative minimum requirements. Expected sizes and SHA-256 hashes pin asset bytes independently of the hosting provider. Sizes, hashes, identifiers and installed paths remain bounded and validated; changing a URL also requires a new edition identity. Prefer permanent versioned or content-addressed URLs. Expiring query URLs are accepted but cannot be renewed in place for an existing immutable edition. Runtime verification still checks the downloaded model. A catalogue cannot add a new inference engine or incompatible model family.
-
-New bundled profiles remain discoverable after an app update even when an older verified catalogue is cached; existing cached editions keep their identity. The canonical SQLDelight catalogue row owns revision, exact verified payload, accepted time and derived entries. An update retains omitted installed or unfinished editions only while their adapter remains supported. Discovery filters retired adapters out of cached catalogues, and native startup removes their model assets before clearing their install inventory. Documents, recordings and notes are never part of that cleanup. It does not alter model-install rows, source documents, notes or listening progress. Existing model identities cannot silently acquire different weights, versions or execution requirements. New compatible editions can be downloaded beside a working edition. Download & use selects the requested edition only after verification; removing the old one remains a deliberate action.
+Updates advertise compatible editions without downloading or selecting them automatically. Existing installed or unfinished editions retain their descriptors. Changing URLs, bytes or edition details requires a new immutable pack ID. A new inference engine or incompatible model family still requires an app release.
 
 ## Release setup
 
-Four uploadable ZIPs are prepared by [the archive release tool](model-archives.md): one Phonon and one Whisper pack per platform. The three newly packaged editions declare an optional `archive` transfer while retaining their exact installed `files` manifest; iOS Phonon keeps its existing verified ZIP. `totalBytes` describes network bytes, and native storage checks also reserve expanded-file space. Both apps verify the outer size/hash, reject unsafe or undeclared ZIP contents, stream extraction with per-file size/hash checks and run the existing runtime check before atomic activation. Failed/cancelled extraction cannot activate partial files, and a verified transfer can be reused offline. No per-file network fallback occurs for an archive edition. The four hosted archive editions are now the bundled defaults. Earlier descriptors remain available only for existing installations or editions explicitly advertised by an accepted catalogue.
+Each clone publishing a catalogue generates its own signing keypair. Prepare the four ZIPs and an external `archive-packs.json` using [the archive workflow](model-archives.md). Set up the [catalogue tools](setup.md#catalogue-tools) first; all paths and hosts below are placeholders.
 
-Both catalogue settings are build-time configuration: `RHAPSODOS_CATALOG_URL` and `RHAPSODOS_CATALOG_PUBLIC_KEY`, the latter containing Base64-encoded, uncompressed P-256 X9.63 public-key bytes. Each process-environment value overrides its ignored root `.env` value independently, including an explicitly empty value. An absent or empty URL disables remote refresh while keeping bundled discovery usable. A nonempty URL requires a valid public key; there is no default build key. Gradle generates the same `ModelCatalogSource` API for Android and iOS under `shared/build/`, tracking both settings for incremental builds. These values are public metadata embedded in the apps. Private signing keys stay outside the repository and app bundles.
-
-Each clone publishing its own catalogue should generate its own keypair. Prepare and review an external pack list using [the archive workflow](model-archives.md), then create a permanent revision-1 catalogue outside the repository:
+Keep private keys outside the repository and upload directory. Generate, sign and verify your first catalogue:
 
 ```sh
-conda run -n dl python tools/model-catalog.py keygen --output-directory /absolute/private/catalog-keys
-conda run -n dl python tools/model-catalog.py sign --catalog /absolute/release/archive-packs.json --private-key /absolute/private/catalog-keys/catalog-private.pem --revision 1 --output /absolute/release/catalogue.json
-conda run -n dl python tools/model-catalog.py verify --envelope /absolute/release/catalogue.json --public-key /absolute/private/catalog-keys/catalog-public-x963.txt
+conda run -n dl python tools/model-catalog.py keygen \
+  --output-directory /absolute/private/catalog-keys
+conda run -n dl python tools/model-catalog.py sign \
+  --catalog /absolute/release/archive-packs.json \
+  --private-key /absolute/private/catalog-keys/catalog-private.pem \
+  --revision 1 --output /absolute/release/catalogue.json
+conda run -n dl python tools/model-catalog.py verify \
+  --envelope /absolute/release/catalogue.json \
+  --public-key /absolute/private/catalog-keys/catalog-public-x963.txt
 ```
 
-The release directory and reviewed pack list must already exist. Host the signed JSON at a stable public HTTPS address and the model ZIPs at their reviewed URLs, then configure that address with the matching public key:
+The release directory and reviewed pack list must already exist. Upload the ZIPs to their declared URLs and the signed JSON to a stable public HTTPS address. The tools do not upload files. Configure the matching endpoint and public key:
 
 ```sh
-conda run -n dl python tools/model-catalog.py configure --url https://your-host.example/catalogue.json --public-key /absolute/private/catalog-keys/catalog-public-x963.txt
+conda run -n dl python tools/model-catalog.py configure \
+  --url https://models.example.com/catalogue.json \
+  --public-key /absolute/private/catalog-keys/catalog-public-x963.txt
 ```
 
-The example paths and host are placeholders. These tools do not upload files. `configure` accepts any valid P-256 public key, validates the address and key, then atomically writes both settings to the ignored root `.env`, preserving unrelated lines. It does not fetch or publish the catalogue. Rebuild both apps after changing either setting; normal Xcode builds use the same Gradle configuration. CI can supply both environment variables directly. Protect a recoverable copy of the private key and reuse it for future releases from that publisher. Increase the revision when publishing changed contents; no periodic signing or renewal is required. Never let a downloaded catalogue replace its own trust key.
+`configure` validates the HTTPS address and P-256 key, then atomically writes both settings to the ignored root `.env`, preserving unrelated settings:
 
-The existing [catalogue/catalogue.json](../catalogue/catalogue.json) is the original publisher's verified revision 7, with four `hosted1` editions at `https://files.ctclctr.com` and no expiry. Its [tracked public key](../catalogue/catalog-public-x963.txt) verifies that release only; it is not a default app trust key. Its [pack list](../catalogue/archive-packs.json) remains bundled for discovery. The owner's local URL/key configuration remains unchanged; cloning does not copy that ignored configuration or rotate the release key. For a fork installed alongside the original app, use a separate app identity and fresh app-data container so its catalogue revisions and signing authority have independent state. Preserve existing user libraries rather than resetting them to test a new publisher.
+| Build setting | Value |
+| --- | --- |
+| `RHAPSODOS_CATALOG_URL` | Public HTTPS address of the signed catalogue |
+| `RHAPSODOS_CATALOG_PUBLIC_KEY` | Base64 uncompressed P-256 X9.63 public-key bytes |
 
-## Ownership and verification
+Environment variables override `.env` independently, including explicitly empty values. CI can provide both directly. An empty URL disables remote refresh; a nonempty URL requires a valid key. **There is no default build key.** The tracked [release public key](../catalogue/catalog-public-x963.txt) only verifies the existing publisher's release. Neither build setting is secret; the private signing key must never enter Git or an app bundle.
 
-Shared code owns catalogue constraints and persistence. Native clients own HTTPS, cryptography, device checks, selected speech adapters and the audio/transcription transition. Selection changes cancel and join affected work before accepting later results. Generated narration and model files remain separate from durable user recordings.
+Rebuild both apps after changing either setting; Android and normal Xcode builds consume the same generated configuration. A fork installed alongside the original app needs a separate app identity and app-data container, so signing authorities and revisions remain independent. Preserve existing user libraries.
 
-Qualification must include valid and invalid signatures, permanent validity, explicit-expiry rejection, revision rollback, offline refresh, restart, interrupted downloads, missing assets, explicit selection and stale transcription results. Temporary harnesses stay outside the repository. Executed results and remaining device/hosting gates belong in [development.md](development.md).
+## Publish an update
 
-## Phonon narration
+Keep a recoverable private-key backup and reuse that publisher's key. Package changed assets under new immutable edition IDs and URLs, sign the reviewed pack list with a higher revision, verify it, then replace the signed JSON at the existing catalogue address. Never edit the signed envelope by hand or let it replace its own trust key.
 
-Settings → Reading voice offers Phonon as the only narration download. Download & use handles the transfer, quiet device check and selection as one flow. The current Android edition downloads one 74,531,696-byte ZIP containing the pinned Q8/config/tokenizer/default-voice files and 37 named speaker profiles (74,526,338 payload bytes). iOS keeps its existing CoreML ZIP (137,096,081 bytes), which already contains all 38 profiles, and compiles its three models locally. Both packs use a 3 GB memory guard, which is an eligibility threshold rather than a physical-device guarantee. Android requires a supported 64-bit process. The iOS app requires iOS 18.
-
-Hosted editions install alongside earlier ready editions and require an explicit selection after successful validation. Existing downloads keep their descriptors and paths; the catalogue does not mutate their bytes or automatically replace them. The earlier development-only Android speaker expansion is no longer the bundled upgrade path. New model or transport versions use new immutable edition identities.
-
-Speaker names and accents come from the pinned [Phonon voice catalogue](https://huggingface.co/gradium/phonon-voices/tree/da6c9ec0d47be8df5c87c730a3aa97187f3229c3): 12 US narrators, 13 UK narrators and 12 characters, alongside the separate default. Character metadata does not declare an accent, so the apps label it English. Android uses the original speaker tensors; the CoreML archive contains their projected representation. Each format retains its own verified hashes. Selecting another installed speaker downloads and compiles nothing; the serialized runtime changes conditioning on the shared model.
-
-iOS verifies the outer archive, its exact permitted paths, bounded sizes, duplicate/symlink restrictions and every inner digest before extraction into staging. Derived compiled models receive a checked receipt tied to the archive and OS. Native readiness synthesis precedes canonical activation. Android's resumable downloader supports either the current per-file manifest or the new single-archive transport, with every installed file checked in both cases. Both paths serialize inference with capture/transcription, discard cancelled or incomplete PCM and keep native audio time authoritative. Model code ships in the app; only assets are downloaded.
-
-## Downloaded speech only
-
-Narration requires a verified Phonon pack selected through an explicit Use voice or Download & use action. A fresh install opens and prepares documents and saves voice notes, but Play directs the listener to download a voice until one is ready. Removing or invalidating the selected pack pauses narration and requires download or repair; cached audio does not bypass readiness. There is no system TTS or system ASR selection or fallback. Downloaded Whisper transcription is independent of narration; unavailable transcription leaves saved recordings pending.
-
-Kitten and Kokoro were removed by the product decision on 21 October 2026 after the recorded Phonon comparison. This simplifies the supported narration surface; it does not turn the speed/memory comparison into proof of universal listening-quality dominance. Future narration packs must justify a measured quality, language, accessibility or resource advantage against Phonon before adding runtime and gallery complexity.
+Compatible model updates at that address need no app release. To change the defaults shipped inside a future build, run `conda run -n dl python tools/model-catalog.py bundle --catalog /absolute/release/archive-packs.json`, then rebuild both apps. Bundling is optional for remote updates.

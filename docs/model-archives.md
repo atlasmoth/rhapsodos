@@ -1,54 +1,50 @@
 # Model archive release
 
-The four speech packs can be distributed as four ZIP files. `tools/model-archives.py` produces the three new archives from the exact upstream source descriptors in [source-packs.json](../catalogue/source-packs.json) and copies the official iOS Phonon ZIP unchanged. It never uploads files, signs a catalogue or invents a live hosting address.
+Publish four ZIPs: one narration pack and one transcription pack for each platform. An app downloads only its platform's selected packs.
 
 | Archive | Content |
 | --- | --- |
-| `phonon-31m-en-android.zip` | 41 files: shared Q8 model, configuration, tokenizer and 38 speaker profiles |
-| `phonon-31m-en-coreml.zip` | Unchanged official CoreML release, including all English speakers |
-| `whisper-base-en-android.zip` | Base English Q8 model |
-| `whisper-base-en-coreml.zip` | 23 CoreML and tokenizer files |
+| `phonon-31m-en-android.zip` | Android Phonon narration and 38 English voices |
+| `phonon-31m-en-coreml.zip` | iOS Phonon narration and the same English voice choices |
+| `whisper-base-en-android.zip` | Android Whisper Base English transcription |
+| `whisper-base-en-coreml.zip` | iOS Whisper Base English transcription |
 
-The three new ZIPs contain only their exact catalogue payload paths at the archive root. Entries are stored without recompression, sorted by path, fixed to the ZIP epoch and marked as regular `0644` files. There are no directory entries, extra fields, data descriptors or ZIP64 records. This keeps the archives reproducible across compression-library versions and suitable for bounded native extraction. The unchanged official Phonon ZIP retains its own verified manifest and native preparation path.
+## Package and verify
 
-## Prepare locally
-
-Use the project's conda `dl` environment. Output and cache directories must remain outside the source repository:
+Set up the [catalogue tools](setup.md#catalogue-tools), then run from the repository root using conda `dl`. Output and cache directories must be outside the repository; these paths are placeholders:
 
 ```sh
 conda run -n dl python tools/model-archives.py build \
-  --output /Users/atlasmoth/Downloads/Rhapsodos-HuggingFace \
-  --cache /Users/atlasmoth/.cache/rhapsodos-model-archives
+  --output /absolute/release/models \
+  --cache /absolute/cache/rhapsodos-models
 conda run -n dl python tools/model-archives.py verify \
-  --directory /Users/atlasmoth/Downloads/Rhapsodos-HuggingFace
+  --directory /absolute/release/models
 ```
 
-`build` hashes every source before use. It downloads pinned assets into a content-addressed cache, rejects oversized or mismatched responses and replaces final ZIPs only after verification. Repeated `--reuse-root /absolute/installed/pack/folder` arguments allow verified local assets to avoid downloading again. Cached assets are always rechecked. `verify` checks outer digests and sizes, exact inner inventories and per-file hashes; the official Phonon archive also has its internal manifest checked. Nothing is extracted into the source repository. The upstream source manifest is separate from [model-catalog.json](model-catalog.json), which describes the editions currently offered by the apps. Bundling hosted editions therefore does not change the inputs needed to reproduce their ZIPs.
+The packager verifies pinned inputs from [source-packs.json](../catalogue/source-packs.json), builds three reproducible ZIPs and copies the official iOS Phonon ZIP unchanged. This source manifest is separate from the apps' [bundled catalogue](model-catalog.json). Optional repeated `--reuse-root /absolute/installed/pack` arguments reuse local files after verification.
 
-The output includes the four archives, `SHA256SUMS`, `release.json` with complete source provenance, a Hugging Face model card and license texts. These small supporting files should accompany the archives. They are not extra model downloads. The existing Phonon named-voice redistribution question remains a publication gate; [third-party.md](third-party.md) records it. Local packaging does not resolve that question or publish the files.
+The output includes `SHA256SUMS`, `release.json` provenance, a model card and license texts. Publish the supporting notices alongside the ZIPs; they are not additional model downloads. Before redistributing named Phonon voices, resolve the voice-asset licensing question recorded in [third-party.md](third-party.md).
 
-The prepared release is recorded in [archives.json](../catalogue/archives.json): four ZIPs totaling 442,563,639 bytes. The binaries remain outside Git. Model archives contain no PDFs, recordings, credentials or signing keys.
+## Upload and bind
 
-## Bind after upload
+Upload the ZIPs to any public HTTPS host: R2, Hugging Face, S3 or your own server. Use durable versioned or content-addressed URLs and preserve published bytes. Downloads must allow unauthenticated HTTPS GET; byte-range support enables efficient resume. Catalogue URLs are public, so do not include private credentials.
 
-Upload the same four ZIPs to any HTTPS host, including Cloudflare R2, Hugging Face, S3 or your own server. The signed catalogue and exact SHA-256 digests establish trust independently of the storage provider. Use durable versioned or content-addressed paths so older editions remain downloadable. No provider SDK, embedded credential or domain allowlist is needed. The server must permit unauthenticated HTTPS GET requests; byte-range support makes interrupted downloads efficient.
-
-Once the actual hosted addresses are available, bind a common directory:
+Bind the actual hosted addresses into a pack list:
 
 ```sh
 conda run -n dl python tools/model-archives.py bind \
-  --directory /Users/atlasmoth/Downloads/Rhapsodos-HuggingFace \
-  --base-url https://models.example.com/releases/2026-10-24 \
+  --directory /absolute/release/models \
+  --base-url https://models.example.com/releases/release1 \
   --edition archive1 \
   --output /absolute/release/archive-packs.json
 ```
 
-The example domain is a placeholder, never a shipping address. `--base-url` appends each archive filename to the supplied directory and preserves any query. For different directories or signed query parameters, replace `--base-url` with `--urls /absolute/release/urls.json`. That file must be a JSON object mapping exactly the four archive filenames in the table above to their full HTTPS URLs. Expiring URLs require a new catalogue edition before they expire; permanent public download addresses are simpler.
+`--base-url` appends each archive filename. For separate hosts or paths, replace it with `--urls /absolute/release/urls.json`: a JSON object mapping exactly the four filenames above to their full HTTPS URLs. Prefer permanent addresses over expiring download links.
 
-`--edition` is required and contains up to 32 lowercase letters, digits or hyphens, starting with a letter or digit. Use a fresh suffix whenever URLs or other edition data change. `bind` verifies the local release again and emits a reviewed pack-list candidate with the supplied HTTPS URLs, archive hashes and immutable edition IDs. Generic archive packs retain the installed file descriptors in `files` and declare one `archive` descriptor. `totalBytes` is the download size; expected installed payload size remains the sum of `files[].bytes`. The official iOS Phonon pack retains its existing one-ZIP shape. All four editions explicitly select their existing compiled adapter.
+`--edition` creates immutable pack IDs. Use a fresh suffix whenever URLs, bytes or edition details change: up to 32 lowercase letters, digits or hyphens, beginning with a letter or digit. `bind` verifies the local release again; it does not upload or sign anything. Check that the hosted bytes match the verified release before publishing the catalogue.
 
-All source, model, archive and catalogue addresses require HTTPS. Release tooling validates every redirect before requesting its target; native apps apply the shared URL policy with the [platform transfer rules](model-manager.md). Different HTTPS hosts and ports, IPv6, encoded paths and queries are supported. Credentials, fragments, whitespace, control characters, malformed escapes and invalid hosts or ports are rejected. International domain names use their ASCII/punycode form. URL query parameters are part of the public catalogue; do not put private credentials in them. The packager verifies downloaded bytes even when redirects are used.
+Follow [release setup](model-manager.md#release-setup) to sign and verify this pack list, publish the signed JSON and configure your own URL and public key. Later publications from the same publisher use the same key and a higher revision. Updating remote discovery does not require rebundling or rebuilding an already configured app.
 
-Review and sign that pack list through [model-catalog.py](../tools/model-catalog.py), increasing the catalogue revision. The signing key stays outside the repository and upload folder. After checking the hosted files, `model-catalog.py bundle --catalog /absolute/release/archive-packs.json` updates both the reviewable bundled manifest and its shared Kotlin representation. It requires the same reviewed payload hashes and explicit adapter IDs, and rejects changes that reuse an existing edition ID. Validate and rebuild both apps for discovery on a fresh install, or publish the signed catalogue through an already configured refresh address. A configured app can change storage hosts through a signed catalogue update without rebuilding. Confirm all four hosted URLs and a complete fresh download before distributing that release. Current upstream catalogue downloads continue working until the bound release is accepted remotely or bundled in an app build.
+## Installation guarantees
 
-The first hosted release uses `https://files.ctclctr.com` and the unchanged filenames above. [archive-packs.json](../catalogue/archive-packs.json) binds its four `hosted1` editions; [catalogue.json](../catalogue/catalogue.json) signs them as revision 7. Keep these ZIP bytes available at their current URLs. Future different bytes need different URLs and edition IDs. The signed JSON is hosted and the reviewed pack list is now bundled. Each publisher configures `RHAPSODOS_CATALOG_URL` and `RHAPSODOS_CATALOG_PUBLIC_KEY` through the build environment or ignored root `.env`; environment values win per field, including explicit empty values. Empty URL disables refresh, and a nonempty URL requires a valid P-256 public key. There is no default build key: the tracked public key only verifies the existing revision-7 release. Follow [release setup](model-manager.md#release-setup) to generate a clone's own keypair and signed catalogue, then rebuild both apps after configuring its URL and key. The owner's existing local configuration is retained. The agent does not upload or publish these artifacts.
+Each archive edition downloads one ZIP without a per-file network fallback. Both apps check the outer SHA-256 and size, reject unsafe or undeclared ZIP contents, verify extracted files and run the native model check before atomic activation. Failed or cancelled installation preserves the working edition. Downloaded model assets remain separate from documents and recordings.

@@ -12,5 +12,3 @@ Rhapsodos uses native operating-system frameworks and the pinned dependencies in
 Font redistribution texts are in [licenses/](licenses/). The active native speech runtimes retain their own pinned sources and notices under [native/](../native/). iOS dependency texts and speech notices ship in [iosApp/Resources/Licenses](../iosApp/Resources/Licenses/); exact package revisions are in [Package.resolved](../iosApp/EReader.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved). An asset's runtime compatibility, license and actual device qualification are separate questions.
 
 Do not substitute a public webfont URL for redistribution permission. Do not replace pinned model URLs with mutable branch downloads or enable a library's automatic fallback download.
-
-ML Kit was evaluated and removed: its documented Android diagnostic collection includes device/app identifiers and usage metadata. The chosen bundled OCR path requires no telemetry or hidden model transfer. [Official disclosure](https://developers.google.com/ml-kit/android-data-disclosure)
