@@ -62,6 +62,7 @@ class PlaybackCoordinator(
     private val mutableState = MutableStateFlow(PlaybackSnapshot())
     val state = mutableState.asStateFlow()
     private var player: ExoPlayer? = null
+    private var audioFocus: ListeningAudioFocus? = null
     private var playerReady = CompletableDeferred<ExoPlayer>()
     private var contents: ReaderContents? = null
     private var generation: Job? = null
@@ -81,28 +82,33 @@ class PlaybackCoordinator(
     var capturing: Boolean = false
         private set
 
-    fun attach(transport: ExoPlayer) {
+    internal fun attach(transport: ExoPlayer, focus: ListeningAudioFocus) {
         player = transport
+        audioFocus = focus
         if (!playerReady.isCompleted) playerReady.complete(transport)
         transport.addListener(object : Player.Listener {
             override fun onEvents(player: Player, events: Player.Events) {
                 if (this@PlaybackCoordinator.player !== player) return
-                if (player.playWhenReady && !canStartPlayback()) player.pause()
+                if (player.playWhenReady && !canStartPlayback()) clearPlaybackIntent()
                 publish()
                 if (player.playbackState == Player.STATE_ENDED && transportEpoch == epoch && state.value.noteId == null &&
                     state.value.passageId == player.currentMediaItem?.mediaId && state.value.passageFraction == 1.0) {
                     val completed = state.value
                     if (completedReading(completed)) {
-                        desiredPlaying = false
-                        if (player.playWhenReady) player.pause()
+                        clearPlaybackIntent()
                     }
                     scope.launch { persistSnapshot(completed) }
                 }
+                if (player.playbackState == Player.STATE_ENDED && transportEpoch == epoch && state.value.noteId != null) clearPlaybackIntent()
+            }
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                if (player !== transport || playWhenReady) return
+                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_BECOMING_NOISY || reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) pause()
             }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 if (player !== transport || transportEpoch != epoch) return
                 transportEpoch = -1
-                desiredPlaying = false
+                clearPlaybackIntent()
                 generation?.cancel()
                 mutableState.value = mutableState.value.copy(playing = false, preparing = false, error = "Audio playback was interrupted. You can prepare this passage again.")
             }
@@ -122,8 +128,7 @@ class PlaybackCoordinator(
     }
 
     fun detach() {
-        desiredPlaying = false
-        player?.pause()
+        clearPlaybackIntent()
         publish()
         val snapshot = state.value
         scope.launch { persistSnapshot(snapshot) }
@@ -132,6 +137,7 @@ class PlaybackCoordinator(
         generation?.cancel()
         monitoring?.cancel()
         player = null
+        audioFocus = null
         playerReady = CompletableDeferred()
         mutableState.value = mutableState.value.copy(playing = false, preparing = false)
     }
@@ -143,8 +149,7 @@ class PlaybackCoordinator(
             return
         }
         if (document.passages.isEmpty()) {
-            desiredPlaying = false
-            player?.pause()
+            clearPlaybackIntent()
             publish()
             val previous = state.value
             val currentEpoch = ++epoch
@@ -163,8 +168,7 @@ class PlaybackCoordinator(
     fun listen(document: ReaderContents, passageIndex: Int = 0, offsetMillis: Long = 0, startPlaying: Boolean = true, passageFraction: Double = 0.0, saveTarget: Boolean = false): CompletableDeferred<Boolean> {
         val accepted = CompletableDeferred<Boolean>()
         if (capturing || document.passages.isEmpty()) { accepted.complete(false); return accepted }
-        desiredPlaying = false
-        player?.pause()
+        clearPlaybackIntent()
         publish()
         val previous = state.value
         val previousContents = contents
@@ -199,7 +203,7 @@ class PlaybackCoordinator(
             playingNote = previousNote
             noteReadingCursor = previousNoteReading
             if (previousTransportReady) transportEpoch = currentEpoch
-            desiredPlaying = false
+            clearPlaybackIntent()
             mutableState.value = previous.copy(playing = false, preparing = false)
         }
         val job = scope.launch {
@@ -259,6 +263,7 @@ class PlaybackCoordinator(
             } catch (failure: Exception) {
                 if (currentEpoch == epoch) {
                     restoreUnacceptedTarget()
+                    clearPlaybackIntent()
                     mutableState.value = mutableState.value.copy(preparing = false, playing = false, error = failure.message ?: "This passage could not be prepared.")
                 }
                 accepted.completeExceptionally(failure)
@@ -288,6 +293,7 @@ class PlaybackCoordinator(
     fun stop(documentId: String? = null) {
         if (documentId != null && state.value.documentId != documentId) return
         if (capturing) return
+        clearPlaybackIntent()
         epoch++
         generation?.cancel()
         player?.stop()
@@ -314,7 +320,7 @@ class PlaybackCoordinator(
             synthesizer.requireVoice()
             true
         } catch (failure: Exception) {
-            desiredPlaying = false
+            clearPlaybackIntent()
             mutableState.value = state.value.copy(playing = false, preparing = false, error = failure.message)
             false
         }
@@ -322,8 +328,10 @@ class PlaybackCoordinator(
 
     fun toggle() {
         if (capturing) return
+        if (retryInterruptedPlayback()) return
         val transport = player
-        if (transport?.isPlaying != true && !canStartPlayback()) return
+        if (desiredPlaying || transport?.isPlaying == true || transport?.playWhenReady == true) { pause(); return }
+        if (!canStartPlayback()) return
         publish()
         if (transport?.isPlaying != true && completedReading(state.value)) {
             contents?.let { listen(it) }
@@ -348,32 +356,28 @@ class PlaybackCoordinator(
             }
             return
         }
-        if (transport.isPlaying || transport.playWhenReady || desiredPlaying) { desiredPlaying = false; transport.pause(); scope.launch { persist() } }
-        else {
-            if (transport.playbackState == Player.STATE_ENDED) {
-                val document = contents
-                if (playingNote == null && document != null) {
-                    val index = document.passages.indexOfFirst { it.id == state.value.passageId }.coerceAtLeast(0)
-                    if (document.document.extractionStatus == "preparing" && index == document.passages.lastIndex) {
-                        desiredPlaying = true
-                        transport.play()
-                        publish()
-                        return
-                    }
-                    listen(document, if (state.value.passageFraction == 1.0 && index < document.passages.lastIndex) index + 1 else index)
+        if (transport.playbackState == Player.STATE_ENDED) {
+            val document = contents
+            if (playingNote == null && document != null) {
+                val index = document.passages.indexOfFirst { it.id == state.value.passageId }.coerceAtLeast(0)
+                if (document.document.extractionStatus == "preparing" && index == document.passages.lastIndex) {
+                    desiredPlaying = true
+                    startTransport()
+                    publish()
                     return
                 }
-                transport.seekTo(0)
+                listen(document, if (state.value.passageFraction == 1.0 && index < document.passages.lastIndex) index + 1 else index)
+                return
             }
-            desiredPlaying = true
-            if (pendingCursor == null) transport.play()
+            transport.seekTo(0)
         }
+        desiredPlaying = true
+        startTransport()
         publish()
     }
 
     fun pause(): FrozenPlayback? {
-        desiredPlaying = false
-        player?.pause()
+        clearPlaybackIntent()
         publish()
         val snapshot = state.value
         val documentId = snapshot.documentId ?: return null
@@ -391,11 +395,60 @@ class PlaybackCoordinator(
 
     fun resume() {
         if (capturing || !canStartPlayback()) return
+        if (retryInterruptedPlayback()) return
+        if (desiredPlaying || player?.isPlaying == true || player?.playWhenReady == true) {
+            desiredPlaying = true
+            startTransport()
+            publish()
+        } else toggle()
+    }
+
+    private fun retryInterruptedPlayback(): Boolean {
+        if (audioFocus?.isWaiting != true) return false
+        audioFocus?.abandon()
         desiredPlaying = true
+        startTransport()
         publish()
-        if (player != null && transportEpoch == epoch) {
-            if (pendingCursor == null) player?.play()
-        } else if (generation?.isActive != true) toggle()
+        return true
+    }
+
+    internal fun audioFocusChanged(expectedEpoch: Long, change: ListeningAudioFocus.Change) {
+        if (expectedEpoch != epoch) return
+        if (!desiredPlaying || capturing) {
+            audioFocus?.abandon()
+            return
+        }
+        when (change) {
+            ListeningAudioFocus.Change.GAIN -> startTransport()
+            ListeningAudioFocus.Change.TRANSIENT_LOSS -> {
+                player?.pause()
+                publish()
+                val snapshot = state.value
+                scope.launch { persistSnapshot(snapshot) }
+            }
+            ListeningAudioFocus.Change.LOSS -> pause()
+        }
+    }
+
+    private fun clearPlaybackIntent() {
+        desiredPlaying = false
+        player?.pause()
+        audioFocus?.abandon()
+    }
+
+    private fun startTransport() {
+        val transport = player ?: return
+        if (!desiredPlaying || capturing || transportEpoch != epoch || pendingCursor != null || !canStartPlayback()) return
+        val permission = audioFocus?.request(epoch) ?: ListeningAudioFocus.Permission.DENIED
+        if (permission != ListeningAudioFocus.Permission.DENIED) mutableState.value = state.value.copy(error = null)
+        when (permission) {
+            ListeningAudioFocus.Permission.READY -> transport.play()
+            ListeningAudioFocus.Permission.WAITING -> transport.pause()
+            ListeningAudioFocus.Permission.DENIED -> {
+                clearPlaybackIntent()
+                mutableState.value = state.value.copy(playing = false, error = "Audio is unavailable right now. Try Play again.")
+            }
+        }
     }
 
     fun beginCapture(expected: PreparedCaptureTarget? = null): CaptureReservation? {
@@ -473,8 +526,7 @@ class PlaybackCoordinator(
     suspend fun selectVoice(models: ModelManager, packId: String, voiceId: String? = null, activationToken: String? = null): Unit = voiceSelection.withLock {
         check(!capturing) { "Finish recording to continue" }
         check(activationToken == null || models.activationIsCurrent("tts", activationToken)) { "Setup was cancelled." }
-        desiredPlaying = false
-        player?.pause()
+        clearPlaybackIntent()
         publish()
         val current = state.value
         val document = contents
@@ -512,8 +564,7 @@ class PlaybackCoordinator(
 
     private fun playSavedNote(note: VoiceNote, offsetMillis: Long, startPlaying: Boolean, savedDocument: ReaderContents? = null) {
         if (capturing) return
-        desiredPlaying = false
-        player?.pause()
+        clearPlaybackIntent()
         publish()
         val previous = state.value
         noteReadingCursor = when {
@@ -547,12 +598,15 @@ class PlaybackCoordinator(
                 transport.playbackParameters = PlaybackParameters(1f)
                 transport.prepare()
                 transport.seekTo(offsetMillis.coerceAtLeast(0))
-                if (startPlaying && !capturing) transport.play()
+                startTransport()
                 publish()
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                if (currentEpoch == epoch) mutableState.value = state.value.copy(preparing = false, playing = false, error = "This saved recording could not be played.")
+                if (currentEpoch == epoch) {
+                    clearPlaybackIntent()
+                    mutableState.value = state.value.copy(preparing = false, playing = false, error = "This saved recording could not be played.")
+                }
             }
         }
     }
@@ -724,6 +778,6 @@ class PlaybackCoordinator(
                 (transport.playbackState == Player.STATE_ENDED && contents?.document?.extractionStatus == "preparing" && desiredPlaying && generation?.isActive == true) else generation?.isActive == true,
             voice = if (playingNote != null) "Your recorded thought" else synthesizer.voiceLabel,
         )
-        if (resolvedPending && desiredPlaying && !capturing) transport.play()
+        if (resolvedPending) startTransport()
     }
 }

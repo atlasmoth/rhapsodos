@@ -32,6 +32,8 @@ The reader draws the original page and overlays passage-level narration highligh
 
 Native playback time is authoritative. Persisted progress identifies the document and passage, with a source fraction used when regenerated audio has a different duration. Manual page browsing pauses audio and following. Play restores the frozen listening position. Layout changes do not create a new playback session.
 
+Android lowers narration volume for duckable notification sounds. Interruptions that require silence preserve the listening position; both apps resume only when the OS permits and the original playback intent is still valid. Manual pauses, browsing, capture, headphone disconnection and changing documents cancel automatic resumption.
+
 ## Voice notes and durable data
 
 Double-tapping prepared text pauses narration and freezes the note's source attachment before capture. A note on another passage uses that passage's start while preserving the book's listening cursor. An equivalent accessible action is available within the PDF surface.
