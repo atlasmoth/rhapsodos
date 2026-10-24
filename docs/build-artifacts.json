@@ -6126,5 +6126,320 @@
       "The existing iOS presented sheet does not fully repaint during an appearance change until reopening/relaunch; dark launch and reopened sheets were checked.",
       "Signed catalogue revision6 is prepared locally, not published; live endpoint and trust configuration remain unset."
     ]
+  },
+  "model_archive_distribution_verification": {
+    "recorded_on": "2026-10-24",
+    "source_revision": "0469ad6ad309ae2d11258066c9060b8d4074d4e4",
+    "implementation_commits": [
+      "5cbab02",
+      "2738608",
+      "04ddc13",
+      "2cebad3",
+      "f51d9d1",
+      "0469ad6"
+    ],
+    "archive_directory": "/Users/atlasmoth/Downloads/Rhapsodos-HuggingFace",
+    "archive_bytes": 442563639,
+    "archives": [
+      {
+        "sourcePackId": "android-whisper-base-en",
+        "path": "whisper-base-en-android.zip",
+        "sha256": "a3e85237863b4f4e9dcf28ecbeab14c4c88e89e871326879fcfbe6e884e8e644",
+        "bytes": 81781951,
+        "payloadFiles": 1,
+        "unchangedUpstreamArchive": false
+      },
+      {
+        "sourcePackId": "whisper-base-en-coreml",
+        "path": "whisper-base-en-coreml.zip",
+        "sha256": "8b779da1480333e6595014858c6db8b4ccf447cbfea3366e1ae129bf489a1605",
+        "bytes": 149153911,
+        "payloadFiles": 23,
+        "unchangedUpstreamArchive": false
+      },
+      {
+        "sourcePackId": "android-phonon-english",
+        "path": "phonon-31m-en-android.zip",
+        "sha256": "7202361fcd73e82df7e2829b0aab437e24f05db50c03af20aba75d0e68debf24",
+        "bytes": 74531696,
+        "payloadFiles": 41,
+        "unchangedUpstreamArchive": false
+      },
+      {
+        "sourcePackId": "phonon-english-coreml",
+        "path": "phonon-31m-en-coreml.zip",
+        "sha256": "10f3a99fd39256db44f826267ef21d78cca959b16c0554926344c09fde27b436",
+        "bytes": 137096081,
+        "payloadFiles": 1,
+        "unchangedUpstreamArchive": true
+      }
+    ],
+    "release_provenance": {
+      "path": "/Users/atlasmoth/Downloads/Rhapsodos-HuggingFace/release.json",
+      "bytes": 39570,
+      "sha256": "b480e656f3df0e82fc08bdcbf2bb65a56e8d9937c9767b78971c3a67cb29c2ee"
+    },
+    "sources": [
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/shared/src/commonMain/kotlin/com/ereader/shared/Domain.kt",
+        "bytes": 5148,
+        "sha256": "d7a1d6b83beba998c998c860a282ffaa96f89f7fb91bbdaba7e68a09c5fd0366"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/shared/src/commonMain/kotlin/com/ereader/shared/CatalogValidation.kt",
+        "bytes": 4568,
+        "sha256": "565fd6e47b4e6d582753f3af1d016dd5bdad4b2a6a2593e39d28d273caa69f7c"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/shared/src/commonMain/kotlin/com/ereader/shared/ModelCatalog.kt",
+        "bytes": 34992,
+        "sha256": "e4df4517c86289c2070c91dc64236eed70ba0876b279d17aa283662e0d48ced1"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/shared/src/commonMain/kotlin/com/ereader/shared/ReaderCore.kt",
+        "bytes": 32999,
+        "sha256": "e8eb5c32c2db728b27edb4e7cf7a5a4c20ab7d176f435fbdbae0d3347f472c3f"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelArchive.kt",
+        "bytes": 11211,
+        "sha256": "980b10946ab9248f75be8bc29f402e7136db1cb7c05aaf79182c071b8c6749e8"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/src/main/kotlin/com/osuji/ereaderapp/models/ModelManager.kt",
+        "bytes": 43792,
+        "sha256": "206f0c6a3ccdffa5a0bbd9c81ec20f313f255bb1375fe044f4e32ea48d45c3e6"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/iosApp/Sources/ModelArchive.swift",
+        "bytes": 10574,
+        "sha256": "ceeea371e1a3d84e3b1e018509c537f18202299b280321647a655af49b3205fd"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/iosApp/Sources/ModelPacks.swift",
+        "bytes": 55767,
+        "sha256": "30bf4c3861c8a537fc0a38ccc57f2294d1c693f4d97b54b36aa11a3bd15883af"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/tools/model-archives.py",
+        "bytes": 17928,
+        "sha256": "3f373b6fb55b36e62d2148917797f41ddda45833a64bb3d53c17ba91938ab0bc"
+      },
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/tools/model-catalog.py",
+        "bytes": 11303,
+        "sha256": "d2ec3aabdc46933381c94ee63d1f9f8c76d92554b2d3dab2bf24b2b6533aadaf"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "/Users/atlasmoth/Desktop/ereader/androidApp/build/outputs/apk/debug/androidApp-debug.apk",
+        "bytes": 154451612,
+        "sha256": "a8377791489943e5e9c89b39c153072fefc863fb08e2984b773e26d2e874635a"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader",
+        "bytes": 40496,
+        "sha256": "de0e8d14290712dd5762de06b1d7db5865a0a1d4e5aba32d666bce6841e0b14e"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Debug-iphonesimulator/EReader.app/EReader.debug.dylib",
+        "bytes": 45743904,
+        "sha256": "3f79bec0a9167fea0457112b2688149f3b43d141f52ffee457aba6490c04c741"
+      },
+      {
+        "path": "/Users/atlasmoth/Library/Developer/Xcode/DerivedData/EReader-czffkdulvceqyrbnwlizrqusazpi/Build/Products/Release-iphoneos/EReader.app/EReader",
+        "bytes": 23226560,
+        "sha256": "be5095c70e913239d09a4f1bc5ba64a317926375d6c2998ca1c8fe0b66128ec8"
+      }
+    ],
+    "checks": {
+      "packaging": {
+        "passed": 25,
+        "repeat_build": "All four archives and provenance byte-identical"
+      },
+      "release_bundle": {
+        "passed": 15,
+        "scope": "Isolated release repository; includes rejection before writes"
+      },
+      "retained_bundle": {
+        "passed": 6
+      },
+      "shared_catalogue": {
+        "passed": 35
+      },
+      "generated_bundle_adapters": {
+        "passed": 12
+      },
+      "retained_installations": {
+        "passed": 15,
+        "scope": "Actual ReaderCore, SQLDelight and SQLite JDBC; generated future catalogue and JVM lock/time adapter"
+      },
+      "android_extraction": {
+        "passed": 29,
+        "scope": "Production extractor on 256 MB host JVM, including all three newly packaged archives"
+      },
+      "android_lifecycle": {
+        "passed": 29,
+        "apk_sha256": "a8377791489943e5e9c89b39c153072fefc863fb08e2984b773e26d2e874635a",
+        "scope": "Unchanged production DEX and canonical SQLite in isolated emulator package; Ktor MockEngine transport and injected runtime gate"
+      },
+      "ios_extraction": {
+        "passed": 23,
+        "scope": "Unchanged production Swift extractor with pinned ZIPFoundation on ARM64 macOS; real 23-file Whisper archive included"
+      },
+      "ios_lifecycle": {
+        "passed": 9,
+        "scope": "Seven scenarios plus two low-space recovery checks; production coordinator with ephemeral URLSession fixtures, app-state shim, in-memory repository and hashing runtime gate"
+      },
+      "android_debug_lint": "Passed; 0 errors and 11 existing warnings",
+      "ios_simulator_debug": "Passed",
+      "ios_unsigned_device_release": "Passed",
+      "shared_platform_builds": "Passed Android, iOS simulator and device frameworks"
+    },
+    "artifact_policy": {
+      "debug": {
+        "android_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "arm64_native_16k_alignment": {
+            "libraries": 12,
+            "status": "passed"
+          },
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "internet_permission": true,
+          "min_sdk": "28",
+          "target_sdk": "37",
+          "version": "0.01"
+        },
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      },
+      "ios_release": {
+        "android_artifact": "not_requested",
+        "device_qualification": "not_run",
+        "ios_artifact": {
+          "application_id": "com.osuji.ereaderapp",
+          "build": "1",
+          "display_name": "Rhapsodos",
+          "min_ios": "18.0",
+          "version": "0.01"
+        },
+        "pinned_assets": {
+          "bundled_ocr_models": 1,
+          "font_families": 3,
+          "model_packs": 4,
+          "status": "passed"
+        },
+        "unit_source_policy": "passed"
+      }
+    },
+    "evidence": [
+      {
+        "path": "/private/tmp/rhapsodos-model-archive-checks.json",
+        "bytes": 1595,
+        "sha256": "b2093918dd98ba64a920592c9d9009d9c3488186eb6d5f3d41258ad38805eb05"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-bundle-retention-checks.json",
+        "bytes": 709,
+        "sha256": "16cb9015a0d558740ea5461aaf936accf07fa3bb6863d4eb05fe5fd4cacea16a"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archive-shared-qa/release-qa-result.json",
+        "bytes": 60,
+        "sha256": "1b3c41dc10a7b87d5698108620c98dd8d0b3eae8b947981255b6197b67967961"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archive-shared-qa/results.log",
+        "bytes": 83,
+        "sha256": "3bb496b5d6fdea594182a9832b9d78746404b44322f5cbe65c310cbe32d6b331"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-retained-core-qa/results.json",
+        "bytes": 1160,
+        "sha256": "27acb7f911ac7a616c2c160cb407aa0f0e08a2084aa06c1ffa9526e1edb5e67c"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-retained-core-qa/source-hashes.json",
+        "bytes": 3753,
+        "sha256": "77304277bf8072b7881c19febe2549157f38adbe64aa6e6ccb61d8d674cf491e"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-android-model-archive-qa/host.log",
+        "bytes": 2226,
+        "sha256": "2cf730fcd0b34e247ced8b6aea9771df3eaffed8f460bdf4891a666e043fc207"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-android-model-archive-qa/native-run-snapshot.log",
+        "bytes": 1456,
+        "sha256": "4350af02f4bd4572ecc934d4b877410cac90bbd13e2954c9c277f1ea03cb3ce0"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-android-model-archive-qa/evidence-snapshot.json",
+        "bytes": 4455,
+        "sha256": "63328b7ae89a3c5f5f1bb521b5d8bacc3ca8f07647ccdaeeec345440e3f21647"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-model-archive-qa/results.json",
+        "bytes": 665,
+        "sha256": "28201da4b0856d578b22b0b63c45411fd91f0bcf4843d6bec573e6fadad72541"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-model-archive-qa/README.md",
+        "bytes": 930,
+        "sha256": "3fa3f0c3a06b83d3d463bb5921e0e9b10251a8418fa71004a1565e64a2995e30"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-model-lifecycle-qa/results.json",
+        "bytes": 350,
+        "sha256": "a9148dc169ff270048241b3b993b75f87ac26b6d3fe1f6161a4741d6b536b026"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-ios-model-lifecycle-qa/README.md",
+        "bytes": 1999,
+        "sha256": "322c3517cd668e2180f0034be380a44b6029a4d018498b64d7ce6f162263e898"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archives-release-gradle.log",
+        "bytes": 7054,
+        "sha256": "b193aa888319c72ebeacf895b4d305f9210115f1ae5517db26a58386e052a1b7"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archives-release-ios-debug.log",
+        "bytes": 111182,
+        "sha256": "195a167b5bffa81080f16f72682575f38b8efb632e69746e3d465db948db18a4"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archives-release-ios-release.log",
+        "bytes": 88830,
+        "sha256": "520226d26081019f92488dee2bce920e080d4f42b8292f0870659aaf620e849a"
+      },
+      {
+        "path": "/private/tmp/rhapsodos-model-archives-final-verify.json",
+        "bytes": 49,
+        "sha256": "d57eaba8634b0a9d4c94b1bf03fb75a28ad98d620c2fec6d34f8def302c89f86"
+      }
+    ],
+    "publication": "Not uploaded or published. Bundled upstream catalogue unchanged; bind only actual Hugging Face repository and immutable commit URLs, then rebuild or sign and configure catalogue refresh.",
+    "limitations": [
+      "No live Hugging Face/CDN endpoint exists for this release yet; fixture transport does not establish hosted range and redirect behavior.",
+      "iOS lifecycle harness does not exercise the OS background daemon or physical-device suspension/relaunch.",
+      "Runtime gates are controlled checks, not a new speech inference, perceptual quality, latency, battery, thermal or audio-route qualification.",
+      "Separately pinned Phonon voice profiles still require redistribution-term confirmation before publication."
+    ]
   }
 }

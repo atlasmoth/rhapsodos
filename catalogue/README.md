@@ -1,6 +1,8 @@
 # Uploadable model catalogue
 
-Upload [catalogue.json](catalogue.json) unchanged to the public GitHub repository that will host catalogue updates. The file contains the signed envelope expected by both apps. Its payload lists the four current speech packs and their 66 pinned assets; the model weights remain at their existing download URLs.
+The existing [catalogue.json](catalogue.json) is a signed revision-6 envelope for four speech packs and their 66 upstream assets. It can be hosted unchanged, but it does not point to the newly prepared four-archive release.
+
+For the four ZIPs, follow [the archive release workflow](../docs/model-archives.md). [archives.json](archives.json) records their sizes and SHA-256 digests. Once the files have an actual Hugging Face repository and immutable commit, bind those addresses, review the resulting pack list and sign a new catalogue revision. Do not edit URLs inside the existing signed envelope. The private signing key must never be uploaded.
 
 - Revision: **6**
 - Published: **21 October 2026, 07:17:48 WAT**
