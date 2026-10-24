@@ -11,6 +11,7 @@
 		13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB800AE8658C38622C0342F1 /* Feedback.swift */; };
 		14659CFAD51C40BB6AFD1B83 /* swift-jinja.txt in Resources */ = {isa = PBXBuildFile; fileRef = 33314AC53448D24B7FD014E6 /* swift-jinja.txt */; };
 		1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38AAAFA5A978CBA22107C06 /* FileDurability.swift */; };
+		1BF2FDA210AC89F6B5C9D9E6 /* ModelArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F589C9F27ED116706578F9 /* ModelArchive.swift */; };
 		1CB35CA2FE8DDEBA8C585EB5 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = ACCB12F96BAD9BECA72FD1EE /* ZIPFoundation */; };
 		203147D2773D6AFB90E4BA54 /* PhononAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */; };
 		20C891C733BA7ADC55FE6927 /* PhononRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = AB988C095418D804F1297F7B /* PhononRuntime */; };
@@ -80,6 +81,7 @@
 		940BE5C6D755CBC0B557F28D /* font-spacemono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "font-spacemono.txt"; sourceTree = "<group>"; };
 		9448C7D055EC8A3AF255AAAD /* AudioCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCoordinator.swift; sourceTree = "<group>"; };
 		95B8B359DCCBC2116CB9015B /* PhononVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhononVoice.swift; sourceTree = "<group>"; };
+		98F589C9F27ED116706578F9 /* ModelArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelArchive.swift; sourceTree = "<group>"; };
 		B23EF19BE856883DC5656A94 /* SharedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRepository.swift; sourceTree = "<group>"; };
 		B2E92111D5E2C960219B20BC /* NarrationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationText.swift; sourceTree = "<group>"; };
 		BDEBD9E22BE867A6A944D44F /* SpaceGrotesk.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = SpaceGrotesk.ttf; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 				4C61C2B36BA7BB537F819D6B /* EReaderApp.swift */,
 				DB800AE8658C38622C0342F1 /* Feedback.swift */,
 				F38AAAFA5A978CBA22107C06 /* FileDurability.swift */,
+				98F589C9F27ED116706578F9 /* ModelArchive.swift */,
 				3B29FF7F661BA934C9D8368F /* ModelCatalogClient.swift */,
 				DC3FA43A11EE783C000FEA59 /* ModelPacks.swift */,
 				B2E92111D5E2C960219B20BC /* NarrationText.swift */,
@@ -335,6 +338,7 @@
 				8DE0003507A7A07A084C4A40 /* EReaderApp.swift in Sources */,
 				13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */,
 				1B6E7F225A35BC540CB01AF9 /* FileDurability.swift in Sources */,
+				1BF2FDA210AC89F6B5C9D9E6 /* ModelArchive.swift in Sources */,
 				E00F7C9A4FB44E5EC2EB532D /* ModelCatalogClient.swift in Sources */,
 				AECCF6CDBE0D973AF982BE44 /* ModelPacks.swift in Sources */,
 				9C9EFD3D323721FAD5293F3E /* NarrationText.swift in Sources */,

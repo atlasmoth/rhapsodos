@@ -12,7 +12,13 @@ struct ModelPack: Codable, Identifiable {
     let runtime: String; let adapter: String; let version: String; let languageTags: [String]
     let minimumOS: Int; let minimumMemoryMB: Int; let license: String; let licenseUrl: String
     let description: String; let files: [ModelAsset]; let totalBytes: Int64; let voices: [ModelVoice]
-    var requiredStorageBytes: Int64 { totalBytes * 4 + 100_000_000 }
+    let archive: ModelAsset?
+    var transfers: [ModelAsset] { archive.map { [$0] } ?? files }
+    var installedBytes: Int64 { files.reduce(0) { $0 + $1.bytes } }
+    var requiredStorageBytes: Int64 { requiredStorageBytes(archiveVerified: false) }
+    func requiredStorageBytes(archiveVerified: Bool) -> Int64 {
+        archive == nil ? totalBytes * 4 + 100_000_000 : (archiveVerified ? 0 : totalBytes * 2) + installedBytes + 100_000_000
+    }
     var supported: Bool {
         capability == "tts" && adapter == "phonon-english-coreml" || capability == "asr" && adapter == "whisper-base-en-coreml"
     }
@@ -234,17 +240,33 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             if let previous = existing, ["paused", "failed"].contains(previous.status) {
                 let old = try self.stage(pack.id, previous.generation), next = try self.stage(pack.id, generation)
                 if FileManager.default.fileExists(atPath: old.path) { try FileManager.default.moveItem(at: old, to: next) }
-                for index in pack.files.indices {
+                let oldArchive = try self.archiveURL(pack.id, previous.generation), nextArchive = try self.archiveURL(pack.id, generation)
+                if FileManager.default.fileExists(atPath: oldArchive.path) { try FileManager.default.moveItem(at: oldArchive, to: nextArchive) }
+                for index in pack.transfers.indices {
                     let oldResume = self.resumeURL(Transfer(packId: pack.id, generation: previous.generation, fileIndex: index))
                     let nextResume = self.resumeURL(Transfer(packId: pack.id, generation: generation, fileIndex: index))
                     if FileManager.default.fileExists(atPath: oldResume.path) { try FileManager.default.moveItem(at: oldResume, to: nextResume) }
                 }
             }
+            let required = try await self.remainingStorageBytes(pack, generation: generation)
             let free = try self.files.staging.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
-            guard free > pack.requiredStorageBytes else { throw PackFailure.space }
+            guard free > required else { throw PackFailure.space }
             try await self.proceed(pack, generation: generation)
         }
         await task.value
+    }
+    private func remainingStorageBytes(_ pack: ModelPack, generation: String) async throws -> Int64 {
+        guard let archive = pack.archive else { return pack.requiredStorageBytes }
+        let retained = try archiveURL(pack.id, generation)
+        guard FileManager.default.fileExists(atPath: retained.path) else { return pack.requiredStorageBytes }
+        do {
+            _ = try await verifyAsset(retained, asset: archive)
+            return pack.requiredStorageBytes(archiveVerified: true)
+        } catch is CancellationError { throw CancellationError() }
+        catch {
+            try? FileManager.default.removeItem(at: retained)
+            return pack.requiredStorageBytes
+        }
     }
     private func beginOperation(_ transfer: Transfer, body: @escaping @MainActor () async throws -> Void) -> Task<Void, Never> {
         let task = Task {
@@ -318,6 +340,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         guard name.hasPrefix(prefix) else { return false }
         let suffix = String(name.dropFirst(prefix.count))
         if UUID(uuidString: suffix) != nil { return true }
+        if suffix.hasSuffix(".archive"), UUID(uuidString: String(suffix.dropLast(8))) != nil { return true }
         if suffix.hasPrefix("old-"), UUID(uuidString: String(suffix.dropFirst(4))) != nil { return true }
         guard suffix.count > 44, suffix.hasSuffix(".resume") else { return false }
         let generation = String(suffix.prefix(36))
@@ -329,6 +352,13 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     private func stage(_ id: String, _ generation: String) throws -> URL {
         guard safeComponent(id), safeComponent(generation) else { throw PackFailure.path }
         return files.staging.appendingPathComponent(id + "-" + generation, isDirectory: true)
+    }
+    private func archiveURL(_ id: String, _ generation: String) throws -> URL {
+        try stage(id, generation).appendingPathExtension("archive")
+    }
+    private func transferURL(_ pack: ModelPack, generation: String, index: Int) throws -> URL {
+        guard pack.transfers.indices.contains(index) else { throw PackFailure.path }
+        return try pack.archive == nil ? assetURL(pack.transfers[index].path, in: stage(pack.id, generation)) : archiveURL(pack.id, generation)
     }
     private func assetURL(_ path: String, in folder: URL) throws -> URL {
         let pieces = path.split(separator: "/", omittingEmptySubsequences: false)
@@ -365,10 +395,13 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             if verified.count == pack.files.count { activationFolder = target }
         }
         if activationFolder != target {
-            for (index, asset) in pack.files.enumerated() {
+            for (index, asset) in pack.transfers.enumerated() {
                 try Task.checkCancellation()
-                let file = try assetURL(asset.path, in: folder)
-                if FileManager.default.fileExists(atPath: file.path), let result = try? await verifyAsset(file, asset: asset) { verified.append(result); continue }
+                let file = try transferURL(pack, generation: generation, index: index)
+                if FileManager.default.fileExists(atPath: file.path), let result = try? await verifyAsset(file, asset: asset) {
+                    if pack.archive == nil { verified.append(result) }
+                    continue
+                }
                 try Task.checkCancellation()
                 try? FileManager.default.removeItem(at: file)
                 let transfer = Transfer(packId: pack.id, generation: generation, fileIndex: index)
@@ -381,7 +414,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 try await repository.updateInstall(id: pack.id, generation: generation, status: "downloading", bytes: verified.reduce(0) { $0 + $1.bytes })
                 try await refresh()
                 try Task.checkCancellation()
-        guard !removing.contains(pack.id), pausedGenerations[pack.id] != generation, installs.contains(where: { $0.packId == pack.id && $0.generation == generation && $0.status == "downloading" }) else { throw CancellationError() }
+                guard !removing.contains(pack.id), pausedGenerations[pack.id] != generation, installs.contains(where: { $0.packId == pack.id && $0.generation == generation && $0.status == "downloading" }) else { throw CancellationError() }
                 task.resume(); return
             }
         }
@@ -393,6 +426,11 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         guard UIApplication.shared.applicationState == .active else {
             try await repository.updateInstall(id: pack.id, generation: generation, status: "paused", bytes: pack.totalBytes)
             try await refresh(); return
+        }
+        if pack.archive != nil && activationFolder != target {
+            let archive = try archiveURL(pack.id, generation)
+            let task = Task.detached(priority: .utility) { try ModelArchive.extract(archive, files: pack.files, to: folder) }
+            verified = try await withTaskCancellationHandler(operation: { try await task.value }, onCancel: { task.cancel() })
         }
         let validationFolder = activationFolder
         try await runtimeCheck(pack, folder: validationFolder)
@@ -425,6 +463,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             throw error
         }
         if let backup { try? FileManager.default.removeItem(at: backup) }
+        try? FileManager.default.removeItem(at: archiveURL(pack.id, generation))
         if activationFolder == target { try? FileManager.default.removeItem(at: folder) }
         try await refresh()
         guard installs.contains(where: { $0.packId == pack.id && $0.generation == generation && $0.status == "ready" }) else { throw CancellationError() }
@@ -437,6 +476,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         }
     }
     nonisolated static func verify(_ url: URL, asset: ModelAsset) throws -> VerifiedModelFile {
+        let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+        guard values.isRegularFile == true, values.isSymbolicLink != true, let size = values.fileSize, Int64(size) == asset.bytes else { throw PackFailure.integrity }
         let handle = try FileHandle(forReadingFrom: url); defer { try? handle.close() }
         var digest = SHA256(); var count: Int64 = 0
         while let bytes = try handle.read(upToCount: 1_048_576), !bytes.isEmpty { try Task.checkCancellation(); count += Int64(bytes.count); guard count <= asset.bytes else { throw PackFailure.integrity }; digest.update(data: bytes) }
@@ -476,7 +517,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             guard self.installs.contains(where: { $0.packId == transfer.packId && $0.generation == transfer.generation && $0.status == "downloading" }),
                   self.active[transfer.packId] == nil || self.active[transfer.packId]?.taskIdentifier == downloadTask.taskIdentifier,
                   !self.removing.contains(transfer.packId), self.pausedGenerations[transfer.packId] != transfer.generation, self.operations[transfer.packId] == nil,
-                  let pack = self.catalog.first(where: { $0.id == transfer.packId }), pack.files.indices.contains(transfer.fileIndex) else { try? FileManager.default.removeItem(at: retained); return }
+                  let pack = self.catalog.first(where: { $0.id == transfer.packId }), pack.transfers.indices.contains(transfer.fileIndex) else { try? FileManager.default.removeItem(at: retained); return }
             let operation = self.beginOperation(transfer) {
                 defer { try? FileManager.default.removeItem(at: retained) }
                 try await self.refresh()
@@ -488,10 +529,10 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
                     try? FileManager.default.removeItem(at: self.resumeURL(transfer))
                     throw PackFailure.transport
                 }
-                let asset = pack.files[transfer.fileIndex]
+                let asset = pack.transfers[transfer.fileIndex]
                 _ = try await self.verifyAsset(retained, asset: asset)
                 try Task.checkCancellation()
-                let destination = try self.assetURL(asset.path, in: self.stage(pack.id, transfer.generation))
+                let destination = try self.transferURL(pack, generation: transfer.generation, index: transfer.fileIndex)
                 try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
                 try FileManager.default.moveItem(at: retained, to: destination)
                 try? FileManager.default.removeItem(at: self.resumeURL(transfer))
@@ -502,7 +543,14 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
         }
     }
     private func failed(_ transfer: Transfer, _ error: Error) async {
-        if let failure = error as? PackFailure, case .integrity = failure { try? FileManager.default.removeItem(at: resumeURL(transfer)) }
+        if let failure = error as? PackFailure {
+            switch failure {
+            case .integrity, .path:
+                try? FileManager.default.removeItem(at: resumeURL(transfer))
+                try? FileManager.default.removeItem(at: archiveURL(transfer.packId, transfer.generation))
+            default: break
+            }
+        }
         try? await repository.updateInstall(id: transfer.packId, generation: transfer.generation, status: error is CancellationError ? "paused" : "failed", bytes: installs.first(where: { $0.packId == transfer.packId })?.bytesDownloaded ?? 0, error: error.localizedDescription)
         try? await refresh(); if !(error is CancellationError) { message = error.localizedDescription }
     }
@@ -520,8 +568,8 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         Task { @MainActor [weak self] in
             guard let self, let transfer = self.decode(downloadTask.taskDescription), self.active[transfer.packId]?.taskIdentifier == downloadTask.taskIdentifier,
-                  let pack = self.catalog.first(where: { $0.id == transfer.packId }), pack.files.indices.contains(transfer.fileIndex) else { return }
-            if totalBytesWritten > pack.files[transfer.fileIndex].bytes || totalBytesExpectedToWrite > pack.files[transfer.fileIndex].bytes {
+                  let pack = self.catalog.first(where: { $0.id == transfer.packId }), pack.transfers.indices.contains(transfer.fileIndex) else { return }
+            if totalBytesWritten > pack.transfers[transfer.fileIndex].bytes || totalBytesExpectedToWrite > pack.transfers[transfer.fileIndex].bytes {
                 self.active.removeValue(forKey: pack.id); self.jobs.removeValue(forKey: pack.id)
                 downloadTask.cancel()
                 guard self.operations[transfer.packId] == nil else { return }
@@ -531,7 +579,7 @@ final class ModelPacks: NSObject, ObservableObject, URLSessionDownloadDelegate {
             let now = Date()
             if let last = self.progressUpdate[pack.id], now.timeIntervalSince(last) < 0.5 { return }
             self.progressUpdate[pack.id] = now
-            let before = pack.files.prefix(transfer.fileIndex).reduce(Int64(0)) { $0 + $1.bytes }
+            let before = pack.transfers.prefix(transfer.fileIndex).reduce(Int64(0)) { $0 + $1.bytes }
             try? await self.repository.updateInstall(id: pack.id, generation: transfer.generation, status: "downloading", bytes: min(pack.totalBytes, before + totalBytesWritten))
             try? await self.refresh()
         }
