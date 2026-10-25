@@ -46,29 +46,32 @@ class PdfAdapter(private val context: Context) {
 
     private val remote = RemotePdfClient(context)
 
-    suspend fun import(uri: Uri): ImportedPdf = withContext(Dispatchers.IO) {
-        val id = UUID.randomUUID().toString()
+    suspend fun import(uri: Uri, id: String = UUID.randomUUID().toString()): ImportedPdf = withContext(Dispatchers.IO) {
+        require(UUID.fromString(id).toString() == id)
         val directory = File(context.filesDir, "documents").apply { check(mkdirs() || isDirectory) }
         val temporary = File(directory, "$id.importing")
         val destination = File(directory, "$id.pdf")
         try {
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                temporary.outputStream().use { output ->
-                    val buffer = ByteArray(64 * 1024)
-                    var copied = 0L
-                    while (true) {
-                        coroutineContext.ensureActive()
-                        val count = input.read(buffer)
-                        if (count < 0) break
-                        copied += count
-                        require(copied <= 512L * 1024 * 1024) { "This PDF exceeds the 512 MB import limit." }
-                        output.write(buffer, 0, count)
+            if (!destination.isFile) {
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    temporary.outputStream().use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        var copied = 0L
+                        while (true) {
+                            coroutineContext.ensureActive()
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            copied += count
+                            require(copied <= 512L * 1024 * 1024) { "This PDF exceeds the 512 MB import limit." }
+                            output.write(buffer, 0, count)
+                        }
+                        output.fd.sync()
                     }
-                    output.fd.sync()
-                }
-            } ?: error("The file provider could not open this PDF.")
-            val count = Json.parseToJsonElement(checkNotNull(remote.request(temporary.absolutePath, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
-            check(temporary.renameTo(destination)) { "The local PDF copy could not be saved." }
+                } ?: error("The file provider could not open this PDF.")
+            }
+            val source = if (destination.isFile) destination else temporary
+            val count = Json.parseToJsonElement(checkNotNull(remote.request(source.absolutePath, "inspect").json)).jsonObject.getValue("pageCount").jsonPrimitive.content.toInt()
+            if (source == temporary) check(temporary.renameTo(destination)) { "The local PDF copy could not be saved." }
             syncDirectory(directory, context.filesDir)
             ImportedPdf(id, displayName(uri), destination.absolutePath, count)
         } catch (failure: Exception) {
@@ -135,8 +138,9 @@ class PdfAdapter(private val context: Context) {
 
     private fun usableText(text: String): Boolean = text.count { it.isLetterOrDigit() } >= 3 && text.count { it == '\uFFFD' } * 5 < text.length
 
-    private fun displayName(uri: Uri): String =
+    private fun displayName(uri: Uri): String = runCatching {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) cursor.getString(0)?.replace(Regex("(?i)\\.pdf$"), "")?.takeIf { it.isNotBlank() } ?: "Imported document" else "Imported document"
         } ?: "Imported document"
+    }.getOrDefault("Imported document")
 }

@@ -24,6 +24,8 @@ A fresh clone can use the bundled model catalogue. Remote catalogue updates are 
 
 Browsing the PDF pauses narration. Play returns to the saved listening position. Opening a book resumes its saved place; progress is shown on each library item. Wide layouts can show the library and notes alongside the PDF.
 
+On Android, tap a PDF in a file app and choose **Rhapsodos** from **Open with**. Rhapsodos saves its own local copy and opens it without starting narration. If a note or document operation is in progress, it waits before switching documents.
+
 The first speech-model download needs internet access. Installed models then run locally; documents, recordings and transcripts are not sent to a cloud service. No account or provider API key is required. Notes can be saved without a transcription model.
 
 **Settings → Documents** exports or restores a `.rhapsodos` archive containing the PDF, saved recordings, transcripts and listening position. These archives contain readable user data; models and generated narration are excluded.

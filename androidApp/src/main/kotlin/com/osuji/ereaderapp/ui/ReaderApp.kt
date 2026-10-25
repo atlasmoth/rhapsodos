@@ -85,6 +85,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -100,6 +101,7 @@ import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.data.LibraryDocument
 import com.osuji.ereaderapp.data.ReaderContents
 import com.osuji.ereaderapp.data.ReaderStore
+import com.osuji.ereaderapp.data.ExternalPdfOpener
 import com.osuji.ereaderapp.data.VoiceNote
 import com.osuji.ereaderapp.data.DocumentArchives
 import com.osuji.ereaderapp.data.OwnedFiles
@@ -122,8 +124,10 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun ReaderApp() {
+fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
     val store = koinInject<ReaderStore>()
+    val externalPdfs = koinInject<ExternalPdfOpener>()
+    val externalOpen by externalPdfs.state.collectAsStateWithLifecycle()
     val pdf = koinInject<PdfAdapter>()
     val playback = koinInject<PlaybackCoordinator>()
     val capture = koinInject<VoiceNoteCoordinator>()
@@ -140,6 +144,7 @@ fun ReaderApp() {
     val view = LocalView.current
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     LaunchedEffect(capture, lifecycleOwner, view) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             capture.savedEvents.collect { haptic(view, true) }
@@ -168,6 +173,7 @@ fun ReaderApp() {
     var returnToSettings by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
+    var documentOverlayOpen by remember { mutableStateOf(false) }
     var libraryAction by remember { mutableStateOf<Pair<String, LibraryDocument>?>(null) }
     var renameText by remember { mutableStateOf("") }
     var actionSaving by remember { mutableStateOf(false) }
@@ -207,6 +213,15 @@ fun ReaderApp() {
         backStack.add(DocumentKey(id))
         if (!wideLibrary) scope.launch { libraryDrawer.close() }
         haptic(view)
+    }
+
+    val externalOpenBlocked = archiveBusy || documentOverlayOpen || showSettings || showSearch || speechSetup != null || libraryAction != null || message != null
+    LaunchedEffect(externalOpen.results.firstOrNull(), externalOpenBlocked, lifecycleState) {
+        if (externalOpenBlocked || lifecycleState != Lifecycle.State.RESUMED) return@LaunchedEffect
+        val result = externalOpen.results.firstOrNull() ?: return@LaunchedEffect
+        result.documentId?.let { openDocument(it) }
+        result.error?.let { message = it }
+        externalPdfConsumed(result.requestId)
     }
 
     fun showLibrary() {
@@ -333,7 +348,7 @@ fun ReaderApp() {
                             documents = library.documents,
                             pdf = pdf,
                             audio = audio,
-                            importing = importing || exporting || exportDocumentId != null,
+                            importing = importing || externalOpen.busy || exporting || exportDocumentId != null,
                             import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
                             search = { showSearch = true; haptic(view) },
                             settings = { showSettings = true; haptic(view) },
@@ -357,7 +372,7 @@ fun ReaderApp() {
                                     documents = library.documents,
                                     pdf = pdf,
                                     audio = audio,
-                                    importing = importing || exporting || exportDocumentId != null,
+                                    importing = importing || externalOpen.busy || exporting || exportDocumentId != null,
                                     import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
                                     search = { showSearch = true; haptic(view) },
                                     settings = { showSettings = true; haptic(view) },
@@ -369,6 +384,7 @@ fun ReaderApp() {
                             entry<DocumentKey>(metadata = ListDetailSceneStrategy.detailPane()) { key ->
                                 DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio,
                                     showLibrary = if (readerCanRevealLibrary) ::showLibrary else null,
+                                    overlayChanged = { if (key.id == selectedDocumentId) documentOverlayOpen = it },
                                     record = { recordThought(it) })
                             }
                         },
@@ -680,7 +696,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, overlayChanged: (Boolean) -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -694,6 +710,8 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showSearch by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
     var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
+    SideEffect { overlayChanged(showSearch || showContents || showThoughts) }
+    DisposableEffect(id) { onDispose { overlayChanged(false) } }
     LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
         try { document = store.contents(id) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }

@@ -21,10 +21,15 @@
         android:icon="@mipmap/ic_rhapsodos"
         android:supportsRtl="true"
         android:theme="@style/Theme.Reader">
-        <activity android:name=".MainActivity" android:exported="true" android:resizeableActivity="true">
+        <activity android:name=".MainActivity" android:exported="true" android:resizeableActivity="true" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
         <service android:name=".audio.ListeningService" android:exported="true" android:foregroundServiceType="mediaPlayback">

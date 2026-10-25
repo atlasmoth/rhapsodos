@@ -10,6 +10,7 @@ import com.osuji.ereaderapp.audio.VoiceNoteCoordinator
 import com.osuji.ereaderapp.audio.VoiceRecorder
 import com.osuji.ereaderapp.audio.TranscriptionCoordinator
 import com.osuji.ereaderapp.data.ReaderStore
+import com.osuji.ereaderapp.data.ExternalPdfOpener
 import com.osuji.ereaderapp.data.OwnedFiles
 import com.osuji.ereaderapp.data.DocumentArchives
 import com.osuji.ereaderapp.models.ModelManager
@@ -62,6 +63,7 @@ class ReaderApplication : Application() {
                 single { VoiceRecorder(get(), get()) }
                 single { VoiceNoteCoordinator(get(), get(), get(), get(), get(), get()) }
                 single { DocumentPreparation(get(), get(), get(), get()) }
+                single { ExternalPdfOpener(get(), get(), get(), get()) }
                 single { OwnedFiles(get(), get()) }
                 single { DocumentArchives(get(), get()) }
             })
