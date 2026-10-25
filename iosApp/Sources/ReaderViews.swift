@@ -750,6 +750,8 @@ private struct NotesPanel: View {
     @State private var audioImporter = false
     @State private var importedAnchor: Passage?
     @State private var text = ""
+    @State private var saving = false
+    @State private var editError: String?
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -801,12 +803,24 @@ private struct NotesPanel: View {
                 }
                 .sheet(item: $editing) { note in
                     NavigationStack {
-                        TextEditor(text: $text).scrollContentBackground(.hidden).padding(20).background(Palette.paper).navigationTitle("Edit thought")
+                        TextEditor(text: $text).scrollContentBackground(.hidden).padding(20).background(Palette.paper).navigationTitle("Edit thought").disabled(saving)
                             .toolbar {
-                                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { editing = nil }.frame(minWidth: 44, minHeight: 44) }
-                                ToolbarItem(placement: .confirmationAction) { Button("Save") { Task { await store.edit(note, text: text); editing = nil } }.frame(minWidth: 44, minHeight: 44) }
+                                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { editing = nil }.frame(minWidth: 44, minHeight: 44).disabled(saving) }
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Save") {
+                                        saving = true
+                                        Task {
+                                            do { try await store.edit(note, text: text); editing = nil }
+                                            catch { editError = error.localizedDescription; store.feedback.play(.failure) }
+                                            saving = false
+                                        }
+                                    }.frame(minWidth: 44, minHeight: 44).disabled(saving)
+                                }
                             }
-                    }
+                    }.interactiveDismissDisabled(saving)
+                        .alert("Could not save your note", isPresented: Binding(get: { editError != nil }, set: { if !$0 { editError = nil } })) {
+                            Button("OK") { editError = nil }
+                        } message: { Text(editError ?? "") }
                 }
         }.background(Palette.paper).foregroundStyle(Palette.ink)
     }

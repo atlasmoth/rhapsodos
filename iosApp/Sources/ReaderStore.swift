@@ -783,9 +783,11 @@ final class ReaderStore: ObservableObject {
         follow = true
     }
 
-    func edit(_ note: VoiceNote, text: String) async {
-        do { try await repository?.editTranscript(id: note.id, text: text); try await refresh(); feedback.play(.saved) }
-        catch { present(error) }
+    func edit(_ note: VoiceNote, text: String) async throws {
+        guard let repository else { throw CocoaError(.fileWriteUnknown) }
+        try await repository.editTranscript(id: note.id, text: text)
+        try await refresh()
+        feedback.play(.saved)
     }
 
     private func reconcileSpeechSelections() async {
