@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6C3B2737FE09437D87CFE57E /* PDFImportInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6F9017A4B574728912FCA31 /* PDFImportInbox.swift */; };
 		0CFBFEFBFC767FBB7CE11452 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 408B4AA746EC0DA7E3367921 /* WhisperKit */; };
 		13B6974D825C81DAA56C5E76 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB800AE8658C38622C0342F1 /* Feedback.swift */; };
 		14659CFAD51C40BB6AFD1B83 /* swift-jinja.txt in Resources */ = {isa = PBXBuildFile; fileRef = 33314AC53448D24B7FD014E6 /* swift-jinja.txt */; };
@@ -55,6 +56,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D6F9017A4B574728912FCA31 /* PDFImportInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFImportInbox.swift; sourceTree = "<group>"; };
 		0296EB9FD3E50A29319E24C5 /* NativeSpeech-NOTICE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "NativeSpeech-NOTICE.txt"; sourceTree = "<group>"; };
 		09119DCD7C8BC9E09A797565 /* swift-collections.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-collections.txt"; sourceTree = "<group>"; };
 		1A2DD48CB307D44194B631A9 /* TranscriptionFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionFailure.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 				B2E92111D5E2C960219B20BC /* NarrationText.swift */,
 				2066543A2FF1C0616A50112D /* NarrationWave.swift */,
 				C30353B6FB6E75E0BA2BF05B /* NoSpeechTextDecoder.swift */,
+				D6F9017A4B574728912FCA31 /* PDFImportInbox.swift */,
 				8AF3DEC0097CB9AFE8B174C7 /* PDFSurface.swift */,
 				3B98BD8C7256FD2B7EA5FE37 /* PhononAssets.swift */,
 				95B8B359DCCBC2116CB9015B /* PhononVoice.swift */,
@@ -344,6 +347,7 @@
 				9C9EFD3D323721FAD5293F3E /* NarrationText.swift in Sources */,
 				C7B146CEC3373421573E9A5E /* NarrationWave.swift in Sources */,
 				5F36D0DB0362C15CBD449779 /* NoSpeechTextDecoder.swift in Sources */,
+				6C3B2737FE09437D87CFE57E /* PDFImportInbox.swift in Sources */,
 				AB66D02DCACA50DE0FFA7B1C /* PDFSurface.swift in Sources */,
 				74DA643810151910DB13A018 /* Passage.metal in Sources */,
 				203147D2773D6AFB90E4BA54 /* PhononAssets.swift in Sources */,
