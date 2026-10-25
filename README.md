@@ -24,7 +24,7 @@ A fresh clone can use the bundled model catalogue. Remote catalogue updates are 
 
 Browsing the PDF pauses narration. Play returns to the saved listening position. Opening a book resumes its saved place; progress is shown on each library item. Wide layouts can show the library and notes alongside the PDF.
 
-On Android, tap a PDF in a file app and choose **Rhapsodos** from **Open with**. Rhapsodos saves its own local copy and opens it without starting narration. If a note or document operation is in progress, it waits before switching documents.
+Open a PDF from a file app by choosing **Rhapsodos** in Android's **Open with** menu or the iOS share menu. Rhapsodos saves its own local copy and opens it without starting narration. If a recording, edit or document operation is in progress, it waits before switching documents. On iOS, accepted imports survive app restarts; **PDF imports** in the library shows waiting or failed requests, with retry or removal when needed.
 
 While listening on Android, use **Picture in picture** in the reader header or go Home to keep the current highlighted passage in a floating window. Use its playback controls or expand it to return to the reader. Closing the floating window pauses narration; recording and document operations stay in the full app. Availability depends on device support and Android's PiP permission.
 

@@ -14,6 +14,8 @@ final class ReaderStore: ObservableObject {
     @Published private(set) var loading = true
     @Published private(set) var busy = false
     @Published private(set) var preparingDocument = false
+    @Published private(set) var incomingPDFs: [PendingPDFImport] = []
+    @Published private(set) var receivingPDFs = 0
     @Published private(set) var preparationProgress = 0.0
     @Published private(set) var selectedTranscription = UserDefaults.standard.string(forKey: "transcriptionModel") ?? "off"
     @Published private(set) var models: ModelPacks?
@@ -44,7 +46,11 @@ final class ReaderStore: ObservableObject {
     private var activeTranscription: String?
     private var interruptedWhileBusy = false
     private var interruptedCaptureReason: String?
-    private var pendingImport: URL?
+    private let pdfInbox = Task.detached(priority: .userInitiated) { try PDFImportInbox() }
+    private var pdfImportTask: Task<Void, Never>?
+    private var pdfImportMutation = false
+    private var pendingPDFError: String?
+    private var importBlockers: Set<UUID> = []
     let speechPacks = CoreMLSpeech()
     let phononPacks = PhononVoice()
     private var preparationTask: Task<Void, Never>?
@@ -109,6 +115,17 @@ final class ReaderStore: ObservableObject {
         audio.$index.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
         $document.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
         $captureDraft.sink { [weak self] _ in Task { @MainActor in self?.repairCurrentGeometry() } }.store(in: &subscriptions)
+        Publishers.MergeMany([
+            $loading.map { _ in () }.eraseToAnyPublisher(),
+            $busy.map { _ in () }.eraseToAnyPublisher(),
+            $preparingDocument.map { _ in () }.eraseToAnyPublisher(),
+            $captureDraft.map { _ in () }.eraseToAnyPublisher(),
+            $preparedArchive.map { _ in () }.eraseToAnyPublisher(),
+            $speechSetupSheet.map { _ in () }.eraseToAnyPublisher(),
+            $errorMessage.map { _ in () }.eraseToAnyPublisher(),
+            audio.$recording.map { _ in () }.eraseToAnyPublisher(),
+            audio.$replayingNote.map { _ in () }.eraseToAnyPublisher(),
+        ]).sink { [weak self] _ in Task { @MainActor in self?.servicePDFImports() } }.store(in: &subscriptions)
         Task { await openLibrary() }
     }
 
@@ -244,10 +261,8 @@ final class ReaderStore: ObservableObject {
             inspector = currentNotes.contains(where: \.isDraft)
             loading = false
             preparation = ""
-            if let pendingImport {
-                self.pendingImport = nil
-                await importPDF(pendingImport)
-            }
+            await refreshPDFImports()
+            servicePDFImports()
             for note in notes where note.status == "pending" && !(note.recordingPath ?? "").isEmpty { enqueue(note.id) }
             if let unfinished = library.first(where: { $0.extractionStatus == "preparing" }) { resumePreparation(unfinished.id) }
         } catch { loading = false; present(error) }
@@ -318,42 +333,139 @@ final class ReaderStore: ObservableObject {
         } catch { present(error) }
     }
 
-    func importPDF(_ url: URL) async {
-        if loading { pendingImport = url; return }
-        guard !busy, !preparingDocument, captureDraft == nil, let repository, let files else { return }
+    func receivePDF(_ url: URL) {
+        let source = PDFImportSource(url: url)
+        receivingPDFs += 1
+        Task {
+            do { _ = try await pdfInbox.value.receive(source) }
+            catch { pendingPDFError = error.localizedDescription }
+            await refreshPDFImports()
+            receivingPDFs -= 1
+            servicePDFImports()
+        }
+    }
+
+    func setImportBlocked(_ blocked: Bool, owner: UUID) {
+        if blocked { importBlockers.insert(owner) } else { importBlockers.remove(owner) }
+        servicePDFImports()
+    }
+
+    func retryPDFImport(_ id: String) {
+        guard !pdfImportMutation, incomingPDFs.contains(where: { $0.id == id && $0.failure != nil && $0.hasCopy }) else { return }
+        pdfImportMutation = true
+        Task {
+            defer { pdfImportMutation = false; servicePDFImports() }
+            do { try await pdfInbox.value.retry(id: id) }
+            catch { pendingPDFError = error.localizedDescription }
+            await refreshPDFImports()
+        }
+    }
+
+    func removePDFImport(_ id: String) {
+        guard !pdfImportMutation, incomingPDFs.contains(where: { $0.id == id && $0.failure != nil }), let repository, let files else { return }
+        pdfImportMutation = true
+        Task {
+            defer { pdfImportMutation = false; servicePDFImports() }
+            do {
+                let registered = try await repository.snapshot().documents.contains { $0.id == id }
+                if !registered {
+                    try await Task.detached(priority: .utility) { try files.removeOwnedAsset("Documents/" + id + ".pdf") }.value
+                }
+                try await pdfInbox.value.remove(id: id)
+            } catch { pendingPDFError = error.localizedDescription }
+            await refreshPDFImports()
+        }
+    }
+
+    private func refreshPDFImports() async {
+        do { incomingPDFs = try await pdfInbox.value.requests() }
+        catch { pendingPDFError = error.localizedDescription }
+    }
+
+    private var canPresentPDFImport: Bool {
+        !loading && sceneActive && importBlockers.isEmpty && captureDraft == nil
+            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
+            && preparedArchive == nil && speechSetupSheet == nil && errorMessage == nil
+    }
+
+    private func servicePDFImports() {
+        guard pdfImportTask == nil, !pdfImportMutation, canPresentPDFImport, !busy, !preparingDocument, preparationTask == nil,
+              receivingPDFs == 0, repository != nil, files != nil else { return }
+        if let message = pendingPDFError {
+            pendingPDFError = nil
+            errorMessage = message
+            feedback.play(.failure)
+            return
+        }
+        guard let request = incomingPDFs.first(where: { $0.failure == nil && $0.hasCopy }) else { return }
+        pdfImportTask = Task { [weak self] in
+            guard let self else { return }
+            await self.openPDFImport(request)
+            self.pdfImportTask = nil
+            self.servicePDFImports()
+        }
+    }
+
+    private func openPDFImport(_ request: PendingPDFImport) async {
+        guard !pdfImportMutation, canPresentPDFImport, !busy, !preparingDocument, preparationTask == nil,
+              receivingPDFs == 0, let repository, let files else { return }
         busy = true
         preparation = "Preparing your PDF"
-        await audio.pauseAndJoinGeneration()
-        let id = UUID().uuidString
-        var copiedFile: URL?
-        var registered = false
+        defer { busy = false; if !preparingDocument { preparation = "" }; serviceTranscriptions() }
         do {
-            try await flushProgress()
-            let title = url.deletingPathExtension().lastPathComponent
-            let copied = try await Task.detached(priority: .userInitiated) { try files.importPDF(url, id: id) }.value
-            copiedFile = copied
-            let session = try await Task.detached(priority: .userInitiated) { try PDFPreparationSession(url: copied) }.value
-            let imported = try await repository.beginDocument(id: id, title: title, path: "Documents/" + id + ".pdf", pageCount: session.pageCount)
-            registered = true
+            let inbox = try await pdfInbox.value
+            let existing = try await repository.snapshot().documents.first { $0.id == request.id }
+            let target = files.documents.appendingPathComponent(request.id + ".pdf")
+            var session: PDFPreparationSession?
+            let imported: DocumentSnapshot
+            if existing != nil {
+                imported = try await repository.document(request.id)
+                if imported.document.extractionStatus == "preparing" {
+                    let count = imported.pages.reduce(0) { $0 + $1.text.utf16.count }
+                    session = try await Task.detached(priority: .userInitiated) { try PDFPreparationSession(url: target, existingCharacters: count) }.value
+                }
+            } else {
+                let source = await inbox.sourceURL(for: request)
+                session = try await Task.detached(priority: .userInitiated) {
+                    if !FileManager.default.fileExists(atPath: target.path) { _ = try files.importPDF(source, id: request.id) }
+                    return try PDFPreparationSession(url: target)
+                }.value
+                guard let session, session.pageCount > 0 else { throw PDFImportFailure.unreadable }
+                imported = try await repository.beginDocument(id: request.id, title: request.title,
+                    path: "Documents/" + request.id + ".pdf", pageCount: session.pageCount)
+            }
             try await refresh()
+            guard canPresentPDFImport else { return }
+            await audio.pauseAndJoinGeneration()
+            try await flushProgress()
+            guard canPresentPDFImport else { return }
             document = imported
-            selectedId = id
-            UserDefaults.standard.set(id, forKey: "selectedDocument")
-            audio.load(imported.passages, title: title, at: 0, complete: false)
+            selectedId = request.id
+            UserDefaults.standard.set(request.id, forKey: "selectedDocument")
+            let saved = positions.first { $0.documentId == request.id }
+            let index = imported.passages.firstIndex { $0.id == saved?.passageId } ?? 0
+            audio.load(imported.passages, title: imported.document.title, at: index, offsetMillis: saved?.offsetMillis ?? 0,
+                passageFraction: saved?.passageFraction ?? 0, complete: imported.document.extractionStatus != "preparing")
+            pageDestination = nil
             follow = true
+            try await inbox.remove(id: request.id)
             feedback.play(.saved)
-            busy = false
-            startPreparation(session: session, id: id, start: 0)
-        } catch { if !registered, let copiedFile { try? FileManager.default.removeItem(at: copiedFile) }; present(error) }
-        busy = false
-        preparation = ""
+            if let session { startPreparation(session: session, id: request.id, start: imported.pages.count) }
+        } catch {
+            do { try await pdfInbox.value.markFailed(id: request.id, message: error.localizedDescription) }
+            catch { pendingPDFError = error.localizedDescription }
+            pendingPDFError = error.localizedDescription
+        }
+        await refreshPDFImports()
     }
 
     func resumePreparation(_ id: String) {
         guard sceneActive, !busy, !preparingDocument, preparationTask == nil, let repository, let files else { return }
         preparationTask = Task { [weak self] in
             guard let self else { return }
-            defer { if !self.preparingDocument { self.preparationTask = nil } }
+            defer {
+                if !self.preparingDocument { self.preparationTask = nil; self.servicePDFImports() }
+            }
             do {
                 let snapshot = try await repository.document(id)
                 guard snapshot.document.extractionStatus == "preparing", let url = files.ownedURL(snapshot.document.filePath) else { return }
@@ -446,6 +558,7 @@ final class ReaderStore: ObservableObject {
             resumePreparation(unfinished.id)
         }
         serviceTranscriptions()
+        servicePDFImports()
         if sceneActive { repairCurrentGeometry(); Task { await models?.recheckReadyPacks() } }
     }
 

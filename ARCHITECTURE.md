@@ -36,6 +36,8 @@ Android lowers narration volume for duckable notification sounds. Interruptions 
 
 Android PiP uses the existing narration service and media session. A bounded original-page raster follows canonical passage geometry while the full reader remains mounted with its prior layout. PiP transitions never seek or record; closing the floating window pauses playback. External PDF intents reuse the activity, copy a granted content URI into owned storage, and defer navigation until capture and document operations finish.
 
+iOS copies incoming PDFs under coordinated, security-scoped access into a durable local inbox. It opens them in order after capture, edits and document operations finish, flushing the previous listening cursor before switching. Each request retains its document ID across retries and restarts, so recovery reuses canonical registration. Failed requests remain available in the library; the inbox never replaces the shared document or note store.
+
 ## Voice notes and durable data
 
 Double-tapping prepared text pauses narration and freezes the note's source attachment before capture. A note on another passage uses that passage's start while preserving the book's listening cursor. An equivalent accessible action is available within the PDF surface.

@@ -20,6 +20,7 @@ struct ReaderRoot: View {
     @State private var columns: NavigationSplitViewVisibility = .all
     @State private var compactColumn: NavigationSplitViewColumn = .sidebar
     @State private var phoneLibrary = false
+    @State private var importQueue = false
 
     private let usesPhoneNavigation = UIDevice.current.userInterfaceIdiom == .phone
 
@@ -45,11 +46,12 @@ struct ReaderRoot: View {
         }
         .fileImporter(isPresented: $importer, allowedContentTypes: [.pdf]) { result in
             switch result {
-            case .success(let url): Task { await store.importPDF(url) }
+            case .success(let url): phoneLibrary = false; store.receivePDF(url)
             case .failure(let error): store.errorMessage = error.localizedDescription
             }
         }
         .sheet(isPresented: $settings) { VoiceSettings() }
+        .sheet(isPresented: $importQueue, onDismiss: { phoneLibrary = false }) { PDFImportQueueSheet() }
         .sheet(item: $store.speechSetupSheet) { capability in
             if let models = store.models { SpeechSetupSheet(capability: capability, models: models) }
         }
@@ -63,7 +65,9 @@ struct ReaderRoot: View {
         .confirmationDialog("Delete this document and its notes from this device?", isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }), titleVisibility: .visible) {
             Button("Delete document and notes", role: .destructive) { if let target = deleteTarget { Task { await store.deleteDocument(target.id) } }; deleteTarget = nil }
         }
-        .sheet(item: $store.captureDraft) { draft in CaptureSheet(draft: draft).interactiveDismissDisabled() }
+        .sheet(item: $store.captureDraft) { draft in
+            CaptureSheet(draft: draft).interactiveDismissDisabled().modifier(ImportNavigationBlocker(blocked: true))
+        }
         .alert("Something needs attention", isPresented: Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })) {
             Button("OK") { store.errorMessage = nil }
         } message: { Text(store.errorMessage ?? "") }
@@ -73,6 +77,8 @@ struct ReaderRoot: View {
                     .padding(14).background(.regularMaterial, in: Capsule()).padding(.top, 10)
             }
         }
+        .modifier(ImportNavigationBlocker(blocked: importer || settings || tools || importQueue || searchScope != nil
+            || renameTarget != nil || deleteTarget != nil))
     }
 
     private var phoneNavigation: some View {
@@ -131,6 +137,20 @@ struct ReaderRoot: View {
                     }
                     HStack(spacing: 12) { libraryActions }
                 }.padding(.vertical, 8).listRowBackground(Color.clear)
+            }
+            if !store.incomingPDFs.isEmpty || store.receivingPDFs > 0 {
+                Section {
+                    Button { importQueue = true; feedback.play(.selection) } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "arrow.down.document")
+                            Text("PDF imports").font(.subheadline.weight(.semibold))
+                            Spacer(minLength: 0)
+                            if store.receivingPDFs > 0 { ProgressView() }
+                            else { Text(store.incomingPDFs.count.formatted()).foregroundStyle(Palette.muted) }
+                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Palette.muted)
+                        }.frame(minHeight: 44).contentShape(Rectangle())
+                    }.buttonStyle(.plain)
+                }
             }
             Section("Library") {
                 ForEach(store.library) { document in
@@ -232,6 +252,53 @@ struct ReaderRoot: View {
             LibraryActionButton(symbol: "slider.horizontal.3") { settings = true }
                 .accessibilityLabel("Settings")
         }
+    }
+}
+
+private struct ImportNavigationBlocker: ViewModifier {
+    let blocked: Bool
+    @EnvironmentObject private var store: ReaderStore
+    @State private var owner = UUID()
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { store.setImportBlocked(blocked, owner: owner) }
+            .onChange(of: blocked) { _, value in store.setImportBlocked(value, owner: owner) }
+            .onDisappear { store.setImportBlocked(false, owner: owner) }
+    }
+}
+
+private struct PDFImportQueueSheet: View {
+    @EnvironmentObject private var store: ReaderStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ReaderSheetHeader(title: "PDF imports") { dismiss() }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 16) {
+                    if store.receivingPDFs > 0 { ProgressView("Copying PDFs…").frame(minHeight: 44) }
+                    ForEach(store.incomingPDFs) { request in
+                        ReaderSheetCard(title: request.title) {
+                            Text(request.failure ?? "Waiting to open").font(.subheadline).foregroundStyle(Palette.muted)
+                            if request.failure != nil {
+                                HStack(spacing: 16) {
+                                    if request.hasCopy {
+                                        Button("Retry") { store.retryPDFImport(request.id) }.frame(minWidth: 44, minHeight: 44)
+                                    }
+                                    Button("Remove", role: .destructive) { store.removePDFImport(request.id) }.frame(minWidth: 44, minHeight: 44)
+                                }
+                            }
+                        }
+                    }
+                    if store.incomingPDFs.isEmpty && store.receivingPDFs == 0 {
+                        Text("No pending imports").foregroundStyle(Palette.muted).frame(maxWidth: .infinity, minHeight: 100)
+                    }
+                }.padding(20).frame(maxWidth: 640).frame(maxWidth: .infinity)
+            }
+        }.foregroundStyle(Palette.ink).background(Palette.paper)
+            .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+            .modifier(ImportNavigationBlocker(blocked: true))
     }
 }
 
@@ -351,6 +418,7 @@ private struct PlaybackDock: View {
         }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
             .onChange(of: store.canSeekDocument) { _, enabled in if !enabled { seekPreview = nil } }
             .sheet(isPresented: $detailsPresented) { DocumentDetailsSheet(document: document) }
+            .modifier(ImportNavigationBlocker(blocked: detailsPresented || volumePresented || seekPreview != nil))
     }
 
     @ViewBuilder private var documentProgress: some View {
@@ -823,6 +891,7 @@ private struct NotesPanel: View {
                         } message: { Text(editError ?? "") }
                 }
         }.background(Palette.paper).foregroundStyle(Palette.ink)
+            .modifier(ImportNavigationBlocker(blocked: editing != nil || deleting != nil || audioImporter))
     }
 
     private func status(_ note: VoiceNote) -> some View {

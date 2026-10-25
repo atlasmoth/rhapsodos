@@ -17,7 +17,11 @@ struct EReaderApp: App {
                 .background { WindowAppearance(appearance: appearance).frame(width: 0, height: 0) }
                 .overlay { LaunchIdentity().environmentObject(store.feedback) }
                 .onChange(of: scenePhase) { _, phase in store.sceneChanged(phase) }
-                .onOpenURL { url in if url.isFileURL { Task { if url.pathExtension.lowercased() == "rhapsodos" { await store.restoreArchive(url) } else { await store.importPDF(url) } } } }
+                .onOpenURL { url in
+                    guard url.isFileURL else { return }
+                    if url.pathExtension.lowercased() == "rhapsodos" { Task { await store.restoreArchive(url) } }
+                    else { store.receivePDF(url) }
+                }
         }
     }
 }
