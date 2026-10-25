@@ -48,10 +48,26 @@ class ListeningService : MediaSessionService() {
             override fun seekToDefaultPosition(mediaItemIndex: Int) { if (!coordinator.capturing) super.seekToDefaultPosition(mediaItemIndex) }
             override fun seekBack() { if (!coordinator.capturing) super.seekBack() }
             override fun seekForward() { if (!coordinator.capturing) super.seekForward() }
-            override fun seekToPrevious() { if (!coordinator.capturing) super.seekToPrevious() }
-            override fun seekToPreviousMediaItem() { if (!coordinator.capturing) super.seekToPreviousMediaItem() }
-            override fun seekToNext() { if (!coordinator.capturing) super.seekToNext() }
-            override fun seekToNextMediaItem() { if (!coordinator.capturing) super.seekToNextMediaItem() }
+            override fun seekToPrevious() {
+                if (!coordinator.capturing) {
+                    if (coordinator.state.value.noteId == null) coordinator.skip(-1, preservePlaybackState = true) else super.seekToPrevious()
+                }
+            }
+            override fun seekToPreviousMediaItem() {
+                if (!coordinator.capturing) {
+                    if (coordinator.state.value.noteId == null) coordinator.skip(-1, preservePlaybackState = true) else super.seekToPreviousMediaItem()
+                }
+            }
+            override fun seekToNext() {
+                if (!coordinator.capturing) {
+                    if (coordinator.state.value.noteId == null) coordinator.skip(1, preservePlaybackState = true) else super.seekToNext()
+                }
+            }
+            override fun seekToNextMediaItem() {
+                if (!coordinator.capturing) {
+                    if (coordinator.state.value.noteId == null) coordinator.skip(1, preservePlaybackState = true) else super.seekToNextMediaItem()
+                }
+            }
         }
         session = MediaSession.Builder(this, guarded).setSessionActivity(activity).setCallback(object : MediaSession.Callback {
             override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult =

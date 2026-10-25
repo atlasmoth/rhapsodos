@@ -550,10 +550,10 @@ class PlaybackCoordinator(
 
     suspend fun stopAndWait() { generation?.cancelAndJoin(); stop() }
 
-    fun skip(direction: Int) {
+    fun skip(direction: Int, preservePlaybackState: Boolean = false) {
         val document = contents ?: return
         val index = document.passages.indexOfFirst { it.id == state.value.passageId }
-        listen(document, (index + direction).coerceIn(document.passages.indices))
+        listen(document, (index + direction).coerceIn(document.passages.indices), startPlaying = !preservePlaybackState || desiredPlaying)
     }
 
     fun playNote(note: VoiceNote) {
