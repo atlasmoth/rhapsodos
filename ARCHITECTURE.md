@@ -34,6 +34,8 @@ Native playback time is authoritative. Persisted progress identifies the documen
 
 Android lowers narration volume for duckable notification sounds. Interruptions that require silence preserve the listening position; both apps resume only when the OS permits and the original playback intent is still valid. Manual pauses, browsing, capture, headphone disconnection and changing documents cancel automatic resumption.
 
+Android PiP uses the existing narration service and media session. A bounded original-page raster follows canonical passage geometry while the full reader remains mounted with its prior layout. PiP transitions never seek or record; closing the floating window pauses playback. External PDF intents reuse the activity, copy a granted content URI into owned storage, and defer navigation until capture and document operations finish.
+
 ## Voice notes and durable data
 
 Double-tapping prepared text pauses narration and freezes the note's source attachment before capture. A note on another passage uses that passage's start while preserving the book's listening cursor. An equivalent accessible action is available within the PDF surface.

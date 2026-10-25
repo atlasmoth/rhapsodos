@@ -50,8 +50,11 @@ import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneSt
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -124,7 +127,7 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
+fun ReaderApp(pictureInPicture: ReaderPictureInPicture, externalPdfConsumed: (String) -> Unit) {
     val store = koinInject<ReaderStore>()
     val externalPdfs = koinInject<ExternalPdfOpener>()
     val externalOpen by externalPdfs.state.collectAsStateWithLifecycle()
@@ -151,7 +154,10 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
         }
     }
     val backStack = rememberNavBackStack(LibraryKey)
-    val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
+    val currentWindowInfo = currentWindowAdaptiveInfoV2()
+    var retainedWindowInfo by remember { mutableStateOf(currentWindowInfo) }
+    if (!pictureInPicture.presenting) SideEffect { retainedWindowInfo = currentWindowInfo }
+    val windowAdaptiveInfo = if (pictureInPicture.presenting) retainedWindowInfo else currentWindowInfo
     val directive = remember(windowAdaptiveInfo) { calculatePaneScaffoldDirective(windowAdaptiveInfo) }
     val layoutDirection = LocalLayoutDirection.current
     val wideLibrary = directive.maxHorizontalPartitions > 1
@@ -168,6 +174,10 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
         if (wideLibrary || selectedDocumentId == null) libraryDrawer.close()
     }
     var importing by remember { mutableStateOf(false) }
+    var pickerPending by rememberSaveable { mutableStateOf(false) }
+    var dockOverlayOpen by remember { mutableStateOf(false) }
+    var libraryPopupOwners by remember { mutableStateOf(emptySet<String>()) }
+    var pipContents by remember { mutableStateOf<ReaderContents?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var speechSetup by rememberSaveable { mutableStateOf<String?>(null) }
     var returnToSettings by rememberSaveable { mutableStateOf(false) }
@@ -215,7 +225,17 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
         haptic(view)
     }
 
-    val externalOpenBlocked = archiveBusy || documentOverlayOpen || showSettings || showSearch || speechSetup != null || libraryAction != null || message != null
+    fun libraryPopupChanged(owner: String, open: Boolean) {
+        libraryPopupOwners = if (open) libraryPopupOwners + owner else libraryPopupOwners - owner
+    }
+
+    val externalOpenBlocked = archiveBusy || pickerPending || dockOverlayOpen || libraryPopupOwners.isNotEmpty() || documentOverlayOpen || showSettings || showSearch || speechSetup != null || libraryAction != null || message != null
+    SideEffect {
+        pictureInPicture.updateUi(selectedDocumentId, externalOpenBlocked || externalOpen.busy || externalOpen.results.isNotEmpty() || libraryDrawer.isOpen)
+    }
+    LaunchedEffect(pictureInPicture.error) {
+        pictureInPicture.error?.let { message = it; pictureInPicture.clearError() }
+    }
     LaunchedEffect(externalOpen.results.firstOrNull(), externalOpenBlocked, lifecycleState) {
         if (externalOpenBlocked || lifecycleState != Lifecycle.State.RESUMED) return@LaunchedEffect
         val result = externalOpen.results.firstOrNull() ?: return@LaunchedEffect
@@ -237,6 +257,7 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
     }
 
     val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pickerPending = false
         if (uri != null) scope.launch {
             importing = true
             try {
@@ -251,7 +272,14 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
             } finally { importing = false }
         }
     }
+    fun importPdf() {
+        pickerPending = true
+        pictureInPicture.suspendAutoEntry()
+        try { importPicker.launch(arrayOf("application/pdf")) }
+        catch (_: Exception) { pickerPending = false; message = "The file picker could not be opened." }
+    }
     val restorePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pickerPending = false
         if (uri != null) scope.launch {
             importing = true
             try { val id = archives.restore(uri); openDocument(id); haptic(view, true) }
@@ -260,6 +288,7 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
         }
     }
     val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.rhapsodos.document+zip")) { uri ->
+        pickerPending = false
         val documentId = exportDocumentId
         exportDocumentId = null
         showSettings = true
@@ -318,13 +347,17 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
             haptic(view, true)
             capture.begin(reservation.id)
         } else {
-            try { microphone.launch(Manifest.permission.RECORD_AUDIO) }
+            try { pictureInPicture.suspendAutoEntry(); microphone.launch(Manifest.permission.RECORD_AUDIO) }
             catch (failure: Exception) { recordRequestPending = false; typedNote = true; typedError = null }
         }
         return true
     }
 
     ReaderTheme(appearance) {
+        Box(Modifier.fillMaxSize()) {
+        if (pictureInPicture.presenting || pictureInPicture.canEnter) PictureInPictureReader(pipContents, audio, pdf,
+            if (pictureInPicture.presenting) Modifier else Modifier.alpha(0f).clearAndSetSemantics { })
+        PreservedReaderLayout(pictureInPicture.presenting) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
@@ -336,7 +369,9 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                     document = dockDocument, pdf = pdf, playback = playback,
                     available = audio.documentId == dockDocument.id && !playback.capturing && !exporting && exportDocumentId == null,
                     voiceReady = models.installed(modelState.selectedVoice) != null,
-                    downloadVoice = { returnToSettings = false; speechSetup = "tts" })
+                    beforeOverlay = pictureInPicture::suspendAutoEntry,
+                    overlayChanged = { dockOverlayOpen = it },
+                    downloadVoice = { pictureInPicture.suspendAutoEntry(); returnToSettings = false; speechSetup = "tts" })
             },
         ) { padding ->
             ModalNavigationDrawer(
@@ -349,11 +384,13 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                             pdf = pdf,
                             audio = audio,
                             importing = importing || externalOpen.busy || exporting || exportDocumentId != null,
-                            import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
-                            search = { showSearch = true; haptic(view) },
-                            settings = { showSettings = true; haptic(view) },
+                            import = { importPdf(); haptic(view) },
+                            search = { pictureInPicture.suspendAutoEntry(); showSearch = true; haptic(view) },
+                            settings = { pictureInPicture.suspendAutoEntry(); showSettings = true; haptic(view) },
                             open = ::openDocument,
                             action = { action, document -> libraryAction = action to document; renameText = document.title },
+                            beforeOverlay = pictureInPicture::suspendAutoEntry,
+                            popupChanged = { libraryPopupChanged("drawer", it) },
                             hide = ::hideLibrary,
                         )
                     }
@@ -367,17 +404,19 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                         onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
                         sceneStrategies = listOf(sceneStrategy),
                         entryProvider = entryProvider {
-                            entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyReader(showLibrary = if (libraryHidden) ::showLibrary else null) { importPicker.launch(arrayOf("application/pdf")) } })) {
+                            entry<LibraryKey>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { EmptyReader(showLibrary = if (libraryHidden) ::showLibrary else null) { importPdf() } })) {
                                 LibraryPane(
                                     documents = library.documents,
                                     pdf = pdf,
                                     audio = audio,
                                     importing = importing || externalOpen.busy || exporting || exportDocumentId != null,
-                                    import = { importPicker.launch(arrayOf("application/pdf")); haptic(view) },
-                                    search = { showSearch = true; haptic(view) },
-                                    settings = { showSettings = true; haptic(view) },
+                                    import = { importPdf(); haptic(view) },
+                                    search = { pictureInPicture.suspendAutoEntry(); showSearch = true; haptic(view) },
+                                    settings = { pictureInPicture.suspendAutoEntry(); showSettings = true; haptic(view) },
                                     open = ::openDocument,
                                     action = { action, document -> libraryAction = action to document; renameText = document.title },
+                                    beforeOverlay = pictureInPicture::suspendAutoEntry,
+                                    popupChanged = { libraryPopupChanged("library", it) },
                                     hide = if (wideLibrary) ::hideLibrary else null,
                                 )
                             }
@@ -385,7 +424,9 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                                 DocumentPane(key.id, store, pdf, playback, library.notes.filter { it.documentId == key.id }, audio,
                                     showLibrary = if (readerCanRevealLibrary) ::showLibrary else null,
                                     overlayChanged = { if (key.id == selectedDocumentId) documentOverlayOpen = it },
-                                    record = { recordThought(it) })
+                                    pictureInPicture = pictureInPicture,
+                                    contentsChanged = { if (key.id == selectedDocumentId) pipContents = it },
+                                    record = { !pictureInPicture.presenting && recordThought(it) })
                             }
                         },
                     )
@@ -395,6 +436,9 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                     }
                 }
             }
+        }
+
+        }
         }
 
         if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("A quick note") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Got it") } })
@@ -470,9 +514,12 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                                     check(playback.persist()) { "Your listening position could not be saved. Please retry." }
                                     val name = document.title.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), "_").trim().take(80).ifBlank { "Document" }
                                     showSettings = false
+                                    pickerPending = true
+                                    pictureInPicture.suspendAutoEntry()
                                     exportPicker.launch("$name.rhapsodos")
                                     haptic(view)
                                 } catch (failure: Exception) {
+                                    pickerPending = false
                                     exportDocumentId = null
                                     message = failure.message ?: "The archive export could not start."
                                 } finally { exporting = false }
@@ -486,7 +533,9 @@ fun ReaderApp(externalPdfConsumed: (String) -> Unit) {
                         else if (selectedDocument.extractionStatus == "preparing") Text("Finish preparing this document before exporting its archive.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         else if (selectedHasDraft) Text("Save or discard the unfinished thought before exporting this document.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (exporting) Text("Preparing and saving your archive…", style = MaterialTheme.typography.bodySmall)
-                        OutlinedButton(onClick = { showSettings = false; restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }, enabled = !archiveBusy) { Text("Restore a document archive") }
+                        OutlinedButton(onClick = { showSettings = false; pickerPending = true; pictureInPicture.suspendAutoEntry()
+                            try { restorePicker.launch(arrayOf("application/vnd.rhapsodos.document+zip", "application/zip", "application/octet-stream")) }
+                            catch (_: Exception) { pickerPending = false; message = "The file picker could not be opened." } }, enabled = !archiveBusy) { Text("Restore a document archive") }
                     }
                 }
             }
@@ -597,8 +646,13 @@ private fun LibraryPane(
     settings: () -> Unit,
     open: (String) -> Unit,
     action: (String, LibraryDocument) -> Unit,
+    beforeOverlay: () -> Unit,
+    popupChanged: (Boolean) -> Unit,
     hide: (() -> Unit)? = null,
 ) {
+    var menuDocumentId by remember { mutableStateOf<String?>(null) }
+    SideEffect { popupChanged(documents.any { it.id == menuDocumentId }) }
+    DisposableEffect(Unit) { onDispose { popupChanged(false) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -646,11 +700,11 @@ private fun LibraryPane(
                             Text(if (fraction == 1.0) "Finished" else if (fraction == 0.0) "Not started" else "${(fraction * 100).toInt()}% listened", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    var menu by remember(document.id) { mutableStateOf(false) }
+                    DisposableEffect(document.id) { onDispose { if (menuDocumentId == document.id) menuDocumentId = null } }
                     Box {
-                        IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "Document actions") }
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                            listOf("Rename", "Delete").forEach { label -> DropdownMenuItem(text = { Text(label) }, onClick = { menu = false; action(label.lowercase(), document) }) }
+                        IconButton(onClick = { beforeOverlay(); popupChanged(true); menuDocumentId = document.id }) { Icon(Icons.Default.MoreVert, "Document actions") }
+                        DropdownMenu(expanded = menuDocumentId == document.id, onDismissRequest = { menuDocumentId = null }) {
+                            listOf("Rename", "Delete").forEach { label -> DropdownMenuItem(text = { Text(label) }, onClick = { menuDocumentId = null; action(label.lowercase(), document) }) }
                         }
                     }
                 }
@@ -696,7 +750,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, overlayChanged: (Boolean) -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, overlayChanged: (Boolean) -> Unit, pictureInPicture: ReaderPictureInPicture, contentsChanged: (ReaderContents?) -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -710,8 +764,12 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     var showSearch by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
     var showThoughts by rememberSaveable(id) { mutableStateOf(false) }
-    SideEffect { overlayChanged(showSearch || showContents || showThoughts) }
-    DisposableEffect(id) { onDispose { overlayChanged(false) } }
+    SideEffect {
+        overlayChanged(showSearch || showContents || showThoughts)
+        pictureInPicture.updateReader(id, document == null || showSearch || showContents || showThoughts)
+        contentsChanged(document)
+    }
+    DisposableEffect(id) { onDispose { overlayChanged(false); pictureInPicture.clearReader(id) } }
     LaunchedEffect(id, metadata?.title, metadata?.sourceRevision, metadata?.passageCount, metadata?.extractionStatus, progress[id]?.running) {
         try { document = store.contents(id) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -746,11 +804,17 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
     }
     val active = contents.passages.firstOrNull { it.id == audio.passageId && audio.documentId == id && audio.noteId == null }
     val recordAvailable = !audio.capturing && audio.noteId == null
+    fun beforeOverlay() {
+        pictureInPicture.suspendAutoEntry()
+        overlayChanged(true)
+    }
     fun browse() {
+        if (pictureInPicture.presenting) return
         following = false
         playback.pauseForBrowsing(id)
     }
     fun browsePage(index: Int) {
+        if (pictureInPicture.presenting) return
         browse()
         page = index
     }
@@ -775,10 +839,13 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                         following = true
                         playback.listen(contents, index, saved?.offsetMillis ?: 0, passageFraction = saved?.passageFraction ?: 0.0); haptic(view, true)
                     }, enabled = !audio.capturing) { Icon(Icons.Default.PlayArrow, "Start listening") }
-                    IconButton(onClick = { showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Document contents") }
-                    IconButton(onClick = { showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Find a passage") }
-                    IconToggleButton(checked = showThoughts, onCheckedChange = { showThoughts = it; haptic(view) }) {
+                    IconButton(onClick = { beforeOverlay(); showContents = true; haptic(view) }) { Icon(Icons.Default.List, "Document contents") }
+                    IconButton(onClick = { beforeOverlay(); showSearch = true; haptic(view) }) { Icon(Icons.Default.Search, "Find a passage") }
+                    IconToggleButton(checked = showThoughts, onCheckedChange = { if (it) beforeOverlay(); showThoughts = it; haptic(view) }) {
                         Icon(Icons.AutoMirrored.Outlined.Comment, if (showThoughts) "Hide anchored notes" else "Show anchored notes")
+                    }
+                    if (pictureInPicture.supported) IconButton(onClick = { haptic(view); pictureInPicture.enter() }, enabled = pictureInPicture.canEnter) {
+                        Icon(Icons.Default.PictureInPictureAlt, "Picture in picture")
                     }
                 }
                 progress[id]?.let { prepared ->
@@ -791,7 +858,10 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                 }
                 OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, active, recordAvailable,
                     { browsePage(it) }, { browse() },
-                    record, { document = it; playback.updateContents(it) }, Modifier.weight(1f))
+                    record, { document = it; playback.updateContents(it) }, Modifier.weight(1f).onGloballyPositioned {
+                        val bounds = it.boundsInWindow()
+                        pictureInPicture.updateSourceRect(id, android.graphics.Rect(bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt()))
+                    })
             }
             NotesPane(notes, store, { note -> returnToPassage(note.passageId) }, showThoughts, wide, { showThoughts = false })
         }
@@ -1180,9 +1250,12 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, downloadVoice: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, beforeOverlay: () -> Unit, overlayChanged: (Boolean) -> Unit, downloadVoice: () -> Unit) {
     val view = LocalView.current
     var showDetails by rememberSaveable(document.id) { mutableStateOf(false) }
+    var volumeMenuOpen by remember { mutableStateOf(false) }
+    SideEffect { overlayChanged(showDetails || volumeMenuOpen) }
+    DisposableEffect(document.id) { onDispose { overlayChanged(false) } }
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 3.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 10.dp)) {
             if (audio.error != null) Text(audio.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -1193,7 +1266,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pd
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     Modifier.weight(1f).heightIn(min = 48.dp).clip(MaterialTheme.shapes.medium)
-                        .clickable(role = Role.Button, onClickLabel = "Show document details") { showDetails = true; haptic(view) }
+                        .clickable(role = Role.Button, onClickLabel = "Show document details") { beforeOverlay(); overlayChanged(true); showDetails = true; haptic(view) }
                         .semantics(mergeDescendants = true) {}.padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1206,7 +1279,7 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pd
                     Icon(Icons.Default.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 TextButton(onClick = { haptic(view); playback.setSpeed(if (audio.speed >= 2f) 0.75f else audio.speed + 0.25f) }, enabled = available && audio.noteId == null, modifier = Modifier.semantics { contentDescription = "Playback speed"; stateDescription = "${audio.speed} times normal" }) { Text("${audio.speed}×") }
-                MediaVolumeControl()
+                MediaVolumeControl(beforeOverlay) { volumeMenuOpen = it; overlayChanged(showDetails || it) }
                 if (!compact) TransportControls(audio, playback, available, voiceReady, downloadVoice)
             }
             if (compact) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -1223,18 +1296,20 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MediaVolumeControl() {
+private fun MediaVolumeControl(beforeOverlay: () -> Unit, expandedChanged: (Boolean) -> Unit) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current
     val view = LocalView.current
     val output = remember(context) { MediaOutputVolume(context) }
     val volume by output.state.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf(false) }
+    SideEffect { expandedChanged(expanded) }
+    DisposableEffect(Unit) { onDispose { expandedChanged(false) } }
     val slider = remember(volume.minimum, volume.maximum) { SliderState(value = volume.current.toFloat(), steps = (volume.maximum - volume.minimum - 1).coerceAtLeast(0), trackRange = volume.minimum.toFloat()..volume.maximum.coerceAtLeast(volume.minimum + 1).toFloat()) }
     LaunchedEffect(output, lifecycle) { lifecycle.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { output.observe() } }
     LaunchedEffect(volume.current) { slider.value = volume.current.toFloat() }
     Box {
-        IconButton(onClick = { output.refresh(); expanded = true; haptic(view) }) {
+        IconButton(onClick = { beforeOverlay(); expandedChanged(true); output.refresh(); expanded = true; haptic(view) }) {
             Icon(if (volume.current <= volume.minimum) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, "Media volume")
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

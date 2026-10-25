@@ -26,6 +26,8 @@ Browsing the PDF pauses narration. Play returns to the saved listening position.
 
 On Android, tap a PDF in a file app and choose **Rhapsodos** from **Open with**. Rhapsodos saves its own local copy and opens it without starting narration. If a note or document operation is in progress, it waits before switching documents.
 
+While listening on Android, use **Picture in picture** in the reader header or go Home to keep the current highlighted passage in a floating window. Use its playback controls or expand it to return to the reader. Closing the floating window pauses narration; recording and document operations stay in the full app. Availability depends on device support and Android's PiP permission.
+
 The first speech-model download needs internet access. Installed models then run locally; documents, recordings and transcripts are not sent to a cloud service. No account or provider API key is required. Notes can be saved without a transcription model.
 
 **Settings → Documents** exports or restores a `.rhapsodos` archive containing the PDF, saved recordings, transcripts and listening position. These archives contain readable user data; models and generated narration are excluded.

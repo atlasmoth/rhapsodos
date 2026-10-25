@@ -1,6 +1,8 @@
 package com.osuji.ereaderapp
 
 import android.content.Intent
+import android.content.res.Configuration
+import android.app.PictureInPictureUiState
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -9,17 +11,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.osuji.ereaderapp.ui.ReaderApp
+import com.osuji.ereaderapp.ui.ReaderPictureInPicture
+import com.osuji.ereaderapp.audio.PlaybackCoordinator
 import com.osuji.ereaderapp.data.ExternalPdfOpener
 import org.koin.android.ext.android.inject
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     private val externalPdfs: ExternalPdfOpener by inject()
+    private val playback: PlaybackCoordinator by inject()
+    private lateinit var pictureInPicture: ReaderPictureInPicture
     private var externalRequestId: String? = null
     private var externalRequestConsumed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pictureInPicture = ReaderPictureInPicture(this, playback)
         externalRequestId = savedInstanceState?.getString("externalPdfRequest")
         externalRequestConsumed = savedInstanceState?.getBoolean("externalPdfConsumed") ?: false
         if (!externalRequestConsumed) receivePdf(intent)
@@ -32,11 +39,12 @@ class MainActivity : ComponentActivity() {
             }
             splash.animate().alpha(0f).setDuration(if (reduced) 100 else 320).withEndAction { splash.remove() }.start()
         }
-        setContent { ReaderApp(externalPdfConsumed = ::externalPdfConsumed) }
+        setContent { ReaderApp(pictureInPicture, externalPdfConsumed = ::externalPdfConsumed) }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        pictureInPicture.suspendAutoEntry()
         setIntent(intent)
         externalRequestId = null
         externalRequestConsumed = false
@@ -66,6 +74,28 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        pictureInPicture.onResume()
         org.koin.core.context.GlobalContext.get().get<com.osuji.ereaderapp.audio.TranscriptionCoordinator>().resumeAfterMemoryPressure()
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        pictureInPicture.onUserLeaveHint()
+    }
+
+    override fun onPictureInPictureModeChanged(inPip: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(inPip, newConfig)
+        pictureInPicture.onModeChanged(inPip)
+    }
+
+    @androidx.annotation.RequiresApi(31)
+    override fun onPictureInPictureUiStateChanged(state: PictureInPictureUiState) {
+        super.onPictureInPictureUiStateChanged(state)
+        pictureInPicture.onUiStateChanged(state)
+    }
+
+    override fun onDestroy() {
+        pictureInPicture.dispose(isFinishing)
+        super.onDestroy()
     }
 }
