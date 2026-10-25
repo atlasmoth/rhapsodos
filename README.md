@@ -9,6 +9,14 @@ A listening-first PDF reader for Android and iOS. Listen with downloaded voices,
 
 **Pre-release:** version `0.01`, build `1`. Both apps use `com.osuji.ereaderapp`. Android requires API 28 or newer; iOS requires 18 or newer. Speech packs have additional device checks. Physical-device performance and sustained listening still need qualification.
 
+## Screenshots
+
+| Reader · light | Reader · dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-reader-light.png"><img src="docs/screenshots/ios-reader-light.png" width="320" alt="Rhapsodos in light mode, showing Alice in Wonderland with narration highlighting and playback controls"></a> | <a href="docs/screenshots/ios-reader-dark.png"><img src="docs/screenshots/ios-reader-dark.png" width="320" alt="Rhapsodos in dark mode, showing the same original PDF page with narration highlighting and playback controls"></a> |
+
+Actual iOS app captures with narration highlighting, using a typeset public-domain excerpt from [Alice's Adventures in Wonderland](https://www.gutenberg.org/ebooks/11). The PDF retains its original page colours in both themes. Select an image to view it at full resolution.
+
 ## Run the apps
 
 Follow [Setup](docs/setup.md) for toolchain requirements, Android build/install commands and running the iOS project in Xcode. Native inference libraries are included; ordinary app builds do not require rebuilding them.
