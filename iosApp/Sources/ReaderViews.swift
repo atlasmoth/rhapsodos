@@ -30,7 +30,7 @@ struct ReaderRoot: View {
             else { splitNavigation }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if let document = playbackDocument { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
+            if !usesPhoneNavigation { playbackDock }
         }
         .overlay(alignment: .leading) {
             if !libraryVisible && !settings && !tools && searchScope == nil && store.captureDraft == nil && store.preparedArchive == nil {
@@ -83,17 +83,40 @@ struct ReaderRoot: View {
 
     private var phoneNavigation: some View {
         NavigationStack {
-            ZStack {
-                readerContent
-                    .opacity(libraryVisible ? 0 : 1)
-                    .allowsHitTesting(!libraryVisible)
-                    .accessibilityHidden(libraryVisible)
-                if libraryVisible { libraryList.listStyle(.insetGrouped).transition(.move(edge: .leading).combined(with: .opacity)) }
-            }
-            .safeAreaInset(edge: .top, spacing: 0) { if !libraryVisible { readerHeader } }
-            .toolbar(.hidden, for: .navigationBar)
-            .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
+            phoneReader
+                .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
         }
+    }
+
+    @ViewBuilder private var phoneReader: some View {
+        if #available(iOS 27.1, *) {
+            phoneContent.modifier(PhoneReaderChrome(
+                libraryVisible: libraryVisible, document: playbackDocument, header: readerHeader,
+                showLibrary: { setLibraryVisible(true) }, showContents: { tools = true },
+                showSearch: { if let id = store.selectedId { searchScope = ReaderSearchScope(documentId: id) } },
+                showNotes: { store.inspector.toggle(); feedback.play(.selection) }))
+        } else {
+            phoneContent
+                .safeAreaInset(edge: .top, spacing: 0) { if !libraryVisible { readerHeader } }
+                .safeAreaInset(edge: .bottom, spacing: 0) { playbackDock }
+                .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var phoneContent: some View {
+        ZStack {
+            readerContent
+                .opacity(libraryVisible ? 0 : 1)
+                .allowsHitTesting(!libraryVisible)
+                .accessibilityHidden(libraryVisible)
+            if libraryVisible {
+                libraryList.listStyle(.insetGrouped).transition(.move(edge: .leading).combined(with: .opacity))
+            }
+        }
+    }
+
+    @ViewBuilder private var playbackDock: some View {
+        if let document = playbackDocument { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
     }
 
     private var splitNavigation: some View {
@@ -252,6 +275,103 @@ struct ReaderRoot: View {
             LibraryActionButton(symbol: "slider.horizontal.3") { settings = true }
                 .accessibilityLabel("Settings")
         }
+    }
+}
+
+@available(iOS 27.1, *)
+private struct PhoneReaderChrome<Header: View>: ViewModifier {
+    let libraryVisible: Bool
+    let document: LibraryDocument?
+    let header: Header
+    let showLibrary: () -> Void
+    let showContents: () -> Void
+    let showSearch: () -> Void
+    let showNotes: () -> Void
+    @Environment(\.toolbarVerticalEdge) private var verticalEdge
+    @EnvironmentObject private var store: ReaderStore
+    @EnvironmentObject private var audio: AudioCoordinator
+    @State private var playbackPresented = false
+
+    func body(content: Content) -> some View {
+        GeometryReader { geometry in
+            let usesRail = verticalEdge != nil && geometry.size.width > geometry.size.height
+            content
+                .safeAreaInset(edge: .top, spacing: 0) { if !usesRail && !libraryVisible { header } }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if !usesRail, let document { PlaybackDock(document: document, count: audio.passages.count).id(document.id) }
+                }
+                .toolbar {
+                    if usesRail {
+                        if !libraryVisible {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Show library", systemImage: "sidebar.left", action: showLibrary)
+                            }.visibilityPriority(.high)
+                            if store.document != nil {
+                                ToolbarItemGroup(placement: .topBarTrailing) {
+                                    Button("Document contents", systemImage: "list.bullet.rectangle", action: showContents)
+                                    Button("Find a passage", systemImage: "magnifyingglass", action: showSearch)
+                                        .disabled(!store.canNavigatePreparedSource)
+                                    Button("Show anchored notes", systemImage: "text.bubble", action: showNotes)
+                                }.visibilityPriority(.low)
+                            }
+                        }
+                        if let document {
+                            ToolbarItem(placement: .bottomBar) {
+                                Button("Previous passage", systemImage: "backward.end.fill") { store.skip(-1) }
+                                    .disabled(transportUnavailable || audio.replayingNote != nil)
+                            }
+                            ToolbarItem(placement: .bottomBar) {
+                                Button(audio.playing ? "Pause narration" : "Play narration", systemImage: audio.playing ? "pause.fill" : "play.fill") {
+                                    store.togglePlayback()
+                                }.disabled(transportUnavailable)
+                            }.visibilityPriority(.init(higherThan: .high))
+                            ToolbarItem(placement: .bottomBar) {
+                                Button("Next passage", systemImage: "forward.end.fill") { store.skip(1) }
+                                    .disabled(transportUnavailable || audio.replayingNote != nil)
+                            }
+                            ToolbarItem(placement: .bottomBar) {
+                                Button { playbackPresented = true; store.feedback.play(.selection) } label: {
+                                    VStack(spacing: 3) {
+                                        if store.preparingDocument || audio.generating { ProgressView().controlSize(.small) }
+                                        else { Image(systemName: "book") }
+                                        if let progressLabel { Text(progressLabel).font(BrandFont.mono(11)) }
+                                    }
+                                }
+                                .accessibilityLabel("Playback controls")
+                                .accessibilityValue([document.title, playbackStatus].filter { !$0.isEmpty }.joined(separator: ", "))
+                                .accessibilityHint("Shows document details, speed, volume, and listening progress")
+                                .popover(isPresented: $playbackPresented) {
+                                    VStack(spacing: 0) {
+                                        ReaderSheetHeader(title: "Playback") { playbackPresented = false }
+                                        PlaybackDock(document: document, count: audio.passages.count).id(document.id)
+                                    }
+                                    .frame(idealWidth: 380)
+                                    .background(Palette.paper)
+                                    .presentationCompactAdaptation(.popover)
+                                }
+                            }.axisBehavior(.verticalPreferred).visibilityPriority(.high)
+                        }
+                    }
+                }
+                .toolbarVerticalBehavior(.automatic)
+                .toolbar(usesRail ? .visible : .hidden, for: .navigationBar, .bottomBar)
+                .onChange(of: usesRail) { _, enabled in if !enabled { playbackPresented = false } }
+        }
+        .modifier(ImportNavigationBlocker(blocked: playbackPresented))
+    }
+
+    private var transportUnavailable: Bool {
+        audio.passages.isEmpty || store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
+    }
+
+    private var progressLabel: String? {
+        store.documentListeningProgress.map { "\(Int((min(1, max(0, $0)) * 100).rounded(.down)))%" }
+    }
+
+    private var playbackStatus: String {
+        if store.preparingDocument { return store.preparation }
+        if audio.generating { return "Preparing local audio" }
+        return progressLabel.map { "\($0) listened" } ?? "No listening text is available"
     }
 }
 

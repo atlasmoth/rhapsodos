@@ -48,6 +48,8 @@ Expose one library control at a time: **Hide library** beside library branding w
 
 iPhone uses a focused NavigationStack and full-width library overlay while keeping the PDF mounted. iPad uses NavigationSplitView, with native narrow-window collapse. Hide native navigation bars that would duplicate sidebar controls. Android uses its adaptive list/detail layout and the same single Show/Hide control across folded and expanded states. Notes use a trailing pane when space permits and a sheet otherwise.
 
+On iPhone Duo in landscape, use the system's vertical toolbar on its reported edge, folded or unfolded. Replace the horizontal header and bottom dock with native navigation and transport items; prioritize Play/Pause when space requires overflow. A book/progress button opens the full player with document details, speed, volume and seeking. Keep the PDF mounted through rotation and hinge changes. Portrait and devices without vertical toolbars retain the normal header and dock; the native rail requires iOS 27.1 while the app still supports iOS 18.
+
 ## Feedback and accessibility
 
 Haptics and decorative motion are enabled behavior without app-level switches. Respect OS motion/haptic settings, assistive technology, hardware capability, low power and thermal pressure. iOS uses native/Core Haptics feedback and a bounded Metal glow; Android uses native haptics and Compose drawing. Keep effects off PDF pixels, stop hidden effects and avoid competing with narration or capture. Launch motion must not delay usable content, acquire audio focus or vibrate automatically.
