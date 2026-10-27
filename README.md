@@ -11,23 +11,38 @@ A listening-first PDF reader for Android and iOS. Listen with downloaded voices,
 
 ## Screenshots
 
-| Duo folded · portrait light | Duo folded · portrait dark |
-| --- | --- |
-| <a href="docs/screenshots/ios-duo-folded-reader-light.png"><img src="docs/screenshots/ios-duo-folded-reader-light.png" width="320" alt="Rhapsodos on folded iPhone Duo in light portrait mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-folded-reader-dark.png"><img src="docs/screenshots/ios-duo-folded-reader-dark.png" width="320" alt="Rhapsodos on folded iPhone Duo in dark portrait mode with narration highlighting and playback controls"></a> |
+Reading midway through *Capitalism, Alone* by Branko Milanovic. The original PDF keeps its appearance in both themes; the small page/total label follows the visible page. Select an image to view it at full resolution.
 
-| Duo folded · landscape light | Duo folded · landscape dark |
-| --- | --- |
-| <a href="docs/screenshots/ios-duo-folded-landscape-light.png"><img src="docs/screenshots/ios-duo-folded-landscape-light.png" width="480" alt="Rhapsodos on folded iPhone Duo in light landscape mode with the compact native navigation and playback rail"></a> | <a href="docs/screenshots/ios-duo-folded-landscape-dark.png"><img src="docs/screenshots/ios-duo-folded-landscape-dark.png" width="480" alt="Rhapsodos on folded iPhone Duo in dark landscape mode with the compact native rail and original PDF colours"></a> |
+### iOS
 
-| Duo unfolded · portrait light | Duo unfolded · portrait dark |
+| iPhone · light | iPhone · dark |
 | --- | --- |
-| <a href="docs/screenshots/ios-duo-reader-light.png"><img src="docs/screenshots/ios-duo-reader-light.png" width="320" alt="Rhapsodos on iPhone Duo in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-reader-dark.png"><img src="docs/screenshots/ios-duo-reader-dark.png" width="320" alt="Rhapsodos on iPhone Duo in dark mode, reading the same book with its original PDF appearance"></a> |
+| <a href="docs/screenshots/ios-reader-light.png"><img src="docs/screenshots/ios-reader-light.png" width="320" alt="Rhapsodos on iPhone in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-reader-dark.png"><img src="docs/screenshots/ios-reader-dark.png" width="320" alt="Rhapsodos on iPhone in dark mode, reading midway through Capitalism, Alone"></a> |
 
-| Duo unfolded · landscape light | Duo unfolded · landscape dark |
+<details>
+<summary>iPhone Duo: folded and unfolded, portrait and landscape</summary>
+
+| Duo folded · portrait · light | Duo folded · portrait · dark |
 | --- | --- |
-| <a href="docs/screenshots/ios-duo-landscape-light.png"><img src="docs/screenshots/ios-duo-landscape-light.png" width="480" alt="Rhapsodos in landscape on iPhone Duo with navigation and playback in the native side rail"></a> | <a href="docs/screenshots/ios-duo-landscape-dark.png"><img src="docs/screenshots/ios-duo-landscape-dark.png" width="480" alt="Rhapsodos in dark landscape on iPhone Duo with its original PDF and native side rail"></a> |
+| <a href="docs/screenshots/ios-duo-folded-reader-light.png"><img src="docs/screenshots/ios-duo-folded-reader-light.png" width="320" alt="Rhapsodos on Duo folded · portrait in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-folded-reader-dark.png"><img src="docs/screenshots/ios-duo-folded-reader-dark.png" width="320" alt="Rhapsodos on Duo folded · portrait in dark mode, reading midway through Capitalism, Alone"></a> |
 
-iPhone Duo simulator captures of mid-book reading in *Capitalism, Alone* by Branko Milanovic. Navigation and playback use the native side rail on the folded display and in unfolded landscape. Unfolded portrait keeps the bottom player. The book/page button opens speed, volume and document details. A small page/total label follows the visible PDF page.
+| Duo folded · landscape · light | Duo folded · landscape · dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-duo-folded-landscape-light.png"><img src="docs/screenshots/ios-duo-folded-landscape-light.png" width="480" alt="Rhapsodos on Duo folded · landscape in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-folded-landscape-dark.png"><img src="docs/screenshots/ios-duo-folded-landscape-dark.png" width="480" alt="Rhapsodos on Duo folded · landscape in dark mode, reading midway through Capitalism, Alone"></a> |
+
+| Duo unfolded · portrait · light | Duo unfolded · portrait · dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-duo-reader-light.png"><img src="docs/screenshots/ios-duo-reader-light.png" width="320" alt="Rhapsodos on Duo unfolded · portrait in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-reader-dark.png"><img src="docs/screenshots/ios-duo-reader-dark.png" width="320" alt="Rhapsodos on Duo unfolded · portrait in dark mode, reading midway through Capitalism, Alone"></a> |
+
+| Duo unfolded · landscape · light | Duo unfolded · landscape · dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-duo-landscape-light.png"><img src="docs/screenshots/ios-duo-landscape-light.png" width="480" alt="Rhapsodos on Duo unfolded · landscape in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-landscape-dark.png"><img src="docs/screenshots/ios-duo-landscape-dark.png" width="480" alt="Rhapsodos on Duo unfolded · landscape in dark mode, reading midway through Capitalism, Alone"></a> |
+
+The native side rail holds navigation and playback on the folded display and in unfolded landscape. Unfolded portrait keeps the bottom player. The book/page button opens speed, volume and document details.
+
+</details>
+
+Captured on iPhone and iPhone Duo simulators.
 
 ## Run the apps
 
