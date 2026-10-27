@@ -17,6 +17,16 @@ A listening-first PDF reader for Android and iOS. Listen with downloaded voices,
 
 Actual iOS app captures with narration highlighting, using a typeset public-domain excerpt from [Alice's Adventures in Wonderland](https://www.gutenberg.org/ebooks/11). The PDF retains its original page colours in both themes. Select an image to view it at full resolution.
 
+| iPhone Duo · light | iPhone Duo · dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-duo-reader-light.png"><img src="docs/screenshots/ios-duo-reader-light.png" width="320" alt="Rhapsodos on iPhone Duo in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-reader-dark.png"><img src="docs/screenshots/ios-duo-reader-dark.png" width="320" alt="Rhapsodos on iPhone Duo in dark mode, reading the same book with its original PDF appearance"></a> |
+
+| iPhone Duo · landscape light | iPhone Duo · landscape dark |
+| --- | --- |
+| <a href="docs/screenshots/ios-duo-landscape-light.png"><img src="docs/screenshots/ios-duo-landscape-light.png" width="480" alt="Rhapsodos in landscape on iPhone Duo with navigation and playback in the native side rail"></a> | <a href="docs/screenshots/ios-duo-landscape-dark.png"><img src="docs/screenshots/ios-duo-landscape-dark.png" width="480" alt="Rhapsodos in dark landscape on iPhone Duo with its original PDF and native side rail"></a> |
+
+iPhone Duo simulator captures of mid-book reading in *Capitalism, Alone* by Branko Milanovic. In landscape, navigation and playback move into the native side rail, folded or unfolded. The book/progress button opens speed, volume, seeking and document details.
+
 ## Run the apps
 
 Follow [Setup](docs/setup.md) for toolchain requirements, Android build/install commands and running the iOS project in Xcode. Native inference libraries are included; ordinary app builds do not require rebuilding them.
