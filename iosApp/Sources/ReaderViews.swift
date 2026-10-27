@@ -25,8 +25,8 @@ struct ReaderRoot: View {
     private let usesPhoneNavigation = UIDevice.current.userInterfaceIdiom == .phone
 
     var body: some View {
-        GeometryReader { geometry in
-            if usesPhoneNavigation { phoneNavigation(landscape: geometry.size.width > geometry.size.height) }
+        Group {
+            if usesPhoneNavigation { phoneNavigation }
             else { splitNavigation }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -81,17 +81,17 @@ struct ReaderRoot: View {
             || renameTarget != nil || deleteTarget != nil))
     }
 
-    private func phoneNavigation(landscape: Bool) -> some View {
+    private var phoneNavigation: some View {
         NavigationStack {
-            phoneReader(landscape: landscape)
+            phoneReader
                 .inspector(isPresented: $store.inspector) { NotesPanel().inspectorColumnWidth(min: 280, ideal: 330, max: 420) }
         }
     }
 
-    @ViewBuilder private func phoneReader(landscape: Bool) -> some View {
+    @ViewBuilder private var phoneReader: some View {
         if #available(iOS 27.1, *) {
             phoneContent.modifier(PhoneReaderChrome(
-                landscape: landscape, libraryVisible: libraryVisible, document: playbackDocument, header: readerHeader,
+                libraryVisible: libraryVisible, document: playbackDocument, header: readerHeader,
                 showLibrary: { setLibraryVisible(true) }, showContents: { tools = true },
                 showSearch: { if let id = store.selectedId { searchScope = ReaderSearchScope(documentId: id) } },
                 showNotes: { store.inspector.toggle(); feedback.play(.selection) }))
@@ -280,7 +280,6 @@ struct ReaderRoot: View {
 
 @available(iOS 27.1, *)
 private struct PhoneReaderChrome<Header: View>: ViewModifier {
-    let landscape: Bool
     let libraryVisible: Bool
     let document: LibraryDocument?
     let header: Header
@@ -358,7 +357,7 @@ private struct PhoneReaderChrome<Header: View>: ViewModifier {
             .modifier(ImportNavigationBlocker(blocked: playbackPresented))
     }
 
-    private var usesRail: Bool { verticalEdge != nil && landscape }
+    private var usesRail: Bool { verticalEdge != nil }
 
     private var transportUnavailable: Bool {
         audio.passages.isEmpty || store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
