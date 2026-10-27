@@ -11,12 +11,6 @@ A listening-first PDF reader for Android and iOS. Listen with downloaded voices,
 
 ## Screenshots
 
-| Reader · light | Reader · dark |
-| --- | --- |
-| <a href="docs/screenshots/ios-reader-light.png"><img src="docs/screenshots/ios-reader-light.png" width="320" alt="Rhapsodos in light mode, showing Alice in Wonderland with narration highlighting and playback controls"></a> | <a href="docs/screenshots/ios-reader-dark.png"><img src="docs/screenshots/ios-reader-dark.png" width="320" alt="Rhapsodos in dark mode, showing the same original PDF page with narration highlighting and playback controls"></a> |
-
-Actual iOS app captures with narration highlighting, using a typeset public-domain excerpt from [Alice's Adventures in Wonderland](https://www.gutenberg.org/ebooks/11). The PDF retains its original page colours in both themes. Select an image to view it at full resolution.
-
 | Duo folded · portrait light | Duo folded · portrait dark |
 | --- | --- |
 | <a href="docs/screenshots/ios-duo-folded-reader-light.png"><img src="docs/screenshots/ios-duo-folded-reader-light.png" width="320" alt="Rhapsodos on folded iPhone Duo in light portrait mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/ios-duo-folded-reader-dark.png"><img src="docs/screenshots/ios-duo-folded-reader-dark.png" width="320" alt="Rhapsodos on folded iPhone Duo in dark portrait mode with narration highlighting and playback controls"></a> |
@@ -33,7 +27,7 @@ Actual iOS app captures with narration highlighting, using a typeset public-doma
 | --- | --- |
 | <a href="docs/screenshots/ios-duo-landscape-light.png"><img src="docs/screenshots/ios-duo-landscape-light.png" width="480" alt="Rhapsodos in landscape on iPhone Duo with navigation and playback in the native side rail"></a> | <a href="docs/screenshots/ios-duo-landscape-dark.png"><img src="docs/screenshots/ios-duo-landscape-dark.png" width="480" alt="Rhapsodos in dark landscape on iPhone Duo with its original PDF and native side rail"></a> |
 
-iPhone Duo simulator captures of mid-book reading in *Capitalism, Alone* by Branko Milanovic. Navigation and playback use the native side rail on the folded display and in unfolded landscape. Unfolded portrait keeps the bottom player. The book/progress button opens speed, volume, seeking and document details.
+iPhone Duo simulator captures of mid-book reading in *Capitalism, Alone* by Branko Milanovic. Navigation and playback use the native side rail on the folded display and in unfolded landscape. Unfolded portrait keeps the bottom player. The book/page button opens speed, volume and document details. A small page/total label follows the visible PDF page.
 
 ## Run the apps
 
