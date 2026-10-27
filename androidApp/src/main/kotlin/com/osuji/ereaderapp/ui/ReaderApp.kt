@@ -125,6 +125,8 @@ import org.koin.compose.koinInject
 @Serializable data object LibraryKey : NavKey
 @Serializable data class DocumentKey(val id: String) : NavKey
 
+private data class VisibleDocumentPage(val documentId: String, val sourceRevision: String, val index: Int, val count: Int)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun ReaderApp(pictureInPicture: ReaderPictureInPicture, externalPdfConsumed: (String) -> Unit) {
@@ -178,6 +180,7 @@ fun ReaderApp(pictureInPicture: ReaderPictureInPicture, externalPdfConsumed: (St
     var dockOverlayOpen by remember { mutableStateOf(false) }
     var libraryPopupOwners by remember { mutableStateOf(emptySet<String>()) }
     var pipContents by remember { mutableStateOf<ReaderContents?>(null) }
+    var visibleDocumentPage by remember { mutableStateOf<VisibleDocumentPage?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var speechSetup by rememberSaveable { mutableStateOf<String?>(null) }
     var returnToSettings by rememberSaveable { mutableStateOf(false) }
@@ -367,6 +370,7 @@ fun ReaderApp(pictureInPicture: ReaderPictureInPicture, externalPdfConsumed: (St
                     audio = audio.takeIf { it.documentId == dockDocument.id }
                         ?: PlaybackSnapshot(documentId = dockDocument.id, title = dockDocument.title),
                     document = dockDocument, pdf = pdf, playback = playback,
+                    visiblePage = visibleDocumentPage?.takeIf { it.documentId == dockDocument.id && it.sourceRevision == dockDocument.sourceRevision },
                     available = audio.documentId == dockDocument.id && !playback.capturing && !exporting && exportDocumentId == null,
                     voiceReady = models.installed(modelState.selectedVoice) != null,
                     beforeOverlay = pictureInPicture::suspendAutoEntry,
@@ -426,6 +430,7 @@ fun ReaderApp(pictureInPicture: ReaderPictureInPicture, externalPdfConsumed: (St
                                     overlayChanged = { if (key.id == selectedDocumentId) documentOverlayOpen = it },
                                     pictureInPicture = pictureInPicture,
                                     contentsChanged = { if (key.id == selectedDocumentId) pipContents = it },
+                                    pageChanged = { if (key.id == selectedDocumentId) visibleDocumentPage = it },
                                     record = { !pictureInPicture.presenting && recordThought(it) })
                             }
                         },
@@ -750,7 +755,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, overlayChanged: (Boolean) -> Unit, pictureInPicture: ReaderPictureInPicture, contentsChanged: (ReaderContents?) -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
+private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playback: PlaybackCoordinator, notes: List<VoiceNote>, audio: PlaybackSnapshot, showLibrary: (() -> Unit)?, overlayChanged: (Boolean) -> Unit, pictureInPicture: ReaderPictureInPicture, contentsChanged: (ReaderContents?) -> Unit, pageChanged: (VisibleDocumentPage) -> Unit, record: (PreparedCaptureTarget) -> Boolean) {
     var document by remember(id) { mutableStateOf<ReaderContents?>(null) }
     var error by remember(id) { mutableStateOf<String?>(null) }
     var following by rememberSaveable(id) { mutableStateOf(true) }
@@ -857,7 +862,7 @@ private fun DocumentPane(id: String, store: ReaderStore, pdf: PdfAdapter, playba
                     }
                 }
                 OriginalPages(contents, page.coerceIn(0, contents.document.pageCount - 1), pdf, active, recordAvailable,
-                    { browsePage(it) }, { browse() },
+                    { browsePage(it) }, { browse() }, pageChanged,
                     record, { document = it; playback.updateContents(it) }, Modifier.weight(1f).onGloballyPositioned {
                         val bounds = it.boundsInWindow()
                         pictureInPicture.updateSourceRect(id, android.graphics.Rect(bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt()))
@@ -951,14 +956,20 @@ internal class PdfHighlightTap(private val startX: Float, private val startY: Fl
 }
 
 @Composable
-private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
+private fun OriginalPages(contents: ReaderContents, page: Int, pdf: PdfAdapter, activePassage: ReaderPassage?, recordAvailable: Boolean, selectPage: (Int) -> Unit, browse: () -> Unit, pageChanged: (VisibleDocumentPage) -> Unit, record: (PreparedCaptureTarget) -> Boolean, geometryUpdated: (ReaderContents) -> Unit, modifier: Modifier) {
     val pager = rememberPagerState(initialPage = page) { contents.document.pageCount }
     val dragged by pager.interactionSource.collectIsDraggedAsState()
     val latestBrowse by rememberUpdatedState(browse)
     val latestSelect by rememberUpdatedState(selectPage)
     val latestPage by rememberUpdatedState(page)
+    val latestPageChanged by rememberUpdatedState(pageChanged)
     var zoomedPage by remember(contents.document.id) { mutableStateOf<Int?>(null) }
     var programmaticScroll by remember(pager) { mutableStateOf(false) }
+    LaunchedEffect(pager, contents.document.id, contents.document.sourceRevision, contents.document.pageCount) {
+        snapshotFlow { pager.currentPage }.collect { index ->
+            latestPageChanged(VisibleDocumentPage(contents.document.id, contents.document.sourceRevision, index, contents.document.pageCount))
+        }
+    }
     LaunchedEffect(page, pager) {
         if (pager.currentPage != page) {
             programmaticScroll = true
@@ -1250,7 +1261,7 @@ private fun NotesPane(notes: List<VoiceNote>, store: ReaderStore, jump: (VoiceNo
 }
 
 @Composable
-private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pdf: PdfAdapter, playback: PlaybackCoordinator, available: Boolean, voiceReady: Boolean, beforeOverlay: () -> Unit, overlayChanged: (Boolean) -> Unit, downloadVoice: () -> Unit) {
+private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pdf: PdfAdapter, playback: PlaybackCoordinator, visiblePage: VisibleDocumentPage?, available: Boolean, voiceReady: Boolean, beforeOverlay: () -> Unit, overlayChanged: (Boolean) -> Unit, downloadVoice: () -> Unit) {
     val view = LocalView.current
     var showDetails by rememberSaveable(document.id) { mutableStateOf(false) }
     var volumeMenuOpen by remember { mutableStateOf(false) }
@@ -1274,6 +1285,12 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pd
                     PdfCover(document, pdf, Modifier.size(36.dp, 46.dp))
                     Column(Modifier.weight(1f)) {
                         Text(document.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        val pageCount = visiblePage?.count ?: document.pageCount
+                        if (pageCount > 0) {
+                            val pageNumber = (visiblePage?.index ?: audio.pageIndex).coerceIn(0, pageCount - 1) + 1
+                            Text("$pageNumber / $pageCount", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.clearAndSetSemantics { contentDescription = "Page $pageNumber of $pageCount" })
+                        }
                         if (audio.preparing) Text("Preparing your passage…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Icon(Icons.Default.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1287,7 +1304,6 @@ private fun ListeningDock(audio: PlaybackSnapshot, document: LibraryDocument, pd
             }
             }
             }
-            SourceProgressMeter(audio, playback, available)
             if (audio.noteId != null) TextButton(onClick = { haptic(view); playback.returnToReading() }) { Text("Return to reading") }
         }
     }
@@ -1324,38 +1340,6 @@ private fun MediaVolumeControl(beforeOverlay: () -> Unit, expandedChanged: (Bool
                 Text(when { !volume.available -> "Volume unavailable"; volume.fixed || !volume.adjustable -> "Adjust volume on your output device."; else -> "${(volume.fraction * 100).toInt()}%" }, style = MaterialTheme.typography.labelSmall)
                 volume.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SourceProgressMeter(audio: PlaybackSnapshot, playback: PlaybackCoordinator, available: Boolean) {
-    val documentId = audio.documentId
-    val revision = audio.sourceRevision
-    val progress = audio.sourceProgress
-    var scrub by remember(documentId, revision, audio.noteId, available) { mutableStateOf<Float?>(null) }
-    val slider = remember(documentId, revision, audio.noteId, available) { SliderState(value = progress?.toFloat() ?: 0f) }
-    val enabled = available && documentId != null && revision != null && progress != null && audio.noteId == null
-    LaunchedEffect(progress, scrub) { if (scrub == null) slider.value = progress?.toFloat() ?: 0f }
-    if (progress == null) {
-        Text("Preparing document progress…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    } else {
-        val shown = (scrub ?: progress.toFloat()).coerceIn(0f, 1f)
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Slider(
-                state = slider,
-                onValueChange = { scrub = it; slider.value = it },
-                onValueChangeFinished = {
-                    val requested = scrub
-                    scrub = null
-                    if (enabled && requested != null) playback.seekSource(documentId, revision, requested.toDouble())
-                },
-                enabled = enabled,
-                modifier = Modifier.weight(1f).semantics { contentDescription = "Document progress"; stateDescription = "${(shown * 100).toInt()} percent" },
-            )
-            Text("${(shown * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clearAndSetSemantics {})
         }
     }
 }

@@ -46,7 +46,6 @@ data class PlaybackSnapshot(
     val capturing: Boolean = false,
     val passageFraction: Double = 0.0,
     val sourceRevision: String? = null,
-    val sourceProgress: Double? = null,
 )
 
 data class FrozenPlayback(val documentId: String, val passageId: String, val offsetMillis: Long)
@@ -192,7 +191,7 @@ class PlaybackCoordinator(
         generation?.cancel()
         contents = document
         resolvedCursor = null
-        mutableState.value = PlaybackSnapshot(document.document.id, document.document.title, document.passages[start].id, document.passages[start].pageIndex, positionMillis = offsetMillis, preparing = true, speed = mutableState.value.speed, passageFraction = passageFraction.coerceIn(0.0, 1.0), sourceRevision = document.document.sourceRevision, sourceProgress = sourceProgress(document, document.passages[start].id, passageFraction))
+        mutableState.value = PlaybackSnapshot(document.document.id, document.document.title, document.passages[start].id, document.passages[start].pageIndex, positionMillis = offsetMillis, preparing = true, speed = mutableState.value.speed, passageFraction = passageFraction.coerceIn(0.0, 1.0), sourceRevision = document.document.sourceRevision)
         pendingCursor = state.value
         val target = state.value
         fun restoreUnacceptedTarget() {
@@ -285,8 +284,7 @@ class PlaybackCoordinator(
     fun updateContents(document: ReaderContents) {
         if (contents?.document?.id == document.document.id) {
             contents = document
-            mutableState.value = state.value.copy(title = document.document.title, sourceRevision = document.document.sourceRevision,
-                sourceProgress = if (state.value.noteId != null) state.value.sourceProgress else sourceProgress(document, state.value.passageId, state.value.passageFraction))
+            mutableState.value = state.value.copy(title = document.document.title, sourceRevision = document.document.sourceRevision)
         }
     }
 
@@ -579,7 +577,7 @@ class PlaybackCoordinator(
         resolvedCursor = null
         desiredPlaying = startPlaying
         mutableState.value = PlaybackSnapshot(note.documentId, savedDocument?.document?.title ?: state.value.title, note.passageId, note.pageIndex, positionMillis = offsetMillis, preparing = true, voice = "Your recorded thought", noteId = note.id,
-            sourceRevision = savedDocument?.document?.sourceRevision ?: previous.sourceRevision, sourceProgress = previous.sourceProgress.takeIf { previous.documentId == note.documentId })
+            sourceRevision = savedDocument?.document?.sourceRevision ?: previous.sourceRevision)
         context.startService(Intent(context, ListeningService::class.java))
         generation = scope.launch {
             try {
@@ -590,9 +588,8 @@ class PlaybackCoordinator(
                     ?: error("The audio service did not start. Please try playing the thought again.")
                 if (currentEpoch != epoch) return@launch
                 contents = document
-                val savedPosition = store.snapshot.value.positions.firstOrNull { it.documentId == note.documentId }
                 mutableState.value = PlaybackSnapshot(note.documentId, document.document.title, note.passageId, note.pageIndex, positionMillis = offsetMillis, voice = "Your recorded thought", noteId = note.id,
-                    sourceRevision = document.document.sourceRevision, sourceProgress = sourceProgress(document, savedPosition?.passageId ?: document.passages.firstOrNull()?.id, savedPosition?.passageFraction ?: 0.0))
+                    sourceRevision = document.document.sourceRevision)
                 transportEpoch = currentEpoch
                 transport.setMediaItem(MediaItem.Builder().setMediaId("note:${note.id}").setUri(android.net.Uri.fromFile(File(note.recordingPath))).setMediaMetadata(MediaMetadata.Builder().setTitle("Your thought · page ${note.pageIndex + 1}").setArtist(contents!!.document.title).build()).build())
                 transport.playbackParameters = PlaybackParameters(1f)
@@ -632,35 +629,10 @@ class PlaybackCoordinator(
         if (current.noteId == null && transport.duration > 0 && transport.currentMediaItem?.mediaId == current.passageId) {
             pendingCursor = null
             val fraction = (position.toDouble() / transport.duration).coerceIn(0.0, 1.0)
-            mutableState.value = current.copy(positionMillis = position.coerceAtMost(transport.duration), passageFraction = fraction,
-                sourceProgress = sourceProgress(contents, current.passageId, fraction))
+            mutableState.value = current.copy(positionMillis = position.coerceAtMost(transport.duration), passageFraction = fraction)
         }
         transport.seekTo(position)
         publish()
-    }
-
-    fun seekSource(documentId: String, sourceRevision: String, fraction: Double) {
-        if (!fraction.isFinite() || fraction !in 0.0..1.0 || !canSeekSource(documentId, sourceRevision)) return
-        val request = ++sourceSeekRequest
-        val expectedEpoch = epoch
-        scope.launch {
-            try {
-                val target = store.resolveSourceSeek(documentId, sourceRevision, fraction)
-                if (request != sourceSeekRequest || epoch != expectedEpoch || !canSeekSource(documentId, sourceRevision)) return@launch
-                if (target.documentId != documentId || target.sourceRevision != sourceRevision) return@launch
-                publish()
-                val document = contents ?: return@launch
-                val index = document.passages.indexOfFirst { it.id == target.passageId }
-                if (index < 0) return@launch
-                val shouldPlay = fraction < 1.0 && !completedReading(state.value) && (desiredPlaying || player?.playWhenReady == true || state.value.playing)
-                listen(document, index, 0, shouldPlay, target.passageFraction, saveTarget = true)
-            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) {
-                if (request == sourceSeekRequest && epoch == expectedEpoch && canSeekSource(documentId, sourceRevision)) {
-                    mutableState.value = state.value.copy(error = "This document position could not be opened. Please retry.")
-                }
-            }
-        }
     }
 
     suspend fun openSearchPassage(documentId: String, passageId: String): Boolean {
@@ -688,17 +660,6 @@ class PlaybackCoordinator(
         return request == sourceSeekRequest && epoch == navigationEpoch && !capturing && state.value.noteId == null &&
             state.value.documentId == documentId && state.value.passageId == passageId && state.value.sourceRevision == document.document.sourceRevision &&
             contents?.document?.sourceRevision == document.document.sourceRevision
-    }
-
-    private fun canSeekSource(documentId: String, sourceRevision: String): Boolean = !capturing && state.value.noteId == null &&
-        state.value.documentId == documentId && contents?.document?.id == documentId && contents?.document?.sourceRevision == sourceRevision &&
-        contents?.document?.extractionStatus != "preparing" && contents?.passages?.isNotEmpty() == true
-
-    private fun sourceProgress(document: ReaderContents?, passageId: String?, fraction: Double): Double? {
-        if (document == null || document.document.extractionStatus == "preparing") return null
-        val total = document.passages.lastOrNull()?.sourceEnd?.takeIf { it > 0 } ?: return null
-        val passage = document.passages.firstOrNull { it.id == passageId } ?: return null
-        return ((passage.sourceStart + (passage.sourceEnd - passage.sourceStart) * fraction.coerceIn(0.0, 1.0)) / total).coerceIn(0.0, 1.0)
     }
 
     fun setSpeed(speed: Float) {
@@ -772,7 +733,6 @@ class PlaybackCoordinator(
             durationMillis = if (clockReady) duration else current.durationMillis,
             passageFraction = fraction,
             sourceRevision = contents?.document?.sourceRevision ?: current.sourceRevision,
-            sourceProgress = if (current.noteId != null) current.sourceProgress else sourceProgress(contents, if (clockReady) passage?.id else current.passageId, fraction),
             playing = currentMedia && transport.isPlaying,
             preparing = if (currentMedia) transport.playbackState == Player.STATE_BUFFERING ||
                 (transport.playbackState == Player.STATE_ENDED && contents?.document?.extractionStatus == "preparing" && desiredPlaying && generation?.isActive == true) else generation?.isActive == true,
