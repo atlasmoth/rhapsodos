@@ -44,6 +44,37 @@ The native side rail holds navigation and playback on the folded display and in 
 
 Captured on iPhone and iPhone Duo simulators.
 
+### Android
+
+| Pixel 10 · light | Pixel 10 · dark |
+| --- | --- |
+| <a href="docs/screenshots/android-reader-light.png"><img src="docs/screenshots/android-reader-light.png" width="320" alt="Rhapsodos on Pixel 10 in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/android-reader-dark.png"><img src="docs/screenshots/android-reader-dark.png" width="320" alt="Rhapsodos on Pixel 10 in dark mode, reading midway through Capitalism, Alone"></a> |
+
+<details>
+<summary>Pixel 10 Pro Fold: folded and unfolded, portrait and landscape</summary>
+
+| Fold folded · portrait · light | Fold folded · portrait · dark |
+| --- | --- |
+| <a href="docs/screenshots/android-folded-reader-light.png"><img src="docs/screenshots/android-folded-reader-light.png" width="320" alt="Rhapsodos on Fold folded · portrait in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/android-folded-reader-dark.png"><img src="docs/screenshots/android-folded-reader-dark.png" width="320" alt="Rhapsodos on Fold folded · portrait in dark mode, reading midway through Capitalism, Alone"></a> |
+
+| Fold folded · landscape · light | Fold folded · landscape · dark |
+| --- | --- |
+| <a href="docs/screenshots/android-folded-landscape-light.png"><img src="docs/screenshots/android-folded-landscape-light.png" width="480" alt="Rhapsodos on Fold folded · landscape in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/android-folded-landscape-dark.png"><img src="docs/screenshots/android-folded-landscape-dark.png" width="480" alt="Rhapsodos on Fold folded · landscape in dark mode, reading midway through Capitalism, Alone"></a> |
+
+| Fold unfolded · portrait · light | Fold unfolded · portrait · dark |
+| --- | --- |
+| <a href="docs/screenshots/android-unfolded-reader-light.png"><img src="docs/screenshots/android-unfolded-reader-light.png" width="400" alt="Rhapsodos on Fold unfolded · portrait in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/android-unfolded-reader-dark.png"><img src="docs/screenshots/android-unfolded-reader-dark.png" width="400" alt="Rhapsodos on Fold unfolded · portrait in dark mode, reading midway through Capitalism, Alone"></a> |
+
+| Fold unfolded · landscape · light | Fold unfolded · landscape · dark |
+| --- | --- |
+| <a href="docs/screenshots/android-unfolded-landscape-light.png"><img src="docs/screenshots/android-unfolded-landscape-light.png" width="400" alt="Rhapsodos on Fold unfolded · landscape in light mode, reading midway through Capitalism, Alone"></a> | <a href="docs/screenshots/android-unfolded-landscape-dark.png"><img src="docs/screenshots/android-unfolded-landscape-dark.png" width="400" alt="Rhapsodos on Fold unfolded · landscape in dark mode, reading midway through Capitalism, Alone"></a> |
+
+Expanded layouts show the library beside the PDF; compact layouts focus on the reader.
+
+</details>
+
+Captured on Pixel 10 and Pixel 10 Pro Fold emulators.
+
 ## Run the apps
 
 Follow [Setup](docs/setup.md) for toolchain requirements, Android build/install commands and running the iOS project in Xcode. Native inference libraries are included; ordinary app builds do not require rebuilding them.
