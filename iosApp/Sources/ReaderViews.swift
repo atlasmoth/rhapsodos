@@ -332,12 +332,12 @@ private struct PhoneReaderChrome<Header: View>: ViewModifier {
                                 VStack(spacing: 3) {
                                     if store.preparingDocument || audio.generating { ProgressView().controlSize(.small) }
                                     else { Image(systemName: "book") }
-                                    if let progressLabel { Text(progressLabel).font(BrandFont.mono(11)) }
+                                    PDFPageLabel(document: document, compact: true).accessibilityHidden(true)
                                 }
                             }
                             .accessibilityLabel("Playback controls")
                             .accessibilityValue([document.title, playbackStatus].filter { !$0.isEmpty }.joined(separator: ", "))
-                            .accessibilityHint("Shows document details, speed, volume, and listening progress")
+                            .accessibilityHint("Shows document details, speed, and volume")
                             .popover(isPresented: $playbackPresented) {
                                 VStack(spacing: 0) {
                                     ReaderSheetHeader(title: "Playback") { playbackPresented = false }
@@ -363,14 +363,11 @@ private struct PhoneReaderChrome<Header: View>: ViewModifier {
         audio.passages.isEmpty || store.busy || store.loading || store.captureDraft != nil || audio.recording || audio.capturePending
     }
 
-    private var progressLabel: String? {
-        store.documentListeningProgress.map { "\(Int((min(1, max(0, $0)) * 100).rounded(.down)))%" }
-    }
-
     private var playbackStatus: String {
         if store.preparingDocument { return store.preparation }
         if audio.generating { return "Preparing local audio" }
-        return progressLabel.map { "\($0) listened" } ?? "No listening text is available"
+        if audio.passages.isEmpty { return "No listening text is available" }
+        return document.flatMap { store.visiblePage(for: $0) }?.accessibilityLabel ?? ""
     }
 }
 
@@ -507,6 +504,7 @@ private struct ListeningView: View {
                     excerpt: audio.current?.displayText ?? "", recordingEnabled: store.canBeginNote,
                     follow: store.follow, browseDestination: store.pageDestination, onBrowse: { store.pauseForBrowsing() },
                     onRecord: { anchor in store.beginNote(expected: anchor) },
+                    onVisiblePage: { store.reportVisiblePage($0) },
                     onLoadFailure: { store.errorMessage = "The original PDF could not be opened. Your listening text and notes are preserved." })
             } else {
                 ContentUnavailableView("Original PDF unavailable", systemImage: "doc", description: Text("Your listening text and anchored notes are preserved."))
@@ -516,12 +514,25 @@ private struct ListeningView: View {
     }
 }
 
+private struct PDFPageLabel: View {
+    let document: LibraryDocument
+    var compact = false
+    @EnvironmentObject private var store: ReaderStore
+
+    var body: some View {
+        if let page = store.visiblePage(for: document) {
+            Text(compact ? "\(page.pageIndex + 1)/\(page.pageCount)" : "\(page.pageIndex + 1) / \(page.pageCount)")
+                .font(BrandFont.mono(compact ? 11 : 12)).foregroundStyle(Palette.muted)
+                .accessibilityLabel(page.accessibilityLabel)
+        }
+    }
+}
+
 private struct PlaybackDock: View {
     let document: LibraryDocument
     let count: Int
     @EnvironmentObject private var store: ReaderStore
     @EnvironmentObject private var audio: AudioCoordinator
-    @State private var seekPreview: Double?
     @State private var volumePresented = false
     @State private var detailsPresented = false
     var body: some View {
@@ -533,43 +544,13 @@ private struct PlaybackDock: View {
                 volumeControl
                 controls.disabled(transportUnavailable)
             }
-            documentProgress
-        }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
-            .onChange(of: store.canSeekDocument) { _, enabled in if !enabled { seekPreview = nil } }
-            .sheet(isPresented: $detailsPresented) { DocumentDetailsSheet(document: document) }
-            .modifier(ImportNavigationBlocker(blocked: detailsPresented || volumePresented || seekPreview != nil))
-    }
-
-    @ViewBuilder private var documentProgress: some View {
-        if let progress = store.documentListeningProgress {
-            HStack(spacing: 12) {
-                Slider(value: Binding(get: { seekPreview ?? progress }, set: { seekPreview = $0 }), in: 0...1) { editing in
-                    if editing { seekPreview = progress }
-                    else if let value = seekPreview { commitSeek(value) }
-                }.tint(Palette.accent)
-                    .accessibilityLabel("Document listening progress")
-                    .accessibilityValue("\(percent(seekPreview ?? progress)) percent")
-                    .accessibilityAdjustableAction { direction in
-                        switch direction {
-                        case .increment: commitSeek(min(1, progress + 0.05))
-                        case .decrement: commitSeek(max(0, progress - 0.05))
-                        @unknown default: break
-                        }
-                    }
-                    .disabled(!store.canSeekDocument)
-                Text("\(percent(seekPreview ?? progress))%").font(BrandFont.mono()).fixedSize().accessibilityHidden(true)
+            if count == 0 && !store.preparingDocument {
+                Text(document.extractionStatus == "preparing" ? "Preparing listening text…" : "No listening text is available.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
-        } else {
-            Text(document.extractionStatus == "preparing" ? "Document progress is available after preparation." : "No listening text is available.")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-    }
-
-    private func percent(_ progress: Double) -> Int { Int((min(1, max(0, progress)) * 100).rounded(.down)) }
-    private func commitSeek(_ value: Double) {
-        let id = document.id, revision = document.sourceRevision
-        seekPreview = nil
-        Task { await store.seekDocument(to: value, documentId: id, sourceRevision: revision) }
+        }.padding(.horizontal, 20).padding(.vertical, 16).background(.regularMaterial)
+            .sheet(isPresented: $detailsPresented) { DocumentDetailsSheet(document: document) }
+            .modifier(ImportNavigationBlocker(blocked: detailsPresented || volumePresented))
     }
 
     private var transportUnavailable: Bool {
@@ -607,6 +588,7 @@ private struct PlaybackDock: View {
                 BookThumbnail(document: document, url: store.files?.ownedURL(document.filePath)).frame(width: 36, height: 46)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(document.title).font(BrandFont.body(15, relativeTo: .subheadline).weight(.semibold)).lineLimit(2)
+                    PDFPageLabel(document: document)
                     if audio.generating { Text("Preparing local audio…").font(.caption2).foregroundStyle(.secondary) }
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Palette.muted)
@@ -614,7 +596,7 @@ private struct PlaybackDock: View {
             .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading).contentShape(Rectangle())
         }.buttonStyle(.plain).multilineTextAlignment(.leading)
             .accessibilityLabel("Document details")
-            .accessibilityValue(document.title)
+            .accessibilityValue([document.title, store.visiblePage(for: document)?.accessibilityLabel ?? ""].filter { !$0.isEmpty }.joined(separator: ", "))
             .accessibilityHint("Shows the full title, page count, and file size")
     }
 

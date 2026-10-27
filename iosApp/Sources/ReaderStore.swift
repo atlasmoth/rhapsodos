@@ -27,6 +27,7 @@ final class ReaderStore: ObservableObject {
     @Published var captureMessage = ""
     @Published var typedThought = ""
     @Published private(set) var pageDestination: PDFPageDestination?
+    @Published private(set) var visiblePDFPage: PDFVisiblePage?
     @Published var follow = true { didSet { if follow { pageDestination = nil } } }
     @Published var inspector = false
     var repository: SharedRepository?
@@ -34,8 +35,6 @@ final class ReaderStore: ObservableObject {
     private var positions: [PlaybackPosition] = []
     private var latestProgress: [String: ListeningCursor] = [:]
     private var progressWrite: Task<Result<Void, Error>, Never>?
-    private var sourceSeekRequest: UUID?
-    private var sourceSeekCancelled = false
     private var noteTask: Task<Void, Never>?
     private var capturedDuration: Int64 = 0
     private var transcriptionQueue: [String] = []
@@ -164,55 +163,20 @@ final class ReaderStore: ObservableObject {
         guard let page = currentPage, page.geometrySpace == "cropTopLeftV1", let range = highlightSourceRange else { return [] }
         return page.regions.filter { $0.start < NSMaxRange(range) && $0.end > range.location }
     }
-    var documentListeningProgress: Double? {
-        guard let document, document.document.extractionStatus != "preparing",
-              let passage = audio.current, passage.documentId == document.document.id,
-              let end = document.passages.last?.sourceEnd, end > 0 else { return nil }
-        return min(1, max(0, (Double(passage.sourceStart) + Double(passage.sourceEnd - passage.sourceStart) * audio.currentFraction) / Double(end)))
-    }
-    var canSeekDocument: Bool {
-        documentListeningProgress != nil && !busy && !loading && sceneActive && captureDraft == nil
-            && !audio.recording && !audio.capturePending && audio.replayingNote == nil
+    func reportVisiblePage(_ page: PDFVisiblePage) {
+        guard selectedId == page.documentId, document?.document.id == page.documentId,
+              document?.document.sourceRevision == page.sourceRevision,
+              page.pageIndex >= 0, page.pageIndex < page.pageCount, visiblePDFPage != page else { return }
+        visiblePDFPage = page
     }
 
-    func seekDocument(to fraction: Double, documentId: String, sourceRevision: String) async {
-        guard fraction.isFinite, (0...1).contains(fraction), canSeekDocument,
-              let snapshot = document, snapshot.document.id == documentId,
-              snapshot.document.sourceRevision == sourceRevision, let repository else { return }
-        let request = UUID(), initialTransport = audio.transportRevision
-        sourceSeekRequest = request
-        sourceSeekCancelled = false
-        busy = true
-        preparation = "Moving to your place"
-        defer { if sourceSeekRequest == request { sourceSeekRequest = nil; sourceSeekCancelled = false; busy = false; preparation = ""; serviceTranscriptions() } }
-        func currentRequest(_ transport: UUID) -> Bool {
-            sourceSeekRequest == request && !sourceSeekCancelled && selectedId == snapshot.document.id
-                && document?.document.sourceRevision == snapshot.document.sourceRevision
-                && audio.current?.documentId == snapshot.document.id && audio.transportRevision == transport
-                && captureDraft == nil && !audio.recording && !audio.capturePending
-                && audio.replayingNote == nil && sceneActive
-        }
-        do {
-            let target = try await repository.resolveSourceSeek(documentId: snapshot.document.id,
-                sourceRevision: snapshot.document.sourceRevision, fraction: fraction)
-            guard currentRequest(initialTransport), target.documentId == snapshot.document.id,
-                  target.sourceRevision == snapshot.document.sourceRevision,
-                  target.passageFraction.isFinite, (0...1).contains(target.passageFraction),
-                  let index = snapshot.passages.firstIndex(where: { $0.id == target.passageId }) else { return }
-            let resume = audio.playing && fraction < 1
-            let pausedTransport = await audio.pauseAndJoinGeneration()
-            guard currentRequest(pausedTransport) else { return }
-            try await flushProgress()
-            guard currentRequest(pausedTransport) else { return }
-            audio.load(snapshot.passages, title: snapshot.document.title, at: index,
-                passageFraction: target.passageFraction, complete: true)
-            let appliedTransport = audio.transportRevision
-            follow = true
-            try await flushProgress()
-            guard currentRequest(appliedTransport) else { return }
-            feedback.play(.selection)
-            if resume { audio.play() }
-        } catch { present(error) }
+    func visiblePage(for document: LibraryDocument) -> PDFVisiblePage? {
+        if let visiblePDFPage, visiblePDFPage.documentId == document.id,
+           visiblePDFPage.sourceRevision == document.sourceRevision { return visiblePDFPage }
+        guard document.pageCount > 0 else { return nil }
+        let page = audio.current.flatMap { $0.documentId == document.id ? $0.pageIndex : nil } ?? 0
+        return PDFVisiblePage(documentId: document.id, sourceRevision: document.sourceRevision,
+            pageIndex: min(document.pageCount - 1, max(0, page)), pageCount: document.pageCount)
     }
 
     private func openLibrary() async {
@@ -677,9 +641,8 @@ final class ReaderStore: ObservableObject {
     func pauseForBrowsing() {
         pageDestination = nil
         guard let selectedId, document?.document.id == selectedId, audio.current?.documentId == selectedId,
-              !loading, (!busy || sourceSeekRequest != nil), captureDraft == nil,
+              !loading, !busy, captureDraft == nil,
               !audio.recording, !audio.capturePending, audio.replayingNote == nil else { return }
-        if sourceSeekRequest != nil { sourceSeekCancelled = true }
         follow = false
         audio.pause()
     }

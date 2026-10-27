@@ -277,6 +277,15 @@ struct PDFPageDestination: Equatable {
     let pageIndex: Int
 }
 
+struct PDFVisiblePage: Equatable {
+    let documentId: String
+    let sourceRevision: String
+    let pageIndex: Int
+    let pageCount: Int
+
+    var accessibilityLabel: String { "Page \(pageIndex + 1) of \(pageCount)" }
+}
+
 struct PDFSurface: UIViewRepresentable {
     let url: URL
     let pageIndex: Int
@@ -297,6 +306,7 @@ struct PDFSurface: UIViewRepresentable {
     var browseDestination: PDFPageDestination? = nil
     let onBrowse: () -> Void
     let onRecord: (PDFHighlightAnchor) -> Bool
+    let onVisiblePage: (PDFVisiblePage) -> Void
     let onLoadFailure: () -> Void
 
     func makeUIView(context: Context) -> PDFView {
@@ -313,13 +323,14 @@ struct PDFSurface: UIViewRepresentable {
     func updateUIView(_ view: PDFView, context: Context) {
         context.coordinator.onBrowse = onBrowse
         context.coordinator.onRecord = onRecord
+        context.coordinator.onVisiblePage = onVisiblePage
         context.coordinator.onLoadFailure = onLoadFailure
         context.coordinator.request(url: url, pageIndex: pageIndex, baseRange: baseRange, baseRegions: baseRegions, range: range, regions: regions, pageContexts: pageContexts,
             preparedPassages: preparedPassages, documentId: documentId, sourceRevision: sourceRevision, geometrySpace: geometrySpace, sourceText: sourceText,
             anchor: anchor, excerpt: excerpt, recordingEnabled: recordingEnabled, follow: follow, browseDestination: browseDestination)
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onRecord: onRecord, onLoadFailure: onLoadFailure) }
+    func makeCoordinator() -> Coordinator { Coordinator(onBrowse: onBrowse, onRecord: onRecord, onVisiblePage: onVisiblePage, onLoadFailure: onLoadFailure) }
     static func dismantleUIView(_ uiView: PDFView, coordinator: Coordinator) { coordinator.cancel() }
 
     @MainActor
@@ -332,6 +343,7 @@ struct PDFSurface: UIViewRepresentable {
         let narrationOverlay = PDFNarrationOverlay()
         var onBrowse: () -> Void
         var onRecord: (PDFHighlightAnchor) -> Bool
+        var onVisiblePage: (PDFVisiblePage) -> Void
         var onLoadFailure: () -> Void
         private var url: URL?
         private var page = -1
@@ -368,10 +380,13 @@ struct PDFSurface: UIViewRepresentable {
         private var loadTask: Task<Void, Never>?
         private var observations: [NSObjectProtocol] = []
         private var scrollObservations: [NSKeyValueObservation] = []
+        private var reportedPage: PDFVisiblePage?
 
-        init(onBrowse: @escaping () -> Void, onRecord: @escaping (PDFHighlightAnchor) -> Bool, onLoadFailure: @escaping () -> Void) {
+        init(onBrowse: @escaping () -> Void, onRecord: @escaping (PDFHighlightAnchor) -> Bool,
+             onVisiblePage: @escaping (PDFVisiblePage) -> Void, onLoadFailure: @escaping () -> Void) {
             self.onBrowse = onBrowse
             self.onRecord = onRecord
+            self.onVisiblePage = onVisiblePage
             self.onLoadFailure = onLoadFailure
             spinner.hidesWhenStopped = true
             spinner.accessibilityLabel = "Opening original PDF"
@@ -503,6 +518,7 @@ struct PDFSurface: UIViewRepresentable {
 
         func cancel() {
             generation = UUID(); loadTask?.cancel(); loadTask = nil
+            reportedPage = nil
             observedPage = nil
             appliedBrowseDestination = nil
             appliedAnchor = nil; appliedPage = nil; hitRects = []
@@ -705,7 +721,25 @@ struct PDFSurface: UIViewRepresentable {
                   view?.currentSelection?.string?.isEmpty != false else { return false }
             return onRecord(anchor)
         }
+        private func reportVisiblePage() {
+            guard let view, let document = view.document, view.bounds.width > 0, view.bounds.height > 0,
+                  let page = view.page(for: CGPoint(x: view.bounds.midX, y: view.bounds.midY), nearest: true),
+                  view.visiblePages.contains(where: { $0 === page }) else { return }
+            let index = document.index(for: page)
+            guard index >= 0, index < document.pageCount else { return }
+            let position = PDFVisiblePage(documentId: preparedDocumentId, sourceRevision: preparedSourceRevision,
+                pageIndex: index, pageCount: document.pageCount)
+            guard position != reportedPage else { return }
+            reportedPage = position
+            let generation = generation
+            Task { @MainActor [weak self] in
+                guard let self, self.generation == generation, self.reportedPage == position else { return }
+                self.onVisiblePage(position)
+            }
+        }
+
         private func refreshAccessibility() {
+            reportVisiblePage()
             narrationOverlay.setNeedsDisplay()
             accessibilityHighlight.isHidden = accessibleFrame().isEmpty
             let enabled = recordingEnabled && view?.currentSelection?.string?.isEmpty != false
